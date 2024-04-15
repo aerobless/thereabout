@@ -1,0 +1,7 @@
+springdoc:
+  api-docs:
+    enabled: true
+  show-actuator: true
+  swagger-ui:
+    show-extensions: true
+    show-common-extensions: true

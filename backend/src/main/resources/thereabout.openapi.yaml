@@ -1,0 +1,106 @@
+openapi: "3.0.2"
+info:
+  title: Frontend REST API
+  version: "1.0"
+paths:
+
+  /backend/api/v1/location:
+    get:
+      summary: Get all mock locations
+      tags:
+        - location
+      operationId: getLocations
+      responses:
+        200:
+          description: Successful response containing a json object with all location history entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationHistoryResponse"
+        500:
+          $ref: '#/components/responses/500'
+
+components:
+  schemas:
+    LocationHistoryResponse:
+      type: array
+      required:
+        - aggridLicense
+        - chartam
+        - documentExtractor
+      items:
+        $ref: "#/components/schemas/LocationHistoryEntry"
+      x-field-extra-annotation: "@lombok.Builder.Default"
+    LocationHistoryEntry:
+      type: object
+      required:
+        - timestamp
+        - longitude
+        - latitude
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: The timestamp of the location history entry
+        longitude:
+          type: number
+          format: double
+          description: The longitude of the location history entry
+        latitude:
+          type: number
+          format: double
+          description: The latitude of the location history entry
+
+    ThereaboutBaseErrorModel:
+      type: object
+      required:
+        - requestId
+        - errorMessageParameters
+        - errorMessageTranslationKey
+        - extraInformation
+      properties:
+        requestId:
+          type: string
+        errorMessageTranslationKey:
+          type: string
+        errorMessageParameters:
+          type: array
+          items:
+            type: string
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        extraInformation:
+          type: string
+        stacktrace:
+          type: string
+
+  responses:
+    400:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThereaboutBaseErrorModel"
+    404:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThereaboutBaseErrorModel"
+    409:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThereaboutBaseErrorModel"
+    500:
+      description: Generic Internal Server Error Response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThereaboutBaseErrorModel"
+    502:
+      description: Bad Gateway
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThereaboutBaseErrorModel"

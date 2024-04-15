@@ -15,6 +15,11 @@
     <description>backend</description>
     <properties>
         <java.version>21</java.version>
+        <swagger-annotations.version>2.2.21</swagger-annotations.version>
+        <openapi-generator-maven-plugin.version>7.4.0</openapi-generator-maven-plugin.version>
+        <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
+        <mapstruct-spring-annotations.version>1.1.1</mapstruct-spring-annotations.version>
     </properties>
     <dependencies>
         <dependency>
@@ -79,6 +84,29 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>${swagger-annotations.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${mapstruct.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct.extensions.spring</groupId>
+            <artifactId>mapstruct-spring-annotations</artifactId>
+            <version>${mapstruct-spring-annotations.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -94,6 +122,60 @@
                         </exclude>
                     </excludes>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>${openapi-generator-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <generatorName>spring</generatorName>
+                            <generateApis>true</generateApis>
+                            <modelNamePrefix>Gen</modelNamePrefix>
+                            <output>${project.build.directory}/generated-sources/openapi</output>
+                            <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
+                            <inputSpec>${project.basedir}/src/main/resources/thereabout.openapi.yaml</inputSpec>
+                            <modelPackage>com.sixtymeters.thereabout.generated.model</modelPackage>
+                            <apiPackage>com.sixtymeters.thereabout.generated.api</apiPackage>
+                            <invokerPackage>com.sixtymeters.thereabout.generated.invoker</invokerPackage>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <configOptions>
+                                <useTags>true</useTags>
+                                <interfaceOnly>true</interfaceOnly>
+                                <skipDefaultInterface>true</skipDefaultInterface>
+                                <generatedConstructorWithRequiredArgs>false</generatedConstructorWithRequiredArgs>
+                                <dateLibrary>java8</dateLibrary>
+                                <useSpringBoot3>true</useSpringBoot3>
+                                <useOptional>true</useOptional>
+                                <useJakartaEe>true</useJakartaEe>
+                                <openApiNullable>false</openApiNullable>
+                                <performBeanValidation>true</performBeanValidation>
+                                <useBeanValidation>true</useBeanValidation>
+                                <useGzipFeature>true</useGzipFeature>
+                                <additionalModelTypeAnnotations>
+                                    &#64;lombok.Builder
+                                    &#64;lombok.NoArgsConstructor
+                                    &#64;lombok.AllArgsConstructor
+                                </additionalModelTypeAnnotations>
+                                <importMappings>
+                                    <importMapping>
+                                        GenNlsString=ch.kessler.misng.shared.generated.model.GenNlsString
+                                    </importMapping>
+                                    <importMapping>java.time.OffsetDateTime=java.time.LocalDateTime</importMapping>
+                                    <importMapping>LocalDateTime=java.time.LocalDateTime</importMapping>
+                                </importMappings>
+                                <typeMappings>
+                                    <typeMapping>OffsetDateTime=java.time.LocalDateTime</typeMapping>
+                                </typeMappings>
+                            </configOptions>
+                            <enablePostProcessFile>false</enablePostProcessFile>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

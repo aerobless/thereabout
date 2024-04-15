@@ -1,10 +1,10 @@
-package com.sixtymeters.thereabout.backend;
+package com.sixtymeters.thereabout;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class BackendApplicationTests {
+class ThereaboutApplicationTests {
 
     @Test
     void contextLoads() {

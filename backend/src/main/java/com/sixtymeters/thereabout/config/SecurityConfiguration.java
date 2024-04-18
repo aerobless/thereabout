@@ -1,4 +1,4 @@
-package com.sixtymeters.thereabout.application.config;
+package com.sixtymeters.thereabout.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package com.sixtymeters.thereabout.application;
+package com.sixtymeters.thereabout;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

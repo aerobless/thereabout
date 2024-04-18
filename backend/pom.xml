@@ -15,6 +15,7 @@
     <description>backend</description>
     <properties>
         <java.version>21</java.version>
+        <spring-boot.version>3.2.4</spring-boot.version>
         <swagger-annotations.version>2.2.21</swagger-annotations.version>
         <springdoc-openapi-starter-webmvc-ui.version>2.5.0</springdoc-openapi-starter-webmvc-ui.version>
         <openapi-generator-maven-plugin.version>7.4.0</openapi-generator-maven-plugin.version>
@@ -179,6 +180,61 @@
                                 </typeMappings>
                             </configOptions>
                             <enablePostProcessFile>false</enablePostProcessFile>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-configuration-processor</artifactId>
+                            <version>${spring-boot.version}</version>
+                        </path>
+                        <path>
+                            <groupId>jakarta.persistence</groupId>
+                            <artifactId>jakarta.persistence-api</artifactId>
+                            <version>${jakarta-persistence.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${mapstruct.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok-mapstruct-binding</artifactId>
+                            <version>${lombok-mapstruct-binding.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct.extensions.spring</groupId>
+                            <artifactId>mapstruct-spring-extensions</artifactId>
+                            <version>${mapstruct-spring-annotations.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                    <showDeprecation>true</showDeprecation>
+                    <showWarnings>true</showWarnings>
+                    <failOnWarning>true</failOnWarning>
+                    <implicit>class</implicit>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <useModulePath>false</useModulePath>
                         </configuration>
                     </execution>
                 </executions>

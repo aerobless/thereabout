@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "openapi:generate": "java -ea -Xms512M -Xmx1024M -server -jar scripts/openapi-generator-cli-7.4.0.jar batch scripts/spec-configs/*.yml"
   },
   "private": true,
   "dependencies": {

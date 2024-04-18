@@ -1,0 +1,7 @@
+'!include': '../openapi-config.yml'
+inputSpec: ../backend/src/main/resources/thereabout.openapi.yaml
+outputDir: generated/backend-api/thereabout
+additionalProperties:
+  '!include': '../openapi-config-angular-properties.yml'
+  apiModulePrefix: ThereaboutApi
+

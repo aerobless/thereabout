@@ -24,3 +24,5 @@ hs_err_pid*
 replay_pid*
 /frontend/.angular/
 /frontend/node_modules/
+/frontend/generated/
+/frontend/generated/

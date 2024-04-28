@@ -27,3 +27,4 @@ replay_pid*
 /frontend/generated/
 /frontend/generated/
 /frontend/environment.ts
+/frontend/src/assets/config.json

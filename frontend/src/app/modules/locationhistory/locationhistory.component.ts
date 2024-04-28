@@ -7,6 +7,7 @@ import {CardModule} from "primeng/card";
 import {IconFieldModule} from "primeng/iconfield";
 import {InputIconModule} from "primeng/inputicon";
 import {FormsModule} from "@angular/forms";
+import {ButtonModule} from "primeng/button";
 
 
 @Component({
@@ -20,7 +21,8 @@ import {FormsModule} from "@angular/forms";
     CardModule,
     IconFieldModule,
     InputIconModule,
-    FormsModule
+    FormsModule,
+    ButtonModule
   ],
   templateUrl: './locationhistory.component.html',
   styleUrl: './locationhistory.component.scss'
@@ -63,4 +65,7 @@ export class LocationhistoryComponent implements OnInit{
     }
   }
 
+  resetSearch() {
+    this.searchValue = '';
+  }
 }

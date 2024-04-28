@@ -7,6 +7,7 @@
             <p-inputIcon styleClass="pi pi-search" />
             <input type="text" pInputText placeholder="Search" (keydown)="geocodeAddress($event)" [(ngModel)]="searchValue"/>
         </p-iconField>
+        <p-button icon="pi pi-times" (onClick)="resetSearch()" class="button" severity="secondary"></p-button>
     </div>
     <div class="p-toolbar-group-end">
         <!-- todo -->

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -19,10 +20,13 @@ public class LocationHistoryController implements LocationApi {
 
     @Override
     public ResponseEntity<List<GenLocationHistoryEntry>> getLocations() {
-        final var fullLocationHistory =  locationHistoryService.getLocationHistory();
-        final var locationHistory = fullLocationHistory.stream()
+        final var filteredLocationHistory =  locationHistoryService.getLocationHistory(
+                LocalDate.of(2023, 1, 1),
+                LocalDate.now()
+        );
+
+        final var locationHistory = filteredLocationHistory.stream()
                 .map(LOCATION_HISTORY_MAPPER::map)
-                .skip(fullLocationHistory.size() - 50000)
                 .toList();
 
         return ResponseEntity.ok(locationHistory);

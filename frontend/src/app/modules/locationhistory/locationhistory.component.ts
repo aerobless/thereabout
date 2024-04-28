@@ -1,13 +1,26 @@
-import {Component, OnInit} from '@angular/core';
-import {GoogleMap, MapHeatmapLayer} from "@angular/google-maps";
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {GoogleMap, MapGeocoder, MapHeatmapLayer} from "@angular/google-maps";
 import {LocationService} from "../../../../generated/backend-api/thereabout";
+import {ToolbarModule} from "primeng/toolbar";
+import {InputTextModule} from "primeng/inputtext";
+import {CardModule} from "primeng/card";
+import {IconFieldModule} from "primeng/iconfield";
+import {InputIconModule} from "primeng/inputicon";
+import {FormsModule} from "@angular/forms";
+
 
 @Component({
   selector: 'app-locationhistory',
   standalone: true,
   imports: [
     GoogleMap,
-    MapHeatmapLayer
+    MapHeatmapLayer,
+    ToolbarModule,
+    InputTextModule,
+    CardModule,
+    IconFieldModule,
+    InputIconModule,
+    FormsModule
   ],
   templateUrl: './locationhistory.component.html',
   styleUrl: './locationhistory.component.scss'
@@ -21,7 +34,9 @@ export class LocationhistoryComponent implements OnInit{
     {lat: 37.782, lng: -122.447}
   ];
 
-  constructor(private readonly locationService: LocationService,) {
+  searchValue: string = '';
+
+  constructor(private readonly locationService: LocationService, private readonly geocodeService: MapGeocoder) {
   }
 
   ngOnInit(){
@@ -34,6 +49,18 @@ export class LocationhistoryComponent implements OnInit{
         return {lat: location.latitude, lng: location.longitude}
       });
     });
+  }
+
+  geocodeAddress($event: KeyboardEvent){
+    if($event.key == 'Enter'){
+      this.geocodeService.geocode({address: this.searchValue}).subscribe(result => {
+        if(result.status == 'OK'){
+          let location = result.results[0].geometry.location;
+          this.center = {lat: location.lat(), lng: location.lng()};
+          this.zoom = 11;
+        }
+      });
+    }
   }
 
 }

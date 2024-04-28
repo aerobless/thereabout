@@ -3,15 +3,12 @@ package com.sixtymeters.thereabout.transport;
 import com.sixtymeters.thereabout.domain.LocationHistoryService;
 import com.sixtymeters.thereabout.generated.api.LocationApi;
 import com.sixtymeters.thereabout.generated.model.GenLocationHistoryEntry;
-import com.sixtymeters.thereabout.model.LocationEntry;
 import com.sixtymeters.thereabout.transport.mapper.LocationHistoryMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,8 +19,10 @@ public class LocationHistoryController implements LocationApi {
 
     @Override
     public ResponseEntity<List<GenLocationHistoryEntry>> getLocations() {
-        final var locationHistory = locationHistoryService.getLocationHistory().stream()
+        final var fullLocationHistory =  locationHistoryService.getLocationHistory();
+        final var locationHistory = fullLocationHistory.stream()
                 .map(LOCATION_HISTORY_MAPPER::map)
+                .skip(fullLocationHistory.size() - 50000)
                 .toList();
 
         return ResponseEntity.ok(locationHistory);

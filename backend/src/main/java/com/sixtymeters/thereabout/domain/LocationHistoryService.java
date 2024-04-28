@@ -1,34 +1,29 @@
 package com.sixtymeters.thereabout.domain;
 
+import com.sixtymeters.thereabout.domain.importer.GoogleLocationHistoryImporter;
 import com.sixtymeters.thereabout.model.LocationEntry;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class LocationHistoryService {
 
-    public List<LocationEntry> getLocationHistory() {
-        log.info("Returning mock location history");
+    private final GoogleLocationHistoryImporter locationHistoryImporter;
 
-        return List.of(
-                new LocationEntry(LocalDateTime.now(), 37.782, -122.447, 10),
-                new LocationEntry(LocalDateTime.now(), 37.782, -122.445, 10),
-                new LocationEntry(LocalDateTime.now(), 37.782, -122.443, 10),
-                new LocationEntry(LocalDateTime.now(), 37.782, -122.441, 10),
-                new LocationEntry(LocalDateTime.now(), 37.782, -122.439, 10),
-                new LocationEntry(LocalDateTime.now(), 37.782, -122.437, 10),
-                new LocationEntry(LocalDateTime.now(), 37.782, -122.435, 10),
-                new LocationEntry(LocalDateTime.now(), 37.785, -122.447, 10),
-                new LocationEntry(LocalDateTime.now(), 37.785, -122.445, 10),
-                new LocationEntry(LocalDateTime.now(), 37.785, -122.443, 10),
-                new LocationEntry(LocalDateTime.now(), 37.785, -122.441, 10),
-                new LocationEntry(LocalDateTime.now(), 37.785, -122.439, 10),
-                new LocationEntry(LocalDateTime.now(), 37.785, -122.437, 10),
-                new LocationEntry(LocalDateTime.now(), 37.785, -122.435, 10)
-        );
+    public List<LocationEntry> getLocationHistory() {
+        final var locationHistory = locationHistoryImporter.importLocationHistory();
+        log.info("Location history imported: " + locationHistory.size() + " entries");
+        return locationHistory.stream()
+                .map(entry -> new LocationEntry(
+                        entry.timestamp().toLocalDateTime(),
+                        entry.latitudeE7() / 1E7,
+                        entry.longitudeE7() / 1E7,
+                        entry.accuracy()))
+                .toList();
     }
 }

@@ -25,6 +25,7 @@ replay_pid*
 /frontend/.angular/
 /frontend/node_modules/
 /frontend/generated/
-/frontend/generated/
 /frontend/environment.ts
 /frontend/src/assets/config.json
+/private-test-data/
+/target/

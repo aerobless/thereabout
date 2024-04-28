@@ -14,9 +14,9 @@ import {LocationService} from "../../../../generated/backend-api/thereabout";
 })
 export class LocationhistoryComponent implements OnInit{
 
-  center = {lat: 37.774546, lng: -122.433523};
-  zoom = 12;
-  heatmapOptions = {radius: 5};
+  center = {lat: 47.3919661, lng: 8.3};
+  zoom = 4;
+  heatmapOptions = {radius: 8, maxIntensity: 2};
   heatmapData = [
     {lat: 37.782, lng: -122.447}
   ];

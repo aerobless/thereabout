@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,10 +20,10 @@ public class LocationHistoryController implements LocationApi {
     private static final LocationHistoryMapper LOCATION_HISTORY_MAPPER = LocationHistoryMapper.INSTANCE;
 
     @Override
-    public ResponseEntity<List<GenLocationHistoryEntry>> getLocations() {
+    public ResponseEntity<List<GenLocationHistoryEntry>> getLocations(Optional<LocalDate> from, Optional<LocalDate> to) {
         final var filteredLocationHistory =  locationHistoryService.getLocationHistory(
-                LocalDate.of(2023, 1, 1),
-                LocalDate.now()
+                from.orElse(LocalDate.now().minusYears(100L)),
+                to.orElse(LocalDate.now().plusYears(100L))
         );
 
         final var locationHistory = filteredLocationHistory.stream()
@@ -31,4 +32,5 @@ public class LocationHistoryController implements LocationApi {
 
         return ResponseEntity.ok(locationHistory);
     }
+
 }

@@ -6,10 +6,27 @@ paths:
 
   /backend/api/v1/location:
     get:
-      summary: Get all mock locations
+      summary: Get all location history entries for the given date range. If no date range is provided, all entries are returned.
       tags:
         - location
       operationId: getLocations
+      parameters:
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date
+            example: "2012-01-31"
+          required: false
+          description: the start of the date range, if no date is provided -infinity is assumed
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date
+            example: "2012-01-31"
+          required: false
+          description: the end of the date range, if no date is provided +infinity is assumed
       responses:
         200:
           description: Successful response containing a json object with all location history entries

@@ -46,7 +46,7 @@ export class LocationhistoryComponent implements OnInit{
   }
 
   loadHeatmapData(){
-    this.locationService.getLocations().subscribe(locations => {
+    this.locationService.getLocations('2023-01-01','2024-12-31').subscribe(locations => {
       this.heatmapData = locations.map(location => {
         return {lat: location.latitude, lng: location.longitude}
       });

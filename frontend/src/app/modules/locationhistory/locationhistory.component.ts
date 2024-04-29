@@ -8,6 +8,7 @@ import {IconFieldModule} from "primeng/iconfield";
 import {InputIconModule} from "primeng/inputicon";
 import {FormsModule} from "@angular/forms";
 import {ButtonModule} from "primeng/button";
+import {CalendarModule} from "primeng/calendar";
 
 
 @Component({
@@ -22,7 +23,8 @@ import {ButtonModule} from "primeng/button";
     IconFieldModule,
     InputIconModule,
     FormsModule,
-    ButtonModule
+    ButtonModule,
+    CalendarModule,
   ],
   templateUrl: './locationhistory.component.html',
   styleUrl: './locationhistory.component.scss'
@@ -37,6 +39,8 @@ export class LocationhistoryComponent implements OnInit{
   ];
 
   searchValue: string = '';
+  fromDate: Date = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
+  toDate: Date = new Date();
 
   constructor(private readonly locationService: LocationService, private readonly geocodeService: MapGeocoder) {
   }
@@ -46,7 +50,7 @@ export class LocationhistoryComponent implements OnInit{
   }
 
   loadHeatmapData(){
-    this.locationService.getLocations('2023-01-01','2024-12-31').subscribe(locations => {
+    this.locationService.getLocations(this.dateToString(this.fromDate), this.dateToString(this.toDate)).subscribe(locations => {
       this.heatmapData = locations.map(location => {
         return {lat: location.latitude, lng: location.longitude}
       });
@@ -63,6 +67,10 @@ export class LocationhistoryComponent implements OnInit{
         }
       });
     }
+  }
+
+  dateToString(date: Date){
+    return date.toISOString().substring(0, 10);
   }
 
   resetSearch() {

@@ -3,11 +3,16 @@
         <b>Thereabout</b>
     </div>
     <div class="p-toolbar-group-center">
-        <p-iconField iconPosition="left">
-            <p-inputIcon styleClass="pi pi-search" />
-            <input type="text" pInputText placeholder="Search" (keydown)="geocodeAddress($event)" [(ngModel)]="searchValue"/>
+        <p-iconField iconPosition="left" class="toolbar-item">
+            <p-inputIcon styleClass="pi pi-search"/>
+            <input type="text" pInputText placeholder="Search" (keydown)="geocodeAddress($event)"
+                   [(ngModel)]="searchValue"/>
         </p-iconField>
-        <p-button icon="pi pi-times" (onClick)="resetSearch()" class="button" severity="secondary"></p-button>
+        <p-button icon="pi pi-times" (onClick)="resetSearch()" class="button toolbar-item" severity="secondary"></p-button>
+        <p-calendar [(ngModel)]="fromDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
+                    [showIcon]="true" class="toolbar-item"></p-calendar>
+        <p-calendar [(ngModel)]="toDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
+                    [showIcon]="true" class="toolbar-item"></p-calendar>
     </div>
     <div class="p-toolbar-group-end">
         <!-- todo -->
@@ -16,6 +21,6 @@
 <br>
 <div style="width: 100%; height: 700px;">
     <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
-        <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions" />
+        <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions"/>
     </google-map>
 </div>

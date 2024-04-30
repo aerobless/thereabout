@@ -29,3 +29,4 @@ replay_pid*
 /frontend/src/assets/config.json
 /private-test-data/
 /target/
+/frontend/dist/

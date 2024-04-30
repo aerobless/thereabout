@@ -8,3 +8,12 @@ springdoc:
 
 server:
   port : 9050
+
+spring:
+  datasource:
+    url: jdbc:mariadb://localhost:3306/mydatabase
+    username: myuser
+    password: secret
+    driver-class-name: org.mariadb.jdbc.Driver
+    hikari:
+      max-lifetime: 580000

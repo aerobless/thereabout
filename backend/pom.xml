@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.sixtymeters.thereabout</groupId>
-    <artifactId>backend</artifactId>
+    <artifactId>thereabout-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>backend</name>
     <description>backend</description>
@@ -41,24 +41,18 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-mysql</artifactId>
-        </dependency>
+        </dependency>-->
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-docker-compose</artifactId>
             <scope>runtime</scope>
             <optional>true</optional>
         </dependency>

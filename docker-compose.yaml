@@ -1,0 +1,18 @@
+services:
+  mariadb:
+    image: 'mariadb:latest'
+    environment:
+      - 'MARIADB_DATABASE=mydatabase'
+      - 'MARIADB_PASSWORD=secret'
+      - 'MARIADB_ROOT_PASSWORD=verysecret'
+      - 'MARIADB_USER=myuser'
+    ports:
+      - '3306:3306'
+  thereabout:
+    image: 'thereabout:latest'
+    ports:
+      - '9050:9050'
+    volumes:
+      - /Users/thwi/git/thereabout/private-test-data/:/data
+    depends_on:
+      - mariadb

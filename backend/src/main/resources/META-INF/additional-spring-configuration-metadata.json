@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "thereabout.import.import-folder",
+      "type": "java.lang.String",
+      "description": "The folder to import location-history files from."
+  }
+] }

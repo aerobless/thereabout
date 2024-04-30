@@ -15,4 +15,8 @@ COPY --from=builder app/spring-boot-loader ./
 COPY --from=builder app/snapshot-dependencies ./
 COPY --from=builder app/application ./
 
-COPY frontend/dist/mis-ng-app /frontend
+COPY frontend/dist/thereabout/browser /frontend
+
+EXPOSE 9050
+
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS org.springframework.boot.loader.launch.JarLauncher"]

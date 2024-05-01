@@ -15,10 +15,14 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
 + DB to store imported location data
 
 ## Roadmap
++ Geolocate country locally https://github.com/coordinates2country/coordinates2country or https://github.com/bencampion/reverse-country-code
++ Add detailed geolocation via Google Maps & persist results in DB (verify how many requests are free)
 + Easy date-range picker, e.g. year, last 3 years, last 5years, all
 + Day overview page
   + Show trip as connected lines instead of just heatmap
-  + Direct link to Google Photos for that day
+  + Direct link to Google Photos for that day (or use Google Photos API to show photos directly)
+  + Weather
+  + Major locations visited
 + Endpoint to allow recording new location data via Home Assistant or similar
 + Statistics: number of countries visited, km travelled, ...
 + Security: User Login & secure endpoints

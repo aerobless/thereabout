@@ -50,6 +50,6 @@ jobs:
     - name: Build frontend
       run: |
         npm install
-        npm openapi:generate
+        npm run openapi:generate
         npm run build
       working-directory: frontend

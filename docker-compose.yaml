@@ -14,5 +14,7 @@ services:
       - '9050:9050'
     volumes:
       - /Users/thwi/git/thereabout/private-test-data/:/data
+    environment:
+      GOOGLE_MAPS_API_KEY: REPLACE_WITH_YOUR_GOOGLE_API_KEY
     depends_on:
       - mariadb

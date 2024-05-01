@@ -30,3 +30,6 @@ replay_pid*
 /private-test-data/
 /target/
 /frontend/dist/
+/.env
+/backend/.env
+/docker-compose-theo-test.yaml

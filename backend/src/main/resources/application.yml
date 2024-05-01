@@ -22,6 +22,8 @@ spring:
       static-locations: classpath:/frontend/
 
 thereabout:
+  apiKeys:
+    googleMaps: ${GOOGLE_MAPS_API_KEY}
   import:
     import-folder: /data
   config:

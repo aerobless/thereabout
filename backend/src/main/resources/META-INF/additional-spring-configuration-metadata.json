@@ -9,6 +9,11 @@
       "name": "thereabout.config.routing.frontend-path",
       "type": "java.lang.String",
       "description": "The path of the built angular client."
+    },
+    {
+      "name": "thereabout.apiKeys.googleMaps",
+      "type": "java.lang.String",
+      "description": "A Google Maps API Key. Get it here: https://console.cloud.google.com/apis/library/maps-backend.googleapis.com"
     }
   ]
 }

@@ -37,6 +37,22 @@ paths:
         500:
           $ref: '#/components/responses/500'
 
+  /backend/api/v1/config:
+    get:
+      summary: Get the frontend configuration.
+      tags:
+        - frontend
+      operationId: getFrontendConfiguration
+      responses:
+        200:
+          description: Successful response containing the frontend configuration, e.g. Google Maps API Key etc.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FrontendConfigurationResponse"
+        500:
+          $ref: '#/components/responses/500'
+
 components:
   schemas:
     LocationHistoryResponse:
@@ -59,14 +75,17 @@ components:
           type: string
           format: date-time
           description: The timestamp of the location history entry
+          example: 2024-01-01T00:15:10.145Z
         longitude:
           type: number
           format: double
           description: The longitude of the location history entry
+          example: 103.8470393
         latitude:
           type: number
           format: double
           description: The latitude of the location history entry
+          example: 1.2842441
 
     ThereaboutBaseErrorModel:
       type: object
@@ -89,6 +108,14 @@ components:
           type: string
         stacktrace:
           type: string
+    FrontendConfigurationResponse:
+      type: object
+      required:
+        - googleMapsApiKey
+      properties:
+        googleMapsApiKey:
+          type: string
+          example: TEST_KEY_ASJHKASHDASJDDSA
 
   responses:
     400:

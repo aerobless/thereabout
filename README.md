@@ -8,11 +8,12 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
 + Visualise your location history as a heatmap on Google Maps
 + Search for locations on Google Maps (Geocoding)
 + Date picker to select range of data to show on map (from, to)
++ Docker Image of combined backend & frontend
++ Docker Compose file to easily deploy application
++ Load Google Maps API Key from the backend
 
 ## Roadmap
-+ Docker Image of combined backend & frontend
-+ load Google Maps API Key from the backend
-+ Docker Compose file to easily deploy application
++ GitHub Build Pipeline
 + DB to store imported location data
 + Easy date-range picker, e.g. year, last 3 years, last 5years, all
 + Day overview page

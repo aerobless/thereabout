@@ -11,8 +11,8 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mariadb://mariadb:3306/mydatabase
-    username: myuser
+    url: jdbc:mariadb://mariadb:3306/thereabout
+    username: thereabout
     password: secret
     driver-class-name: org.mariadb.jdbc.Driver
     hikari:

@@ -3,8 +3,12 @@ package com.sixtymeters.thereabout.domain.importer;
 import com.fatboyindustrial.gsonjavatime.Converters;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.sixtymeters.thereabout.model.LocationHistoryEntry;
+import com.sixtymeters.thereabout.model.LocationHistorySource;
+import com.sixtymeters.thereabout.support.ThereaboutException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 
 import java.io.FileReader;
@@ -18,7 +22,7 @@ public class GoogleLocationHistoryImporter {
     @Value("${thereabout.import.import-folder}")
     private String LOCATION_HISTORY_PATH;
 
-    public List<GoogleLocationEntry> importLocationHistory() {
+    public List<LocationHistoryEntry> importLocationHistory() {
         final var importFile = "%s/Records.json".formatted(LOCATION_HISTORY_PATH);
         log.info("Loading location history from file: " + importFile);
 
@@ -26,10 +30,22 @@ public class GoogleLocationHistoryImporter {
         try (FileReader reader = new FileReader(importFile)) {
             List<GoogleLocationEntry> locationHistory = gson.fromJson(reader, GoogleLocationHistory.class).locations();
             log.info("Successfully loaded %d location entries".formatted(locationHistory.size()));
-            return locationHistory;
+            return locationHistory.stream()
+                    .map(this::mapToGenericLocationHistoryEntry)
+                    .toList();
         } catch (IOException e) {
-            log.warn("Failed to read or parse the JSON file: " + e.getMessage());
-            return null;
+            throw new ThereaboutException(HttpStatusCode.valueOf(500),
+                    "Failed to read or parse the Records.json file from '%s': %s".formatted(importFile, e.getMessage()));
         }
+    }
+
+    private LocationHistoryEntry mapToGenericLocationHistoryEntry(GoogleLocationEntry entry) {
+        return LocationHistoryEntry.builder()
+                .timestamp(entry.timestamp().toLocalDateTime())
+                .latitude(entry.latitudeE7() / 1E7)
+                .longitude(entry.longitudeE7() / 1E7)
+                .gpsAccuracy(entry.accuracy())
+                .source(LocationHistorySource.GOOGLE_IMPORT)
+                .build();
     }
 }

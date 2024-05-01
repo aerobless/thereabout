@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mariadb://localhost:3306/mydatabase
+    url: jdbc:mariadb://localhost:3306/thereabout
 
 thereabout:
   apiKeys:

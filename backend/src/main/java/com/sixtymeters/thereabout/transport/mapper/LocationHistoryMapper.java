@@ -1,7 +1,7 @@
 package com.sixtymeters.thereabout.transport.mapper;
 
 import com.sixtymeters.thereabout.generated.model.GenLocationHistoryEntry;
-import com.sixtymeters.thereabout.model.LocationEntry;
+import com.sixtymeters.thereabout.model.LocationHistoryEntry;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -16,7 +16,7 @@ public interface LocationHistoryMapper {
     LocationHistoryMapper INSTANCE = Mappers.getMapper(LocationHistoryMapper.class);
 
     @Mapping(source = "timestamp", target = "timestamp", qualifiedByName = "localDateTimeToOffsetDateTime")
-    GenLocationHistoryEntry map(final LocationEntry locationEntry);
+    GenLocationHistoryEntry map(final LocationHistoryEntry locationHistoryEntry);
 
     @Named("localDateTimeToOffsetDateTime")
     default OffsetDateTime localDateTimeToOffsetDateTime(LocalDateTime localDateTime) {

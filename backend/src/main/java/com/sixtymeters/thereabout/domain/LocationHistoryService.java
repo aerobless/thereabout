@@ -1,43 +1,49 @@
 package com.sixtymeters.thereabout.domain;
 
+import com.google.common.collect.Lists;
 import com.sixtymeters.thereabout.domain.importer.GoogleLocationHistoryImporter;
-import com.sixtymeters.thereabout.model.LocationEntry;
+import com.sixtymeters.thereabout.model.LocationHistoryEntry;
+import com.sixtymeters.thereabout.model.LocationHistoryRepository;
+import com.sixtymeters.thereabout.model.LocationHistorySource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class LocationHistoryService {
-
     private final GoogleLocationHistoryImporter locationHistoryImporter;
-    private List<LocationEntry> locationHistory;
+    private final LocationHistoryRepository locationHistoryRepository;
+    private final static int CHUNK_SIZE = 10000;
 
-    public List<LocationEntry> getFullLocationHistory() {
-        final var locationHistory = locationHistoryImporter.importLocationHistory();
-        log.info("Location history imported: " + locationHistory.size() + " entries");
-
-        if(this.locationHistory == null) {
-            this.locationHistory = locationHistory.stream()
-                    .map(entry -> new LocationEntry(
-                            entry.timestamp().toLocalDateTime(),
-                            entry.latitudeE7() / 1E7,
-                            entry.longitudeE7() / 1E7,
-                            entry.accuracy()))
-                    .toList();
+    public List<LocationHistoryEntry> getLocationHistory(LocalDate from, LocalDate to) {
+        if(locationHistoryRepository.countBySource(LocationHistorySource.GOOGLE_IMPORT) == 0) {
+            importLocationHistoryFromGoogleFile();
         }
 
-        return this.locationHistory;
+        return locationHistoryRepository.findAllByTimestampBetween(from.atStartOfDay(), to.atStartOfDay());
     }
 
-    public List<LocationEntry> getLocationHistory(LocalDate from, LocalDate to) {
-        return getFullLocationHistory().stream()
-                .filter(entry -> entry.getTimestamp().toLocalDate().isAfter(from.minusDays(1)))
-                .filter(entry -> entry.getTimestamp().toLocalDate().isBefore(to.plusDays(1)))
-                .toList();
+    private void importLocationHistoryFromGoogleFile() {
+        final var locationHistory = locationHistoryImporter.importLocationHistory();
+
+        AtomicLong importedCount = new AtomicLong();
+        Lists.partition(locationHistory, CHUNK_SIZE).forEach(chunk -> {
+            importedCount.addAndGet(chunk.size());
+            locationHistoryRepository.saveAll(chunk);
+            log.info("Imported %d%% of Google Location History.".formatted(calculatePercentage(locationHistory.size(), importedCount.get())));
+        });
+
+        locationHistoryRepository.flush();
+        log.info("Finished importing %d entries of Google Location History.".formatted(locationHistory.size()));
+    }
+
+    private int calculatePercentage(long total, long current) {
+        return (int) ((current / (float) total) * 100);
     }
 }

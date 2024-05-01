@@ -41,7 +41,8 @@ time and is not intended as a multi-tenant application. Any user with access can
 ## Usage
 1. Clone the repository or download the [docker-compose.yml](https://github.com/aerobless/thereabout/blob/main/docker-compose.yaml) file
 2. Get a Google Maps API Key from the [Google Cloud Console](https://console.cloud.google.com/apis/library/maps-backend.googleapis.com)
-3. Add the Google Maps API Key to the `docker-compose.yml` file & run it.
+3. Add the location of your `Records.json` file to the `docker-compose.yml` file. Records.json can be exported from [Google Takeout](https://takeout.google.com).
+4. Add the Google Maps API Key to the `docker-compose.yml` file & run it.
 
 ## export home assistant location data via influx
 

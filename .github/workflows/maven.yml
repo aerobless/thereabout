@@ -23,8 +23,8 @@ jobs:
       mariadb:
         image: mariadb:latest
         env:
-          MARIADB_DATABASE: mydatabase
-          MARIADB_USER: myuser
+          MARIADB_DATABASE: thereabout
+          MARIADB_USER: thereabout
           MARIADB_PASSWORD: secret
           MARIADB_ROOT_PASSWORD: verysecret
         ports:

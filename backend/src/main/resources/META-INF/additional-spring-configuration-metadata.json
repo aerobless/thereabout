@@ -4,5 +4,11 @@
       "name": "thereabout.import.import-folder",
       "type": "java.lang.String",
       "description": "The folder to import location-history files from."
-  }
-] }
+    },
+    {
+      "name": "thereabout.config.routing.frontend-path",
+      "type": "java.lang.String",
+      "description": "The path of the built angular client."
+    }
+  ]
+}

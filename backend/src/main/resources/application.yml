@@ -17,7 +17,13 @@ spring:
     driver-class-name: org.mariadb.jdbc.Driver
     hikari:
       max-lifetime: 580000
+  web:
+    resources:
+      static-locations: classpath:/frontend/
 
 thereabout:
   import:
     import-folder: /data
+  config:
+    routing:
+      frontend-path: /frontend/

@@ -11,6 +11,7 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
 
 ## Roadmap
 + Docker Image of combined backend & frontend
++ load Google Maps API Key from the backend
 + Docker Compose file to easily deploy application
 + DB to store imported location data
 + Easy date-range picker, e.g. year, last 3 years, last 5years, all

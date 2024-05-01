@@ -19,6 +19,7 @@
                     key: config.googleMapsApiKey
                 });
                 console.log('Loaded Google Maps Integration');
+                window.googleMapsIntegrationReady = true;
             })
             .catch(error => console.error('Error loading configuration:', error));
     </script>

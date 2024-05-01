@@ -27,8 +27,23 @@ public class LocationHistoryEntry {
     private double longitude;
 
     @Column
-    private double gpsAccuracy;
+    private int horizontalAccuracy;
 
     @Column
+    private int verticalAccuracy;
+
+    @Column
+    private int altitude;
+
+    // in degrees
+    @Column
+    private int heading;
+
+    // in m/s
+    @Column
+    private int velocity;
+
+    @Column
+    @Enumerated(EnumType.STRING)
     private LocationHistorySource source;
 }

@@ -44,7 +44,11 @@ public class GoogleLocationHistoryImporter {
                 .timestamp(entry.timestamp().toLocalDateTime())
                 .latitude(entry.latitudeE7() / 1E7)
                 .longitude(entry.longitudeE7() / 1E7)
-                .gpsAccuracy(entry.accuracy())
+                .horizontalAccuracy(entry.accuracy())
+                .verticalAccuracy(entry.verticalAccuracy())
+                .altitude(entry.altitude())
+                .heading(entry.heading())
+                .velocity(entry.velocity())
                 .source(LocationHistorySource.GOOGLE_IMPORT)
                 .build();
     }

@@ -11,9 +11,9 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
 + Docker Image of combined backend & frontend
 + Docker Compose file to easily deploy application
 + Load Google Maps API Key from the backend
++ GitHub Build Pipeline
 
 ## Roadmap
-+ GitHub Build Pipeline
 + DB to store imported location data
 + Easy date-range picker, e.g. year, last 3 years, last 5years, all
 + Day overview page
@@ -37,6 +37,11 @@ a Google Maps API Key to load the Map. Google may be able to track your usage of
 Please beware that Thereabout is not intended to be run on the public internet. Either run it fully locally or behind a 
 authorization server such as [Authelia](https://www.authelia.com/). Thereabout itself does not have a login solution at this
 time and is not intended as a multi-tenant application. Any user with access can see all data, including your Google Maps API key.
+
+## Usage
+1. Clone the repository or download the [docker-compose.yml](https://github.com/aerobless/thereabout/blob/main/docker-compose.yaml) file
+2. Get a Google Maps API Key from the [Google Cloud Console](https://console.cloud.google.com/apis/library/maps-backend.googleapis.com)
+3. Add the Google Maps API Key to the `docker-compose.yml` file & run it.
 
 ## export home assistant location data via influx
 

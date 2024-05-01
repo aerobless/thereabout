@@ -9,7 +9,7 @@ services:
     ports:
       - '3306:3306'
   thereabout:
-    image: 'thereabout:latest'
+    image: 'aerobless/thereabout:latest'
     ports:
       - '9050:9050'
     volumes:

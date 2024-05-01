@@ -70,3 +70,4 @@ jobs:
         context: .
         push: true
         tags: aerobless/thereabout:latest
+        platforms: linux/amd64,linux/arm64

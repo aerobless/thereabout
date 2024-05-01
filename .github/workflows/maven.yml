@@ -19,6 +19,22 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+      mariadb:
+        image: mariadb:latest
+        env:
+          MARIADB_DATABASE: mydatabase
+          MARIADB_USER: myuser
+          MARIADB_PASSWORD: secret
+          MARIADB_ROOT_PASSWORD: verysecret
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping --silent"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK 21

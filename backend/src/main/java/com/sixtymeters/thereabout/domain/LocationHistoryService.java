@@ -46,4 +46,10 @@ public class LocationHistoryService {
     private int calculatePercentage(long total, long current) {
         return (int) ((current / (float) total) * 100);
     }
+
+    public LocationHistoryEntry createLocationHistoryEntry(LocationHistoryEntry locationHistoryEntry) {
+        final var createdLocationHistory = locationHistoryRepository.save(locationHistoryEntry);
+        log.info("Created location history entry with id %d.".formatted(createdLocationHistory.getId()));
+        return createdLocationHistory;
+    }
 }

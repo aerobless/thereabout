@@ -18,8 +18,16 @@ public interface LocationHistoryMapper {
     @Mapping(source = "timestamp", target = "timestamp", qualifiedByName = "localDateTimeToOffsetDateTime")
     GenLocationHistoryEntry map(final LocationHistoryEntry locationHistoryEntry);
 
+    @Mapping(source = "timestamp", target = "timestamp", qualifiedByName = "OffsetDateTimeToLocalDateTime")
+    LocationHistoryEntry map(final GenLocationHistoryEntry locationHistoryEntry);
+
     @Named("localDateTimeToOffsetDateTime")
     default OffsetDateTime localDateTimeToOffsetDateTime(LocalDateTime localDateTime) {
         return localDateTime == null ? null : OffsetDateTime.of(localDateTime, ZoneOffset.UTC);
+    }
+
+    @Named("OffsetDateTimeToLocalDateTime")
+    default LocalDateTime localDateTimeToOffsetDateTime(OffsetDateTime offsetDateTime) {
+        return offsetDateTime == null ? null : offsetDateTime.toLocalDateTime();
     }
 }

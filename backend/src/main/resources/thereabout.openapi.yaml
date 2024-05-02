@@ -36,6 +36,29 @@ paths:
                 $ref: "#/components/schemas/LocationHistoryResponse"
         500:
           $ref: '#/components/responses/500'
+    post:
+      summary: Add a new location history entry.
+      tags:
+        - location
+      operationId: addLocation
+      requestBody:
+        description: location history entry to be added
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationHistoryEntry"
+      responses:
+        200:
+          description: Successful response containing the newly created location history entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationHistoryEntry"
+        400:
+          $ref: '#/components/responses/400'
+        500:
+          $ref: '#/components/responses/500'
 
   /backend/api/v1/config:
     get:
@@ -57,17 +80,12 @@ components:
   schemas:
     LocationHistoryResponse:
       type: array
-      required:
-        - aggridLicense
-        - chartam
-        - documentExtractor
       items:
         $ref: "#/components/schemas/LocationHistoryEntry"
       x-field-extra-annotation: "@lombok.Builder.Default"
     LocationHistoryEntry:
       type: object
       required:
-        - timestamp
         - longitude
         - latitude
       properties:

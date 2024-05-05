@@ -9,23 +9,27 @@ import {InputIconModule} from "primeng/inputicon";
 import {FormsModule} from "@angular/forms";
 import {ButtonModule} from "primeng/button";
 import {CalendarModule} from "primeng/calendar";
+import {PanelModule} from "primeng/panel";
+import {NgIf} from "@angular/common";
 
 
 @Component({
   selector: 'app-locationhistory',
   standalone: true,
-  imports: [
-    GoogleMap,
-    MapHeatmapLayer,
-    ToolbarModule,
-    InputTextModule,
-    CardModule,
-    IconFieldModule,
-    InputIconModule,
-    FormsModule,
-    ButtonModule,
-    CalendarModule,
-  ],
+    imports: [
+        GoogleMap,
+        MapHeatmapLayer,
+        ToolbarModule,
+        InputTextModule,
+        CardModule,
+        IconFieldModule,
+        InputIconModule,
+        FormsModule,
+        ButtonModule,
+        CalendarModule,
+        PanelModule,
+        NgIf,
+    ],
   templateUrl: './locationhistory.component.html',
   styleUrl: './locationhistory.component.scss'
 })
@@ -41,6 +45,8 @@ export class LocationhistoryComponent implements OnInit{
   searchValue: string = '';
   fromDate: Date = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
   toDate: Date = new Date();
+  dayView: boolean = false;
+  heatmap: boolean = false;
 
   constructor(private readonly locationService: LocationService, private readonly geocodeService: MapGeocoder) {
   }
@@ -75,5 +81,13 @@ export class LocationhistoryComponent implements OnInit{
 
   resetSearch() {
     this.searchValue = '';
+  }
+
+  toggleDayView(){
+    this.dayView = !this.dayView;
+  }
+
+  toggleHeatmap(){
+    this.heatmap = !this.heatmap;
   }
 }

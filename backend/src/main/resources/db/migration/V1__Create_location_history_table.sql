@@ -10,6 +10,7 @@ CREATE TABLE location_history_entry
     heading INT,
     velocity INT,
     source VARCHAR(255) NOT NULL,
+    estimated_iso_country_code CHAR(2),
     INDEX timestamp_idx (timestamp),
     INDEX lat_long_idx (latitude, longitude)
 );

@@ -8,6 +8,8 @@ import com.sixtymeters.thereabout.model.LocationHistorySource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uk.recurse.geocoding.reverse.Country;
+import uk.recurse.geocoding.reverse.ReverseGeocoder;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -19,6 +21,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class LocationHistoryService {
     private final GoogleLocationHistoryImporter locationHistoryImporter;
     private final LocationHistoryRepository locationHistoryRepository;
+
+    private final ReverseGeocoder reverseGeocoder = new ReverseGeocoder();
+
     private final static int CHUNK_SIZE = 10000;
 
     public List<LocationHistoryEntry> getLocationHistory(LocalDate from, LocalDate to) {
@@ -31,6 +36,7 @@ public class LocationHistoryService {
 
     private void importLocationHistoryFromGoogleFile() {
         final var locationHistory = locationHistoryImporter.importLocationHistory();
+        computeAdditionalFields(locationHistory);
 
         AtomicLong importedCount = new AtomicLong();
         Lists.partition(locationHistory, CHUNK_SIZE).forEach(chunk -> {
@@ -48,8 +54,25 @@ public class LocationHistoryService {
     }
 
     public LocationHistoryEntry createLocationHistoryEntry(LocationHistoryEntry locationHistoryEntry) {
+        computeAdditionalFields(locationHistoryEntry);
         final var createdLocationHistory = locationHistoryRepository.save(locationHistoryEntry);
         log.info("Created location history entry with id %d.".formatted(createdLocationHistory.getId()));
         return createdLocationHistory;
+    }
+
+    public void computeAdditionalFields(List<LocationHistoryEntry> entries) {
+        log.info("Computing additional fields for %d location history entries.".formatted(entries.size()));
+        entries.forEach(this::computeAdditionalFields);
+        log.info("Finished computing additional fields for %d location history entries.".formatted(entries.size()));
+    }
+
+    public void computeAdditionalFields(LocationHistoryEntry entry) {
+        entry.setEstimatedIsoCountryCode(estimateCountryForCoordinates(entry));
+    }
+
+    private String estimateCountryForCoordinates(LocationHistoryEntry entry) {
+        return reverseGeocoder.getCountry(entry.getLatitude(), entry.getLongitude())
+                .map(Country::iso)
+                .orElse(null);
     }
 }

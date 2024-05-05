@@ -46,4 +46,7 @@ public class LocationHistoryEntry {
     @Column
     @Enumerated(EnumType.STRING)
     private LocationHistorySource source;
+
+    @Column
+    private String estimatedIsoCountryCode;
 }

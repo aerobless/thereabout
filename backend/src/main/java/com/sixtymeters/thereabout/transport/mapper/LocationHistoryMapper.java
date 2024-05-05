@@ -18,6 +18,14 @@ public interface LocationHistoryMapper {
     @Mapping(source = "timestamp", target = "timestamp", qualifiedByName = "localDateTimeToOffsetDateTime")
     GenLocationHistoryEntry map(final LocationHistoryEntry locationHistoryEntry);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "horizontalAccuracy", ignore = true)
+    @Mapping(target = "verticalAccuracy", ignore = true)
+    @Mapping(target = "altitude", ignore = true)
+    @Mapping(target = "heading", ignore = true)
+    @Mapping(target = "velocity", ignore = true)
+    @Mapping(target = "source", ignore = true)
+    @Mapping(target = "estimatedIsoCountryCode", ignore = true)
     @Mapping(source = "timestamp", target = "timestamp", qualifiedByName = "OffsetDateTimeToLocalDateTime")
     LocationHistoryEntry map(final GenLocationHistoryEntry locationHistoryEntry);
 

@@ -18,6 +18,7 @@ import {ButtonModule} from "primeng/button";
 import {CalendarModule} from "primeng/calendar";
 import {PanelModule} from "primeng/panel";
 import {NgIf} from "@angular/common";
+import {FloatLabelModule} from "primeng/floatlabel";
 
 
 @Component({
@@ -40,6 +41,7 @@ import {NgIf} from "@angular/common";
     MapMarker,
     MapMarkerClusterer,
     MapAdvancedMarker,
+    FloatLabelModule,
   ],
   templateUrl: './locationhistory.component.html',
   styleUrl: './locationhistory.component.scss'

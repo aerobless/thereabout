@@ -11,13 +11,11 @@
         <p-button icon="pi pi-times" (onClick)="resetSearch()" class="button toolbar-item" severity="secondary"></p-button>
     </div>
     <div class="p-toolbar-group-end">
-        <p-button icon="pi pi-calendar-clock" (onClick)="toggleHeatmap()" class="button toolbar-item" severity="secondary"></p-button>
-        <p-button icon="pi pi-car" (onClick)="toggleDayView()" class="button toolbar-item" severity="secondary"></p-button>
     </div>
 </p-toolbar>
 <br>
 
-<div style="display: flex; height: 700px;">
+<div style="display: flex; height: calc(100vh - 120px);">
     <!-- Google Maps Section -->
     <div style="flex-grow: 1;">
         <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
@@ -29,22 +27,28 @@
     <!-- Right Side Panels -->
     <div style="display: flex; flex-direction: column;">
         <!-- Heatmap Panel -->
-        <div style="padding: 0 0 10px 10px; width: 360px;" *ngIf="heatmap">
-            <p-panel header="Heatmap">
-                <div class="flex flex-column gap-2">
-                    <label for="from-date">From</label><br>
-                    <p-calendar [(ngModel)]="fromDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
-                                [showIcon]="true" class="toolbar-item" id="from-date"></p-calendar><br>
-                    <label for="to-date">To</label><br>
-                    <p-calendar [(ngModel)]="toDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
-                                [showIcon]="true" class="toolbar-item" id="to-date"></p-calendar>
+        <div style="padding: 0 0 10px 10px; width: 360px;">
+            <p-panel header="Heatmap" [toggleable]="true">
+                <div style="display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">
+                        <p-floatLabel style="padding-right: 10px">
+                            <p-calendar [(ngModel)]="fromDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
+                                        [showIcon]="true" class="toolbar-item" id="from-date"></p-calendar>
+                            <label for="from-date">From</label>
+                        </p-floatLabel>
+                        <p-floatLabel>
+                            <p-calendar [(ngModel)]="toDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
+                                        [showIcon]="true" class="toolbar-item" id="to-date"></p-calendar>
+                            <label for="to-date">To</label>
+                        </p-floatLabel>
+                    </div>
                 </div>
             </p-panel>
         </div>
 
         <!-- Day View Panel -->
-        <div style="padding: 0 0 10px 10px; width: 360px;" *ngIf="dayView">
-            <p-panel header="Day View">
+        <div style="padding: 0 0 10px 10px; width: 360px;">
+            <p-panel header="Day View" [toggleable]="true">
                 <div class="dayview-date-selector">
                     <p-button icon="pi pi-chevron-left" (onClick)="decrementDate()" class="button toolbar-item" severity="secondary"></p-button>
                     <p-calendar [(ngModel)]="exactDate" (ngModelChange)="loadDayViewData()" [iconDisplay]="'input'"

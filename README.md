@@ -8,6 +8,7 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
   + Geolocate country for each entry locally.
   + Store the imported data in mariaDB.
 + Visualise your location history as a heatmap on Google Maps
+  + Filter by date range: custom, YTD, 1 year, 5 years, full history
 + Visualise a specific day as a polygon line on Google Maps
 + Geocoding: Search for any location on Google Maps
 + Deploy the application via Docker Compose
@@ -15,7 +16,6 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
 
 ## Roadmap
 + Add detailed geolocation via Google Maps & persist results in DB (verify how many requests are free)
-+ Easy date-range picker, e.g. year, last 3 years, last 5years, all
 + Day overview page
   + Show trip as connected lines instead of just heatmap
   + Direct link to Google Photos for that day (or use Google Photos API to show photos directly)

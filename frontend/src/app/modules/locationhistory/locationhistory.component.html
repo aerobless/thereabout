@@ -19,8 +19,8 @@
     <!-- Google Maps Section -->
     <div style="flex-grow: 1;">
         <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
-            <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions" *ngIf="heatmap"></map-heatmap-layer>
-            <map-polyline [path]="dayViewData" *ngIf="dayView"></map-polyline>
+            <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions"></map-heatmap-layer>
+            <map-polyline [path]="dayViewData"></map-polyline>
         </google-map>
     </div>
 
@@ -29,19 +29,23 @@
         <!-- Heatmap Panel -->
         <div style="padding: 0 0 10px 10px; width: 360px;">
             <p-panel header="Heatmap" [toggleable]="true">
-                <div style="display: flex; flex-direction: column;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">
-                        <p-floatLabel style="padding-right: 10px">
-                            <p-calendar [(ngModel)]="fromDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
-                                        [showIcon]="true" class="toolbar-item" id="from-date"></p-calendar>
-                            <label for="from-date">From</label>
-                        </p-floatLabel>
-                        <p-floatLabel>
-                            <p-calendar [(ngModel)]="toDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
-                                        [showIcon]="true" class="toolbar-item" id="to-date"></p-calendar>
-                            <label for="to-date">To</label>
-                        </p-floatLabel>
-                    </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">
+                    <p-floatLabel style="padding-right: 10px">
+                        <p-calendar [(ngModel)]="fromDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
+                                    [showIcon]="true" class="toolbar-item" id="from-date"></p-calendar>
+                        <label for="from-date">From</label>
+                    </p-floatLabel>
+                    <p-floatLabel>
+                        <p-calendar [(ngModel)]="toDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
+                                    [showIcon]="true" class="toolbar-item" id="to-date"></p-calendar>
+                        <label for="to-date">To</label>
+                    </p-floatLabel>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">
+                    <p-button label="YTD" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickselectDateCombo.YTD)"></p-button>
+                    <p-button label="1 year" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickselectDateCombo.ONE_YEAR)"></p-button>
+                    <p-button label="5 years" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickselectDateCombo.FIVE_YEARS)"></p-button>
+                    <p-button label="Full" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickselectDateCombo.FULL_HISTORY)"></p-button>
                 </div>
             </p-panel>
         </div>

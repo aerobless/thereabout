@@ -19,6 +19,7 @@ import {CalendarModule} from "primeng/calendar";
 import {PanelModule} from "primeng/panel";
 import {NgIf} from "@angular/common";
 import {FloatLabelModule} from "primeng/floatlabel";
+import QuickFilterDateCombo from "./quickselect-date-combo";
 
 
 @Component({
@@ -65,10 +66,6 @@ export class LocationhistoryComponent implements OnInit{
   @ViewChild('exactDateCalendarInput')
   private exactDateCalendarInput: any;
 
-  // Enabled features
-  dayView: boolean = true;
-  heatmap: boolean = true;
-
   constructor(private readonly locationService: LocationService, private readonly geocodeService: MapGeocoder) {
   }
 
@@ -114,14 +111,6 @@ export class LocationhistoryComponent implements OnInit{
     this.searchValue = '';
   }
 
-  toggleDayView(){
-    this.dayView = !this.dayView;
-  }
-
-  toggleHeatmap(){
-    this.heatmap = !this.heatmap;
-  }
-
   decrementDate() {
     this.exactDate.setDate(this.exactDate.getDate() - 1);
     this.exactDateCalendarInput.updateInputfield();
@@ -132,5 +121,28 @@ export class LocationhistoryComponent implements OnInit{
     this.exactDate.setDate(this.exactDate.getDate() + 1);
     this.exactDateCalendarInput.updateInputfield();
     this.loadDayViewData();
+  }
+
+  setQuickFilterForHeatmap(quickFilterDateOption: QuickFilterDateCombo){
+    switch (quickFilterDateOption) {
+        case QuickFilterDateCombo.YTD:
+          this.fromDate = new Date(new Date().getFullYear(), 0, 1);
+          this.toDate = new Date();
+          break;
+        case QuickFilterDateCombo.ONE_YEAR:
+          this.fromDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
+          this.toDate = new Date();
+          break;
+        case QuickFilterDateCombo.FIVE_YEARS:
+          this.fromDate = new Date(new Date().setFullYear(new Date().getFullYear() - 5));
+          this.toDate = new Date();
+          break;
+        case QuickFilterDateCombo.FULL_HISTORY:
+          this.fromDate = new Date(new Date().setFullYear(new Date().getFullYear() - 50));
+          this.toDate = new Date();
+          break;
+
+    }
+    this.loadHeatmapData();
   }
 }

@@ -1,21 +1,19 @@
 # thereabout
 Thereabout is a self-hosted replacement for Google Location History. It can import your existing Google Location History and visualise it as a heatmap on Google Maps.
 
-![Thereabout UI](/documentation/img/v2.png)
+![Thereabout UI](/documentation/img/v3.png)
 
 ## Features
 + Load existing Google Location History ("Records.json") when exported via [Google Takeout](https://takeout.google.com).
+  + Geolocate country for each entry locally.
+  + Store the imported data in mariaDB.
 + Visualise your location history as a heatmap on Google Maps
-+ Search for locations on Google Maps (Geocoding)
-+ Date picker to select range of data to show on map (from, to)
-+ Docker Image of combined backend & frontend
-+ Docker Compose file to easily deploy application
-+ Load Google Maps API Key from the backend
++ Visualise a specific day as a polygon line on Google Maps
++ Geocoding: Search for any location on Google Maps
++ Deploy the application via Docker Compose
 + GitHub Build Pipeline
-+ DB to store imported location data
 
 ## Roadmap
-+ Geolocate country locally https://github.com/coordinates2country/coordinates2country or https://github.com/bencampion/reverse-country-code
 + Add detailed geolocation via Google Maps & persist results in DB (verify how many requests are free)
 + Easy date-range picker, e.g. year, last 3 years, last 5years, all
 + Day overview page

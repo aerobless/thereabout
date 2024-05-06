@@ -19,7 +19,7 @@ import {CalendarModule} from "primeng/calendar";
 import {PanelModule} from "primeng/panel";
 import {NgIf} from "@angular/common";
 import {FloatLabelModule} from "primeng/floatlabel";
-import QuickFilterDateCombo from "./quickselect-date-combo";
+import QuickFilterDateCombo from "./quick-filter-date-combo";
 
 
 @Component({
@@ -97,7 +97,7 @@ export class LocationhistoryComponent implements OnInit{
         if(result.status == 'OK'){
           let location = result.results[0].geometry.location;
           this.center = {lat: location.lat(), lng: location.lng()};
-          this.zoom = 11;
+          this.applyZoom(11);
         }
       });
     }
@@ -144,5 +144,29 @@ export class LocationhistoryComponent implements OnInit{
 
     }
     this.loadHeatmapData();
+  }
+
+  protected readonly QuickFilterDateCombo = QuickFilterDateCombo;
+
+  locateDayView() {
+    if(this.dayViewData.length == 0) return;
+    this.center = this.dayViewData[0];
+    this.applyZoom(11);
+  }
+
+  setTodayForDayView(){
+    this.exactDate = new Date();
+  }
+
+  private applyZoom(zoom: number) {
+    if (this.zoom == zoom) {
+      this.zoom = zoom + 0.1;
+    } else {
+      this.zoom = zoom;
+    }
+  }
+
+  openGooglePhotos() {
+    window.open("https://photos.google.com/search/"+this.dateToString(this.exactDate), "_blank");
   }
 }

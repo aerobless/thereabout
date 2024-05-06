@@ -42,10 +42,10 @@
                     </p-floatLabel>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">
-                    <p-button label="YTD" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickselectDateCombo.YTD)"></p-button>
-                    <p-button label="1 year" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickselectDateCombo.ONE_YEAR)"></p-button>
-                    <p-button label="5 years" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickselectDateCombo.FIVE_YEARS)"></p-button>
-                    <p-button label="Full" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickselectDateCombo.FULL_HISTORY)"></p-button>
+                    <p-button label="YTD" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.YTD)"></p-button>
+                    <p-button label="1 year" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.ONE_YEAR)"></p-button>
+                    <p-button label="5 years" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.FIVE_YEARS)"></p-button>
+                    <p-button label="Full" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.FULL_HISTORY)"></p-button>
                 </div>
             </p-panel>
         </div>
@@ -58,6 +58,11 @@
                     <p-calendar [(ngModel)]="exactDate" (ngModelChange)="loadDayViewData()" [iconDisplay]="'input'"
                                 [showIcon]="true" class="toolbar-item" #exactDateCalendarInput></p-calendar>
                     <p-button icon="pi pi-chevron-right" (onClick)="incrementDate()" class="button toolbar-item" severity="secondary"></p-button>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">
+                    <p-button icon="pi pi-map-marker" label="Locate" [rounded]="true" severity="info" (onClick)="locateDayView()"></p-button>
+                    <p-button icon="pi pi-image" label="Photos" [rounded]="true" severity="secondary" (onClick)="openGooglePhotos()"></p-button>
+                    <p-button label="Reset" [rounded]="true" severity="secondary" (onClick)="setTodayForDayView()"></p-button>
                 </div>
             </p-panel>
         </div>

@@ -1,7 +1,7 @@
 # thereabout
 Thereabout is a self-hosted replacement for Google Location History. It can import your existing Google Location History and visualise it as a heatmap on Google Maps.
 
-![Thereabout UI](/documentation/img/v3.png)
+![Thereabout UI](/documentation/img/v4.png)
 
 ## Features
 + Load existing Google Location History ("Records.json") when exported via [Google Takeout](https://takeout.google.com).
@@ -10,6 +10,8 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
 + Visualise your location history as a heatmap on Google Maps
   + Filter by date range: custom, YTD, 1 year, 5 years, full history
 + Visualise a specific day as a polygon line on Google Maps
+  + Locate the first entry on the map
+  + Open Google Photos on the selected day
 + Geocoding: Search for any location on Google Maps
 + Deploy the application via Docker Compose
 + GitHub Build Pipeline
@@ -18,7 +20,7 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
 + Add detailed geolocation via Google Maps & persist results in DB (verify how many requests are free)
 + Day overview page
   + Show trip as connected lines instead of just heatmap
-  + Direct link to Google Photos for that day (or use Google Photos API to show photos directly)
+  + Integrate Google Photos API (low prio)
   + Weather
   + Major locations visited
 + Endpoint to allow recording new location data via Home Assistant or similar

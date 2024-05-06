@@ -1,5 +1,12 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {GoogleMap, MapGeocoder, MapHeatmapLayer} from "@angular/google-maps";
+import {
+  GoogleMap, MapAdvancedMarker,
+  MapGeocoder,
+  MapHeatmapLayer,
+  MapMarker,
+  MapMarkerClusterer,
+  MapPolyline
+} from "@angular/google-maps";
 import {LocationService} from "../../../../generated/backend-api/thereabout";
 import {ToolbarModule} from "primeng/toolbar";
 import {InputTextModule} from "primeng/inputtext";
@@ -16,37 +23,49 @@ import {NgIf} from "@angular/common";
 @Component({
   selector: 'app-locationhistory',
   standalone: true,
-    imports: [
-        GoogleMap,
-        MapHeatmapLayer,
-        ToolbarModule,
-        InputTextModule,
-        CardModule,
-        IconFieldModule,
-        InputIconModule,
-        FormsModule,
-        ButtonModule,
-        CalendarModule,
-        PanelModule,
-        NgIf,
-    ],
+  imports: [
+    GoogleMap,
+    MapHeatmapLayer,
+    ToolbarModule,
+    InputTextModule,
+    CardModule,
+    IconFieldModule,
+    InputIconModule,
+    FormsModule,
+    ButtonModule,
+    CalendarModule,
+    PanelModule,
+    NgIf,
+    MapPolyline,
+    MapMarker,
+    MapMarkerClusterer,
+    MapAdvancedMarker,
+  ],
   templateUrl: './locationhistory.component.html',
   styleUrl: './locationhistory.component.scss'
 })
 export class LocationhistoryComponent implements OnInit{
 
+  // Map configuration
   center = {lat: 47.3919661, lng: 8.3};
   zoom = 4;
-  heatmapOptions = {radius: 8, maxIntensity: 2};
-  heatmapData = [
-    {lat: 37.782, lng: -122.447}
-  ];
-
   searchValue: string = '';
+
+  // Heatmap
+  heatmapOptions = {radius: 8, maxIntensity: 2};
+  heatmapData: { lng: number; lat: number }[] = [];
   fromDate: Date = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
   toDate: Date = new Date();
-  dayView: boolean = false;
-  heatmap: boolean = false;
+
+  // Day view
+  dayViewData: { lng: number; lat: number }[] = [];
+  exactDate: Date = new Date();
+  @ViewChild('exactDateCalendarInput')
+  private exactDateCalendarInput: any;
+
+  // Enabled features
+  dayView: boolean = true;
+  heatmap: boolean = true;
 
   constructor(private readonly locationService: LocationService, private readonly geocodeService: MapGeocoder) {
   }
@@ -56,8 +75,18 @@ export class LocationhistoryComponent implements OnInit{
   }
 
   loadHeatmapData(){
+    if(!this.fromDate || !this.toDate) return;
     this.locationService.getLocations(this.dateToString(this.fromDate), this.dateToString(this.toDate)).subscribe(locations => {
       this.heatmapData = locations.map(location => {
+        return {lat: location.latitude, lng: location.longitude}
+      });
+    });
+  }
+
+  loadDayViewData(){
+    if(!this.exactDate) return;
+    this.locationService.getLocations(this.dateToString(this.exactDate), this.dateToString(this.exactDate)).subscribe(locations => {
+      this.dayViewData = locations.map(location => {
         return {lat: location.latitude, lng: location.longitude}
       });
     });
@@ -89,5 +118,17 @@ export class LocationhistoryComponent implements OnInit{
 
   toggleHeatmap(){
     this.heatmap = !this.heatmap;
+  }
+
+  decrementDate() {
+    this.exactDate.setDate(this.exactDate.getDate() - 1);
+    this.exactDateCalendarInput.updateInputfield();
+    this.loadDayViewData();
+  }
+
+  incrementDate() {
+    this.exactDate.setDate(this.exactDate.getDate() + 1);
+    this.exactDateCalendarInput.updateInputfield();
+    this.loadDayViewData();
   }
 }

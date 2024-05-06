@@ -21,7 +21,8 @@
     <!-- Google Maps Section -->
     <div style="flex-grow: 1;">
         <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
-            <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions"></map-heatmap-layer>
+            <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions" *ngIf="heatmap"></map-heatmap-layer>
+            <map-polyline [path]="dayViewData" *ngIf="dayView"></map-polyline>
         </google-map>
     </div>
 
@@ -45,14 +46,11 @@
         <div style="padding: 0 0 10px 10px; width: 360px;" *ngIf="dayView">
             <p-panel header="Day View">
                 <div class="dayview-date-selector">
-                    <p-button icon="pi pi-chevron-left" (onClick)="resetSearch()" class="button toolbar-item" severity="secondary"></p-button>
-                    <p-calendar [(ngModel)]="toDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
-                                [showIcon]="true" class="toolbar-item"></p-calendar>
-                    <p-button icon="pi pi-chevron-right" (onClick)="resetSearch()" class="button toolbar-item" severity="secondary"></p-button>
+                    <p-button icon="pi pi-chevron-left" (onClick)="decrementDate()" class="button toolbar-item" severity="secondary"></p-button>
+                    <p-calendar [(ngModel)]="exactDate" (ngModelChange)="loadDayViewData()" [iconDisplay]="'input'"
+                                [showIcon]="true" class="toolbar-item" #exactDateCalendarInput></p-calendar>
+                    <p-button icon="pi pi-chevron-right" (onClick)="incrementDate()" class="button toolbar-item" severity="secondary"></p-button>
                 </div>
-                <p>
-                    Lorem ipsum dolor sit amet...
-                </p>
             </p-panel>
         </div>
     </div>

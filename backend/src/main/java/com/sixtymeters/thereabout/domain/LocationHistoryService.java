@@ -31,7 +31,7 @@ public class LocationHistoryService {
             importLocationHistoryFromGoogleFile();
         }
 
-        return locationHistoryRepository.findAllByTimestampBetween(from.atStartOfDay(), to.atStartOfDay());
+        return locationHistoryRepository.findAllByTimestampBetween(from.atStartOfDay(), to.atStartOfDay().plusDays(1));
     }
 
     private void importLocationHistoryFromGoogleFile() {

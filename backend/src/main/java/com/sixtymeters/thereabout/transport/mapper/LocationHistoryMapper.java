@@ -1,6 +1,7 @@
 package com.sixtymeters.thereabout.transport.mapper;
 
 import com.sixtymeters.thereabout.generated.model.GenLocationHistoryEntry;
+import com.sixtymeters.thereabout.generated.model.GenSparseLocationHistoryEntry;
 import com.sixtymeters.thereabout.model.LocationHistoryEntry;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -14,6 +15,8 @@ import java.time.ZoneOffset;
 @Mapper
 public interface LocationHistoryMapper {
     LocationHistoryMapper INSTANCE = Mappers.getMapper(LocationHistoryMapper.class);
+
+    GenSparseLocationHistoryEntry mapToSparseEntry(final LocationHistoryEntry locationHistoryEntry);
 
     @Mapping(source = "timestamp", target = "timestamp", qualifiedByName = "localDateTimeToOffsetDateTime")
     GenLocationHistoryEntry map(final LocationHistoryEntry locationHistoryEntry);

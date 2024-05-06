@@ -76,7 +76,7 @@ export class LocationhistoryComponent implements OnInit{
 
   loadHeatmapData(){
     if(!this.fromDate || !this.toDate) return;
-    this.locationService.getLocations(this.dateToString(this.fromDate), this.dateToString(this.toDate)).subscribe(locations => {
+    this.locationService.getSparseLocations(this.dateToString(this.fromDate), this.dateToString(this.toDate)).subscribe(locations => {
       this.heatmapData = locations.map(location => {
         return {lat: location.latitude, lng: location.longitude}
       });

@@ -8,13 +8,29 @@ services:
       - 'MARIADB_USER=thereabout'
     ports:
       - '3306:3306'
+    restart: unless-stopped
+    volumes:
+      - thereabout_mariadb:/var/lib/mysql
+    networks:
+      - traefik_default
   thereabout:
     image: 'aerobless/thereabout:latest'
     ports:
       - '9050:9050'
+    restart: unless-stopped
     volumes:
-      - /Users/thwi/git/thereabout/private-test-data/:/data
+      - thereabout_upload:/data
     environment:
       GOOGLE_MAPS_API_KEY: REPLACE_WITH_YOUR_GOOGLE_API_KEY
     depends_on:
       - mariadb
+    networks:
+      - traefik_default
+
+volumes:
+  thereabout_upload:
+  thereabout_mariadb:
+
+networks:
+  traefik_default:
+    external: true

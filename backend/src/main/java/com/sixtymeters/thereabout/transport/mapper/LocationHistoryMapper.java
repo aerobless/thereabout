@@ -22,6 +22,7 @@ public interface LocationHistoryMapper {
     GenLocationHistoryEntry map(final LocationHistoryEntry locationHistoryEntry);
 
     @Mapping(target = "source", ignore = true)
+    @Mapping(target = "id", ignore = true)
     @Mapping(source = "timestamp", target = "timestamp", qualifiedByName = "OffsetDateTimeToLocalDateTime")
     LocationHistoryEntry map(final GenLocationHistoryEntry locationHistoryEntry);
 

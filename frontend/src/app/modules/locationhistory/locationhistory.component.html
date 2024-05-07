@@ -32,12 +32,12 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">
                     <p-floatLabel style="padding-right: 10px">
                         <p-calendar [(ngModel)]="fromDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
-                                    [showIcon]="true" class="toolbar-item" id="from-date"></p-calendar>
+                                    [showIcon]="true" class="toolbar-item" id="from-date" dateFormat="dd.mm.yy"></p-calendar>
                         <label for="from-date">From</label>
                     </p-floatLabel>
                     <p-floatLabel>
                         <p-calendar [(ngModel)]="toDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
-                                    [showIcon]="true" class="toolbar-item" id="to-date"></p-calendar>
+                                    [showIcon]="true" class="toolbar-item" id="to-date" dateFormat="dd.mm.yy"></p-calendar>
                         <label for="to-date">To</label>
                     </p-floatLabel>
                 </div>
@@ -56,7 +56,7 @@
                 <div class="dayview-date-selector">
                     <p-button icon="pi pi-chevron-left" (onClick)="decrementDate()" class="button toolbar-item" severity="secondary"></p-button>
                     <p-calendar [(ngModel)]="exactDate" (ngModelChange)="loadDayViewData()" [iconDisplay]="'input'"
-                                [showIcon]="true" class="toolbar-item" #exactDateCalendarInput></p-calendar>
+                                [showIcon]="true" class="toolbar-item" #exactDateCalendarInput dateFormat="dd.mm.yy"></p-calendar>
                     <p-button icon="pi pi-chevron-right" (onClick)="incrementDate()" class="button toolbar-item" severity="secondary"></p-button>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">

@@ -7,7 +7,7 @@ import {
   MapMarkerClusterer,
   MapPolyline
 } from "@angular/google-maps";
-import {LocationService} from "../../../../generated/backend-api/thereabout";
+import {LocationHistoryEntry, LocationService} from "../../../../generated/backend-api/thereabout";
 import {ToolbarModule} from "primeng/toolbar";
 import {InputTextModule} from "primeng/inputtext";
 import {CardModule} from "primeng/card";
@@ -20,6 +20,7 @@ import {PanelModule} from "primeng/panel";
 import {NgIf} from "@angular/common";
 import {FloatLabelModule} from "primeng/floatlabel";
 import QuickFilterDateCombo from "./quick-filter-date-combo";
+import {TableModule} from "primeng/table";
 
 
 @Component({
@@ -43,6 +44,7 @@ import QuickFilterDateCombo from "./quick-filter-date-combo";
     MapMarkerClusterer,
     MapAdvancedMarker,
     FloatLabelModule,
+    TableModule,
   ],
   templateUrl: './locationhistory.component.html',
   styleUrl: './locationhistory.component.scss'
@@ -62,15 +64,19 @@ export class LocationhistoryComponent implements OnInit{
 
   // Day view
   dayViewData: { lng: number; lat: number }[] = [];
+  dayViewDataFull: Array<LocationHistoryEntry> = [];
   exactDate: Date = new Date();
   @ViewChild('exactDateCalendarInput')
   private exactDateCalendarInput: any;
+
+  selectedLocationEntry: any;
 
   constructor(private readonly locationService: LocationService, private readonly geocodeService: MapGeocoder) {
   }
 
   ngOnInit(){
     this.loadHeatmapData();
+    this.loadDayViewData();
   }
 
   loadHeatmapData(){
@@ -85,6 +91,7 @@ export class LocationhistoryComponent implements OnInit{
   loadDayViewData(){
     if(!this.exactDate) return;
     this.locationService.getLocations(this.dateToString(this.exactDate), this.dateToString(this.exactDate)).subscribe(locations => {
+      this.dayViewDataFull = locations;
       this.dayViewData = locations.map(location => {
         return {lat: location.latitude, lng: location.longitude}
       });
@@ -172,5 +179,14 @@ export class LocationhistoryComponent implements OnInit{
 
   openGooglePhotos() {
     window.open("https://photos.google.com/search/"+this.dateToString(this.exactDate), "_blank");
+  }
+
+  convertToLocalTime(date: string){
+    return new Date(date).toLocaleTimeString().slice(0, 5);
+  }
+
+  shortCoordinates(lat: number, lng: number){
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
   }
 }

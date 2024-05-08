@@ -1,11 +1,12 @@
 <p-toolbar>
     <div class="p-toolbar-group-start">
-        <b>Thereabout</b>
+        <b style="padding-left: 5px; padding-right: 5px">Thereabout 📍</b>
+        <i style="font-size: small">near that place or time</i>
     </div>
     <div class="p-toolbar-group-center">
         <p-iconField iconPosition="left" class="toolbar-item">
             <p-inputIcon styleClass="pi pi-search"/>
-            <input type="text" pInputText placeholder="Search" (keydown)="geocodeAddress($event)"
+            <input type="text" pInputText placeholder="Search" (keydown)="geocodeAddress($event)" style="width: 400px;"
                    [(ngModel)]="searchValue"/>
         </p-iconField>
         <p-button icon="pi pi-times" (onClick)="resetSearch()" class="button toolbar-item" severity="secondary"></p-button>
@@ -21,6 +22,7 @@
         <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
             <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions"></map-heatmap-layer>
             <map-polyline [path]="dayViewData"></map-polyline>
+            <map-marker *ngIf="selectedLocationEntry" [position]="{lat: selectedLocationEntry.latitude, lng: selectedLocationEntry.longitude}"></map-marker>
         </google-map>
     </div>
 
@@ -71,6 +73,7 @@
                         styleClass="p-datatable-sm"
                         scrollable="true"
                         scrollHeight="calc(100vh - 500px)"
+                        (onRowSelect)="onRowSelect($event)"
                         [metaKeySelection]="false" dataKey="id">
                     <ng-template pTemplate="header">
                         <tr>

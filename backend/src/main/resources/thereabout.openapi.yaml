@@ -91,6 +91,25 @@ paths:
           $ref: '#/components/responses/400'
         500:
           $ref: '#/components/responses/500'
+  /backend/api/v1/location/{id}:
+    delete:
+      summary: Delete a specific location history entry.
+      tags:
+        - location
+      operationId: deleteLocation
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 42
+          required: true
+          description: the id of the location history entry to be deleted
+      responses:
+        204:
+          description: The location history entry was successfully deleted
+        500:
+          $ref: '#/components/responses/500'
 
   /backend/api/v1/config:
     get:

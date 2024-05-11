@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +31,12 @@ public class LocationHistoryController implements LocationApi {
                 .createLocationHistoryEntry(locationHistoryEntryCreationRequest);
 
         return ResponseEntity.ok(LOCATION_HISTORY_MAPPER.map(createdLocationHistoryEntry));
+    }
+
+    @Override
+    public ResponseEntity<Void> deleteLocation(BigDecimal id) {
+        locationHistoryService.deleteLocationHistoryEntry(id.longValue());
+        return ResponseEntity.noContent().build();
     }
 
     @Override

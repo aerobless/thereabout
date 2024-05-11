@@ -60,13 +60,13 @@ public class LocationHistoryService {
         return createdLocationHistory;
     }
 
-    public void computeAdditionalFields(List<LocationHistoryEntry> entries) {
+    private void computeAdditionalFields(List<LocationHistoryEntry> entries) {
         log.info("Computing additional fields for %d location history entries.".formatted(entries.size()));
         entries.forEach(this::computeAdditionalFields);
         log.info("Finished computing additional fields for %d location history entries.".formatted(entries.size()));
     }
 
-    public void computeAdditionalFields(LocationHistoryEntry entry) {
+    private void computeAdditionalFields(LocationHistoryEntry entry) {
         entry.setEstimatedIsoCountryCode(estimateCountryForCoordinates(entry));
     }
 
@@ -74,5 +74,10 @@ public class LocationHistoryService {
         return reverseGeocoder.getCountry(entry.getLatitude(), entry.getLongitude())
                 .map(Country::iso)
                 .orElse(null);
+    }
+
+    public void deleteLocationHistoryEntry(long locationHistoryEntryId) {
+        locationHistoryRepository.deleteById(locationHistoryEntryId);
+        log.info("Deleted location history entry with id %d.".formatted(locationHistoryEntryId));
     }
 }

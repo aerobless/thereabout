@@ -21,6 +21,8 @@ import {NgIf} from "@angular/common";
 import {FloatLabelModule} from "primeng/floatlabel";
 import QuickFilterDateCombo from "./quick-filter-date-combo";
 import {TableModule, TableRowSelectEvent} from "primeng/table";
+import {MessageService} from "primeng/api";
+import {ToastModule} from "primeng/toast";
 
 
 @Component({
@@ -45,6 +47,7 @@ import {TableModule, TableRowSelectEvent} from "primeng/table";
         MapAdvancedMarker,
         FloatLabelModule,
         TableModule,
+        ToastModule,
     ],
     templateUrl: './locationhistory.component.html',
     styleUrl: './locationhistory.component.scss'
@@ -71,7 +74,7 @@ export class LocationhistoryComponent implements OnInit {
 
     selectedLocationEntry: LocationHistoryEntry | undefined = undefined;
 
-    constructor(private readonly locationService: LocationService, private readonly geocodeService: MapGeocoder) {
+    constructor(private readonly locationService: LocationService, private readonly geocodeService: MapGeocoder, private messageService: MessageService) {
     }
 
     ngOnInit() {
@@ -172,6 +175,7 @@ export class LocationhistoryComponent implements OnInit {
 
     setTodayForDayView() {
         this.exactDate = new Date();
+        this.loadDayViewData();
     }
 
     private applyZoom(zoom: number) {
@@ -201,6 +205,7 @@ export class LocationhistoryComponent implements OnInit {
 
     deleteLocationEntry(entry: LocationHistoryEntry) {
         this.locationService.deleteLocation(entry.id).subscribe(() => {
+            this.messageService.add({severity: 'success', summary: 'Success', detail: 'Location entry deleted'});
             this.loadDayViewData();
         });
     }

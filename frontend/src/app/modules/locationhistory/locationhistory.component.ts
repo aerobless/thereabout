@@ -191,7 +191,7 @@ export class LocationhistoryComponent implements OnInit {
     }
 
     shortCoordinates(lat: number, lng: number) {
-        return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        return `${lat.toFixed(5)},\n ${lng.toFixed(5)}`;
 
     }
 
@@ -199,5 +199,9 @@ export class LocationhistoryComponent implements OnInit {
 
     }
 
-    protected readonly google = google;
+    deleteLocationEntry(entry: LocationHistoryEntry) {
+        this.locationService.deleteLocation(entry.id).subscribe(() => {
+            this.loadDayViewData();
+        });
+    }
 }

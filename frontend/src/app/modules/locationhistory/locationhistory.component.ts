@@ -23,6 +23,7 @@ import QuickFilterDateCombo from "./quick-filter-date-combo";
 import {TableModule, TableRowSelectEvent} from "primeng/table";
 import {MessageService} from "primeng/api";
 import {ToastModule} from "primeng/toast";
+import {Router} from "@angular/router";
 
 
 @Component({
@@ -74,7 +75,7 @@ export class LocationhistoryComponent implements OnInit {
 
     selectedLocationEntry: LocationHistoryEntry | undefined = undefined;
 
-    constructor(private readonly locationService: LocationService, private readonly geocodeService: MapGeocoder, private messageService: MessageService) {
+    constructor(private readonly locationService: LocationService, private readonly geocodeService: MapGeocoder, private messageService: MessageService, private router: Router) {
     }
 
     ngOnInit() {
@@ -208,5 +209,9 @@ export class LocationhistoryComponent implements OnInit {
             this.messageService.add({severity: 'success', summary: 'Success', detail: 'Location entry deleted'});
             this.loadDayViewData();
         });
+    }
+
+    openConfiguration() {
+        this.router.navigate(['configuration']);
     }
 }

@@ -10,7 +10,7 @@ services:
       - '3306:3306'
     restart: unless-stopped
     volumes:
-      - thereabout_mariadb:/var/lib/mysql
+      - thereabout_data:/var/lib/mysql
     networks:
       - traefik_default
   thereabout:
@@ -19,7 +19,7 @@ services:
       - '9050:9050'
     restart: unless-stopped
     volumes:
-      - thereabout_upload:/data
+      - thereabout_data:/data
     environment:
       GOOGLE_MAPS_API_KEY: REPLACE_WITH_YOUR_GOOGLE_API_KEY
     depends_on:
@@ -28,8 +28,7 @@ services:
       - traefik_default
 
 volumes:
-  thereabout_upload:
-  thereabout_mariadb:
+  thereabout_data:
 
 networks:
   traefik_default:

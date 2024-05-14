@@ -1,0 +1,33 @@
+<p-toolbar>
+    <div class="p-toolbar-group-start">
+        <b style="padding-left: 5px; padding-right: 5px">Thereabout Configuration</b>
+    </div>
+    <div class="p-toolbar-group-center">
+    </div>
+    <div class="p-toolbar-group-end">
+        <p-button icon="pi pi-arrow-circle-left" (onClick)="navigateBackToMap()" class="button toolbar-item" severity="secondary"></p-button>
+    </div>
+</p-toolbar>
+
+<div style="display: flex; justify-content: center; align-items: center; padding-top: 10px">
+    <div style="width: 500px">
+        <p-panel header="Location History Import">
+            <p>
+                You upload your Google Maps <b>Records.json</b> here. It will then be imported into Thereabout.
+                Beware that for large files, the import may take a while.
+            </p>
+            <p-fileUpload
+                    name="file"
+                    mode="basic"
+                    chooseIcon="pi pi-upload"
+                    url="/backend/api/v1/config/import-file"
+                    accept=".json"
+                    maxFileSize="5073741824"
+                    fileLimit="1"
+                    [auto]="true"
+                    (onError)="onError($event)"
+                    (onUpload)="onUpload($event)"
+                    chooseLabel="Browse" />
+        </p-panel>
+    </div>
+</div>

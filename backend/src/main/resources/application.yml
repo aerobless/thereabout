@@ -10,6 +10,10 @@ server:
   port : 9050
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 5GB
+      max-request-size: 5GB
   datasource:
     url: jdbc:mariadb://mariadb:3306/thereabout
     username: thereabout

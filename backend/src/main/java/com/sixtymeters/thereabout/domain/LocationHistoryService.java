@@ -4,13 +4,14 @@ import com.google.common.collect.Lists;
 import com.sixtymeters.thereabout.domain.importer.GoogleLocationHistoryImporter;
 import com.sixtymeters.thereabout.model.LocationHistoryEntry;
 import com.sixtymeters.thereabout.model.LocationHistoryRepository;
-import com.sixtymeters.thereabout.model.LocationHistorySource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import uk.recurse.geocoding.reverse.Country;
 import uk.recurse.geocoding.reverse.ReverseGeocoder;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -27,15 +28,12 @@ public class LocationHistoryService {
     private final static int CHUNK_SIZE = 10000;
 
     public List<LocationHistoryEntry> getLocationHistory(LocalDate from, LocalDate to) {
-        if(locationHistoryRepository.countBySource(LocationHistorySource.GOOGLE_IMPORT) == 0) {
-            importLocationHistoryFromGoogleFile();
-        }
-
         return locationHistoryRepository.findAllByTimestampBetween(from.atStartOfDay(), to.atStartOfDay().plusDays(1));
     }
 
-    private void importLocationHistoryFromGoogleFile() {
-        final var locationHistory = locationHistoryImporter.importLocationHistory();
+    @Async
+    public void importGoogleLocationHistory(File file) {
+        final var locationHistory = locationHistoryImporter.importLocationHistory(file);
         computeAdditionalFields(locationHistory);
 
         AtomicLong importedCount = new AtomicLong();

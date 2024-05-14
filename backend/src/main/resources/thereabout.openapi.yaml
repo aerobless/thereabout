@@ -126,6 +126,28 @@ paths:
                 $ref: "#/components/schemas/FrontendConfigurationResponse"
         500:
           $ref: '#/components/responses/500'
+  /backend/api/v1/config/import-file:
+    post:
+      summary: Import location data from a file.
+      tags:
+        - frontend
+      operationId: importFromFile
+      requestBody:
+          description: The file to import
+          required: true
+          content:
+            multipart/form-data:
+              schema:
+                type: object
+                properties:
+                  file:
+                    type: string
+                    format: binary
+      responses:
+        204:
+          description: The file is successfully being imported.
+        500:
+          $ref: '#/components/responses/500'
 
 components:
   schemas:

@@ -13,24 +13,27 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
   + Locate the first or any entry on the map
   + List all location entries for the given day and show the selected entry as a marker on the map
   + Open Google Photos on the selected day
+  + Delete location entry
 + Geocoding: Search for any location on Google Maps
 + Endpoint to add new location entries continuously , e.g. via Home Assistant
 + Deploy the application via Docker Compose
 + GitHub Build Pipeline
++ Configuration page
+  + Upload Google Records.json from the frontend
 
 ## Roadmap
 + Add detailed geolocation via Google Maps & persist results in DB (verify how many requests are free)
++ Add support for [Overland](https://github.com/aaronpk/Overland-iOS) for more accurate tracking independent of HA
 + Day overview page
   + Integrate Google Photos API (low prio)
   + Weather
   + Major locations visited
-  + Delete location entry (high prio)
   + Add location entry (low prio)
   + Update location entry (low prio)
 + Endpoint to allow recording new location data via Home Assistant or similar
 + Statistics: number of countries visited, km travelled, ...
 + Security: User Login & secure endpoints
-+ Manually add/remove location data
++ Add location data from the UI
 + Export location history as json
 + Endpoint/Integration with OpenAI, e.g. ask "Where was I in November 2023?",
 + Add support to load other dated data into Thereabout, e.g. chatlogs, temperature for location, weather to make a more comprehensive view of a specific day
@@ -57,7 +60,7 @@ add new location data. You can use this endpoint to add new location data from H
 ## Usage
 1. Clone the repository or download the [docker-compose.yml](https://github.com/aerobless/thereabout/blob/main/docker-compose.yaml) file
 2. Get a Google Maps API Key from the [Google Cloud Console](https://console.cloud.google.com/apis/library/maps-backend.googleapis.com)
-3. Add the location of your `Records.json` file to the `docker-compose.yml` file. Records.json can be exported from [Google Takeout](https://takeout.google.com).
+3. Open the configuration page via /configuration and upload your Google Location History file (Records.json)
 4. Add the Google Maps API Key to the `docker-compose.yml` file & run it.
 
 ## export home assistant location data via influx

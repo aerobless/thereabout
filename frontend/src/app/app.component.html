@@ -1,2 +1,3 @@
 <div *ngIf="!googleMapsIntegrationReady">Loading Thereabout application...</div>
-<app-locationhistory *ngIf="googleMapsIntegrationReady"></app-locationhistory>
+<router-outlet *ngIf="googleMapsIntegrationReady"></router-outlet>
+<p-toast />

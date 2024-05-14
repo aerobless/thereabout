@@ -127,6 +127,20 @@ paths:
         500:
           $ref: '#/components/responses/500'
   /backend/api/v1/config/import-file:
+    get:
+      summary: The status of the file import process.
+      tags:
+        - frontend
+      operationId: fileImportStatus
+      responses:
+        200:
+          description: Successful response containing the status of the file import process.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileImportStatus'
+        500:
+          $ref: '#/components/responses/500'
     post:
       summary: Import location data from a file.
       tags:
@@ -151,6 +165,23 @@ paths:
 
 components:
   schemas:
+    FileImportStatus:
+      description: The status of the file import process.
+      type: object
+      required:
+        - status
+        - progress
+      properties:
+        status:
+          type: string
+          example: "IN_PROGRESS"
+          enum:
+            - IN_PROGRESS
+            - IDLE
+        progress:
+          type: number
+          example: 60
+          description: The progress of the file import process from 0 to 100.
     SparseLocationHistoryResponse:
       type: array
       items:

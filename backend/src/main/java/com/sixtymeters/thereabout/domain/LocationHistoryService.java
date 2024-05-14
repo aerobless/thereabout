@@ -14,6 +14,7 @@ import uk.recurse.geocoding.reverse.ReverseGeocoder;
 import java.io.File;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
@@ -27,12 +28,19 @@ public class LocationHistoryService {
 
     private final static int CHUNK_SIZE = 10000;
 
+    private final static AtomicInteger importProgress = new AtomicInteger(0);
+
     public List<LocationHistoryEntry> getLocationHistory(LocalDate from, LocalDate to) {
         return locationHistoryRepository.findAllByTimestampBetween(from.atStartOfDay(), to.atStartOfDay().plusDays(1));
     }
 
+    public int getImportProgress() {
+        return importProgress.get();
+    }
+
     @Async
     public void importGoogleLocationHistory(File file) {
+        importProgress.set(1);
         final var locationHistory = locationHistoryImporter.importLocationHistory(file);
         computeAdditionalFields(locationHistory);
 
@@ -40,15 +48,18 @@ public class LocationHistoryService {
         Lists.partition(locationHistory, CHUNK_SIZE).forEach(chunk -> {
             importedCount.addAndGet(chunk.size());
             locationHistoryRepository.saveAll(chunk);
-            log.info("Imported %d%% of Google Location History.".formatted(calculatePercentage(locationHistory.size(), importedCount.get())));
+            importProgress.set(calculatePercentage(locationHistory.size(), importedCount.get()));
+            log.info("Imported %d%% of Google Location History.".formatted(importProgress.get()));
         });
 
         locationHistoryRepository.flush();
+        importProgress.set(0);
         log.info("Finished importing %d entries of Google Location History.".formatted(locationHistory.size()));
     }
 
     private int calculatePercentage(long total, long current) {
-        return (int) ((current / (float) total) * 100);
+        int percentage = (int) ((current / (float) total) * 100);
+        return Math.max(percentage, 1);
     }
 
     public LocationHistoryEntry createLocationHistoryEntry(LocationHistoryEntry locationHistoryEntry) {

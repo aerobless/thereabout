@@ -2,6 +2,7 @@ package com.sixtymeters.thereabout.transport;
 
 import com.sixtymeters.thereabout.domain.LocationHistoryService;
 import com.sixtymeters.thereabout.generated.api.FrontendApi;
+import com.sixtymeters.thereabout.generated.model.GenFileImportStatus;
 import com.sixtymeters.thereabout.generated.model.GenFrontendConfigurationResponse;
 import com.sixtymeters.thereabout.support.ThereaboutException;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -27,6 +29,20 @@ public class FrontendConfigurationController implements FrontendApi {
     private String googleMapsApiKey;
 
     private final LocationHistoryService locationHistoryService;
+
+    @Override
+    public ResponseEntity<GenFileImportStatus> fileImportStatus() {
+        final var importProgress = locationHistoryService.getImportProgress();
+
+        return ResponseEntity.ok(GenFileImportStatus.builder()
+                .status(mapImportProgressToStatus(importProgress))
+                .progress(new BigDecimal(importProgress))
+                .build());
+    }
+
+    private GenFileImportStatus.StatusEnum mapImportProgressToStatus(int importProgress) {
+        return importProgress == 0 ? GenFileImportStatus.StatusEnum.IDLE : GenFileImportStatus.StatusEnum.IN_PROGRESS;
+    }
 
     @Override
     public ResponseEntity<GenFrontendConfigurationResponse> getFrontendConfiguration() {

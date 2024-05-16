@@ -16,6 +16,7 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
   + Delete location entry
 + Geocoding: Search for any location on Google Maps
 + Endpoint to add new location entries continuously , e.g. via Home Assistant
+  + Support for [Overland](https://github.com/aaronpk/Overland-iOS) for more accurate tracking independent of HA
 + Deploy the application via Docker Compose
 + GitHub Build Pipeline
 + Configuration page
@@ -23,15 +24,15 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
 
 ## Roadmap
 + Add detailed geolocation via Google Maps & persist results in DB (verify how many requests are free)
-+ Add support for [Overland](https://github.com/aaronpk/Overland-iOS) for more accurate tracking independent of HA
 + Day overview page
   + Integrate Google Photos API (low prio)
   + Weather
   + Major locations visited
   + Add location entry (low prio)
   + Update location entry (low prio)
-+ Endpoint to allow recording new location data via Home Assistant or similar
+  + calculate & persist total distance travelled in a day
 + Statistics: number of countries visited, km travelled, ...
+  + yearly: total km travelled, countries visited, ...
 + Security: User Login & secure endpoints
 + Add location data from the UI
 + Export location history as json

@@ -3,7 +3,6 @@ info:
   title: Frontend REST API
   version: "1.0"
 paths:
-
   /backend/api/v1/location/sparse:
     get:
       summary: Get all sparse location history entries for the given date range. If no date range is provided, all entries are returned.
@@ -91,6 +90,38 @@ paths:
           $ref: '#/components/responses/400'
         500:
           $ref: '#/components/responses/500'
+  /backend/api/v1/location/geojson:
+    post:
+      summary: Post GeoJson location data
+      tags:
+        - location
+      description: Endpoint for posting geojson location data, e.g. from a client such as Overland
+      operationId: addGeoJsonLocation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                locations:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/GeoJsonLocation'
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "ok"
+        500:
+          $ref: '#/components/responses/500'
+
   /backend/api/v1/location/{id}:
     delete:
       summary: Delete a specific location history entry.
@@ -256,6 +287,94 @@ components:
               type: string
               description: The estimated ISO 3166-1 alpha-2 country code of the location.
               example: CH
+    GeoJsonLocation:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [Feature]
+        geometry:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [Point]
+            coordinates:
+              type: array
+              items:
+                type: number
+              example: [-122.030581, 37.331800]
+        properties:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+              example: "2015-10-01T08:00:00-0700"
+            altitude:
+              type: number
+              example: 0
+            speed:
+              type: number
+              example: 4
+            course:
+              type: number
+              example: 90
+            horizontal_accuracy:
+              type: number
+              example: 30
+            vertical_accuracy:
+              type: number
+              example: -1
+            speed_accuracy:
+              type: number
+              example: -1
+            course_accuracy:
+              type: number
+              example: -1
+            motion:
+              type: array
+              items:
+                type: string
+                enum: [driving, walking, running, cycling, stationary]
+              example: ["driving", "stationary"]
+            battery_state:
+              type: string
+              enum: [unknown, charging, full, unplugged]
+              example: "charging"
+            battery_level:
+              type: number
+              format: float
+              example: 0.80
+            wifi:
+              type: string
+              example: ""
+            device_id:
+              type: string
+              example: ""
+            unique_id:
+              type: string
+              example: ""
+            pauses:
+              type: boolean
+              example: false
+            activity:
+              type: string
+              enum: [automotive_navigation, fitness, other_navigation, other]
+              example: "other_navigation"
+            desired_accuracy:
+              type: number
+              example: 100
+            deferred:
+              type: number
+              example: 1000
+            significant_change:
+              type: string
+              enum: [disabled, enabled, exclusive]
+              example: "disabled"
+            locations_in_payload:
+              type: number
+              example: 1
 
     ThereaboutBaseErrorModel:
       type: object

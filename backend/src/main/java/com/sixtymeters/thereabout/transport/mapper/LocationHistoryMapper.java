@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.transport.mapper;
 
+import com.sixtymeters.thereabout.generated.model.GenGeoJsonLocation;
 import com.sixtymeters.thereabout.generated.model.GenLocationHistoryEntry;
 import com.sixtymeters.thereabout.generated.model.GenSparseLocationHistoryEntry;
 import com.sixtymeters.thereabout.model.LocationHistoryEntry;
@@ -23,6 +24,7 @@ public interface LocationHistoryMapper {
 
     @Mapping(target = "source", ignore = true)
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "estimatedIsoCountryCode", ignore = true)
     @Mapping(source = "timestamp", target = "timestamp", qualifiedByName = "OffsetDateTimeToLocalDateTime")
     LocationHistoryEntry map(final GenLocationHistoryEntry locationHistoryEntry);
 
@@ -35,4 +37,17 @@ public interface LocationHistoryMapper {
     default LocalDateTime localDateTimeToOffsetDateTime(OffsetDateTime offsetDateTime) {
         return offsetDateTime == null ? null : offsetDateTime.toLocalDateTime();
     }
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "estimatedIsoCountryCode", ignore = true)
+    @Mapping(target = "timestamp", source = "properties.timestamp", qualifiedByName = "OffsetDateTimeToLocalDateTime")
+    @Mapping(target = "latitude", expression = "java(locationHistoryEntry.getGeometry().getCoordinates().get(1).doubleValue())")
+    @Mapping(target = "longitude", expression = "java(locationHistoryEntry.getGeometry().getCoordinates().get(0).doubleValue())")
+    @Mapping(target = "horizontalAccuracy", source = "properties.horizontalAccuracy")
+    @Mapping(target = "verticalAccuracy", source = "properties.verticalAccuracy")
+    @Mapping(target = "altitude", source = "properties.altitude")
+    @Mapping(target = "heading", source = "properties.course")
+    @Mapping(target = "velocity", source = "properties.speed")
+    @Mapping(target = "source", expression = "java(LocationHistorySource.THEREABOUT_API)")
+    LocationHistoryEntry map(final GenGeoJsonLocation locationHistoryEntry);
 }

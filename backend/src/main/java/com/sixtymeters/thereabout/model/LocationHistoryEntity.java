@@ -7,11 +7,11 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@Entity
+@Entity(name = "location_history_entry")
 @Builder
 @AllArgsConstructor
 @RequiredArgsConstructor
-public class LocationHistoryEntry {
+public class LocationHistoryEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

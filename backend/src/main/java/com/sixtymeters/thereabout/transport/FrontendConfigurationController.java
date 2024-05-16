@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.transport;
 
+import com.sixtymeters.thereabout.domain.ConfigurationService;
 import com.sixtymeters.thereabout.domain.LocationHistoryService;
 import com.sixtymeters.thereabout.generated.api.FrontendApi;
 import com.sixtymeters.thereabout.generated.model.GenFileImportStatus;
@@ -29,6 +30,7 @@ public class FrontendConfigurationController implements FrontendApi {
     private String googleMapsApiKey;
 
     private final LocationHistoryService locationHistoryService;
+    private final ConfigurationService configurationService;
 
     @Override
     public ResponseEntity<GenFileImportStatus> fileImportStatus() {
@@ -49,6 +51,7 @@ public class FrontendConfigurationController implements FrontendApi {
         log.info("Serving the frontend configuration.");
         return ResponseEntity.ok(GenFrontendConfigurationResponse.builder()
                 .googleMapsApiKey(googleMapsApiKey)
+                .thereaboutApiKey(configurationService.getThereaboutApiKey())
                 .build());
     }
 

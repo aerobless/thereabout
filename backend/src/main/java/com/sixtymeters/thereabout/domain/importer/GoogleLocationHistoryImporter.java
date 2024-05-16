@@ -3,7 +3,7 @@ package com.sixtymeters.thereabout.domain.importer;
 import com.fatboyindustrial.gsonjavatime.Converters;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.sixtymeters.thereabout.model.LocationHistoryEntry;
+import com.sixtymeters.thereabout.model.LocationHistoryEntity;
 import com.sixtymeters.thereabout.model.LocationHistorySource;
 import com.sixtymeters.thereabout.support.ThereaboutException;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,7 @@ import java.util.List;
 @Service
 public class GoogleLocationHistoryImporter {
 
-    public List<LocationHistoryEntry> importLocationHistory(final File file) {
+    public List<LocationHistoryEntity> importLocationHistory(final File file) {
         final Gson gson = Converters.registerZonedDateTime(new GsonBuilder()).create();
         try (Reader reader = new FileReader(file)) {
             List<GoogleLocationEntry> locationHistory = gson.fromJson(reader, GoogleLocationHistory.class).locations();
@@ -35,8 +35,8 @@ public class GoogleLocationHistoryImporter {
         }
     }
 
-    private LocationHistoryEntry mapToGenericLocationHistoryEntry(GoogleLocationEntry entry) {
-        return LocationHistoryEntry.builder()
+    private LocationHistoryEntity mapToGenericLocationHistoryEntry(GoogleLocationEntry entry) {
+        return LocationHistoryEntity.builder()
                 .timestamp(entry.timestamp().toLocalDateTime())
                 .latitude(entry.latitudeE7() / 1E7)
                 .longitude(entry.longitudeE7() / 1E7)

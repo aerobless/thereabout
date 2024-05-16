@@ -3,7 +3,7 @@ package com.sixtymeters.thereabout.transport.mapper;
 import com.sixtymeters.thereabout.generated.model.GenGeoJsonLocation;
 import com.sixtymeters.thereabout.generated.model.GenLocationHistoryEntry;
 import com.sixtymeters.thereabout.generated.model.GenSparseLocationHistoryEntry;
-import com.sixtymeters.thereabout.model.LocationHistoryEntry;
+import com.sixtymeters.thereabout.model.LocationHistoryEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -17,16 +17,16 @@ import java.time.ZoneOffset;
 public interface LocationHistoryMapper {
     LocationHistoryMapper INSTANCE = Mappers.getMapper(LocationHistoryMapper.class);
 
-    GenSparseLocationHistoryEntry mapToSparseEntry(final LocationHistoryEntry locationHistoryEntry);
+    GenSparseLocationHistoryEntry mapToSparseEntry(final LocationHistoryEntity locationHistoryEntity);
 
     @Mapping(source = "timestamp", target = "timestamp", qualifiedByName = "localDateTimeToOffsetDateTime")
-    GenLocationHistoryEntry map(final LocationHistoryEntry locationHistoryEntry);
+    GenLocationHistoryEntry map(final LocationHistoryEntity locationHistoryEntity);
 
     @Mapping(target = "source", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "estimatedIsoCountryCode", ignore = true)
     @Mapping(source = "timestamp", target = "timestamp", qualifiedByName = "OffsetDateTimeToLocalDateTime")
-    LocationHistoryEntry map(final GenLocationHistoryEntry locationHistoryEntry);
+    LocationHistoryEntity map(final GenLocationHistoryEntry locationHistoryEntry);
 
     @Named("localDateTimeToOffsetDateTime")
     default OffsetDateTime localDateTimeToOffsetDateTime(LocalDateTime localDateTime) {
@@ -49,5 +49,5 @@ public interface LocationHistoryMapper {
     @Mapping(target = "heading", source = "properties.course")
     @Mapping(target = "velocity", source = "properties.speed")
     @Mapping(target = "source", expression = "java(LocationHistorySource.THEREABOUT_API)")
-    LocationHistoryEntry map(final GenGeoJsonLocation locationHistoryEntry);
+    LocationHistoryEntity map(final GenGeoJsonLocation locationHistoryEntry);
 }

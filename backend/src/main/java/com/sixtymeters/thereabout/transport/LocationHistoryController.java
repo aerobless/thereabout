@@ -29,7 +29,8 @@ public class LocationHistoryController implements LocationApi {
 
     @Transactional
     @Override
-    public ResponseEntity<GenAddGeoJsonLocation200Response> addGeoJsonLocation(GenAddGeoJsonLocationRequest genAddGeoJsonLocationRequest) {
+    public ResponseEntity<GenAddGeoJsonLocation200Response> addGeoJsonLocation(String authorization, GenAddGeoJsonLocationRequest genAddGeoJsonLocationRequest) {
+        log.info("Received GeoJson location data via HTTP Endpoint /backend/api/v1/location/add-geojson-location" + authorization);
         genAddGeoJsonLocationRequest.getLocations().stream()
                 .map(LOCATION_HISTORY_MAPPER::map)
                 .forEach(locationHistoryService::createLocationHistoryEntry);

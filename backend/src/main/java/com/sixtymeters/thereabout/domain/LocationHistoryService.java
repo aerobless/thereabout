@@ -2,7 +2,7 @@ package com.sixtymeters.thereabout.domain;
 
 import com.google.common.collect.Lists;
 import com.sixtymeters.thereabout.domain.importer.GoogleLocationHistoryImporter;
-import com.sixtymeters.thereabout.model.LocationHistoryEntry;
+import com.sixtymeters.thereabout.model.LocationHistoryEntity;
 import com.sixtymeters.thereabout.model.LocationHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,7 @@ public class LocationHistoryService {
 
     private final static AtomicInteger importProgress = new AtomicInteger(0);
 
-    public List<LocationHistoryEntry> getLocationHistory(LocalDate from, LocalDate to) {
+    public List<LocationHistoryEntity> getLocationHistory(LocalDate from, LocalDate to) {
         return locationHistoryRepository.findAllByTimestampBetween(from.atStartOfDay(), to.atStartOfDay().plusDays(1));
     }
 
@@ -62,24 +62,24 @@ public class LocationHistoryService {
         return Math.max(percentage, 1);
     }
 
-    public LocationHistoryEntry createLocationHistoryEntry(LocationHistoryEntry locationHistoryEntry) {
-        computeAdditionalFields(locationHistoryEntry);
-        final var createdLocationHistory = locationHistoryRepository.save(locationHistoryEntry);
+    public LocationHistoryEntity createLocationHistoryEntry(LocationHistoryEntity locationHistoryEntity) {
+        computeAdditionalFields(locationHistoryEntity);
+        final var createdLocationHistory = locationHistoryRepository.save(locationHistoryEntity);
         log.info("Created location history entry with id %d.".formatted(createdLocationHistory.getId()));
         return createdLocationHistory;
     }
 
-    private void computeAdditionalFields(List<LocationHistoryEntry> entries) {
+    private void computeAdditionalFields(List<LocationHistoryEntity> entries) {
         log.info("Computing additional fields for %d location history entries.".formatted(entries.size()));
         entries.forEach(this::computeAdditionalFields);
         log.info("Finished computing additional fields for %d location history entries.".formatted(entries.size()));
     }
 
-    private void computeAdditionalFields(LocationHistoryEntry entry) {
+    private void computeAdditionalFields(LocationHistoryEntity entry) {
         entry.setEstimatedIsoCountryCode(estimateCountryForCoordinates(entry));
     }
 
-    private String estimateCountryForCoordinates(LocationHistoryEntry entry) {
+    private String estimateCountryForCoordinates(LocationHistoryEntity entry) {
         return reverseGeocoder.getCountry(entry.getLatitude(), entry.getLongitude())
                 .map(Country::iso)
                 .orElse(null);

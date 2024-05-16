@@ -41,6 +41,7 @@ export class ConfigurationComponent implements OnInit {
     importStatus: FileImportStatus.StatusEnum | unknown;
     importStatusProgress: number = 0;
     importDisabled = false;
+    bearerToken: string | undefined;
 
     constructor(private router: Router, private messageService: MessageService, private frontendService: FrontendService) {
     }
@@ -91,6 +92,9 @@ export class ConfigurationComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.frontendService.getFrontendConfiguration().subscribe(e => {
+            this.bearerToken = e.thereaboutApiKey;
+        })
         this.updateOrPollImportStatus();
     }
 
@@ -106,8 +110,7 @@ export class ConfigurationComponent implements OnInit {
 
     configureOverland() {
         const url = `${window.location.protocol}//${window.location.host}/backend/api/v1/location/geojson`;
-        const token = '1234';
         const deviceId = 'iPhone';
-        window.location.href = `overland://setup?url=${url}&token=${token}&device_id=${deviceId}`;
+        window.location.href = `overland://setup?url=${url}&token=${this.bearerToken}&device_id=${deviceId}`;
     }
 }

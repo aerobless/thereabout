@@ -97,6 +97,13 @@ paths:
         - location
       description: Endpoint for posting geojson location data, e.g. from a client such as Overland
       operationId: addGeoJsonLocation
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+          description: Bearer token for authorization
       requestBody:
         required: true
         content:
@@ -405,6 +412,9 @@ components:
         googleMapsApiKey:
           type: string
           example: TEST_KEY_ASJHKASHDASJDDSA
+        thereaboutApiKey:
+          type: string
+          example: UUID-2342-4556345
 
   responses:
     400:

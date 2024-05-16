@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {ButtonModule} from "primeng/button";
 import {IconFieldModule} from "primeng/iconfield";
 import {InputIconModule} from "primeng/inputicon";
@@ -10,16 +10,11 @@ import {FieldsetModule} from "primeng/fieldset";
 import {CardModule} from "primeng/card";
 import {TabViewModule} from "primeng/tabview";
 import {PanelModule} from "primeng/panel";
-import {
-    FileUpload,
-    FileUploadErrorEvent,
-    FileUploadEvent,
-    FileUploadModule
-} from "primeng/fileupload";
+import {FileUploadErrorEvent, FileUploadModule} from "primeng/fileupload";
 import {FileImportStatus, FrontendService} from "../../../../generated/backend-api/thereabout";
 import {MessageService} from "primeng/api";
 import {NgIf} from "@angular/common";
-import {catchError, interval, Observable, of, switchMap, takeWhile, tap} from "rxjs";
+import {catchError, interval, Observable, of, switchMap, takeWhile} from "rxjs";
 
 @Component({
   selector: 'app-configuration',
@@ -107,5 +102,12 @@ export class ConfigurationComponent implements OnInit {
 
     onSelect() {
         this.importDisabled = true;
+    }
+
+    configureOverland() {
+        const url = `${window.location.protocol}//${window.location.host}/backend/api/v1/location/geojson`;
+        const token = '1234';
+        const deviceId = 'iPhone';
+        window.location.href = `overland://setup?url=${url}&token=${token}&device_id=${deviceId}`;
     }
 }

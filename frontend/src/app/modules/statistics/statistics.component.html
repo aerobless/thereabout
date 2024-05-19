@@ -1,0 +1,56 @@
+<p-toolbar>
+    <div class="p-toolbar-group-start">
+        <b style="padding-left: 5px; padding-right: 5px">Thereabout Statistics</b>
+    </div>
+    <div class="p-toolbar-group-center">
+    </div>
+    <div class="p-toolbar-group-end">
+        <p-button icon="pi pi-arrow-circle-left" (onClick)="navigateBackToMap()" class="button toolbar-item"
+                  severity="secondary"></p-button>
+    </div>
+</p-toolbar>
+
+<div style="display: flex; justify-content: center; align-items: center; padding-top: 10px">
+    <div style="width: 100%">
+        <p-panel header="Countries visited">
+            <p-table
+                    sortField="numberOfDaysSpent" [sortOrder]="-1"
+                    [value]="visitedCountries"
+                    [paginator]="true"
+                    [rows]="10"
+                    [rowsPerPageOptions]="[10, 25, 100]"
+                    [globalFilterFields]="['countryName', 'continent']"
+                    styleClass="p-datatable-striped"
+                    [tableStyle]="{'min-width': '50rem'}">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th pSortableColumn="countryName">
+                            Country <p-sortIcon field="countryName"/>
+                        </th>
+                        <th pSortableColumn="continent">
+                            Continent <p-sortIcon field="continent"/>
+                        </th>
+                        <th  pSortableColumn="firstVisit">
+                            First visit <p-sortIcon field="firstVisit"/>
+                        </th>
+                        <th  pSortableColumn="lastVisit">
+                            Last visit <p-sortIcon field="lastVisit"/>
+                        </th>
+                        <th  pSortableColumn="numberOfDaysSpent">
+                            Number of days spent <p-sortIcon field="numberOfDaysSpent"/>
+                        </th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-visitedCountry>
+                    <tr>
+                        <td>{{countryNameFormat(visitedCountry)}}</td>
+                        <td>{{mapContinent(visitedCountry.continent)}}</td>
+                        <td>{{visitedCountry.firstVisit}}</td>
+                        <td>{{visitedCountry.lastVisit}}</td>
+                        <td>{{visitedCountry.numberOfDaysSpent}}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </p-panel>
+    </div>
+</div>

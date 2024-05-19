@@ -234,6 +234,11 @@ components:
       type: object
       required:
         - countryIsoCode
+        - countryName
+        - continent
+        - firstVisit
+        - lastVisit
+        - numberOfDaysSpent
       properties:
         countryIsoCode:
           type: string

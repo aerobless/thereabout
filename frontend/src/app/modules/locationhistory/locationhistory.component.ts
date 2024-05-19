@@ -214,4 +214,8 @@ export class LocationhistoryComponent implements OnInit {
     openConfiguration() {
         this.router.navigate(['configuration']);
     }
+
+    openStatistics() {
+        this.router.navigate(['statistics']);
+    }
 }

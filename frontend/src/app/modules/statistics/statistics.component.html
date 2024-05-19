@@ -12,6 +12,19 @@
 
 <div style="display: flex; justify-content: center; align-items: center; padding-top: 10px">
     <div style="width: 100%">
+        <div style="display: flex; padding-bottom: 10px; gap: 10px;">
+            <div style="flex: 1;">
+                <p-panel header="Number of countries visited">
+                    <h1>️{{visitedCountries.length}}</h1>
+                </p-panel>
+            </div>
+            <div style="flex: 1;">
+                <p-panel header="Days spent abroad">
+                    <h1>{{calculateDaysSpentAbroad()}}</h1>
+                </p-panel>
+            </div>
+        </div>
+
         <p-panel header="Countries visited">
             <p-table
                     sortField="numberOfDaysSpent" [sortOrder]="-1"

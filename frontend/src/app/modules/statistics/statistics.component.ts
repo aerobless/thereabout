@@ -80,4 +80,15 @@ export class StatisticsComponent implements OnInit {
     }
   }
 
+  calculateDaysSpentAbroad() {
+    if (this.visitedCountries.length === 0) return 0;
+
+    // Find the maximum number of days spent
+    const maxDays = Math.max(...this.visitedCountries.map(country => country.numberOfDaysSpent));
+
+    // Sum all days except the maximum
+    return this.visitedCountries
+        .filter(country => country.numberOfDaysSpent !== maxDays)
+        .reduce((acc, country) => acc + country.numberOfDaysSpent, 0);
+  }
 }

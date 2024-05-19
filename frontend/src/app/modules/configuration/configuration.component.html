@@ -48,3 +48,19 @@
         </p-panel>
     </div>
 </div>
+
+<div style="display: flex; justify-content: center; align-items: center; padding-top: 10px">
+    <div style="width: 500px">
+        <p-panel header="Thereabout API Authentication Key">
+            <div class="flex flex-column gap-2">
+                <input
+                        id="thereabout-api-key"
+                        type="text"
+                        pInputText
+                        style="width: 100%"
+                        [value]="bearerToken"
+                        [disabled]="true"/>
+            </div>
+        </p-panel>
+    </div>
+</div>

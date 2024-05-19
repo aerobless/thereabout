@@ -7,7 +7,8 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@Entity(name = "location_history_entry")
+@Entity
+@Table(name = "location_history_entry")
 @Builder
 @AllArgsConstructor
 @RequiredArgsConstructor

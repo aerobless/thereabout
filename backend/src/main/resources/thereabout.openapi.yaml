@@ -201,8 +201,66 @@ paths:
         500:
           $ref: '#/components/responses/500'
 
+  /backend/api/v1/statistics:
+    get:
+      summary: Statistics about the user's location history.
+      tags:
+        - statistics
+      operationId: getStatistics
+      responses:
+        200:
+          description: Successful response containing the users statistics.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStatistics'
+        500:
+          $ref: '#/components/responses/500'
+
 components:
   schemas:
+    UserStatistics:
+      description: The status of the file import process.
+      type: object
+      required:
+        - visitedCountries
+      properties:
+        visitedCountries:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountryStatistic"
+          x-field-extra-annotation: "@lombok.Builder.Default"
+    CountryStatistic:
+      type: object
+      required:
+        - countryIsoCode
+      properties:
+        countryIsoCode:
+          type: string
+          example: "CH"
+          description: The ISO 3166-1 alpha-2 country code
+        countryName:
+          type: string
+          example: "Switzerland"
+          description: The full english name of the country
+        continent:
+          type: string
+          example: "EU"
+          description: The continent the country is located in
+        firstVisit:
+          type: string
+          format: date
+          example: "2012-01-31"
+          description: The first time the country was visited by the user
+        lastVisit:
+          type: string
+          format: date
+          example: "2012-01-31"
+          description: The last time the country was visited by the user
+        numberOfDaysSpent:
+          type: number
+          description: The number of days spent in the country
+
     FileImportStatus:
       description: The status of the file import process.
       type: object

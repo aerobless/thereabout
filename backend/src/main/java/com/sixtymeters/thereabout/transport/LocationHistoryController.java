@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.transport;
 
+import com.sixtymeters.thereabout.domain.AuthorizationService;
 import com.sixtymeters.thereabout.domain.LocationHistoryService;
 import com.sixtymeters.thereabout.generated.api.LocationApi;
 import com.sixtymeters.thereabout.generated.model.GenAddGeoJsonLocation200Response;
@@ -25,12 +26,15 @@ import java.util.Optional;
 public class LocationHistoryController implements LocationApi {
 
     private final LocationHistoryService locationHistoryService;
+    private final AuthorizationService authorizationService;
     private static final LocationHistoryMapper LOCATION_HISTORY_MAPPER = LocationHistoryMapper.INSTANCE;
 
     @Transactional
     @Override
     public ResponseEntity<GenAddGeoJsonLocation200Response> addGeoJsonLocation(String authorization, GenAddGeoJsonLocationRequest genAddGeoJsonLocationRequest) {
-        log.info("Received GeoJson location data via HTTP Endpoint /backend/api/v1/location/add-geojson-location" + authorization);
+        authorizationService.isAuthorised(authorization);
+        log.info("Received GeoJson location data via HTTP Endpoint /backend/api/v1/location/add-geojson-location");
+
         genAddGeoJsonLocationRequest.getLocations().stream()
                 .map(LOCATION_HISTORY_MAPPER::map)
                 .forEach(locationHistoryService::createLocationHistoryEntry);

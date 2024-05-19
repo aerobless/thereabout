@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,12 +19,15 @@ public class ConfigurationService {
 
     private final ConfigurationRepository configurationRepository;
 
-    private Optional<String> getConfiguration(ConfigurationKey key) {
-        return configurationRepository.findById(key).map(ConfigurationEntity::getConfigValue);
-    }
+    private final Map<ConfigurationKey, String> configurationCache = new HashMap<>();
 
     public String getThereaboutApiKey() {
-        return getConfiguration(ConfigurationKey.THEREABOUT_API_KEY).orElseGet(this::persistNewThereaboutApiKey);
+        return configurationCache.computeIfAbsent(ConfigurationKey.THEREABOUT_API_KEY, k ->
+                getConfiguration(ConfigurationKey.THEREABOUT_API_KEY).orElseGet(this::persistNewThereaboutApiKey));
+    }
+
+    private Optional<String> getConfiguration(ConfigurationKey key) {
+        return configurationRepository.findById(key).map(ConfigurationEntity::getConfigValue);
     }
 
     private String persistNewThereaboutApiKey() {

@@ -11,6 +11,7 @@ import {MessageService} from "primeng/api";
 import {CountryStatistic, FrontendService, StatisticsService} from "../../../../generated/backend-api/thereabout";
 import {CardModule} from "primeng/card";
 import {TableModule} from "primeng/table";
+import {ReformatDatePipe} from "../../util/reformat-date.pipe";
 
 @Component({
   selector: 'app-statistics',
@@ -24,7 +25,8 @@ import {TableModule} from "primeng/table";
     ProgressBarModule,
     ToolbarModule,
     CardModule,
-    TableModule
+    TableModule,
+    ReformatDatePipe
   ],
   templateUrl: './statistics.component.html',
   styleUrl: './statistics.component.scss'

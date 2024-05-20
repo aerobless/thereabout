@@ -58,8 +58,8 @@
                     <tr>
                         <td>{{countryNameFormat(visitedCountry)}}</td>
                         <td>{{mapContinent(visitedCountry.continent)}}</td>
-                        <td>{{visitedCountry.firstVisit}}</td>
-                        <td>{{visitedCountry.lastVisit}}</td>
+                        <td>{{visitedCountry.firstVisit | reformatDate}}</td>
+                        <td>{{visitedCountry.lastVisit | reformatDate}}</td>
                         <td>{{visitedCountry.numberOfDaysSpent}}</td>
                     </tr>
                 </ng-template>

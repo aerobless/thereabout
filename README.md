@@ -1,7 +1,11 @@
 # thereabout
 Thereabout is a self-hosted replacement for Google Location History. It can import your existing Google Location History and visualise it as a heatmap on Google Maps.
 
-![Thereabout UI](/documentation/img/v5.png)
+![Thereabout Main UI](/documentation/img/v6_main.png)
+
+![Thereabout Statistics](/documentation/img/v6_statistics.png)
+
+![Thereabout Configuration](/documentation/img/v6_config.png)
 
 ## Features
 + Load existing Google Location History ("Records.json") when exported via [Google Takeout](https://takeout.google.com).

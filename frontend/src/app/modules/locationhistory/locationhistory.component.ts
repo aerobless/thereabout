@@ -17,7 +17,7 @@ import {FormsModule} from "@angular/forms";
 import {ButtonModule} from "primeng/button";
 import {CalendarModule} from "primeng/calendar";
 import {PanelModule} from "primeng/panel";
-import {NgIf} from "@angular/common";
+import {NgForOf, NgIf} from "@angular/common";
 import {FloatLabelModule} from "primeng/floatlabel";
 import QuickFilterDateCombo from "./quick-filter-date-combo";
 import {TableModule, TableRowSelectEvent} from "primeng/table";
@@ -49,6 +49,7 @@ import {Router} from "@angular/router";
         FloatLabelModule,
         TableModule,
         ToastModule,
+        NgForOf,
     ],
     templateUrl: './locationhistory.component.html',
     styleUrl: './locationhistory.component.scss'
@@ -73,7 +74,7 @@ export class LocationhistoryComponent implements OnInit {
     @ViewChild('exactDateCalendarInput')
     private exactDateCalendarInput: any;
 
-    selectedLocationEntry: LocationHistoryEntry | undefined = undefined;
+    selectedLocationEntries: LocationHistoryEntry[] = [];
 
     constructor(private readonly locationService: LocationService, private readonly geocodeService: MapGeocoder, private messageService: MessageService, private router: Router) {
     }
@@ -99,6 +100,7 @@ export class LocationhistoryComponent implements OnInit {
             this.dayViewData = locations.map(location => {
                 return {lat: location.latitude, lng: location.longitude}
             });
+            this.selectedLocationEntries = [];
         });
     }
 
@@ -164,8 +166,8 @@ export class LocationhistoryComponent implements OnInit {
     protected readonly QuickFilterDateCombo = QuickFilterDateCombo;
 
     locateDayView() {
-        if (this.selectedLocationEntry) {
-            this.center = {lat: this.selectedLocationEntry.latitude, lng: this.selectedLocationEntry.longitude};
+        if (this.selectedLocationEntries.length > 0) {
+            this.center = {lat: this.selectedLocationEntries[0].latitude, lng: this.selectedLocationEntries[0].longitude};
             this.applyZoom(16);
         } else {
             if (this.dayViewData.length == 0) return;
@@ -204,8 +206,10 @@ export class LocationhistoryComponent implements OnInit {
 
     }
 
-    deleteLocationEntry(entry: LocationHistoryEntry) {
-        this.locationService.deleteLocations([entry.id]).subscribe(() => {
+    deleteLocationEntry() {
+        if (this.selectedLocationEntries.length == 0) return;
+
+        this.locationService.deleteLocations(this.selectedLocationEntries.map(value => value.id)).subscribe(() => {
             this.messageService.add({severity: 'success', summary: 'Success', detail: 'Location entry deleted'});
             this.loadDayViewData();
         });

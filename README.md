@@ -13,7 +13,10 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
   + Locate the first or any entry on the map
   + List all location entries for the given day and show the selected entry as a marker on the map
   + Open Google Photos on the selected day
-  + Delete location entry
+  + CRUD
+    + Deletion
+      + bulk delete entries via selection
+      + delete all entries for a specific day
 + Geocoding: Search for any location on Google Maps
 + Statistics
   + Number of countries visited
@@ -29,9 +32,6 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
 
 ## Roadmap
 + CRUD
-  + Deletion
-    + bulk delete entries via selection
-    + delete all entries for a specific day
   + Add entry
   + Move entry via Google Maps Pin
 + Reverse Geolocation

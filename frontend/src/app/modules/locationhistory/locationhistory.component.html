@@ -24,7 +24,7 @@
         <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
             <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions"></map-heatmap-layer>
             <map-polyline [path]="dayViewData"></map-polyline>
-            <map-marker *ngIf="selectedLocationEntry" [position]="{lat: selectedLocationEntry.latitude, lng: selectedLocationEntry.longitude}"></map-marker>
+            <map-marker *ngFor="let entry of selectedLocationEntries" [position]="{lat: entry.latitude, lng: entry.longitude}"></map-marker>
         </google-map>
     </div>
 
@@ -70,27 +70,35 @@
                 </div>
                 <p-table
                         [value]="dayViewDataFull"
-                        selectionMode="single"
-                        [(selection)]="selectedLocationEntry"
+                        selectionMode="multiple"
+                        [(selection)]="selectedLocationEntries"
                         styleClass="p-datatable-sm"
                         scrollable="true"
-                        scrollHeight="calc(100vh - 500px)"
+                        scrollHeight="calc(100vh - 550px)"
                         (onRowSelect)="onRowSelect($event)"
                         [metaKeySelection]="false" dataKey="id">
+                    <ng-template pTemplate="caption">
+                        <div class="flex flex-wrap justify-content-end gap-2">
+                            <p-button label="New" icon="pi pi-plus" text (onClick)="decrementDate()" disabled="true" />
+                            <p-button label="Delete" icon="pi pi-trash" severity="danger" text (onClick)="deleteLocationEntry()" />
+                        </div>
+                    </ng-template>
                     <ng-template pTemplate="header">
                         <tr>
+                            <th style="width: 4rem"><p-tableHeaderCheckbox /></th>
                             <th>Time</th>
                             <th>Coordinates</th>
                             <th>Altitude</th>
-                            <th>Action</th>
                         </tr>
                     </ng-template>
                     <ng-template pTemplate="body" let-locationEntry>
                         <tr [pSelectableRow]="locationEntry">
+                            <td>
+                                <p-tableCheckbox [value]="locationEntry" [pSelectableRow]="locationEntry" />
+                            </td>
                             <td>{{convertToLocalTime(locationEntry.timestamp)}}</td>
                             <td><p style="font-size: small; white-space:pre-wrap; margin-top: 0; margin-bottom: 0">{{shortCoordinates(locationEntry.latitude,locationEntry.longitude)}}</p></td>
                             <td>{{locationEntry.altitude}}m</td>
-                            <td><p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" (onClick)="deleteLocationEntry(locationEntry)"/></td>
                         </tr>
                     </ng-template>
                 </p-table>

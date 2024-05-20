@@ -15,29 +15,43 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
   + Open Google Photos on the selected day
   + Delete location entry
 + Geocoding: Search for any location on Google Maps
++ Statistics
+  + Number of countries visited
+  + Number of days spent abroad
+  + Detailed list of countries visited with first/last visit, days spent
 + Endpoint to add new location entries continuously , e.g. via Home Assistant
   + Support for [Overland](https://github.com/aaronpk/Overland-iOS) for more accurate tracking independent of HA
+  + One-Click configuration button for Overland
 + Deploy the application via Docker Compose
 + GitHub Build Pipeline
 + Configuration page
   + Upload Google Records.json from the frontend
 
 ## Roadmap
-+ Add detailed geolocation via Google Maps & persist results in DB (verify how many requests are free)
++ CRUD
+  + Deletion
+    + bulk delete entries via selection
+    + delete all entries for a specific day
+  + Add entry
+  + Move entry via Google Maps Pin
++ Reverse Geolocation
+  + Ability to reverse geolocate points with place & POI information
+  + Persist geolocated POIs so that they can be re-used
+  + Tag days based on locations visited, e.g. home, work etc.
 + Day overview page
   + Integrate Google Photos API (low prio)
   + Weather
   + Major locations visited
-  + Add location entry (low prio)
-  + Update location entry (low prio)
-  + calculate & persist total distance travelled in a day
-+ Statistics: number of countries visited, km travelled, ...
+  + calculate distance travelled in a day
++ Statistics:
+  + km travelled
   + yearly: total km travelled, countries visited, ...
 + Security: User Login & secure endpoints
-+ Add location data from the UI
 + Export location history as json
 + Endpoint/Integration with OpenAI, e.g. ask "Where was I in November 2023?",
 + Add support to load other dated data into Thereabout, e.g. chatlogs, temperature for location, weather to make a more comprehensive view of a specific day
++ InMemory TestDB for integration tests
+  + test for CRUD operations
 
 ## Bugs
 + It's possible to trigger multiple imports resulting in duplicated records

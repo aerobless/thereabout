@@ -205,7 +205,7 @@ export class LocationhistoryComponent implements OnInit {
     }
 
     deleteLocationEntry(entry: LocationHistoryEntry) {
-        this.locationService.deleteLocation(entry.id).subscribe(() => {
+        this.locationService.deleteLocations([entry.id]).subscribe(() => {
             this.messageService.add({severity: 'success', summary: 'Success', detail: 'Location entry deleted'});
             this.loadDayViewData();
         });

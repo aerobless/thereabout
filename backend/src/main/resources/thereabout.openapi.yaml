@@ -90,6 +90,27 @@ paths:
           $ref: '#/components/responses/400'
         500:
           $ref: '#/components/responses/500'
+    delete:
+      summary: Delete a list of location entries.
+      tags:
+        - location
+      operationId: deleteLocations
+      parameters:
+        - in: query
+          name: ids
+          schema:
+            type: array
+            items:
+              type: number
+              example: 42
+            example: [42, 43]
+          required: true
+          description: the ids of the location history entries to be deleted
+      responses:
+        204:
+          description: The location history entry was successfully deleted
+        500:
+          $ref: '#/components/responses/500'
   /backend/api/v1/location/geojson:
     post:
       summary: Post GeoJson location data
@@ -130,11 +151,11 @@ paths:
           $ref: '#/components/responses/500'
 
   /backend/api/v1/location/{id}:
-    delete:
-      summary: Delete a specific location history entry.
+    put:
+      summary: Update a specific location history entry.
       tags:
         - location
-      operationId: deleteLocation
+      operationId: updateLocation
       parameters:
         - in: path
           name: id
@@ -142,10 +163,21 @@ paths:
             type: number
             example: 42
           required: true
-          description: the id of the location history entry to be deleted
+          description: the id of the location history entry to be updated
+      requestBody:
+        description: location history entry to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationHistoryEntry"
       responses:
-        204:
-          description: The location history entry was successfully deleted
+        200:
+          description: Successful response containing the updated location history entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationHistoryEntry"
         500:
           $ref: '#/components/responses/500'
 
@@ -351,6 +383,7 @@ components:
               enum:
                 - GOOGLE_IMPORT
                 - THEREABOUT_API
+                - THEREABOUT_API_UPDATE
               description: The source of the location measurement
               example: GOOGLE_IMPORT
             estimatedIsoCountryCode:

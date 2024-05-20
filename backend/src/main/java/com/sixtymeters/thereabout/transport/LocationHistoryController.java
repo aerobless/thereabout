@@ -54,8 +54,8 @@ public class LocationHistoryController implements LocationApi {
     }
 
     @Override
-    public ResponseEntity<Void> deleteLocation(BigDecimal id) {
-        locationHistoryService.deleteLocationHistoryEntry(id.longValue());
+    public ResponseEntity<Void> deleteLocations(List<BigDecimal> ids) {
+        locationHistoryService.deleteLocationHistoryEntries(ids.stream().map(BigDecimal::longValue).toList());
         return ResponseEntity.noContent().build();
     }
 
@@ -85,6 +85,12 @@ public class LocationHistoryController implements LocationApi {
                 .toList();
 
         return ResponseEntity.ok(locationHistory);
+    }
+
+    @Override
+    public ResponseEntity<GenLocationHistoryEntry> updateLocation(BigDecimal id, GenLocationHistoryEntry genLocationHistoryEntry) {
+        final var updatedEntry = locationHistoryService.updateLocationHistoryEntry(id.longValue(), LOCATION_HISTORY_MAPPER.map(genLocationHistoryEntry));
+        return ResponseEntity.ok(LOCATION_HISTORY_MAPPER.map(updatedEntry));
     }
 
 }

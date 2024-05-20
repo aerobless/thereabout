@@ -4,10 +4,12 @@ import com.google.common.collect.Lists;
 import com.sixtymeters.thereabout.domain.importer.GoogleLocationHistoryImporter;
 import com.sixtymeters.thereabout.model.LocationHistoryEntity;
 import com.sixtymeters.thereabout.model.LocationHistoryRepository;
+import com.sixtymeters.thereabout.model.LocationHistorySource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uk.recurse.geocoding.reverse.Country;
 import uk.recurse.geocoding.reverse.ReverseGeocoder;
 
@@ -29,6 +31,8 @@ public class LocationHistoryService {
     private final static int CHUNK_SIZE = 10000;
 
     private final static AtomicInteger importProgress = new AtomicInteger(0);
+
+    private final int MANUAL_ACCURACY = 0;
 
     public List<LocationHistoryEntity> getLocationHistory(LocalDate from, LocalDate to) {
         return locationHistoryRepository.findAllByTimestampBetween(from.atStartOfDay(), to.atStartOfDay().plusDays(1));
@@ -85,8 +89,22 @@ public class LocationHistoryService {
                 .orElse(null);
     }
 
-    public void deleteLocationHistoryEntry(long locationHistoryEntryId) {
-        locationHistoryRepository.deleteById(locationHistoryEntryId);
-        log.info("Deleted location history entry with id %d.".formatted(locationHistoryEntryId));
+    public void deleteLocationHistoryEntries(List<Long> locationHistoryEntryIds) {
+        locationHistoryRepository.deleteAllById(locationHistoryEntryIds);
+        log.info("Deleted %d location history entries.".formatted(locationHistoryEntryIds.size()));
+    }
+
+    @Transactional
+    public LocationHistoryEntity updateLocationHistoryEntry(long entryId, LocationHistoryEntity updateEntry) {
+        final var existingEntry = locationHistoryRepository.findById(entryId).orElseThrow();
+
+        existingEntry.setLatitude(updateEntry.getLatitude());
+        existingEntry.setLongitude(updateEntry.getLongitude());
+        existingEntry.setTimestamp(updateEntry.getTimestamp());
+        existingEntry.setHorizontalAccuracy(MANUAL_ACCURACY);
+        existingEntry.setVerticalAccuracy(MANUAL_ACCURACY);
+        existingEntry.setSource(LocationHistorySource.THEREABOUT_API_UPDATE);
+        existingEntry.setEstimatedIsoCountryCode(estimateCountryForCoordinates(updateEntry));
+        return locationHistoryRepository.save(existingEntry);
     }
 }

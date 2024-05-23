@@ -15,6 +15,7 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
   + Filter by date range: custom, YTD, 1 year, 5 years, full history
 + Visualise a specific day as a polygon line on Google Maps
   + Locate the first or any entry on the map
+  + Highlight the entry your cursor is hovering over
   + List all location entries for the given day and show the selected entry as a marker on the map
   + Open Google Photos on the selected day
   + CRUD

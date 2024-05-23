@@ -75,6 +75,16 @@ export class LocationhistoryComponent implements OnInit {
     private exactDateCalendarInput: any;
 
     selectedLocationEntries: LocationHistoryEntry[] = [];
+    highlightedLocationEntry: LocationHistoryEntry | undefined;
+
+    blueHighlightMarker = {
+        path: "M0,0 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0",
+        fillColor: "blue",
+        fillOpacity: 0.6,
+        strokeWeight: 0,
+        rotation: 0,
+        scale: 2,
+    };
 
     constructor(private readonly locationService: LocationService, private readonly geocodeService: MapGeocoder, private messageService: MessageService, private router: Router) {
     }
@@ -202,10 +212,6 @@ export class LocationhistoryComponent implements OnInit {
 
     }
 
-    onRowSelect($event: TableRowSelectEvent) {
-
-    }
-
     deleteLocationEntry() {
         if (this.selectedLocationEntries.length == 0) return;
 
@@ -221,5 +227,15 @@ export class LocationhistoryComponent implements OnInit {
 
     openStatistics() {
         this.router.navigate(['statistics']);
+    }
+
+    onMouseOverLocationEntry($event: MouseEvent, locationEntry: any) {
+        if($event.type == 'mouseleave') {
+            this.highlightedLocationEntry = undefined;
+        }
+
+        if(locationEntry) {
+            this.highlightedLocationEntry = locationEntry;
+        }
     }
 }

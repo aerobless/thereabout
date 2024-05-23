@@ -25,6 +25,7 @@
             <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions"></map-heatmap-layer>
             <map-polyline [path]="dayViewData"></map-polyline>
             <map-marker *ngFor="let entry of selectedLocationEntries" [position]="{lat: entry.latitude, lng: entry.longitude}"></map-marker>
+            <map-marker *ngIf="highlightedLocationEntry" [position]="{lat: highlightedLocationEntry.latitude, lng: highlightedLocationEntry.longitude}" [icon]="blueHighlightMarker"></map-marker>
         </google-map>
     </div>
 
@@ -75,7 +76,7 @@
                         styleClass="p-datatable-sm"
                         scrollable="true"
                         scrollHeight="calc(100vh - 550px)"
-                        (onRowSelect)="onRowSelect($event)"
+                        (mouseleave)="onMouseOverLocationEntry($event, null)"
                         [metaKeySelection]="false" dataKey="id">
                     <ng-template pTemplate="caption">
                         <div class="flex flex-wrap justify-content-end gap-2">
@@ -92,7 +93,7 @@
                         </tr>
                     </ng-template>
                     <ng-template pTemplate="body" let-locationEntry>
-                        <tr [pSelectableRow]="locationEntry">
+                        <tr [pSelectableRow]="locationEntry" (mouseenter)="onMouseOverLocationEntry($event, locationEntry)">
                             <td>
                                 <p-tableCheckbox [value]="locationEntry" [pSelectableRow]="locationEntry" />
                             </td>

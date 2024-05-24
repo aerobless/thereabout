@@ -22,6 +22,8 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
     + Deletion
       + bulk delete entries via selection
       + delete all entries for a specific day
+    + Update
+      + Drag map markers to update their location
 + Geocoding: Search for any location on Google Maps
 + Statistics
   + Number of countries visited

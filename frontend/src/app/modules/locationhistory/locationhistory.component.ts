@@ -68,7 +68,6 @@ export class LocationhistoryComponent implements OnInit {
     toDate: Date = new Date();
 
     // Day view
-    dayViewData: { lng: number; lat: number }[] = [];
     dayViewDataFull: Array<LocationHistoryEntry> = [];
     exactDate: Date = new Date();
     @ViewChild('exactDateCalendarInput')
@@ -107,10 +106,13 @@ export class LocationhistoryComponent implements OnInit {
         if (!this.exactDate) return;
         this.locationService.getLocations(this.dateToString(this.exactDate), this.dateToString(this.exactDate)).subscribe(locations => {
             this.dayViewDataFull = locations;
-            this.dayViewData = locations.map(location => {
-                return {lat: location.latitude, lng: location.longitude}
-            });
             this.selectedLocationEntries = [];
+        });
+    }
+
+    minifyDayViewData(data: Array<LocationHistoryEntry>){
+        return data.map(location => {
+            return {lat: location.latitude, lng: location.longitude}
         });
     }
 
@@ -180,8 +182,8 @@ export class LocationhistoryComponent implements OnInit {
             this.center = {lat: this.selectedLocationEntries[0].latitude, lng: this.selectedLocationEntries[0].longitude};
             this.applyZoom(16);
         } else {
-            if (this.dayViewData.length == 0) return;
-            this.center = this.dayViewData[0];
+            if (this.dayViewDataFull.length == 0) return;
+            this.center = this.minifyDayViewData(this.dayViewDataFull)[0];
             this.applyZoom(11);
         }
     }
@@ -216,7 +218,7 @@ export class LocationhistoryComponent implements OnInit {
         if (this.selectedLocationEntries.length == 0) return;
 
         this.locationService.deleteLocations(this.selectedLocationEntries.map(value => value.id)).subscribe(() => {
-            this.messageService.add({severity: 'success', summary: 'Success', detail: 'Location entry deleted'});
+            this.messageService.add({severity: 'success', summary: 'Location deleted', detail: 'The location entry was successfully deleted.'});
             this.loadDayViewData();
         });
     }
@@ -237,5 +239,13 @@ export class LocationhistoryComponent implements OnInit {
         if(locationEntry) {
             this.highlightedLocationEntry = locationEntry;
         }
+    }
+
+    markerDragged(entry: LocationHistoryEntry, $event: google.maps.MapMouseEvent) {
+        entry.latitude = $event.latLng!.lat();
+        entry.longitude = $event.latLng!.lng();
+        this.locationService.updateLocation(entry.id, entry).subscribe(() => {
+            this.messageService.add({severity: 'success', summary: 'Location updated', detail: `The location was successfully updated.`});
+        });
     }
 }

@@ -81,6 +81,7 @@
                     <ng-template pTemplate="caption">
                         <div class="flex flex-wrap justify-content-end gap-2">
                             <p-button label="New" icon="pi pi-plus" text (onClick)="decrementDate()" disabled="true" />
+                            <p-button label="Edit" icon="pi pi-pen-to-square" text (onClick)="showEditModal()" [disabled]="editDisabled()" />
                             <p-button label="Delete" icon="pi pi-trash" severity="danger" text (onClick)="deleteLocationEntry()" />
                         </div>
                     </ng-template>
@@ -107,3 +108,25 @@
         </div>
     </div>
 </div>
+
+<p-dialog header="Edit Location" [modal]="true" [(visible)]="editModalVisible" [style]="{ width: '25rem' }" *ngIf="selectedLocationEntries.length === 1">
+    <div class="flex align-items-center gap-3 mb-3">
+        <label for="editDateTime" class="font-semibold w-6rem">Date & Time</label>
+        <p-calendar [(ngModel)]="editDate" [iconDisplay]="'input'" appendTo="body"
+                    [showTime]="true"
+                    (ngModelChange)="selectedLocationEntries[0].timestamp = editDate.toISOString()"
+                    [showIcon]="true" id="editDateTime" dateFormat="dd.mm.yy"></p-calendar>
+    </div>
+    <div class="flex align-items-center gap-3 mb-5">
+        <label for="altitudeInput" class="font-semibold w-6rem">Altitude</label>
+        <p-inputNumber id="altitudeInput"
+                       inputId="integeronly"
+                       [min]="0"
+                       suffix="m"
+                       [(ngModel)]="selectedLocationEntries[0].altitude" />
+    </div>
+    <div class="flex justify-content-end gap-2">
+        <p-button label="Cancel" severity="secondary" (click)="cancelEdit()" />
+        <p-button label="Save" (click)="saveEdit()" />
+    </div>
+</p-dialog>

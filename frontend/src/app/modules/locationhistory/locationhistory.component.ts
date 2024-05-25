@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit, ViewChild} from '@angular/core';
 import {
     GoogleMap, MapAdvancedMarker,
     MapGeocoder,
@@ -24,6 +24,8 @@ import {TableModule, TableRowSelectEvent} from "primeng/table";
 import {MessageService} from "primeng/api";
 import {ToastModule} from "primeng/toast";
 import {Router} from "@angular/router";
+import {DialogModule} from "primeng/dialog";
+import {InputNumberModule} from "primeng/inputnumber";
 
 
 @Component({
@@ -50,6 +52,8 @@ import {Router} from "@angular/router";
         TableModule,
         ToastModule,
         NgForOf,
+        DialogModule,
+        InputNumberModule,
     ],
     templateUrl: './locationhistory.component.html',
     styleUrl: './locationhistory.component.scss'
@@ -73,6 +77,10 @@ export class LocationhistoryComponent implements OnInit {
     @ViewChild('exactDateCalendarInput')
     private exactDateCalendarInput: any;
 
+    // Edit Modal
+    editModalVisible: boolean = false;
+    editDate: Date = new Date();
+
     selectedLocationEntries: LocationHistoryEntry[] = [];
     highlightedLocationEntry: LocationHistoryEntry | undefined;
 
@@ -85,7 +93,10 @@ export class LocationhistoryComponent implements OnInit {
         scale: 2,
     };
 
-    constructor(private readonly locationService: LocationService, private readonly geocodeService: MapGeocoder, private messageService: MessageService, private router: Router) {
+    constructor(private readonly locationService: LocationService,
+                private readonly geocodeService: MapGeocoder,
+                private messageService: MessageService,
+                private router: Router) {
     }
 
     ngOnInit() {
@@ -110,7 +121,7 @@ export class LocationhistoryComponent implements OnInit {
         });
     }
 
-    minifyDayViewData(data: Array<LocationHistoryEntry>){
+    minifyDayViewData(data: Array<LocationHistoryEntry>) {
         return data.map(location => {
             return {lat: location.latitude, lng: location.longitude}
         });
@@ -179,7 +190,10 @@ export class LocationhistoryComponent implements OnInit {
 
     locateDayView() {
         if (this.selectedLocationEntries.length > 0) {
-            this.center = {lat: this.selectedLocationEntries[0].latitude, lng: this.selectedLocationEntries[0].longitude};
+            this.center = {
+                lat: this.selectedLocationEntries[0].latitude,
+                lng: this.selectedLocationEntries[0].longitude
+            };
             this.applyZoom(16);
         } else {
             if (this.dayViewDataFull.length == 0) return;
@@ -218,7 +232,11 @@ export class LocationhistoryComponent implements OnInit {
         if (this.selectedLocationEntries.length == 0) return;
 
         this.locationService.deleteLocations(this.selectedLocationEntries.map(value => value.id)).subscribe(() => {
-            this.messageService.add({severity: 'success', summary: 'Location deleted', detail: 'The location entry was successfully deleted.'});
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Location deleted',
+                detail: 'The location entry was successfully deleted.'
+            });
             this.loadDayViewData();
         });
     }
@@ -232,11 +250,11 @@ export class LocationhistoryComponent implements OnInit {
     }
 
     onMouseOverLocationEntry($event: MouseEvent, locationEntry: any) {
-        if($event.type == 'mouseleave') {
+        if ($event.type == 'mouseleave') {
             this.highlightedLocationEntry = undefined;
         }
 
-        if(locationEntry) {
+        if (locationEntry) {
             this.highlightedLocationEntry = locationEntry;
         }
     }
@@ -245,7 +263,37 @@ export class LocationhistoryComponent implements OnInit {
         entry.latitude = $event.latLng!.lat();
         entry.longitude = $event.latLng!.lng();
         this.locationService.updateLocation(entry.id, entry).subscribe(() => {
-            this.messageService.add({severity: 'success', summary: 'Location updated', detail: `The location was successfully updated.`});
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Location updated',
+                detail: `The location was successfully updated.`
+            });
         });
     }
+
+    editDisabled() {
+        return !(this.selectedLocationEntries.length === 1);
+    }
+
+    showEditModal() {
+        this.editModalVisible = true;
+        this.editDate = new Date(this.selectedLocationEntries[0].timestamp);
+    }
+
+    cancelEdit() {
+        this.loadDayViewData()
+    }
+
+    saveEdit() {
+        this.locationService.updateLocation(this.selectedLocationEntries[0].id, this.selectedLocationEntries[0]).subscribe(() => {
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Location updated',
+                detail: `The location was successfully updated.`
+            });
+            this.loadDayViewData();
+        });
+        this.editModalVisible = false;
+    }
+
 }

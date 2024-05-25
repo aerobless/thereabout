@@ -98,9 +98,10 @@ public class LocationHistoryService {
     public LocationHistoryEntity updateLocationHistoryEntry(long entryId, LocationHistoryEntity updateEntry) {
         final var existingEntry = locationHistoryRepository.findById(entryId).orElseThrow();
 
+        existingEntry.setTimestamp(updateEntry.getTimestamp());
+        existingEntry.setAltitude(updateEntry.getAltitude());
         existingEntry.setLatitude(updateEntry.getLatitude());
         existingEntry.setLongitude(updateEntry.getLongitude());
-        existingEntry.setTimestamp(updateEntry.getTimestamp());
         existingEntry.setHorizontalAccuracy(MANUAL_ACCURACY);
         existingEntry.setVerticalAccuracy(MANUAL_ACCURACY);
         existingEntry.setSource(LocationHistorySource.THEREABOUT_API_UPDATE);

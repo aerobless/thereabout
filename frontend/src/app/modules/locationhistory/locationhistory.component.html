@@ -80,8 +80,8 @@
                         [metaKeySelection]="false" dataKey="id">
                     <ng-template pTemplate="caption">
                         <div class="flex flex-wrap justify-content-end gap-2">
-                            <p-button label="New" icon="pi pi-plus" text (onClick)="decrementDate()" disabled="true" />
-                            <p-button label="Edit" icon="pi pi-pen-to-square" text (onClick)="showEditModal()" [disabled]="editDisabled()" />
+                            <p-button label="New" icon="pi pi-plus" text (onClick)="createNewLocationEntry()" [disabled]="newLocationBtnDisabled()" />
+                            <p-button label="Edit" icon="pi pi-pen-to-square" text (onClick)="showEditModal()" [disabled]="editLocationBtnDisabled()" />
                             <p-button label="Delete" icon="pi pi-trash" severity="danger" text (onClick)="deleteLocationEntry()" />
                         </div>
                     </ng-template>

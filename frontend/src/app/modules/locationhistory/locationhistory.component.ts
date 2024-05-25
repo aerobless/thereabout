@@ -113,11 +113,15 @@ export class LocationhistoryComponent implements OnInit {
         });
     }
 
-    loadDayViewData() {
+    loadDayViewData(preselectedLocationId?: number) {
         if (!this.exactDate) return;
         this.locationService.getLocations(this.dateToString(this.exactDate), this.dateToString(this.exactDate)).subscribe(locations => {
             this.dayViewDataFull = locations;
-            this.selectedLocationEntries = [];
+            if(preselectedLocationId){
+                this.selectedLocationEntries = locations.filter(value => value.id === preselectedLocationId);
+            } else {
+                this.selectedLocationEntries = [];
+            }
         });
     }
 
@@ -271,8 +275,12 @@ export class LocationhistoryComponent implements OnInit {
         });
     }
 
-    editDisabled() {
+    editLocationBtnDisabled() {
         return !(this.selectedLocationEntries.length === 1);
+    }
+
+    newLocationBtnDisabled() {
+        return !(this.selectedLocationEntries.length === 0 || this.selectedLocationEntries.length === 1);
     }
 
     showEditModal() {
@@ -296,4 +304,39 @@ export class LocationhistoryComponent implements OnInit {
         this.editModalVisible = false;
     }
 
+    createNewLocationEntry() {
+        if (this.selectedLocationEntries.length === 1){
+            this.locationService.addLocation({
+                latitude: this.selectedLocationEntries[0].latitude,
+                longitude: this.selectedLocationEntries[0].longitude,
+                timestamp: new Date(this.selectedLocationEntries[0].timestamp).toISOString(),
+                id: 0,
+                altitude: 0,
+            }).subscribe(resp => {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Location created',
+                    detail: `The location was successfully created.`
+                });
+                this.loadDayViewData(resp.id);
+            });
+        }
+
+        if (this.selectedLocationEntries.length === 0){
+            this.locationService.addLocation({
+                latitude: this.center.lat,
+                longitude: this.center.lng,
+                timestamp: new Date(this.exactDate).toISOString(),
+                id: 0,
+                altitude: 0,
+            }).subscribe(resp => {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Location created',
+                    detail: `The location was successfully created.`
+                });
+                this.loadDayViewData(resp.id);
+            });
+        }
+    }
 }

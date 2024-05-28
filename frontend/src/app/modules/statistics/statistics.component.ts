@@ -12,6 +12,7 @@ import {CountryStatistic, FrontendService, StatisticsService} from "../../../../
 import {CardModule} from "primeng/card";
 import {TableModule} from "primeng/table";
 import {ReformatDatePipe} from "../../util/reformat-date.pipe";
+import {getFlagEmoji} from "../../util/country-util";
 
 @Component({
   selector: 'app-statistics',
@@ -48,16 +49,8 @@ export class StatisticsComponent implements OnInit {
     this.router.navigate(['']);
   }
 
-  getFlagEmoji(countryCode: string): string {
-    const codePoints = countryCode
-        .toUpperCase()
-        .split('')
-        .map((char: string) => 127397 + char.charCodeAt(0));
-    return String.fromCodePoint(...codePoints);
-  }
-
   countryNameFormat(countryStats: CountryStatistic): string {
-    return `${this.getFlagEmoji(countryStats.countryIsoCode)} ${countryStats.countryName}`;
+    return `${getFlagEmoji(countryStats.countryIsoCode)} ${countryStats.countryName}`;
   }
 
   mapContinent(continent: string): string {

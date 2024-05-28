@@ -12,42 +12,40 @@
 </p-toolbar>
 
 <div style="padding: 20px">
-    <h1>2024</h1>
-
-    <div style="display: flex; justify-content: left;">
-        <div style="max-width: 450px; padding: 10px">
-            <p-panel>
-                <ng-template pTemplate="header">
-                    <div class="flex align-items-center gap-2">
-            <span class="font-bold">
-                Singapore & Bali 🏝️
-            </span>
-                    </div>
-                </ng-template>
-                <ng-template pTemplate="footer">
-                    <div class="flex flex-wrap align-items-center justify-content-between gap-3">
+    <div *ngFor="let year of getYears()">
+        <h1>{{year}}</h1>
+        <div style="display: flex; justify-content: left;">
+            <div *ngFor="let trip of getTripsForYear(year)" style="width: 450px; padding: 10px">
+                <p-panel>
+                    <ng-template pTemplate="header">
                         <div class="flex align-items-center gap-2">
-                            <p-chip label="🇸🇬 Singapore" />
-                            <p-chip label="🇮🇩 Indonesia" />
+                            <span class="font-bold">
+                                {{trip.title}}
+                            </span>
                         </div>
-                        <span class="p-text-secondary">
+                    </ng-template>
+                    <ng-template pTemplate="footer">
+                        <div class="flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div class="flex align-items-center gap-2">
+                                <p-chip *ngFor="let country of trip.visitedCountries" label="{{getFlagEmoji(country.countryIsoCode!)}} {{country.countryName}}" />
+                            </div>
+                            <span class="p-text-secondary">
                     <p-splitButton
                             label="View"
                             severity="secondary"
                             [model]="tripPanelMenuItems"
                             outlined />
                 </span>
-                    </div>
-                </ng-template>
-                <ng-template pTemplate="icons">
-                    <p-chip label="14 days" icon="pi pi-calendar" />
-                </ng-template>
-                <p class="m-0">
-                    We celebrated New Years Eve in Singapore and then flew to Bali for some time in the sun!
-                </p>
-            </p-panel>
+                        </div>
+                    </ng-template>
+                    <ng-template pTemplate="icons">
+                        <p-chip label="{{calculateDaysSpent(trip)}} days" icon="pi pi-calendar" />
+                    </ng-template>
+                    <p class="m-0">
+                        {{trip.description}}
+                    </p>
+                </p-panel>
+            </div>
         </div>
     </div>
-
-    <h1>2023</h1>
 </div>

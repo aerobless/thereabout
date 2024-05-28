@@ -8,6 +8,9 @@ import {PanelModule} from "primeng/panel";
 import {ChipModule} from "primeng/chip";
 import {TagModule} from "primeng/tag";
 import {SplitButtonModule} from "primeng/splitbutton";
+import {Trip} from "../../../../generated/backend-api/thereabout";
+import {NgForOf} from "@angular/common";
+import {getFlagEmoji} from "../../util/country-util";
 
 @Component({
   selector: 'app-trips',
@@ -19,7 +22,8 @@ import {SplitButtonModule} from "primeng/splitbutton";
         PanelModule,
         ChipModule,
         TagModule,
-        SplitButtonModule
+        SplitButtonModule,
+        NgForOf
     ],
   templateUrl: './trips.component.html',
   styleUrl: './trips.component.scss'
@@ -39,10 +43,78 @@ export class TripsComponent {
         }
     ];
 
+    trips: Trip[] = [
+        {
+            id: 1,
+            start: '2024-01-01',
+            end: '2024-01-10',
+            description: 'A trip to the beach',
+            title: 'Beach Trip',
+            visitedCountries: [
+                {
+                    countryIsoCode: 'DE',
+                    countryName: 'Germany'
+                },
+                {
+                    countryIsoCode: 'FR',
+                    countryName: 'France'
+                }
+            ]
+        },
+        {
+            id: 2,
+            start: '2023-02-01',
+            end: '2023-02-10',
+            description: 'A trip to the mountains',
+            title: 'Mountain Trip',
+            visitedCountries: [
+                {
+                    countryIsoCode: 'DE',
+                    countryName: 'Germany'
+                }
+            ]
+        },
+        {
+            id: 3,
+            start: '2021-03-01',
+            end: '2021-03-08',
+            description: 'A trip to the city',
+            title: 'City Trip',
+            visitedCountries: [
+                {
+                    countryIsoCode: 'FR',
+                    countryName: 'France'
+                },
+                {
+                    countryIsoCode: 'IT',
+                    countryName: 'Italy'
+                }
+            ]
+        }
+    ];
+
     constructor(private router: Router, private messageService: MessageService) {
     }
 
     navigateBackToMap() {
         this.router.navigate(['']);
     }
+
+    getYears(): string[] {
+        return this.trips.map(trip => {
+            return trip.start.substring(0, 4);
+        });
+    }
+
+    getTripsForYear(year: string): Trip[] {
+        return this.trips.filter(trip => {
+            return trip.start.startsWith(year);
+        });
+    }
+
+    calculateDaysSpent(trip: Trip): number {
+        return new Date(trip.end).getDate() - new Date(trip.start).getDate();
+    }
+
+    protected readonly getFlagEmoji = getFlagEmoji;
 }

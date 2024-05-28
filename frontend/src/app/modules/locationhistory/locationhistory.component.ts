@@ -339,4 +339,8 @@ export class LocationhistoryComponent implements OnInit {
             });
         }
     }
+
+    openTrips() {
+        this.router.navigate(['trips']);
+    }
 }

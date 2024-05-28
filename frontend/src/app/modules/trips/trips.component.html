@@ -1,0 +1,53 @@
+<p-toolbar>
+    <div class="p-toolbar-group-start">
+        <b style="padding-left: 5px; padding-right: 5px">Thereabout Trips</b>
+    </div>
+    <div class="p-toolbar-group-center">
+        <p-button label="Add Trip" icon="pi pi-plus" class="button" severity="secondary"></p-button>
+    </div>
+    <div class="p-toolbar-group-end">
+        <p-button icon="pi pi-arrow-circle-left" (onClick)="navigateBackToMap()" class="button toolbar-item"
+                  severity="secondary"></p-button>
+    </div>
+</p-toolbar>
+
+<div style="padding: 20px">
+    <h1>2024</h1>
+
+    <div style="display: flex; justify-content: left;">
+        <div style="max-width: 450px; padding: 10px">
+            <p-panel>
+                <ng-template pTemplate="header">
+                    <div class="flex align-items-center gap-2">
+            <span class="font-bold">
+                Singapore & Bali 🏝️
+            </span>
+                    </div>
+                </ng-template>
+                <ng-template pTemplate="footer">
+                    <div class="flex flex-wrap align-items-center justify-content-between gap-3">
+                        <div class="flex align-items-center gap-2">
+                            <p-chip label="🇸🇬 Singapore" />
+                            <p-chip label="🇮🇩 Indonesia" />
+                        </div>
+                        <span class="p-text-secondary">
+                    <p-splitButton
+                            label="View"
+                            severity="secondary"
+                            [model]="tripPanelMenuItems"
+                            outlined />
+                </span>
+                    </div>
+                </ng-template>
+                <ng-template pTemplate="icons">
+                    <p-chip label="14 days" icon="pi pi-calendar" />
+                </ng-template>
+                <p class="m-0">
+                    We celebrated New Years Eve in Singapore and then flew to Bali for some time in the sun!
+                </p>
+            </p-panel>
+        </div>
+    </div>
+
+    <h1>2023</h1>
+</div>

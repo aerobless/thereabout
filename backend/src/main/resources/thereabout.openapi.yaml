@@ -249,8 +249,142 @@ paths:
         500:
           $ref: '#/components/responses/500'
 
+  /backend/api/v1/trip:
+    get:
+      summary: A list of all the trips the user has taken.
+      tags:
+        - trip
+      operationId: getTrips
+      responses:
+        200:
+          description: Successful response containing the users trips.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trip'
+                x-field-extra-annotation: "@lombok.Builder.Default"
+        500:
+          $ref: '#/components/responses/500'
+    post:
+      summary: Add a new trip.
+      tags:
+        - trip
+      operationId: addTrip
+      requestBody:
+        description: the trip to be added
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Trip"
+      responses:
+        200:
+          description: Successful response containing the newly created trip
+          content:
+            application/json:
+              schema:
+                  $ref: "#/components/schemas/Trip"
+        500:
+          $ref: '#/components/responses/500'
+    put:
+      summary: Update a specific trip.
+      tags:
+        - trip
+      operationId: updateTrip
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 42
+          description: the id of the trip to be updated
+          required: true
+      requestBody:
+        description: the trip to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Trip"
+      responses:
+        200:
+          description: Successful response containing the updated trip
+          content:
+            application/json:
+                schema:
+                  $ref: "#/components/schemas/Trip"
+        500:
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete a specific trip.
+      tags:
+        - trip
+      operationId: deleteTrip
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 42
+          description: the id of the trip to be deleted
+          required: true
+      responses:
+        204:
+          description: The trip was successfully deleted
+        500:
+          $ref: '#/components/responses/500'
+
 components:
   schemas:
+    Trip:
+      description: A trip the user has taken.
+      type: object
+      required:
+          - id
+          - start
+          - end
+          - description
+          - title
+      properties:
+        id:
+          type: number
+          description: The unique identifier of the trip
+          example: 42
+        start:
+          type: string
+          format: date
+          example: "2012-01-15"
+          description: The start of the trip
+        end:
+          type: string
+          format: date
+          example: "2012-01-31"
+          description: The end of the trip
+        visitedCountries:
+          type: array
+          items:
+            type: object
+            description: The countries visited during the trip
+            properties:
+              countryIsoCode:
+                type: string
+                example: "CH"
+                description: The ISO 3166-1 alpha-2 country code
+              countryName:
+                type: string
+                example: "Switzerland"
+                description: The full english name of the country
+        description:
+          type: string
+          example: "A trip to the mountains"
+          description: A description of the trip
+        title:
+          type: string
+          example: "Mountain trip"
+          description: The title of the trip
+
     UserStatistics:
       description: The status of the file import process.
       type: object

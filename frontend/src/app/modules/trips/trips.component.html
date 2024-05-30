@@ -3,7 +3,7 @@
         <b style="padding-left: 5px; padding-right: 5px">Thereabout Trips</b>
     </div>
     <div class="p-toolbar-group-center">
-        <p-button label="Add Trip" icon="pi pi-plus" class="button" (onClick)="addTripDialogVisible = true" severity="secondary"></p-button>
+        <p-button label="Add Trip" icon="pi pi-plus" class="button" (onClick)="addTrip()" severity="secondary"></p-button>
     </div>
     <div class="p-toolbar-group-end">
         <p-button icon="pi pi-arrow-circle-left" (onClick)="navigateBackToMap()" class="button toolbar-item"
@@ -12,6 +12,9 @@
 </p-toolbar>
 
 <div style="padding: 20px">
+    <div style="text-align: center" *ngIf="trips.length === 0">
+        <h2> ^^ Add your first trip to get started..</h2>
+    </div>
     <div *ngFor="let year of getYears()">
         <h1>{{year}}</h1>
         <div style="display: flex; justify-content: left; flex-wrap: wrap;">
@@ -34,6 +37,7 @@
                             label="View"
                             severity="secondary"
                             [model]="tripPanelMenuItems"
+                            (onDropdownClick)="onTripPanelMenuClick(trip)"
                             outlined />
                 </span>
                         </div>
@@ -53,11 +57,11 @@
 <p-dialog header="Add new trip" [modal]="true" [(visible)]="addTripDialogVisible" [style]="{ width: '30rem' }">
     <div class="flex align-items-center gap-3 mb-3">
         <label for="tripTitle" class="font-semibold w-6rem">Title</label>
-        <input pInputText id="tripTitle" class="flex-auto" autocomplete="off" />
+        <input pInputText id="tripTitle" class="flex-auto" autocomplete="off" [(ngModel)]="currentTrip.title" />
     </div>
     <div class="flex align-items-center gap-3 mb-3">
         <label for="tripSubtitle" class="font-semibold w-6rem">Subtitle</label>
-        <input pInputText id="tripSubtitle" class="flex-auto" autocomplete="off" />
+        <input pInputText id="tripSubtitle" class="flex-auto" autocomplete="off" [(ngModel)]="currentTrip.description" />
     </div>
     <div class="flex align-items-center gap-3 mb-5">
         <div style="display: flex; gap: 10px" class="align-items-center">
@@ -66,6 +70,8 @@
                 <p-calendar
                         [iconDisplay]="'input'"
                         [showIcon]="true"
+                        [(ngModel)]="currentTripStart"
+                        (ngModelChange)="currentTrip.start = formatIsoDateWithoutTimeZoneAdjustment(currentTripStart!)"
                         id="fromDate"
                         dateFormat="dd.mm.yy"
                         appendTo="body"
@@ -76,6 +82,8 @@
                 <p-calendar
                         [iconDisplay]="'input'"
                         [showIcon]="true"
+                        [(ngModel)]="currentTripEnd"
+                        (ngModelChange)="currentTrip.end = formatIsoDateWithoutTimeZoneAdjustment(currentTripEnd!)"
                         id="toDate"
                         dateFormat="dd.mm.yy"
                         appendTo="body"
@@ -86,6 +94,7 @@
     <span class="p-text-secondary block mb-5">Additional information such as days spent and visited countries are calculated automatically based on your location data.</span>
     <div class="flex justify-content-end gap-2">
         <p-button label="Cancel" severity="secondary" (click)="addTripDialogVisible = false" />
-        <p-button label="Save" (click)="addTripDialogVisible = false" />
+        <p-button *ngIf="!isEdit()" label="Save" (click)="saveTrip()" [disabled]="isSaveButtonDisabled()" />
+        <p-button *ngIf="isEdit()" label="Update" (click)="updateTrip()" [disabled]="isSaveButtonDisabled()" />
     </div>
 </p-dialog>

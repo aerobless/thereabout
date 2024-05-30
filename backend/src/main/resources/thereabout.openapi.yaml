@@ -288,6 +288,7 @@ paths:
                   $ref: "#/components/schemas/Trip"
         500:
           $ref: '#/components/responses/500'
+  /backend/api/v1/trip/{id}:
     put:
       summary: Update a specific trip.
       tags:

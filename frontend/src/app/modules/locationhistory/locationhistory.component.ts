@@ -26,6 +26,8 @@ import {ToastModule} from "primeng/toast";
 import {Router} from "@angular/router";
 import {DialogModule} from "primeng/dialog";
 import {InputNumberModule} from "primeng/inputnumber";
+import {StyleClassModule} from "primeng/styleclass";
+import {TooltipModule} from "primeng/tooltip";
 
 
 @Component({
@@ -54,6 +56,8 @@ import {InputNumberModule} from "primeng/inputnumber";
         NgForOf,
         DialogModule,
         InputNumberModule,
+        StyleClassModule,
+        TooltipModule,
     ],
     templateUrl: './locationhistory.component.html',
     styleUrl: './locationhistory.component.scss'

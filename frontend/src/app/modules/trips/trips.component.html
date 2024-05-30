@@ -14,7 +14,7 @@
 <div style="padding: 20px">
     <div *ngFor="let year of getYears()">
         <h1>{{year}}</h1>
-        <div style="display: flex; justify-content: left;">
+        <div style="display: flex; justify-content: left; flex-wrap: wrap;">
             <div *ngFor="let trip of getTripsForYear(year)" style="width: 450px; padding: 10px">
                 <p-panel>
                     <ng-template pTemplate="header">

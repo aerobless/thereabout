@@ -63,8 +63,8 @@ export class TripsComponent {
         },
         {
             id: 2,
-            start: '2023-02-01',
-            end: '2023-02-10',
+            start: '2024-02-01',
+            end: '2024-02-10',
             description: 'A trip to the mountains',
             title: 'Mountain Trip',
             visitedCountries: [
@@ -101,9 +101,9 @@ export class TripsComponent {
     }
 
     getYears(): string[] {
-        return this.trips.map(trip => {
-            return trip.start.substring(0, 4);
-        });
+        return this.trips
+            .map(trip => trip.start.substring(0, 4))
+            .filter((year, index, self) => self.indexOf(year) === index);
     }
 
     getTripsForYear(year: string): Trip[] {

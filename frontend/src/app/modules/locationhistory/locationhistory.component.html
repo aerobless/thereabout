@@ -88,20 +88,22 @@
                     </ng-template>
                     <ng-template pTemplate="header">
                         <tr>
-                            <th style="width: 4rem"><p-tableHeaderCheckbox /></th>
-                            <th>Time</th>
-                            <th>Coordinates</th>
-                            <th>Altitude</th>
+                            <th style="width: 2rem; text-align: center"><p-tableHeaderCheckbox /></th>
+                            <th style="text-align: center"><i class="fa-solid fa-clock" pTooltip="Time" tooltipPosition="top"></i></th>
+                            <th style="text-align: center"><i class="fa-solid fa-map-location-dot" pTooltip="Coordinates" tooltipPosition="top"></i></th>
+                            <th style="text-align: center"><i class="fa-solid fa-ruler-vertical" pTooltip="Altitude" tooltipPosition="top"></i></th>
+                            <th style="text-align: center"><i class="fa-solid fa-bullseye" pTooltip="Horizontal accuracy" tooltipPosition="left"></i></th>
                         </tr>
                     </ng-template>
                     <ng-template pTemplate="body" let-locationEntry>
                         <tr [pSelectableRow]="locationEntry" (mouseenter)="onMouseOverLocationEntry($event, locationEntry)">
-                            <td>
+                            <td style="text-align: center">
                                 <p-tableCheckbox [value]="locationEntry" [pSelectableRow]="locationEntry" />
                             </td>
-                            <td>{{convertToLocalTime(locationEntry.timestamp)}}</td>
-                            <td><p style="font-size: small; white-space:pre-wrap; margin-top: 0; margin-bottom: 0">{{shortCoordinates(locationEntry.latitude,locationEntry.longitude)}}</p></td>
-                            <td>{{locationEntry.altitude}}m</td>
+                            <td style="text-align: center">{{convertToLocalTime(locationEntry.timestamp)}}</td>
+                            <td style="text-align: center"><p style="font-size: small; white-space:pre-wrap; margin-top: 0; margin-bottom: 0">{{shortCoordinates(locationEntry.latitude,locationEntry.longitude)}}</p></td>
+                            <td style="text-align: center">{{locationEntry.altitude}}m</td>
+                            <td style="text-align: center">{{locationEntry.horizontalAccuracy}}m</td>
                         </tr>
                     </ng-template>
                 </p-table>

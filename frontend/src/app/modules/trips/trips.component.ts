@@ -11,6 +11,10 @@ import {SplitButtonModule} from "primeng/splitbutton";
 import {Trip} from "../../../../generated/backend-api/thereabout";
 import {NgForOf} from "@angular/common";
 import {getFlagEmoji} from "../../util/country-util";
+import {DialogModule} from "primeng/dialog";
+import {InputTextModule} from "primeng/inputtext";
+import {InputTextareaModule} from "primeng/inputtextarea";
+import {CalendarModule} from "primeng/calendar";
 
 @Component({
   selector: 'app-trips',
@@ -23,13 +27,18 @@ import {getFlagEmoji} from "../../util/country-util";
         ChipModule,
         TagModule,
         SplitButtonModule,
-        NgForOf
+        NgForOf,
+        DialogModule,
+        InputTextModule,
+        InputTextareaModule,
+        CalendarModule
     ],
   templateUrl: './trips.component.html',
   styleUrl: './trips.component.scss'
 })
 export class TripsComponent {
 
+    addTripDialogVisible: boolean = false;
     tripPanelMenuItems: MenuItem[] = [
         {
             icon: 'pi pi-pencil',

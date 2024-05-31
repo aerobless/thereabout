@@ -89,6 +89,8 @@ export class TripsComponent implements OnInit {
 
     getYears(): string[] {
         return this.trips
+            .sort((a, b) => a.start.localeCompare(b.start))
+            .reverse()
             .map(trip => trip.start.substring(0, 4))
             .filter((year, index, self) => self.indexOf(year) === index);
     }

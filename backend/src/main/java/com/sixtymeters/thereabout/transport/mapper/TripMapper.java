@@ -10,6 +10,7 @@ import org.mapstruct.factory.Mappers;
 public interface TripMapper {
     TripMapper INSTANCE = Mappers.getMapper(TripMapper.class);
 
+    @Mapping(target = "visitedCountries", ignore = true)
     GenTrip mapToGenTrip(final TripEntity tripEntity);
 
     @Mapping(target = "id", ignore = true)

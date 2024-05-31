@@ -1,0 +1,9 @@
+.country-tags {
+  max-width: 310px;
+  height: 80px;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.2rem !important;
+  gap: 2px; /* Adjust the gap as needed */
+}

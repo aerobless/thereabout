@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {ButtonModule} from "primeng/button";
 import {ToolbarModule} from "primeng/toolbar";
 import {Router} from "@angular/router";
@@ -8,7 +8,7 @@ import {PanelModule} from "primeng/panel";
 import {ChipModule} from "primeng/chip";
 import {TagModule} from "primeng/tag";
 import {SplitButtonModule} from "primeng/splitbutton";
-import {Trip, TripService} from "../../../../generated/backend-api/thereabout";
+import {LocationHistoryEntry, Trip, TripService} from "../../../../generated/backend-api/thereabout";
 import {NgForOf, NgIf} from "@angular/common";
 import {getFlagEmoji} from "../../util/country-util";
 import {DialogModule} from "primeng/dialog";
@@ -16,6 +16,10 @@ import {InputTextModule} from "primeng/inputtext";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {CalendarModule} from "primeng/calendar";
 import {FormsModule} from "@angular/forms";
+import QuickFilterDateCombo from "../locationhistory/quick-filter-date-combo";
+import {FloatLabelModule} from "primeng/floatlabel";
+import {GoogleMap, MapHeatmapLayer, MapMarker, MapPolyline} from "@angular/google-maps";
+import {TableModule} from "primeng/table";
 
 @Component({
   selector: 'app-trips',
@@ -34,7 +38,13 @@ import {FormsModule} from "@angular/forms";
         InputTextareaModule,
         CalendarModule,
         NgIf,
-        FormsModule
+        FormsModule,
+        FloatLabelModule,
+        GoogleMap,
+        MapHeatmapLayer,
+        MapMarker,
+        MapPolyline,
+        TableModule
     ],
   templateUrl: './trips.component.html',
   styleUrl: './trips.component.scss'
@@ -162,4 +172,12 @@ export class TripsComponent implements OnInit {
             String(date.getMilliseconds()).padStart(3, '0');
     }
 
+    minifyDayViewData(data: Array<LocationHistoryEntry>) {
+        return data.map(location => {
+            return {lat: location.latitude, lng: location.longitude}
+        });
+    }
+
+
+    protected readonly QuickFilterDateCombo = QuickFilterDateCombo;
 }

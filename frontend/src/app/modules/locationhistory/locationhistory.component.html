@@ -24,6 +24,7 @@
     <div style="flex-grow: 1;">
         <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
             <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions"></map-heatmap-layer>
+            <map-polyline [path]="minifyDayViewData(tripViewDataFull)" [options]="{strokeColor: 'blue', strokeOpacity: 0, icons: [{icon: lineSymbol, offset: '0', repeat: '15px'}]}"></map-polyline>
             <map-polyline [path]="minifyDayViewData(dayViewDataFull)"></map-polyline>
             <map-marker *ngFor="let entry of selectedLocationEntries" [position]="{lat: entry.latitude, lng: entry.longitude}" [options]="{draggable: true}" (mapDragend)="markerDragged(entry, $event)"></map-marker>
             <map-marker *ngIf="highlightedLocationEntry" [position]="{lat: highlightedLocationEntry.latitude, lng: highlightedLocationEntry.longitude}" [icon]="blueHighlightMarker"></map-marker>
@@ -32,6 +33,15 @@
 
     <!-- Right Side Panels -->
     <div style="display: flex; flex-direction: column;">
+
+        <!-- Trip Panel -->
+        <div style="padding: 0 0 10px 10px; width: 400px;" *ngIf="currentTrip">
+            <p-panel header="Trip: {{currentTrip.title}}" [toggleable]="true">
+                <p>{{currentTrip.description}}</p>
+                <p-button label="Close Trip" [rounded]="true" severity="secondary" (onClick)="closeTripView()"></p-button>
+            </p-panel>
+        </div>
+
         <!-- Heatmap Panel -->
         <div style="padding: 0 0 10px 10px; width: 400px;">
             <p-panel header="Heatmap" [toggleable]="true">

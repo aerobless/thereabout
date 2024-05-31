@@ -172,12 +172,9 @@ export class TripsComponent implements OnInit {
             String(date.getMilliseconds()).padStart(3, '0');
     }
 
-    minifyDayViewData(data: Array<LocationHistoryEntry>) {
-        return data.map(location => {
-            return {lat: location.latitude, lng: location.longitude}
-        });
+    viewTrip(trip: Trip){
+        this.router.navigate([''], {queryParams: {tripId: trip.id}});
     }
-
 
     protected readonly QuickFilterDateCombo = QuickFilterDateCombo;
 }

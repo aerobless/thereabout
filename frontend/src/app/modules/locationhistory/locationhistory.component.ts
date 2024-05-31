@@ -7,7 +7,7 @@ import {
     MapMarkerClusterer,
     MapPolyline
 } from "@angular/google-maps";
-import {LocationHistoryEntry, LocationService} from "../../../../generated/backend-api/thereabout";
+import {LocationHistoryEntry, LocationService, Trip, TripService} from "../../../../generated/backend-api/thereabout";
 import {ToolbarModule} from "primeng/toolbar";
 import {InputTextModule} from "primeng/inputtext";
 import {CardModule} from "primeng/card";
@@ -23,7 +23,7 @@ import QuickFilterDateCombo from "./quick-filter-date-combo";
 import {TableModule, TableRowSelectEvent} from "primeng/table";
 import {MessageService} from "primeng/api";
 import {ToastModule} from "primeng/toast";
-import {Router} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import {DialogModule} from "primeng/dialog";
 import {InputNumberModule} from "primeng/inputnumber";
 import {StyleClassModule} from "primeng/styleclass";
@@ -84,7 +84,6 @@ export class LocationhistoryComponent implements OnInit {
     // Edit Modal
     editModalVisible: boolean = false;
     editDate: Date = new Date();
-
     selectedLocationEntries: LocationHistoryEntry[] = [];
     highlightedLocationEntry: LocationHistoryEntry | undefined;
 
@@ -97,15 +96,42 @@ export class LocationhistoryComponent implements OnInit {
         scale: 2,
     };
 
+    lineSymbol = {
+        path: 'M 0,-1 0,1',
+        strokeOpacity: 1,
+        scale: 4
+    };
+
+
+    // Trip view
+    currentTrip: Trip | null = null;
+    tripViewDataFull: Array<LocationHistoryEntry> = [];
+
     constructor(private readonly locationService: LocationService,
                 private readonly geocodeService: MapGeocoder,
                 private messageService: MessageService,
+                private tripService: TripService,
+                private route: ActivatedRoute,
                 private router: Router) {
     }
 
     ngOnInit() {
         this.loadHeatmapData();
         this.loadDayViewData();
+        this.route.queryParams.subscribe(params => {
+            let tripId = params['tripId'] || null;
+            if (tripId) {
+                console.log(`Trip ID: ${tripId}`);
+                this.tripService.getTrips().subscribe(trips => {
+                    this.currentTrip = trips.find(trip => trip.id == tripId) || null;
+                    if (this.currentTrip) {
+                        this.exactDate = new Date(this.currentTrip.start);
+                        this.loadDayViewData();
+                        this.loadTripViewData();
+                    }
+                });
+            }
+        });
     }
 
     loadHeatmapData() {
@@ -126,6 +152,13 @@ export class LocationhistoryComponent implements OnInit {
             } else {
                 this.selectedLocationEntries = [];
             }
+        });
+    }
+
+    loadTripViewData() {
+        if (!this.currentTrip) return;
+        this.locationService.getLocations(this.currentTrip?.start, this.currentTrip?.end).subscribe(locations => {
+            this.tripViewDataFull = locations;
         });
     }
 
@@ -246,6 +279,7 @@ export class LocationhistoryComponent implements OnInit {
                 detail: 'The location entry was successfully deleted.'
             });
             this.loadDayViewData();
+            this.loadTripViewData();
         });
     }
 
@@ -276,6 +310,7 @@ export class LocationhistoryComponent implements OnInit {
                 summary: 'Location updated',
                 detail: `The location was successfully updated.`
             });
+            this.loadTripViewData();
         });
     }
 
@@ -293,7 +328,8 @@ export class LocationhistoryComponent implements OnInit {
     }
 
     cancelEdit() {
-        this.loadDayViewData()
+        this.loadDayViewData();
+        this.loadTripViewData();
     }
 
     saveEdit() {
@@ -304,6 +340,7 @@ export class LocationhistoryComponent implements OnInit {
                 detail: `The location was successfully updated.`
             });
             this.loadDayViewData();
+            this.loadTripViewData();
         });
         this.editModalVisible = false;
     }
@@ -323,6 +360,7 @@ export class LocationhistoryComponent implements OnInit {
                     detail: `The location was successfully created.`
                 });
                 this.loadDayViewData(resp.id);
+                this.loadTripViewData();
             });
         }
 
@@ -346,5 +384,11 @@ export class LocationhistoryComponent implements OnInit {
 
     openTrips() {
         this.router.navigate(['trips']);
+    }
+
+    closeTripView() {
+        this.tripViewDataFull = [];
+        this.currentTrip = null;
+        this.router.navigate(['']);
     }
 }

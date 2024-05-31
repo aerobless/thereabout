@@ -7,16 +7,19 @@ import com.sixtymeters.thereabout.generated.model.GenTrip;
 import com.sixtymeters.thereabout.generated.model.GenTripVisitedCountriesInner;
 import com.sixtymeters.thereabout.model.LocationHistoryEntity;
 import com.sixtymeters.thereabout.model.TripEntity;
+import com.sixtymeters.thereabout.support.ThereaboutException;
 import com.sixtymeters.thereabout.transport.mapper.TripMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import uk.recurse.geocoding.reverse.ReverseGeocoder;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -55,12 +58,15 @@ public class TripsController implements TripApi {
         final var locationHistoryOfTrip = locationHistoryService.getLocationHistory(trip.getStart(), trip.getEnd());
         locationHistoryOfTrip.stream()
                 .map(LocationHistoryEntity::getEstimatedIsoCountryCode)
+                .filter(Objects::nonNull)
                 .distinct()
                 .forEach(country -> trip.addVisitedCountriesItem(GenTripVisitedCountriesInner.builder()
                         .countryIsoCode(country)
                         .countryName(reverseGeocoder.countries()
                                 .filter(c -> c.iso().equals(country))
-                                .findFirst().orElseThrow().name())
+                                .findFirst()
+                                .orElseThrow(() -> new ThereaboutException(HttpStatusCode.valueOf(500), "Country %s not found".formatted(country)))
+                                .name())
                         .build()));
         return trip;
     }

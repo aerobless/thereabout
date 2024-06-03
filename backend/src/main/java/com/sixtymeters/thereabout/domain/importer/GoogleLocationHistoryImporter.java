@@ -46,6 +46,9 @@ public class GoogleLocationHistoryImporter {
                 .heading(entry.heading())
                 .velocity(entry.velocity())
                 .source(LocationHistorySource.GOOGLE_IMPORT)
+                .sensorSource(entry.source())
+                .deviceTag(entry.deviceTag())
                 .build();
     }
+
 }

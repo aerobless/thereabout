@@ -50,4 +50,14 @@ public class LocationHistoryEntity {
 
     @Column
     private String estimatedIsoCountryCode;
+
+    // Whether this entry should not be shown in Thereabout
+    @Column
+    private boolean ignoreEntry;
+
+    @Column
+    private String deviceTag;
+
+    @Column
+    private String sensorSource;
 }

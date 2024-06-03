@@ -11,6 +11,7 @@ import java.util.List;
 @Repository
 public interface LocationHistoryRepository extends JpaRepository<LocationHistoryEntity, Long> {
 
+    @Query("select l from LocationHistoryEntity l where l.timestamp between ?1 and ?2 and l.ignoreEntry = false")
     List<LocationHistoryEntity> findAllByTimestampBetween(LocalDateTime from, LocalDateTime to);
 
     @Query("""

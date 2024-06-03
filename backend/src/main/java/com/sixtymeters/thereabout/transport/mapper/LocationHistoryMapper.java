@@ -22,6 +22,9 @@ public interface LocationHistoryMapper {
     @Mapping(source = "timestamp", target = "timestamp", qualifiedByName = "localDateTimeToOffsetDateTime")
     GenLocationHistoryEntry map(final LocationHistoryEntity locationHistoryEntity);
 
+    @Mapping(target = "ignoreEntry", ignore = true)
+    @Mapping(target = "deviceTag", ignore = true)
+    @Mapping(target = "sensorSource", ignore = true)
     @Mapping(target = "source", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "estimatedIsoCountryCode", ignore = true)
@@ -38,6 +41,9 @@ public interface LocationHistoryMapper {
         return offsetDateTime == null ? null : offsetDateTime.toLocalDateTime();
     }
 
+    @Mapping(target = "ignoreEntry", ignore = true)
+    @Mapping(target = "deviceTag", ignore = true)
+    @Mapping(target = "sensorSource", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "estimatedIsoCountryCode", ignore = true)
     @Mapping(target = "timestamp", source = "properties.timestamp", qualifiedByName = "OffsetDateTimeToLocalDateTime")

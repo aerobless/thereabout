@@ -56,12 +56,12 @@ jobs:
         npm run build
       working-directory: frontend
 
-    # EXTRACT VERSION TAG
     - name: Extract version tag from git.properties
       id: extract_version
       run: |
         GIT_COMMIT_TIME=$(grep '^git.commit.time=' backend/target/classes/git.properties | cut -d'=' -f2)
-        VERSION_TAG=$(date -d "$GIT_COMMIT_TIME" '+%Y%m%d%H%M%S')
+        CLEANED_GIT_COMMIT_TIME=$(echo $GIT_COMMIT_TIME | sed 's/\\//g')
+        VERSION_TAG=$(date -d "$CLEANED_GIT_COMMIT_TIME" '+%Y%m%d%H%M%S')
         echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_ENV
 
     # DOCKER BUILD & PUBLISH

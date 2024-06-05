@@ -20,6 +20,7 @@ import QuickFilterDateCombo from "../locationhistory/quick-filter-date-combo";
 import {FloatLabelModule} from "primeng/floatlabel";
 import {GoogleMap, MapHeatmapLayer, MapMarker, MapPolyline} from "@angular/google-maps";
 import {TableModule} from "primeng/table";
+import {ProgressSpinnerModule} from "primeng/progressspinner";
 
 @Component({
   selector: 'app-trips',
@@ -44,7 +45,8 @@ import {TableModule} from "primeng/table";
         MapHeatmapLayer,
         MapMarker,
         MapPolyline,
-        TableModule
+        TableModule,
+        ProgressSpinnerModule
     ],
   templateUrl: './trips.component.html',
   styleUrl: './trips.component.scss'
@@ -69,14 +71,17 @@ export class TripsComponent implements OnInit {
     currentTrip: Trip = {description: "", end: "", id: 0, start: "", title: ""};
     currentTripStart: Date | undefined;
     currentTripEnd: Date | undefined;
+    isLoading: boolean = false;
 
     ngOnInit(): void {
         this.updateTrips();
     }
 
     private updateTrips() {
+        this.isLoading = true;
         this.tripService.getTrips().subscribe(trips => {
             this.trips = trips;
+            this.isLoading = false;
         });
     }
 
@@ -179,4 +184,5 @@ export class TripsComponent implements OnInit {
     }
 
     protected readonly QuickFilterDateCombo = QuickFilterDateCombo;
+
 }

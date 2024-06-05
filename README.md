@@ -41,6 +41,29 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
   + Ability to reverse geolocate points with place & POI information
   + Persist geolocated POIs so that they can be re-used
   + Tag days based on locations visited, e.g. home, work etc.
++ Convenience features
+  + loading spinner
+  + favicon
+  + centralised UI header
+  + integration tests
+  + improved db security: configurable password & improved docker file that doesn't allow access from outside by default
+  + trips
+    + trips speed improvement
+    + trips search
+    + trip line for whom was travelled with
+  + always visible "add trip button"
+  + versioning
+    + versioned docker releases
+    + see version in configuration
+  + jump to google calendar directly from day view
+  + show search results in main page as list
+  + disable delete when nothing is selected
+  + store selected day as url parameter
+  + round edges of google maps integration
+  + store user details
+    + birthdate, name, home country
+  + show weeks of life with country flags
+  + add more tooltips
 + Day overview page
   + Integrate Google Photos API (low prio)
   + Weather

@@ -13,7 +13,10 @@
 </p-toolbar>
 
 <div style="padding: 20px">
-    <div style="text-align: center" *ngIf="trips.length === 0">
+    <div class="loading-spinner" *ngIf="isLoading">
+        <p-progressSpinner ariaLabel="loading" styleClass="w-20rem h-20rem"/>
+    </div>
+    <div style="text-align: center" *ngIf="trips.length === 0 && !isLoading">
         <h2> ^^ Add your first trip to get started..</h2>
     </div>
     <div *ngFor="let year of getYears()">

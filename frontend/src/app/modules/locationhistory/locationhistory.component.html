@@ -58,10 +58,18 @@
                     </p-floatLabel>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">
-                    <p-button label="YTD" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.YTD)"></p-button>
-                    <p-button label="1 year" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.ONE_YEAR)"></p-button>
-                    <p-button label="5 years" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.FIVE_YEARS)"></p-button>
-                    <p-button label="Full" [rounded]="true" severity="secondary" (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.FULL_HISTORY)"></p-button>
+                    <p-button label="YTD" [rounded]="true" severity="secondary"
+                              pTooltip="Load heatmap data for the current year." tooltipPosition="top" showDelay="500"
+                              (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.YTD)"></p-button>
+                    <p-button label="1 year" [rounded]="true" severity="secondary"
+                              pTooltip="Load heatmap data from 1 year ago until now." tooltipPosition="top" showDelay="500"
+                              (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.ONE_YEAR)"></p-button>
+                    <p-button label="5 years" [rounded]="true" severity="secondary"
+                              pTooltip="Load heatmap data from 5 years ago until now." tooltipPosition="top" showDelay="500"
+                              (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.FIVE_YEARS)"></p-button>
+                    <p-button label="Full" [rounded]="true" severity="secondary"
+                              pTooltip="Load all heatmap data. WARNING: Potentially laggy for a long history." tooltipPosition="left" showDelay="500"
+                              (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.FULL_HISTORY)"></p-button>
                 </div>
             </p-panel>
         </div>
@@ -76,9 +84,18 @@
                     <p-button icon="pi pi-chevron-right" (onClick)="incrementDate()" class="button toolbar-item" severity="secondary"></p-button>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px; padding-bottom: 20px;">
-                    <p-button icon="pi pi-map-marker" label="Locate" [rounded]="true" severity="info" (onClick)="locateDayView()"></p-button>
-                    <p-button icon="pi pi-image" label="Photos" [rounded]="true" severity="secondary" (onClick)="openGooglePhotos()"></p-button>
-                    <p-button label="Reset" [rounded]="true" severity="secondary" (onClick)="setTodayForDayView()"></p-button>
+                    <p-button icon="pi pi-map-marker" label="Locate" severity="info"
+                              pTooltip="Go to the selected entry or the first entry of the day." tooltipPosition="top" showDelay="500"
+                              [rounded]="true"
+                              (onClick)="locateDayView()"></p-button>
+                    <p-button icon="pi pi-image" label="Photos" severity="secondary"
+                              pTooltip="View the current day in Google Photos." tooltipPosition="top" showDelay="500"
+                              [rounded]="true"
+                              (onClick)="openGooglePhotos()"></p-button>
+                    <p-button label="Today" severity="secondary"
+                              pTooltip="Reset the date to today." tooltipPosition="top" showDelay="500"
+                              [rounded]="true"
+                              (onClick)="setTodayForDayView()"></p-button>
                 </div>
                 <p-table
                         [value]="dayViewDataFull"
@@ -91,9 +108,18 @@
                         [metaKeySelection]="false" dataKey="id">
                     <ng-template pTemplate="caption">
                         <div class="flex flex-wrap justify-content-end gap-2">
-                            <p-button label="New" icon="pi pi-plus" text (onClick)="createNewLocationEntry()" [disabled]="newLocationBtnDisabled()" />
-                            <p-button label="Edit" icon="pi pi-pen-to-square" text (onClick)="showEditModal()" [disabled]="editLocationBtnDisabled()" />
-                            <p-button label="Delete" icon="pi pi-trash" severity="danger" text (onClick)="deleteLocationEntry()" />
+                            <p-button label="New" icon="pi pi-plus" text
+                                      pTooltip="New entry at the current time or after the selected entry." tooltipPosition="top" showDelay="500"
+                                      (onClick)="createNewLocationEntry()"
+                                      [disabled]="newLocationBtnDisabled()" />
+                            <p-button label="Edit" icon="pi pi-pen-to-square" text
+                                      pTooltip="Edited the selected entry. To change the location drag the marker on the map." tooltipPosition="top" showDelay="500"
+                                      (onClick)="showEditModal()"
+                                      [disabled]="notSingleLocationSelected()" />
+                            <p-button label="Delete" icon="pi pi-trash" severity="danger" text
+                                      pTooltip="Delete the selected entry." tooltipPosition="left" showDelay="500"
+                                      (onClick)="deleteLocationEntry()"
+                                      [disabled]="notSingleLocationSelected()" />
                         </div>
                     </ng-template>
                     <ng-template pTemplate="header">

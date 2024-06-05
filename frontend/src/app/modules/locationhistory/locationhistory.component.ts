@@ -314,7 +314,7 @@ export class LocationhistoryComponent implements OnInit {
         });
     }
 
-    editLocationBtnDisabled() {
+    notSingleLocationSelected() {
         return !(this.selectedLocationEntries.length === 1);
     }
 

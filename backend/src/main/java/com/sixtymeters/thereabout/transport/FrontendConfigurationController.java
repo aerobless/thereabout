@@ -5,10 +5,12 @@ import com.sixtymeters.thereabout.domain.LocationHistoryService;
 import com.sixtymeters.thereabout.generated.api.FrontendApi;
 import com.sixtymeters.thereabout.generated.model.GenFileImportStatus;
 import com.sixtymeters.thereabout.generated.model.GenFrontendConfigurationResponse;
+import com.sixtymeters.thereabout.generated.model.GenVersionDetails;
 import com.sixtymeters.thereabout.support.ThereaboutException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.info.GitProperties;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +21,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 @Slf4j
@@ -31,6 +35,7 @@ public class FrontendConfigurationController implements FrontendApi {
 
     private final LocationHistoryService locationHistoryService;
     private final ConfigurationService configurationService;
+    private final GitProperties gitProperties;
 
     @Override
     public ResponseEntity<GenFileImportStatus> fileImportStatus() {
@@ -52,7 +57,21 @@ public class FrontendConfigurationController implements FrontendApi {
         return ResponseEntity.ok(GenFrontendConfigurationResponse.builder()
                 .googleMapsApiKey(googleMapsApiKey)
                 .thereaboutApiKey(configurationService.getThereaboutApiKey())
+                .versionDetails(getVersionDetails())
                 .build());
+    }
+
+    private GenVersionDetails getVersionDetails() {
+        final var commitTime = gitProperties.getCommitTime().atOffset(ZoneOffset.UTC);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        final var version = "0.1.%s".formatted(commitTime.format(formatter));
+
+        return GenVersionDetails.builder()
+                .version(version)
+                .commitTime(commitTime)
+                .branch(gitProperties.getBranch())
+                .commitRef(gitProperties.getShortCommitId())
+                .build();
     }
 
     @Override

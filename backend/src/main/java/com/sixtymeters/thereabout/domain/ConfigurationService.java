@@ -16,9 +16,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ConfigurationService {
-
     private final ConfigurationRepository configurationRepository;
-
     private final Map<ConfigurationKey, String> configurationCache = new HashMap<>();
 
     public String getThereaboutApiKey() {

@@ -646,6 +646,29 @@ components:
         thereaboutApiKey:
           type: string
           example: UUID-2342-4556345
+        versionDetails:
+          $ref: "#/components/schemas/VersionDetails"
+    VersionDetails:
+        type: object
+        required:
+            - version
+            - commitTime
+            - commitRef
+            - branch
+        properties:
+          version:
+            type: string
+            example: "1.0.0"
+          commitTime:
+            type: string
+            format: date-time
+            example: "2024-01-01T00:15:10.145Z"
+          commitRef:
+            type: string
+            example: "4faee41"
+          branch:
+            type: string
+            example: "main"
 
   responses:
     400:

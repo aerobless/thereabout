@@ -11,10 +11,16 @@ import {CardModule} from "primeng/card";
 import {TabViewModule} from "primeng/tabview";
 import {PanelModule} from "primeng/panel";
 import {FileUploadErrorEvent, FileUploadModule} from "primeng/fileupload";
-import {FileImportStatus, FrontendService} from "../../../../generated/backend-api/thereabout";
+import {
+    FileImportStatus,
+    FrontendConfigurationResponse,
+    FrontendService
+} from "../../../../generated/backend-api/thereabout";
 import {MessageService} from "primeng/api";
 import {NgIf} from "@angular/common";
 import {catchError, interval, Observable, of, switchMap, takeWhile} from "rxjs";
+import {ChipModule} from "primeng/chip";
+import {TooltipModule} from "primeng/tooltip";
 
 @Component({
   selector: 'app-configuration',
@@ -31,7 +37,9 @@ import {catchError, interval, Observable, of, switchMap, takeWhile} from "rxjs";
         TabViewModule,
         PanelModule,
         FileUploadModule,
-        NgIf
+        NgIf,
+        ChipModule,
+        TooltipModule
     ],
   templateUrl: './configuration.component.html',
   styleUrl: './configuration.component.scss'
@@ -41,7 +49,7 @@ export class ConfigurationComponent implements OnInit {
     importStatus: FileImportStatus.StatusEnum | unknown;
     importStatusProgress: number = 0;
     importDisabled = false;
-    bearerToken: string | undefined;
+    thereaboutConfig?: FrontendConfigurationResponse;
 
     constructor(private router: Router, private messageService: MessageService, private frontendService: FrontendService) {
     }
@@ -93,7 +101,7 @@ export class ConfigurationComponent implements OnInit {
 
     ngOnInit(): void {
         this.frontendService.getFrontendConfiguration().subscribe(e => {
-            this.bearerToken = e.thereaboutApiKey;
+            this.thereaboutConfig = e;
         })
         this.updateOrPollImportStatus();
     }
@@ -111,6 +119,6 @@ export class ConfigurationComponent implements OnInit {
     configureOverland() {
         const url = `${window.location.protocol}//${window.location.host}/backend/api/v1/location/geojson`;
         const deviceId = 'iPhone';
-        window.location.href = `overland://setup?url=${url}&token=${this.bearerToken}&device_id=${deviceId}`;
+        window.location.href = `overland://setup?url=${url}&token=${this.thereaboutConfig?.thereaboutApiKey}&device_id=${deviceId}`;
     }
 }

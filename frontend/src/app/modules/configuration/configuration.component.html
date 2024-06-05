@@ -14,7 +14,8 @@
     <div style="width: 500px">
         <p-panel header="Location History Import">
             <p>
-                You upload your <a href="https://takeout.google.com/" target="_blank">Google Maps <b>Records.json</b></a> here. It will then be imported into Thereabout.
+                You upload your <a href="https://takeout.google.com/" target="_blank">Google Maps
+                <b>Records.json</b></a> here. It will then be imported into Thereabout.
                 Beware that for large files, the import may take a while.
             </p>
             <p-fileUpload *ngIf="importStatus == FileImportStatus.StatusEnum.Idle"
@@ -41,28 +42,46 @@
     <div style="width: 500px">
         <p-panel header="Overland configuration">
             <p>
-                <a href="https://overland.p3k.app/" target="_blank">Overland</a> is an iOS/Android app that can be used to track your location.
+                <a href="https://overland.p3k.app/" target="_blank">Overland</a> is an iOS/Android app that can be used
+                to track your location.
                 Click the button below on your mobile device to configure Overland for Thereabout.
             </p>
             <p-button label="Configure Overland" (onClick)="configureOverland()"></p-button>
         </p-panel>
     </div>
+
 </div>
 
 <div style="display: flex; justify-content: center; align-items: center; padding-top: 10px">
     <div style="width: 500px">
-        <p-panel header="Thereabout API Authentication Key">
+        <p-panel header="API Authentication Key">
             <div class="flex flex-column gap-2">
                 <input
                         id="thereabout-api-key"
                         type="text"
                         pInputText
                         style="width: 100%"
-                        [value]="bearerToken"
+                        [value]="thereaboutConfig?.thereaboutApiKey"
                         [disabled]="true"/>
             </div>
             <p>Can be used to authenticate public API requests. See the POST GeoJson endpoint in the
                 <a href="/swagger-ui/index.html" target="_blank">Thereabout API</a>.</p>
         </p-panel>
+    </div>
+</div>
+
+<div style="display: flex; justify-content: center; align-items: center; padding-top: 10px">
+    <div style="width: 500px">
+        <div class="p-panel">
+            <div class="p-panel-title p-panel-header version-panel">
+                <p style="padding-right: 5px">Version</p>
+                <b pTooltip="Branch: {{thereaboutConfig?.versionDetails?.branch}}
+                 Date: {{thereaboutConfig?.versionDetails?.commitTime}}
+                 Commit: {{thereaboutConfig?.versionDetails?.commitRef}}"
+                   tooltipPosition="top" showDelay="500">{{ thereaboutConfig?.versionDetails?.version }}</b>
+                <p style="padding-left: 5px"> made with ♡ by <a href="https://github.com/aerobless/thereabout"
+                                                                target="_blank">aerobless</a></p>
+            </div>
+        </div>
     </div>
 </div>

@@ -50,7 +50,7 @@ public class TripsController implements TripApi {
     public ResponseEntity<List<GenTrip>> getTrips() {
         return ResponseEntity.ok(tripsService.getAllTrips().stream()
                 .map(TRIP_MAPPER::mapToGenTrip)
-                        .map(this::addCountryInformation)
+                .map(this::addCountryInformation)
                 .collect(Collectors.toList()));
     }
 

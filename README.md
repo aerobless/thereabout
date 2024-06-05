@@ -42,8 +42,6 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
   + Persist geolocated POIs so that they can be re-used
   + Tag days based on locations visited, e.g. home, work etc.
 + Convenience features
-  + loading spinner
-  + favicon
   + centralised UI header
   + integration tests
   + improved db security: configurable password & improved docker file that doesn't allow access from outside by default
@@ -51,7 +49,6 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
     + trips speed improvement
     + trips search
     + trip line for whom was travelled with
-  + always visible "add trip button"
   + versioning
     + versioned docker releases
     + see version in configuration

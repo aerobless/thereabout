@@ -7,3 +7,17 @@
   font-size: 0.2rem !important;
   gap: 2px; /* Adjust the gap as needed */
 }
+
+.add-trip-button-container {
+  position: fixed;
+  bottom: 100px;
+  right: 100px;
+  z-index: 1000; /* Ensure it stays on top of other elements */
+}
+
+.add-trip-button {
+  align-self: flex-end; /* This pushes the button container to the right */
+  width: 100%;
+  display: flex;
+  justify-content: flex-end; /* This aligns the button to the right inside its container */
+}

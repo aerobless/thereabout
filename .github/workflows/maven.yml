@@ -56,6 +56,14 @@ jobs:
         npm run build
       working-directory: frontend
 
+    # EXTRACT VERSION TAG
+    - name: Extract version tag from git.properties
+      id: extract_version
+      run: |
+        GIT_COMMIT_TIME=$(grep '^git.commit.time=' backend/target/classes/git.properties | cut -d'=' -f2)
+        VERSION_TAG=$(date -d "$GIT_COMMIT_TIME" '+%Y%m%d%H%M%S')
+        echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_ENV
+
     # DOCKER BUILD & PUBLISH
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -69,5 +77,7 @@ jobs:
       with:
         context: .
         push: true
-        tags: aerobless/thereabout:latest
+        tags: |
+          aerobless/thereabout:latest
+          aerobless/thereabout:${{ env.VERSION_TAG }}
         platforms: linux/amd64,linux/arm64

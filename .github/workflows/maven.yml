@@ -13,6 +13,11 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'release'
+        required: true
 
 jobs:
   build:
@@ -56,15 +61,7 @@ jobs:
         npm run build
       working-directory: frontend
 
-    - name: Extract version tag from git.properties
-      id: extract_version
-      run: |
-        GIT_COMMIT_TIME=$(grep '^git.commit.time=' backend/target/classes/git.properties | cut -d'=' -f2)
-        CLEANED_GIT_COMMIT_TIME=$(echo $GIT_COMMIT_TIME | sed 's/\\//g')
-        VERSION_TAG=$(date -d "$CLEANED_GIT_COMMIT_TIME" '+%Y%m%d%H%M%S')
-        echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_ENV
-
-    # DOCKER BUILD & PUBLISH
+    # BUILD AND PUSH DEVELOPMENT TAG
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
     - name: Login to Docker Hub
@@ -72,7 +69,36 @@ jobs:
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-    - name: Build and push
+    - name: Build and push development
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: aerobless/thereabout:development
+        platforms: linux/amd64,linux/arm64
+
+    # CONDITIONAL EXTRACT VERSION TAG
+    - name: Extract version tag from git.properties
+      id: extract_version
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        GIT_COMMIT_TIME=$(grep '^git.commit.time=' backend/target/classes/git.properties | cut -d'=' -f2)
+        CLEANED_GIT_COMMIT_TIME=$(echo $GIT_COMMIT_TIME | sed 's/\\//g')
+        VERSION_TAG=$(date -d "$CLEANED_GIT_COMMIT_TIME" '+%Y%m%d%H%M%S')
+        echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_ENV
+
+    # CONDITIONAL DOCKER BUILD & PUBLISH FOR RELEASE
+    - name: Set up Docker Buildx for release
+      if: github.event_name == 'workflow_dispatch'
+      uses: docker/setup-buildx-action@v3
+    - name: Login to Docker Hub for release
+      if: github.event_name == 'workflow_dispatch'
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+    - name: Build and push for release
+      if: github.event_name == 'workflow_dispatch'
       uses: docker/build-push-action@v5
       with:
         context: .

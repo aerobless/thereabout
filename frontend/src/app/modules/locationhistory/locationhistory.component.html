@@ -37,6 +37,10 @@
         <!-- Trip Panel -->
         <div style="padding: 0 0 10px 10px; width: 400px;" *ngIf="currentTrip">
             <p-panel header="Trip: {{currentTrip.title}}" [toggleable]="true">
+                <p style="margin-top: -5px">
+                    <i class="fa-solid fa-route" pTooltip="Distance travelled" tooltipPosition="top"></i> {{calculateDistanceOfCurrentTrip()}}km
+                    <i class="fa-solid fa-globe" style="padding-left: 20px"></i> {{countriesInCurrentTrip()}}
+                </p>
                 <p>{{currentTrip.description}}</p>
                 <p-button label="Close Trip" [rounded]="true" severity="secondary" (onClick)="closeTripView()"></p-button>
             </p-panel>

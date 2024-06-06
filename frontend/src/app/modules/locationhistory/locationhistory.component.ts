@@ -122,7 +122,6 @@ export class LocationhistoryComponent implements OnInit {
         this.route.queryParams.subscribe(params => {
             let tripId = params['tripId'] || null;
             if (tripId) {
-                console.log(`Trip ID: ${tripId}`);
                 this.tripService.getTrips().subscribe(trips => {
                     this.currentTrip = trips.find(trip => trip.id == tripId) || null;
                     if (this.currentTrip) {
@@ -423,5 +422,33 @@ export class LocationhistoryComponent implements OnInit {
             // otherwise select
             this.selectedLocationEntries = [closestPoint];
         }
+    }
+
+    calculateDistanceOfCurrentTrip(): number {
+        if (this.tripViewDataFull.length < 2) {
+            return 0;
+        }
+
+        let totalDistance = 0;
+
+        for (let i = 0; i < this.tripViewDataFull.length - 1; i++) {
+            const point1 = new google.maps.LatLng(this.tripViewDataFull[i].latitude, this.tripViewDataFull[i].longitude);
+            const point2 = new google.maps.LatLng(this.tripViewDataFull[i + 1].latitude, this.tripViewDataFull[i + 1].longitude);
+
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(point1, point2);
+            totalDistance += distance;
+        }
+
+        return Math.round(totalDistance/1000);
+    }
+
+    countriesInCurrentTrip(): string {
+        const countries = new Set<string>();
+        this.tripViewDataFull.forEach(entry => {
+            if (entry.estimatedIsoCountryCode) {
+                countries.add(entry.estimatedIsoCountryCode);
+            }
+        });
+        return Array.from(countries).join(", ")
     }
 }

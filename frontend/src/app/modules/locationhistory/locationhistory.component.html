@@ -19,9 +19,9 @@
 </p-toolbar>
 <br>
 
-<div style="display: flex; height: calc(100vh - 120px);">
+<div style="display: flex; height: calc(100vh - 100px);">
     <!-- Google Maps Section -->
-    <div style="flex-grow: 1;">
+    <div class="google-maps-container p-panel" tabindex="-1">
         <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
             <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions"></map-heatmap-layer>
             <map-polyline [path]="minifyDayViewData(tripViewDataFull)" [options]="{strokeColor: 'grey', strokeOpacity: 0, icons: [{icon: lineSymbol, offset: '0', repeat: '15px'}]}"></map-polyline>
@@ -32,7 +32,7 @@
     </div>
 
     <!-- Right Side Panels -->
-    <div style="display: flex; flex-direction: column; height: calc(100vh - 120px); overflow: hidden">
+    <div style="display: flex; flex-direction: column; height: calc(100vh - 100px); overflow: hidden">
 
         <!-- Trip Panel -->
         <div style="padding: 0 0 10px 10px; width: 400px;" *ngIf="currentTrip">
@@ -103,7 +103,7 @@
                         [(selection)]="selectedLocationEntries"
                         styleClass="p-datatable-sm"
                         scrollable="true"
-                        scrollHeight="calc(100vh - 550px)"
+                        scrollHeight="calc(100vh - 540px)"
                         (mouseleave)="onMouseOverLocationEntry($event, null)"
                         [metaKeySelection]="false" dataKey="id">
                     <ng-template pTemplate="caption">

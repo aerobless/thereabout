@@ -12,3 +12,10 @@
 .paginatorStyleClass {
   font-size: 0.5em;
 }
+
+.google-maps-container {
+  flex-grow: 1;
+  border-radius: 6px;
+  overflow: hidden;
+  outline: none;
+}

@@ -11,6 +11,10 @@
 .trip-container {
   width: 500px;
   padding: 10px;
+
+  .p-panel {
+    height: 100%;
+  }
 }
 
 .country-tags {
@@ -35,4 +39,20 @@
   width: 100%;
   display: flex;
   justify-content: flex-end;
+}
+
+.trip-title {
+  display: block;
+  text-overflow:ellipsis;
+  overflow:hidden;
+  white-space: nowrap;
+  width: 310px;
+}
+
+.trip-description {
+  display: block;
+  text-overflow:ellipsis;
+  overflow:hidden;
+  height: 60px;
+  width: 430px;
 }

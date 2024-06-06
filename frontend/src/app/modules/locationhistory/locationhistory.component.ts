@@ -1,6 +1,7 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
 import {
-    GoogleMap, MapAdvancedMarker,
+    GoogleMap,
+    MapAdvancedMarker,
     MapGeocoder,
     MapHeatmapLayer,
     MapMarker,
@@ -20,7 +21,7 @@ import {PanelModule} from "primeng/panel";
 import {NgForOf, NgIf} from "@angular/common";
 import {FloatLabelModule} from "primeng/floatlabel";
 import QuickFilterDateCombo from "./quick-filter-date-combo";
-import {TableModule, TableRowSelectEvent} from "primeng/table";
+import {TableModule} from "primeng/table";
 import {MessageService} from "primeng/api";
 import {ToastModule} from "primeng/toast";
 import {ActivatedRoute, Router} from "@angular/router";
@@ -390,5 +391,37 @@ export class LocationhistoryComponent implements OnInit {
         this.tripViewDataFull = [];
         this.currentTrip = null;
         this.router.navigate(['']);
+    }
+
+    dayLineClick($event: google.maps.PolyMouseEvent) {
+        if (!$event.latLng) {
+            return;
+        }
+
+        let closestPoint: LocationHistoryEntry | null = null;
+        let minDistance = Number.MAX_VALUE;
+
+        this.dayViewDataFull.forEach((entry) => {
+            const entryPoint = new google.maps.LatLng(entry.latitude, entry.longitude);
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                $event.latLng!,
+                entryPoint
+            );
+
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestPoint = entry;
+            }
+        });
+
+        if (closestPoint) {
+            // Deselect if already selected
+            if(this.selectedLocationEntries.length === 1 && this.selectedLocationEntries[0] === closestPoint){
+                this.selectedLocationEntries = [];
+                return;
+            }
+            // otherwise select
+            this.selectedLocationEntries = [closestPoint];
+        }
     }
 }

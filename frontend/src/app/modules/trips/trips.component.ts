@@ -21,6 +21,7 @@ import {FloatLabelModule} from "primeng/floatlabel";
 import {GoogleMap, MapHeatmapLayer, MapMarker, MapPolyline} from "@angular/google-maps";
 import {TableModule} from "primeng/table";
 import {ProgressSpinnerModule} from "primeng/progressspinner";
+import {ReformatDatePipe} from "../../util/reformat-date.pipe";
 
 @Component({
   selector: 'app-trips',
@@ -46,7 +47,8 @@ import {ProgressSpinnerModule} from "primeng/progressspinner";
         MapMarker,
         MapPolyline,
         TableModule,
-        ProgressSpinnerModule
+        ProgressSpinnerModule,
+        ReformatDatePipe
     ],
   templateUrl: './trips.component.html',
   styleUrl: './trips.component.scss'

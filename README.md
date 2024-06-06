@@ -49,18 +49,13 @@ Thereabout is a self-hosted replacement for Google Location History. It can impo
     + trips speed improvement
     + trips search
     + trip line for whom was travelled with
-  + versioning
-    + versioned docker releases
-    + see version in configuration
   + jump to google calendar directly from day view
   + show search results in main page as list
-  + disable delete when nothing is selected
   + store selected day as url parameter
   + round edges of google maps integration
   + store user details
     + birthdate, name, home country
   + show weeks of life with country flags
-  + add more tooltips
 + Day overview page
   + Integrate Google Photos API (low prio)
   + Weather

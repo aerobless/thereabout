@@ -64,7 +64,7 @@ public class FrontendConfigurationController implements FrontendApi {
     private GenVersionDetails getVersionDetails() {
         final var commitTime = gitProperties.getCommitTime().atOffset(ZoneOffset.UTC);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        final var version = "0.1.%s".formatted(commitTime.format(formatter));
+        final var version = commitTime.format(formatter);
 
         return GenVersionDetails.builder()
                 .version(version)

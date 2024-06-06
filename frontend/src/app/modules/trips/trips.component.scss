@@ -1,3 +1,18 @@
+.main-content {
+  padding: 20px;
+}
+
+.trip-content {
+  display: flex;
+  justify-content: left;
+  flex-wrap: wrap;
+}
+
+.trip-container {
+  width: 500px;
+  padding: 10px;
+}
+
 .country-tags {
   max-width: 310px;
   height: 80px;
@@ -5,19 +20,19 @@
   display: flex;
   flex-wrap: wrap;
   font-size: 0.2rem !important;
-  gap: 2px; /* Adjust the gap as needed */
+  gap: 2px;
 }
 
 .add-trip-button-container {
   position: fixed;
   bottom: 100px;
   right: 100px;
-  z-index: 1000; /* Ensure it stays on top of other elements */
+  z-index: 1000;
 }
 
 .add-trip-button {
-  align-self: flex-end; /* This pushes the button container to the right */
+  align-self: flex-end;
   width: 100%;
   display: flex;
-  justify-content: flex-end; /* This aligns the button to the right inside its container */
+  justify-content: flex-end;
 }

@@ -11,14 +11,14 @@
     </div>
 </p-toolbar>
 
-<div style="padding: 20px">
+<div class="main-content">
     <div class="loading-spinner" *ngIf="isLoading">
         <p-progressSpinner ariaLabel="loading" styleClass="w-20rem h-20rem"/>
     </div>
     <div *ngFor="let year of getYears()">
         <h1>{{ year }}</h1>
-        <div style="display: flex; justify-content: left; flex-wrap: wrap;">
-            <div *ngFor="let trip of getTripsForYear(year)" style="width: 500px; padding: 10px;">
+        <div class="trip-content">
+            <div *ngFor="let trip of getTripsForYear(year)" class="trip-container">
                 <p-panel>
                     <ng-template pTemplate="header">
                         <div class="flex align-items-center gap-2">
@@ -46,7 +46,9 @@
                         </div>
                     </ng-template>
                     <ng-template pTemplate="icons">
-                        <p-chip label="{{calculateDaysSpent(trip)}} days" icon="pi pi-calendar"/>
+                        <p-chip label="{{calculateDaysSpent(trip)}} days"
+                                pTooltip="{{trip.start | reformatDate}} until {{trip.end | reformatDate}}" tooltipPosition="top" showDelay="500"
+                                icon="pi pi-calendar"/>
                     </ng-template>
                     <p class="m-0">
                         {{ trip.description }}
@@ -102,7 +104,7 @@
     </div>
 </p-dialog>
 
-<div class="add-trip-button-container">
+<div class="add-trip-button-container" *ngIf="!isLoading">
     <div *ngIf="trips.length === 0 && !isLoading">
         <h2>Click below to add your first trip</h2>
     </div>

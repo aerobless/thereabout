@@ -21,7 +21,8 @@
             <div *ngFor="let trip of getTripsForYear(year)" class="trip-container">
                 <p-panel>
                     <ng-template pTemplate="header">
-                        <div class="trip-title font-bold">
+                        <div class="trip-title font-bold"
+                             pTooltip="{{ trip.title }}" tooltipPosition="bottom" showDelay="1000">
                             {{ trip.title }}
                         </div>
                     </ng-template>
@@ -48,7 +49,8 @@
                                 pTooltip="{{trip.start | reformatDate}} until {{trip.end | reformatDate}}" tooltipPosition="top" showDelay="500"
                                 icon="pi pi-calendar"/>
                     </ng-template>
-                    <div class="m-0 trip-description">
+                    <div class="m-0 trip-description"
+                         pTooltip="{{ trip.description }}" tooltipPosition="top" showDelay="1000">
                         {{ trip.description }}
                     </div>
                 </p-panel>
@@ -63,8 +65,10 @@
         <input pInputText id="tripTitle" class="flex-auto" autocomplete="off" [maxLength]="250" [(ngModel)]="currentTrip.title"/>
     </div>
     <div class="flex align-items-center gap-3 mb-3">
-        <label for="tripSubtitle" class="font-semibold w-6rem">Subtitle</label>
-        <input pInputText id="tripSubtitle" class="flex-auto" autocomplete="off" [maxLength]="250" [(ngModel)]="currentTrip.description"/>
+        <label for="tripSubtitle" class="font-semibold w-6rem" style="align-self: start">Description</label>
+        <!--<input pInputText id="tripSubtitle" class="flex-auto" autocomplete="off" [maxLength]="250" [(ngModel)]="currentTrip.description"/>-->
+        <textarea class="description-textarea" id="tripSubtitle" rows="5" cols="30" [maxLength]="250" pInputTextarea [(ngModel)]="currentTrip.description">
+        </textarea>
     </div>
     <div class="flex align-items-center gap-3 mb-5">
         <div style="display: flex; gap: 10px" class="align-items-center">

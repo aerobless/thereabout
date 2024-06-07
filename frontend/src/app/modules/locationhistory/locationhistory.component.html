@@ -1,20 +1,26 @@
 <p-toolbar>
     <div class="p-toolbar-group-start">
-        <b style="padding-left: 5px; padding-right: 5px">Thereabout 📍</b>
+        <b style="padding-left: 5px; padding-right: 5px">Thereabout <img src="favicon.ico" alt="favicon"
+                                                                         class="favicon"></b>
         <i style="font-size: small">near that place or time</i>
     </div>
     <div class="p-toolbar-group-center">
         <p-iconField iconPosition="left" class="toolbar-item">
             <p-inputIcon styleClass="pi pi-search"/>
-            <input type="text" pInputText placeholder="Search" (keydown)="geocodeAddress($event)" style="width: 400px;"
+            <input type="text" pInputText placeholder="Jump to location" (keydown)="geocodeAddress($event)" style="width: 400px;"
                    [(ngModel)]="searchValue"/>
+            <p-button icon="pi pi-times" (onClick)="resetSearch()" class="reset-button" [text]="true"
+                      *ngIf="searchValue"
+                      severity="secondary"></p-button>
         </p-iconField>
-        <p-button icon="pi pi-times" (onClick)="resetSearch()" class="button toolbar-item" severity="secondary"></p-button>
     </div>
     <div class="p-toolbar-group-end">
-        <p-button icon="pi pi-star-fill" (onClick)="openTrips()" class="button toolbar-item" severity="secondary"></p-button>
-        <p-button icon="pi pi-chart-line" (onClick)="openStatistics()" class="button toolbar-item" severity="secondary"></p-button>
-        <p-button icon="pi pi-cog" (onClick)="openConfiguration()" class="button toolbar-item" severity="secondary"></p-button>
+        <p-button icon="pi pi-star-fill" (onClick)="openTrips()" class="button toolbar-item" severity="secondary"
+                  pTooltip="Trips" tooltipPosition="bottom" showDelay="500"></p-button>
+        <p-button icon="pi pi-chart-line" (onClick)="openStatistics()" class="button toolbar-item" severity="secondary"
+                  pTooltip="Statistics" tooltipPosition="bottom" showDelay="500"></p-button>
+        <p-button icon="pi pi-cog" (onClick)="openConfiguration()" class="button toolbar-item" severity="secondary"
+                  pTooltip="Configuration" tooltipPosition="bottom" showDelay="500"></p-button>
     </div>
 </p-toolbar>
 <br>
@@ -24,10 +30,16 @@
     <div class="google-maps-container p-panel" tabindex="-1">
         <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
             <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions"></map-heatmap-layer>
-            <map-polyline [path]="minifyDayViewData(tripViewDataFull)" [options]="{strokeColor: 'grey', strokeOpacity: 0, icons: [{icon: lineSymbol, offset: '0', repeat: '15px'}]}"></map-polyline>
-            <map-polyline [path]="minifyDayViewData(dayViewDataFull)" [options]="{strokeColor: 'blue'}" (polylineClick)="dayLineClick($event)"></map-polyline>
-            <map-marker *ngFor="let entry of selectedLocationEntries" [position]="{lat: entry.latitude, lng: entry.longitude}" [options]="{draggable: true}" (mapDragend)="markerDragged(entry, $event)"></map-marker>
-            <map-marker *ngIf="highlightedLocationEntry" [position]="{lat: highlightedLocationEntry.latitude, lng: highlightedLocationEntry.longitude}" [icon]="blueHighlightMarker"></map-marker>
+            <map-polyline [path]="minifyDayViewData(tripViewDataFull)"
+                          [options]="{strokeColor: 'grey', strokeOpacity: 0, icons: [{icon: lineSymbol, offset: '0', repeat: '15px'}]}"></map-polyline>
+            <map-polyline [path]="minifyDayViewData(dayViewDataFull)" [options]="{strokeColor: 'blue'}"
+                          (polylineClick)="dayLineClick($event)"></map-polyline>
+            <map-marker *ngFor="let entry of selectedLocationEntries"
+                        [position]="{lat: entry.latitude, lng: entry.longitude}" [options]="{draggable: true}"
+                        (mapDragend)="markerDragged(entry, $event)"></map-marker>
+            <map-marker *ngIf="highlightedLocationEntry"
+                        [position]="{lat: highlightedLocationEntry.latitude, lng: highlightedLocationEntry.longitude}"
+                        [icon]="blueHighlightMarker"></map-marker>
         </google-map>
     </div>
 
@@ -38,11 +50,13 @@
         <div style="padding: 0 0 10px 10px; width: 400px;" *ngIf="currentTrip">
             <p-panel header="Trip: {{currentTrip.title}}" [toggleable]="true">
                 <p style="margin-top: -5px">
-                    <i class="fa-solid fa-route" pTooltip="Distance travelled" tooltipPosition="top"></i> {{calculateDistanceOfCurrentTrip()}}km
-                    <i class="fa-solid fa-globe" style="padding-left: 20px"></i> {{countriesInCurrentTrip()}}
+                    <i class="fa-solid fa-route" pTooltip="Distance travelled"
+                       tooltipPosition="top"></i> {{ calculateDistanceOfCurrentTrip() }}km
+                    <i class="fa-solid fa-globe" style="padding-left: 20px"></i> {{ countriesInCurrentTrip() }}
                 </p>
-                <p>{{currentTrip.description}}</p>
-                <p-button label="Close Trip" [rounded]="true" severity="secondary" (onClick)="closeTripView()"></p-button>
+                <p>{{ currentTrip.description }}</p>
+                <p-button label="Close Trip" [rounded]="true" severity="secondary"
+                          (onClick)="closeTripView()"></p-button>
             </p-panel>
         </div>
 
@@ -52,12 +66,14 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">
                     <p-floatLabel style="padding-right: 10px">
                         <p-calendar [(ngModel)]="fromDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
-                                    [showIcon]="true" class="toolbar-item" id="from-date" dateFormat="dd.mm.yy"></p-calendar>
+                                    [showIcon]="true" class="toolbar-item" id="from-date"
+                                    dateFormat="dd.mm.yy"></p-calendar>
                         <label for="from-date">From</label>
                     </p-floatLabel>
                     <p-floatLabel>
                         <p-calendar [(ngModel)]="toDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
-                                    [showIcon]="true" class="toolbar-item" id="to-date" dateFormat="dd.mm.yy"></p-calendar>
+                                    [showIcon]="true" class="toolbar-item" id="to-date"
+                                    dateFormat="dd.mm.yy"></p-calendar>
                         <label for="to-date">To</label>
                     </p-floatLabel>
                 </div>
@@ -66,13 +82,16 @@
                               pTooltip="Load heatmap data for the current year." tooltipPosition="top" showDelay="500"
                               (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.YTD)"></p-button>
                     <p-button label="1 year" [rounded]="true" severity="secondary"
-                              pTooltip="Load heatmap data from 1 year ago until now." tooltipPosition="top" showDelay="500"
+                              pTooltip="Load heatmap data from 1 year ago until now." tooltipPosition="top"
+                              showDelay="500"
                               (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.ONE_YEAR)"></p-button>
                     <p-button label="5 years" [rounded]="true" severity="secondary"
-                              pTooltip="Load heatmap data from 5 years ago until now." tooltipPosition="top" showDelay="500"
+                              pTooltip="Load heatmap data from 5 years ago until now." tooltipPosition="top"
+                              showDelay="500"
                               (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.FIVE_YEARS)"></p-button>
                     <p-button label="Full" [rounded]="true" severity="secondary"
-                              pTooltip="Load all heatmap data. WARNING: Potentially laggy for a long history." tooltipPosition="left" showDelay="500"
+                              pTooltip="Load all heatmap data. WARNING: Potentially laggy for a long history."
+                              tooltipPosition="left" showDelay="500"
                               (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.FULL_HISTORY)"></p-button>
                 </div>
             </p-panel>
@@ -82,14 +101,18 @@
         <div style="padding: 0 0 10px 10px; width: 400px; height: 100%">
             <p-panel header="Day View" [toggleable]="true">
                 <div class="dayview-date-selector">
-                    <p-button icon="pi pi-chevron-left" (onClick)="decrementDate()" class="button toolbar-item" severity="secondary"></p-button>
+                    <p-button icon="pi pi-chevron-left" (onClick)="decrementDate()" class="button toolbar-item"
+                              severity="secondary"></p-button>
                     <p-calendar [(ngModel)]="exactDate" (ngModelChange)="loadDayViewData()" [iconDisplay]="'input'"
-                                [showIcon]="true" class="toolbar-item" #exactDateCalendarInput dateFormat="dd.mm.yy"></p-calendar>
-                    <p-button icon="pi pi-chevron-right" (onClick)="incrementDate()" class="button toolbar-item" severity="secondary"></p-button>
+                                [showIcon]="true" class="toolbar-item" #exactDateCalendarInput
+                                dateFormat="dd.mm.yy"></p-calendar>
+                    <p-button icon="pi pi-chevron-right" (onClick)="incrementDate()" class="button toolbar-item"
+                              severity="secondary"></p-button>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px; padding-bottom: 20px;">
                     <p-button icon="pi pi-map-marker" label="Locate" severity="info"
-                              pTooltip="Go to the selected entry or the first entry of the day." tooltipPosition="top" showDelay="500"
+                              pTooltip="Go to the selected entry or the first entry of the day." tooltipPosition="top"
+                              showDelay="500"
                               [rounded]="true"
                               (onClick)="locateDayView()"></p-button>
                     <p-button icon="pi pi-image" label="Photos" severity="secondary"
@@ -113,37 +136,49 @@
                     <ng-template pTemplate="caption">
                         <div class="flex flex-wrap justify-content-end gap-2">
                             <p-button label="New" icon="pi pi-plus" text
-                                      pTooltip="New entry at the current time or after the selected entry." tooltipPosition="top" showDelay="500"
+                                      pTooltip="New entry at the current time or after the selected entry."
+                                      tooltipPosition="top" showDelay="500"
                                       (onClick)="createNewLocationEntry()"
-                                      [disabled]="newLocationBtnDisabled()" />
+                                      [disabled]="newLocationBtnDisabled()"/>
                             <p-button label="Edit" icon="pi pi-pen-to-square" text
-                                      pTooltip="Edited the selected entry. To change the location drag the marker on the map." tooltipPosition="top" showDelay="500"
+                                      pTooltip="Edited the selected entry. To change the location drag the marker on the map."
+                                      tooltipPosition="top" showDelay="500"
                                       (onClick)="showEditModal()"
-                                      [disabled]="notSingleLocationSelected()" />
+                                      [disabled]="notSingleLocationSelected()"/>
                             <p-button label="Delete" icon="pi pi-trash" severity="danger" text
                                       pTooltip="Delete the selected entry." tooltipPosition="left" showDelay="500"
                                       (onClick)="deleteLocationEntry()"
-                                      [disabled]="notSingleLocationSelected()" />
+                                      [disabled]="notSingleLocationSelected()"/>
                         </div>
                     </ng-template>
                     <ng-template pTemplate="header">
                         <tr>
-                            <th style="width: 2rem; text-align: center"><p-tableHeaderCheckbox /></th>
-                            <th style="text-align: center"><i class="fa-solid fa-clock" pTooltip="Time" tooltipPosition="top"></i></th>
-                            <th style="text-align: center"><i class="fa-solid fa-map-location-dot" pTooltip="Coordinates" tooltipPosition="top"></i></th>
-                            <th style="text-align: center"><i class="fa-solid fa-ruler-vertical" pTooltip="Altitude" tooltipPosition="top"></i></th>
-                            <th style="text-align: center"><i class="fa-solid fa-bullseye" pTooltip="Horizontal accuracy" tooltipPosition="left"></i></th>
+                            <th style="width: 2rem; text-align: center">
+                                <p-tableHeaderCheckbox/>
+                            </th>
+                            <th style="text-align: center"><i class="fa-solid fa-clock" pTooltip="Time"
+                                                              tooltipPosition="top"></i></th>
+                            <th style="text-align: center"><i class="fa-solid fa-map-location-dot"
+                                                              pTooltip="Coordinates" tooltipPosition="top"></i></th>
+                            <th style="text-align: center"><i class="fa-solid fa-ruler-vertical" pTooltip="Altitude"
+                                                              tooltipPosition="top"></i></th>
+                            <th style="text-align: center"><i class="fa-solid fa-bullseye"
+                                                              pTooltip="Horizontal accuracy" tooltipPosition="left"></i>
+                            </th>
                         </tr>
                     </ng-template>
                     <ng-template pTemplate="body" let-locationEntry>
-                        <tr [pSelectableRow]="locationEntry" (mouseenter)="onMouseOverLocationEntry($event, locationEntry)">
+                        <tr [pSelectableRow]="locationEntry"
+                            (mouseenter)="onMouseOverLocationEntry($event, locationEntry)">
                             <td style="text-align: center">
-                                <p-tableCheckbox [value]="locationEntry" [pSelectableRow]="locationEntry" />
+                                <p-tableCheckbox [value]="locationEntry" [pSelectableRow]="locationEntry"/>
                             </td>
-                            <td style="text-align: center">{{convertToLocalTime(locationEntry.timestamp)}}</td>
-                            <td style="text-align: center"><p style="font-size: small; white-space:pre-wrap; margin-top: 0; margin-bottom: 0">{{shortCoordinates(locationEntry.latitude,locationEntry.longitude)}}</p></td>
-                            <td style="text-align: center">{{locationEntry.altitude}}m</td>
-                            <td style="text-align: center">{{locationEntry.horizontalAccuracy}}m</td>
+                            <td style="text-align: center">{{ convertToLocalTime(locationEntry.timestamp) }}</td>
+                            <td style="text-align: center"><p
+                                    style="font-size: small; white-space:pre-wrap; margin-top: 0; margin-bottom: 0">{{ shortCoordinates(locationEntry.latitude, locationEntry.longitude) }}</p>
+                            </td>
+                            <td style="text-align: center">{{ locationEntry.altitude }}m</td>
+                            <td style="text-align: center">{{ locationEntry.horizontalAccuracy }}m</td>
                         </tr>
                     </ng-template>
                 </p-table>
@@ -152,7 +187,8 @@
     </div>
 </div>
 
-<p-dialog header="Edit Location" [modal]="true" [(visible)]="editModalVisible" [style]="{ width: '25rem' }" *ngIf="selectedLocationEntries.length === 1">
+<p-dialog header="Edit Location" [modal]="true" [(visible)]="editModalVisible" [style]="{ width: '25rem' }"
+          *ngIf="selectedLocationEntries.length === 1">
     <div class="flex align-items-center gap-3 mb-3">
         <label for="editDateTime" class="font-semibold w-6rem">Date & Time</label>
         <p-calendar [(ngModel)]="editDate" [iconDisplay]="'input'" appendTo="body"
@@ -166,10 +202,10 @@
                        inputId="integeronly"
                        [min]="0"
                        suffix="m"
-                       [(ngModel)]="selectedLocationEntries[0].altitude" />
+                       [(ngModel)]="selectedLocationEntries[0].altitude"/>
     </div>
     <div class="flex justify-content-end gap-2">
-        <p-button label="Cancel" severity="secondary" (click)="cancelEdit()" />
-        <p-button label="Save" (click)="saveEdit()" />
+        <p-button label="Cancel" severity="secondary" (click)="cancelEdit()"/>
+        <p-button label="Save" (click)="saveEdit()"/>
     </div>
 </p-dialog>

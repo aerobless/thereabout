@@ -13,22 +13,24 @@ import {CardModule} from "primeng/card";
 import {TableModule} from "primeng/table";
 import {ReformatDatePipe} from "../../util/reformat-date.pipe";
 import {getFlagEmoji} from "../../util/country-util";
+import {TooltipModule} from "primeng/tooltip";
 
 @Component({
   selector: 'app-statistics',
   standalone: true,
-  imports: [
-    ButtonModule,
-    FileUploadModule,
-    InputTextModule,
-    NgIf,
-    PanelModule,
-    ProgressBarModule,
-    ToolbarModule,
-    CardModule,
-    TableModule,
-    ReformatDatePipe
-  ],
+    imports: [
+        ButtonModule,
+        FileUploadModule,
+        InputTextModule,
+        NgIf,
+        PanelModule,
+        ProgressBarModule,
+        ToolbarModule,
+        CardModule,
+        TableModule,
+        ReformatDatePipe,
+        TooltipModule
+    ],
   templateUrl: './statistics.component.html',
   styleUrl: './statistics.component.scss'
 })

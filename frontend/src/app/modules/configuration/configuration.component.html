@@ -1,11 +1,13 @@
 <p-toolbar>
     <div class="p-toolbar-group-start">
-        <b style="padding-left: 5px; padding-right: 5px">Thereabout Configuration</b>
+        <b style="padding-left: 5px; padding-right: 5px">Thereabout Configuration <img src="favicon.ico" alt="favicon" class="favicon"></b>
+        <i style="font-size: small">near that place or time</i>
     </div>
     <div class="p-toolbar-group-center">
     </div>
     <div class="p-toolbar-group-end">
         <p-button icon="pi pi-arrow-circle-left" (onClick)="navigateBackToMap()" class="button toolbar-item"
+                  pTooltip="Back" tooltipPosition="bottom" showDelay="500"
                   severity="secondary"></p-button>
     </div>
 </p-toolbar>

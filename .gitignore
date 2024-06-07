@@ -32,4 +32,3 @@ replay_pid*
 /frontend/dist/
 /.env
 /backend/.env
-/docker-compose-theo-test.yaml

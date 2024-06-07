@@ -11,7 +11,7 @@ services:
     volumes:
       - thereabout_data:/var/lib/mysql
   thereabout:
-    image: 'aerobless/thereabout:latest'
+    image: 'aerobless/thereabout:development'
     ports:
       - '9050:9050'
     volumes:

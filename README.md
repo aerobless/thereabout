@@ -52,11 +52,13 @@ See how many countries you've visited, how many days you've spent abroad and a d
 > If you want to continuously add data you'll need to be able to securely expose the GeoJSON endpoint to the internet.
 > This endpoint only is secured with an API key.
 
-1. Download the [docker-compose.yml](https://github.com/aerobless/thereabout/blob/main/docker-compose.yaml) file. *(There is also an [example](https://github.com/aerobless/thereabout/blob/main/docker-compose-authelia.yaml) for usage with Authelia.)*
-2. Get a Google Maps API Key from the [Google Cloud Console](https://console.cloud.google.com/apis/library/maps-backend.googleapis.com)
-and enter it in  the docker-compose.yaml file  where it says `REPLACE_WITH_YOUR_GOOGLE_API_KEY`.
-3. Run `docker-compose up -d` in the same directory as the `docker-compose.yml` file.
-4. You can now access Thereabout on port 9050: http://localhost:9050
+1. Download the [docker-compose.yml](https://github.com/aerobless/thereabout/blob/main/docker-compose.yaml) file and the 
+[.env.example](https://github.com/aerobless/thereabout/blob/main/.env.example). *(There is also an [example](https://github.com/aerobless/thereabout/blob/main/docker-compose-authelia.yaml) for usage with Authelia.)*
+2. Rename the `.env.example` to `.env`.
+3. Get a Google Maps API Key from the [Google Cloud Console](https://console.cloud.google.com/apis/library/maps-backend.googleapis.com)
+and enter it in the `.env` file  where it says `REPLACE_WITH_YOUR_GOOGLE_API_KEY`.
+4. Run `docker-compose up -d` in the same directory as the `docker-compose.yml` file.
+5. You can now access Thereabout on port 9050: http://localhost:9050
 
 # FAQ
 

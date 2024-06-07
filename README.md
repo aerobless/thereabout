@@ -78,7 +78,7 @@ There are several options available for you:
 - Alternatively you can also use the REST API to insert data.
 - And as a final option you could always code your own importer and contribute it back to the project.
 
-# Potential feature & Roadmap
+## What's next?
 These features may or may not get realised depending on my time and motivation.
 + Reverse Geolocation
   + Ability to reverse geolocate points with place & POI information

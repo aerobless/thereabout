@@ -15,9 +15,9 @@ spring:
       max-file-size: 5GB
       max-request-size: 5GB
   datasource:
-    url: jdbc:mariadb://mariadb:3306/thereabout
-    username: thereabout
-    password: secret
+    url: jdbc:mariadb://mariadb:3306/${THEREABOUT_DATABASE:thereabout}
+    username: ${THEREABOUT_DB_USER:thereabout}
+    password: ${THEREABOUT_DB_PASSWORD:secret}
     driver-class-name: org.mariadb.jdbc.Driver
     hikari:
       max-lifetime: 580000

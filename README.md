@@ -90,7 +90,6 @@ These features may or may not get realised depending on my time and motivation.
   + InMemory TestDB for integration tests
 + Export location history as .json file
 + Simple single user login system
-+ Configurable db passwords
 + Trips
   + search/filter trips
   + additional calculated information

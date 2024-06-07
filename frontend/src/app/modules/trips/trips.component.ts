@@ -8,7 +8,7 @@ import {PanelModule} from "primeng/panel";
 import {ChipModule} from "primeng/chip";
 import {TagModule} from "primeng/tag";
 import {SplitButtonModule} from "primeng/splitbutton";
-import {LocationHistoryEntry, Trip, TripService} from "../../../../generated/backend-api/thereabout";
+import {Trip, TripService} from "../../../../generated/backend-api/thereabout";
 import {NgForOf, NgIf} from "@angular/common";
 import {getFlagEmoji} from "../../util/country-util";
 import {DialogModule} from "primeng/dialog";

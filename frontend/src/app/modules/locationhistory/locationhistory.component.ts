@@ -29,6 +29,7 @@ import {DialogModule} from "primeng/dialog";
 import {InputNumberModule} from "primeng/inputnumber";
 import {StyleClassModule} from "primeng/styleclass";
 import {TooltipModule} from "primeng/tooltip";
+import {InputTextareaModule} from "primeng/inputtextarea";
 
 
 @Component({
@@ -59,6 +60,7 @@ import {TooltipModule} from "primeng/tooltip";
         InputNumberModule,
         StyleClassModule,
         TooltipModule,
+        InputTextareaModule,
     ],
     templateUrl: './locationhistory.component.html',
     styleUrl: './locationhistory.component.scss'

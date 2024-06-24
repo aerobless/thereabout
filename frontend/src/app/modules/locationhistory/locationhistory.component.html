@@ -158,6 +158,8 @@
                             </th>
                             <th style="text-align: center"><i class="fa-solid fa-clock" pTooltip="Time"
                                                               tooltipPosition="top"></i></th>
+                            <th style="text-align: center"><i class="fa-solid fa-message"
+                                                              pTooltip="Note" tooltipPosition="top"></i></th>
                             <th style="text-align: center"><i class="fa-solid fa-map-location-dot"
                                                               pTooltip="Coordinates" tooltipPosition="top"></i></th>
                             <th style="text-align: center"><i class="fa-solid fa-ruler-vertical" pTooltip="Altitude"
@@ -174,6 +176,10 @@
                                 <p-tableCheckbox [value]="locationEntry" [pSelectableRow]="locationEntry"/>
                             </td>
                             <td style="text-align: center">{{ convertToLocalTime(locationEntry.timestamp) }}</td>
+                            <td style="text-align: center">
+                                <i class="fa-solid fa-message" *ngIf="locationEntry.note"
+                                   pTooltip="{{ locationEntry.note }}" tooltipPosition="top"></i>
+                            </td>
                             <td style="text-align: center"><p
                                     style="font-size: small; white-space:pre-wrap; margin-top: 0; margin-bottom: 0">{{ shortCoordinates(locationEntry.latitude, locationEntry.longitude) }}</p>
                             </td>
@@ -196,13 +202,18 @@
                     (ngModelChange)="selectedLocationEntries[0].timestamp = editDate.toISOString()"
                     [showIcon]="true" id="editDateTime" dateFormat="dd.mm.yy"></p-calendar>
     </div>
-    <div class="flex align-items-center gap-3 mb-5">
+    <div class="flex align-items-center gap-3 mb-3">
         <label for="altitudeInput" class="font-semibold w-6rem">Altitude</label>
         <p-inputNumber id="altitudeInput"
                        inputId="integeronly"
                        [min]="0"
                        suffix="m"
                        [(ngModel)]="selectedLocationEntries[0].altitude"/>
+    </div>
+    <div class="flex align-items-center gap-3 mb-3">
+        <label for="tripSubtitle" class="font-semibold w-6rem" style="align-self: start">Description</label>
+        <textarea class="description-textarea" id="tripSubtitle" rows="5" cols="30" [maxLength]="250" pInputTextarea [(ngModel)]="selectedLocationEntries[0].note">
+        </textarea>
     </div>
     <div class="flex justify-content-end gap-2">
         <p-button label="Cancel" severity="secondary" (click)="cancelEdit()"/>

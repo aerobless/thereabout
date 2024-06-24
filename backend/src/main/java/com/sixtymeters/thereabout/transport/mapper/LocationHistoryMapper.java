@@ -44,6 +44,7 @@ public interface LocationHistoryMapper {
     @Mapping(target = "ignoreEntry", ignore = true)
     @Mapping(target = "deviceTag", ignore = true)
     @Mapping(target = "sensorSource", ignore = true)
+    @Mapping(target = "note", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "estimatedIsoCountryCode", ignore = true)
     @Mapping(target = "timestamp", source = "properties.timestamp", qualifiedByName = "OffsetDateTimeToLocalDateTime")

@@ -106,6 +106,7 @@ public class LocationHistoryService {
         existingEntry.setVerticalAccuracy(MANUAL_ACCURACY);
         existingEntry.setSource(LocationHistorySource.THEREABOUT_API_UPDATE);
         existingEntry.setEstimatedIsoCountryCode(estimateCountryForCoordinates(updateEntry));
+        existingEntry.setNote(updateEntry.getNote());
         return locationHistoryRepository.save(existingEntry);
     }
 }

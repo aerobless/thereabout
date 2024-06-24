@@ -60,4 +60,8 @@ public class LocationHistoryEntity {
 
     @Column
     private String sensorSource;
+
+    @Column
+    private String note;
+
 }

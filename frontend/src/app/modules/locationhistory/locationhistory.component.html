@@ -148,7 +148,7 @@
                             <p-button label="Delete" icon="pi pi-trash" severity="danger" text
                                       pTooltip="Delete the selected entry." tooltipPosition="left" showDelay="500"
                                       (onClick)="deleteLocationEntry()"
-                                      [disabled]="notSingleLocationSelected()"/>
+                                      [disabled]="notAtLeastOneLocationSelected()"/>
                         </div>
                     </ng-template>
                     <ng-template pTemplate="header">

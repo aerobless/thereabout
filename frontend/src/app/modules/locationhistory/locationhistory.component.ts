@@ -318,6 +318,10 @@ export class LocationhistoryComponent implements OnInit {
         return !(this.selectedLocationEntries.length === 1);
     }
 
+    notAtLeastOneLocationSelected() {
+        return this.selectedLocationEntries.length === 0;
+    }
+
     newLocationBtnDisabled() {
         return !(this.selectedLocationEntries.length === 0 || this.selectedLocationEntries.length === 1);
     }

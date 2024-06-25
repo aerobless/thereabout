@@ -12,7 +12,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @RequiredArgsConstructor
-public class LocationHistoryList {
+public class LocationListEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

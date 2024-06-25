@@ -337,6 +337,115 @@ paths:
         500:
           $ref: '#/components/responses/500'
 
+  /backend/api/v1/location-history-list:
+    get:
+      summary: Get all location history lists.
+      tags:
+        - location list
+      operationId: getLocationHistoryLists
+      responses:
+        200:
+          description: Successful response containing a list of all location history lists.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LocationHistoryList"
+        500:
+          $ref: '#/components/responses/500'
+    post:
+      summary: Create a new location history list.
+      tags:
+        - location list
+      operationId: createLocationHistoryList
+      requestBody:
+        description: The location history list to create
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationHistoryList"
+      responses:
+        200:
+          description: Successful response containing the newly created location history list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationHistoryList"
+        500:
+          $ref: '#/components/responses/500'
+  /backend/api/v1/location-history-list/{id}:
+    get:
+      summary: Get a specific location history list.
+      tags:
+        - location list
+      operationId: getLocationHistoryList
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 42
+          required: true
+          description: The id of the location history list to retrieve
+      responses:
+        200:
+          description: Successful response containing the requested location history list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationHistoryList"
+        500:
+          $ref: '#/components/responses/500'
+    put:
+      summary: Update a specific location history list.
+      tags:
+        - location list
+      operationId: updateLocationHistoryList
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 42
+          required: true
+          description: The id of the location history list to update
+      requestBody:
+        description: The location history list to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationHistoryList"
+      responses:
+        200:
+          description: Successful response containing the updated location history list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationHistoryList"
+        500:
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Delete a specific location history list.
+      tags:
+        - location list
+      operationId: deleteLocationHistoryList
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 42
+          required: true
+          description: The id of the location history list to delete
+      responses:
+        204:
+          description: The location history list was successfully deleted
+        500:
+          $ref: '#/components/responses/500'
+
 components:
   schemas:
     Trip:
@@ -617,6 +726,27 @@ components:
             locations_in_payload:
               type: number
               example: 1
+    LocationHistoryList:
+      description: A list of location history entries.
+      type: object
+      required:
+        - id
+        - name
+        - locationHistoryEntries
+      properties:
+        id:
+          type: number
+          description: The unique identifier of the location history list
+          example: 1
+        name:
+          type: string
+          description: The name of the location history list
+          example: "Vacation Spots"
+        locationHistoryEntries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationHistoryEntry'
+          x-field-extra-annotation: "@lombok.Builder.Default"
 
     ThereaboutBaseErrorModel:
       type: object

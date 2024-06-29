@@ -7,7 +7,8 @@
     <div class="p-toolbar-group-center">
         <p-iconField iconPosition="left" class="toolbar-item">
             <p-inputIcon styleClass="pi pi-search"/>
-            <input type="text" pInputText placeholder="Jump to location" (keydown)="geocodeAddress($event)" style="width: 400px;"
+            <input type="text" pInputText placeholder="Jump to location" (keydown)="geocodeAddress($event)"
+                   style="width: 400px;"
                    [(ngModel)]="searchValue"/>
             <p-button icon="pi pi-times" (onClick)="resetSearch()" class="reset-button" [text]="true"
                       *ngIf="searchValue"
@@ -48,16 +49,10 @@
 
         <!-- Trip Panel -->
         <div style="padding: 0 0 10px 10px; width: 400px;" *ngIf="currentTrip">
-            <p-panel header="Trip: {{currentTrip.title}}" [toggleable]="true">
-                <p style="margin-top: -5px">
-                    <i class="fa-solid fa-route" pTooltip="Distance travelled"
-                       tooltipPosition="top"></i> {{ calculateDistanceOfCurrentTrip() }}km
-                    <i class="fa-solid fa-globe" style="padding-left: 20px"></i> {{ countriesInCurrentTrip() }}
-                </p>
-                <p>{{ currentTrip.description }}</p>
-                <p-button label="Close Trip" [rounded]="true" severity="secondary"
-                          (onClick)="closeTripView()"></p-button>
-            </p-panel>
+            <thereabout-trip-panel [trip]="currentTrip"
+                                   [tripViewDataFull]="tripViewDataFull"
+                                   (closeTripView)="closeTripView()">
+            </thereabout-trip-panel>
         </div>
 
         <!-- Heatmap Panel -->
@@ -212,7 +207,8 @@
     </div>
     <div class="flex align-items-center gap-3 mb-3">
         <label for="tripSubtitle" class="font-semibold w-6rem" style="align-self: start">Description</label>
-        <textarea class="description-textarea" id="tripSubtitle" rows="5" cols="30" [maxLength]="250" pInputTextarea [(ngModel)]="selectedLocationEntries[0].note">
+        <textarea class="description-textarea" id="tripSubtitle" rows="5" cols="30" [maxLength]="250" pInputTextarea
+                  [(ngModel)]="selectedLocationEntries[0].note">
         </textarea>
     </div>
     <div class="flex justify-content-end gap-2">

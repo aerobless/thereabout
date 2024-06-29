@@ -30,6 +30,7 @@ import {InputNumberModule} from "primeng/inputnumber";
 import {StyleClassModule} from "primeng/styleclass";
 import {TooltipModule} from "primeng/tooltip";
 import {InputTextareaModule} from "primeng/inputtextarea";
+import {TripPanelComponent} from "./trip-panel/trip-panel.component";
 
 
 @Component({
@@ -61,6 +62,7 @@ import {InputTextareaModule} from "primeng/inputtextarea";
         StyleClassModule,
         TooltipModule,
         InputTextareaModule,
+        TripPanelComponent,
     ],
     templateUrl: './locationhistory.component.html',
     styleUrl: './locationhistory.component.scss'
@@ -428,33 +430,5 @@ export class LocationhistoryComponent implements OnInit {
             // otherwise select
             this.selectedLocationEntries = [closestPoint];
         }
-    }
-
-    calculateDistanceOfCurrentTrip(): number {
-        if (this.tripViewDataFull.length < 2) {
-            return 0;
-        }
-
-        let totalDistance = 0;
-
-        for (let i = 0; i < this.tripViewDataFull.length - 1; i++) {
-            const point1 = new google.maps.LatLng(this.tripViewDataFull[i].latitude, this.tripViewDataFull[i].longitude);
-            const point2 = new google.maps.LatLng(this.tripViewDataFull[i + 1].latitude, this.tripViewDataFull[i + 1].longitude);
-
-            const distance = google.maps.geometry.spherical.computeDistanceBetween(point1, point2);
-            totalDistance += distance;
-        }
-
-        return Math.round(totalDistance/1000);
-    }
-
-    countriesInCurrentTrip(): string {
-        const countries = new Set<string>();
-        this.tripViewDataFull.forEach(entry => {
-            if (entry.estimatedIsoCountryCode) {
-                countries.add(entry.estimatedIsoCountryCode);
-            }
-        });
-        return Array.from(countries).join(", ")
     }
 }

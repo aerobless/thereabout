@@ -1,0 +1,10 @@
+<p-panel header="Trip: {{trip.title}}" [toggleable]="true">
+    <p style="margin-top: -5px">
+        <i class="fa-solid fa-route" pTooltip="Distance travelled"
+           tooltipPosition="top"></i> {{ calculateDistanceOfCurrentTrip() }}km
+        <i class="fa-solid fa-globe" style="padding-left: 20px"></i> {{ countriesInCurrentTrip() }}
+    </p>
+    <p>{{ trip.description }}</p>
+    <p-button label="Close Trip" [rounded]="true" severity="secondary"
+              (onClick)="closeTripView.emit()"></p-button>
+</p-panel>

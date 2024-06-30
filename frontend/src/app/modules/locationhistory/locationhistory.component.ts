@@ -31,6 +31,7 @@ import {StyleClassModule} from "primeng/styleclass";
 import {TooltipModule} from "primeng/tooltip";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {TripPanelComponent} from "./trip-panel/trip-panel.component";
+import {DayPanelComponent} from "./day-panel/day-panel.component";
 
 
 @Component({
@@ -63,6 +64,7 @@ import {TripPanelComponent} from "./trip-panel/trip-panel.component";
         TooltipModule,
         InputTextareaModule,
         TripPanelComponent,
+        DayPanelComponent,
     ],
     templateUrl: './locationhistory.component.html',
     styleUrl: './locationhistory.component.scss'
@@ -83,12 +85,8 @@ export class LocationhistoryComponent implements OnInit {
     // Day view
     dayViewDataFull: Array<LocationHistoryEntry> = [];
     exactDate: Date = new Date();
-    @ViewChild('exactDateCalendarInput')
-    private exactDateCalendarInput: any;
 
     // Edit Modal
-    editModalVisible: boolean = false;
-    editDate: Date = new Date();
     selectedLocationEntries: LocationHistoryEntry[] = [];
     highlightedLocationEntry: LocationHistoryEntry | undefined;
 
@@ -106,7 +104,6 @@ export class LocationhistoryComponent implements OnInit {
         strokeOpacity: 1,
         scale: 4
     };
-
 
     // Trip view
     currentTrip: Trip | null = null;
@@ -196,18 +193,6 @@ export class LocationhistoryComponent implements OnInit {
         this.searchValue = '';
     }
 
-    decrementDate() {
-        this.exactDate.setDate(this.exactDate.getDate() - 1);
-        this.exactDateCalendarInput.updateInputfield();
-        this.loadDayViewData();
-    }
-
-    incrementDate() {
-        this.exactDate.setDate(this.exactDate.getDate() + 1);
-        this.exactDateCalendarInput.updateInputfield();
-        this.loadDayViewData();
-    }
-
     setQuickFilterForHeatmap(quickFilterDateOption: QuickFilterDateCombo) {
         switch (quickFilterDateOption) {
             case QuickFilterDateCombo.YTD:
@@ -233,58 +218,12 @@ export class LocationhistoryComponent implements OnInit {
 
     protected readonly QuickFilterDateCombo = QuickFilterDateCombo;
 
-    locateDayView() {
-        if (this.selectedLocationEntries.length > 0) {
-            this.center = {
-                lat: this.selectedLocationEntries[0].latitude,
-                lng: this.selectedLocationEntries[0].longitude
-            };
-            this.applyZoom(16);
-        } else {
-            if (this.dayViewDataFull.length == 0) return;
-            this.center = this.minifyDayViewData(this.dayViewDataFull)[0];
-            this.applyZoom(11);
-        }
-    }
-
-    setTodayForDayView() {
-        this.exactDate = new Date();
-        this.loadDayViewData();
-    }
-
-    private applyZoom(zoom: number) {
+    applyZoom(zoom: number) {
         if (this.zoom == zoom) {
             this.zoom = zoom + 0.1;
         } else {
             this.zoom = zoom;
         }
-    }
-
-    openGooglePhotos() {
-        window.open("https://photos.google.com/search/" + this.dateToString(this.exactDate), "_blank");
-    }
-
-    convertToLocalTime(date: string) {
-        return new Date(date).toLocaleTimeString().slice(0, 5);
-    }
-
-    shortCoordinates(lat: number, lng: number) {
-        return `${lat.toFixed(5)},\n ${lng.toFixed(5)}`;
-
-    }
-
-    deleteLocationEntry() {
-        if (this.selectedLocationEntries.length == 0) return;
-
-        this.locationService.deleteLocations(this.selectedLocationEntries.map(value => value.id)).subscribe(() => {
-            this.messageService.add({
-                severity: 'success',
-                summary: 'Location deleted',
-                detail: 'The location entry was successfully deleted.'
-            });
-            this.loadDayViewData();
-            this.loadTripViewData();
-        });
     }
 
     openConfiguration() {
@@ -293,16 +232,6 @@ export class LocationhistoryComponent implements OnInit {
 
     openStatistics() {
         this.router.navigate(['statistics']);
-    }
-
-    onMouseOverLocationEntry($event: MouseEvent, locationEntry: any) {
-        if ($event.type == 'mouseleave') {
-            this.highlightedLocationEntry = undefined;
-        }
-
-        if (locationEntry) {
-            this.highlightedLocationEntry = locationEntry;
-        }
     }
 
     markerDragged(entry: LocationHistoryEntry, $event: google.maps.MapMouseEvent) {
@@ -316,78 +245,6 @@ export class LocationhistoryComponent implements OnInit {
             });
             this.loadTripViewData();
         });
-    }
-
-    notSingleLocationSelected() {
-        return !(this.selectedLocationEntries.length === 1);
-    }
-
-    notAtLeastOneLocationSelected() {
-        return this.selectedLocationEntries.length === 0;
-    }
-
-    newLocationBtnDisabled() {
-        return !(this.selectedLocationEntries.length === 0 || this.selectedLocationEntries.length === 1);
-    }
-
-    showEditModal() {
-        this.editModalVisible = true;
-        this.editDate = new Date(this.selectedLocationEntries[0].timestamp);
-    }
-
-    cancelEdit() {
-        this.loadDayViewData();
-        this.loadTripViewData();
-    }
-
-    saveEdit() {
-        this.locationService.updateLocation(this.selectedLocationEntries[0].id, this.selectedLocationEntries[0]).subscribe(() => {
-            this.messageService.add({
-                severity: 'success',
-                summary: 'Location updated',
-                detail: `The location was successfully updated.`
-            });
-            this.loadDayViewData();
-            this.loadTripViewData();
-        });
-        this.editModalVisible = false;
-    }
-
-    createNewLocationEntry() {
-        if (this.selectedLocationEntries.length === 1){
-            this.locationService.addLocation({
-                latitude: this.selectedLocationEntries[0].latitude,
-                longitude: this.selectedLocationEntries[0].longitude,
-                timestamp: new Date(this.selectedLocationEntries[0].timestamp).toISOString(),
-                id: 0,
-                altitude: 0,
-            }).subscribe(resp => {
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Location created',
-                    detail: `The location was successfully created.`
-                });
-                this.loadDayViewData(resp.id);
-                this.loadTripViewData();
-            });
-        }
-
-        if (this.selectedLocationEntries.length === 0){
-            this.locationService.addLocation({
-                latitude: this.center.lat,
-                longitude: this.center.lng,
-                timestamp: new Date(this.exactDate).toISOString(),
-                id: 0,
-                altitude: 0,
-            }).subscribe(resp => {
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Location created',
-                    detail: `The location was successfully created.`
-                });
-                this.loadDayViewData(resp.id);
-            });
-        }
     }
 
     openTrips() {

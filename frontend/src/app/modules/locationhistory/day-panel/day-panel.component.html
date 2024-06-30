@@ -1,0 +1,120 @@
+<p-panel header="Day View" [toggleable]="true">
+    <div class="dayview-date-selector">
+        <p-button icon="pi pi-chevron-left" (onClick)="decrementDate()" class="button toolbar-item"
+                  severity="secondary"></p-button>
+        <p-calendar [(ngModel)]="exactDate" (ngModelChange)="onDateChanged()" [iconDisplay]="'input'"
+                    [showIcon]="true" class="toolbar-item" #exactDateCalendarInput
+                    dateFormat="dd.mm.yy"></p-calendar>
+        <p-button icon="pi pi-chevron-right" (onClick)="incrementDate()" class="button toolbar-item"
+                  severity="secondary"></p-button>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px; padding-bottom: 20px;">
+        <p-button icon="pi pi-map-marker" label="Locate" severity="info"
+                  pTooltip="Go to the selected entry or the first entry of the day." tooltipPosition="top"
+                  showDelay="500"
+                  [rounded]="true"
+                  (onClick)="locateDayView()"></p-button>
+        <p-button icon="pi pi-image" label="Photos" severity="secondary"
+                  pTooltip="View the current day in Google Photos." tooltipPosition="top" showDelay="500"
+                  [rounded]="true"
+                  (onClick)="openGooglePhotos()"></p-button>
+        <p-button label="Today" severity="secondary"
+                  pTooltip="Reset the date to today." tooltipPosition="top" showDelay="500"
+                  [rounded]="true"
+                  (onClick)="setTodayForDayView()"></p-button>
+    </div>
+    <p-table
+            [value]="dayViewDataFull"
+            selectionMode="multiple"
+            [(selection)]="selectedLocationEntries"
+            styleClass="p-datatable-sm"
+            scrollable="true"
+            scrollHeight="calc(100vh - 540px)"
+            (mouseleave)="onMouseOverLocationEntry($event, null)"
+            (selectionChange)="onSelectionChange($event)"
+            [metaKeySelection]="false" dataKey="id">
+        <ng-template pTemplate="caption">
+            <div class="flex flex-wrap justify-content-end gap-2">
+                <p-button label="New" icon="pi pi-plus" text
+                          pTooltip="New entry at the current time or after the selected entry."
+                          tooltipPosition="top" showDelay="500"
+                          (onClick)="createNewLocationEntry()"
+                          [disabled]="newLocationBtnDisabled()"/>
+                <p-button label="Edit" icon="pi pi-pen-to-square" text
+                          pTooltip="Edited the selected entry. To change the location drag the marker on the map."
+                          tooltipPosition="top" showDelay="500"
+                          (onClick)="showEditModal()"
+                          [disabled]="notSingleLocationSelected()"/>
+                <p-button label="Delete" icon="pi pi-trash" severity="danger" text
+                          pTooltip="Delete the selected entry." tooltipPosition="left" showDelay="500"
+                          (onClick)="deleteLocationEntry()"
+                          [disabled]="notAtLeastOneLocationSelected()"/>
+            </div>
+        </ng-template>
+        <ng-template pTemplate="header">
+            <tr>
+                <th style="width: 2rem; text-align: center">
+                    <p-tableHeaderCheckbox/>
+                </th>
+                <th style="text-align: center"><i class="fa-solid fa-clock" pTooltip="Time"
+                                                  tooltipPosition="top"></i></th>
+                <th style="text-align: center"><i class="fa-solid fa-message"
+                                                  pTooltip="Note" tooltipPosition="top"></i></th>
+                <th style="text-align: center"><i class="fa-solid fa-map-location-dot"
+                                                  pTooltip="Coordinates" tooltipPosition="top"></i></th>
+                <th style="text-align: center"><i class="fa-solid fa-ruler-vertical" pTooltip="Altitude"
+                                                  tooltipPosition="top"></i></th>
+                <th style="text-align: center"><i class="fa-solid fa-bullseye"
+                                                  pTooltip="Horizontal accuracy" tooltipPosition="left"></i>
+                </th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-locationEntry>
+            <tr [pSelectableRow]="locationEntry"
+                (mouseenter)="onMouseOverLocationEntry($event, locationEntry)">
+                <td style="text-align: center">
+                    <p-tableCheckbox [value]="locationEntry" [pSelectableRow]="locationEntry"/>
+                </td>
+                <td style="text-align: center">{{ convertToLocalTime(locationEntry.timestamp) }}</td>
+                <td style="text-align: center">
+                    <i class="fa-solid fa-message" *ngIf="locationEntry.note"
+                       pTooltip="{{ locationEntry.note }}" tooltipPosition="top"></i>
+                </td>
+                <td style="text-align: center"><p
+                        style="font-size: small; white-space:pre-wrap; margin-top: 0; margin-bottom: 0">{{ shortCoordinates(locationEntry.latitude, locationEntry.longitude) }}</p>
+                </td>
+                <td style="text-align: center">{{ locationEntry.altitude }}m</td>
+                <td style="text-align: center">{{ locationEntry.horizontalAccuracy }}m</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</p-panel>
+
+<p-dialog header="Edit Location" [modal]="true" [(visible)]="editModalVisible" [style]="{ width: '25rem' }"
+          *ngIf="selectedLocationEntries.length === 1">
+    <div class="flex align-items-center gap-3 mb-3">
+        <label for="editDateTime" class="font-semibold w-6rem">Date & Time</label>
+        <p-calendar [(ngModel)]="editDate" [iconDisplay]="'input'" appendTo="body"
+                    [showTime]="true"
+                    (ngModelChange)="selectedLocationEntries[0].timestamp = editDate.toISOString()"
+                    [showIcon]="true" id="editDateTime" dateFormat="dd.mm.yy"></p-calendar>
+    </div>
+    <div class="flex align-items-center gap-3 mb-3">
+        <label for="altitudeInput" class="font-semibold w-6rem">Altitude</label>
+        <p-inputNumber id="altitudeInput"
+                       inputId="integeronly"
+                       [min]="0"
+                       suffix="m"
+                       [(ngModel)]="selectedLocationEntries[0].altitude"/>
+    </div>
+    <div class="flex align-items-center gap-3 mb-3">
+        <label for="tripSubtitle" class="font-semibold w-6rem" style="align-self: start">Description</label>
+        <textarea class="description-textarea" id="tripSubtitle" rows="5" cols="30" [maxLength]="250" pInputTextarea
+                  [(ngModel)]="selectedLocationEntries[0].note">
+        </textarea>
+    </div>
+    <div class="flex justify-content-end gap-2">
+        <p-button label="Cancel" severity="secondary" (click)="cancelEdit()"/>
+        <p-button label="Save" (click)="saveEdit()"/>
+    </div>
+</p-dialog>

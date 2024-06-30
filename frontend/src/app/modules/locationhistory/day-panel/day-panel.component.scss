@@ -1,0 +1,11 @@
+.dayview-date-selector {
+  display: flex;
+  align-items: center; /* Centers items vertically if they have different heights */
+  justify-content: center; /* Horizontally centers the items in the toolbar */
+  gap: 10px; /* Adjusts spacing between each item */
+}
+
+.description-textarea {
+  resize: none;
+  width: 234px;
+}

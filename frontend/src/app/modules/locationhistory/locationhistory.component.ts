@@ -122,6 +122,12 @@ export class LocationhistoryComponent implements OnInit {
         this.loadDayViewData();
         this.route.queryParams.subscribe(params => {
             let tripId = params['tripId'] || null;
+            let date = params['date'] || null;
+            if (date) {
+                this.exactDate = new Date(date);
+                this.loadDayViewData();
+            }
+
             if (tripId) {
                 this.tripService.getTrips().subscribe(trips => {
                     this.currentTrip = trips.find(trip => trip.id == tripId) || null;

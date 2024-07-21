@@ -95,6 +95,7 @@ export class LocationhistoryComponent implements OnInit {
     // Day view
     dayViewDataFull: Array<LocationHistoryEntry> = [];
     exactDate: Date = new Date();
+    tabIndex: number = 0;
 
     // Edit Modal
     selectedLocationEntries: LocationHistoryEntry[] = [];

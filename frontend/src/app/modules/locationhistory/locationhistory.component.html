@@ -31,10 +31,10 @@
     <div class="google-maps-container p-panel" tabindex="-1">
         <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
             <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions"></map-heatmap-layer>
-            <map-polyline [path]="minifyDayViewData(tripViewDataFull)"
+            <map-polyline [path]="minifyDayViewData(tripViewDataFull)" *ngIf="tabIndex===0"
                           [options]="{strokeColor: 'grey', strokeOpacity: 0, icons: [{icon: lineSymbol, offset: '0', repeat: '15px'}]}"></map-polyline>
             <map-polyline [path]="minifyDayViewData(dayViewDataFull)" [options]="{strokeColor: 'blue'}"
-                          (polylineClick)="dayLineClick($event)"></map-polyline>
+                          (polylineClick)="dayLineClick($event)" *ngIf="tabIndex===0"></map-polyline>
             <map-marker *ngFor="let entry of selectedLocationEntries"
                         [position]="{lat: entry.latitude, lng: entry.longitude}" [options]="{draggable: true}"
                         (mapDragend)="markerDragged(entry, $event)"></map-marker>
@@ -94,7 +94,7 @@
 
         <!-- List View Panel -->
         <div style="padding: 0 0 10px 10px; width: 400px; height: 100%">
-            <p-tabView (onChange)="reloadDataOnTabChange()">
+            <p-tabView (onChange)="reloadDataOnTabChange()" [(activeIndex)]="tabIndex">
                 <p-tabPanel header="Day View">
                     <thereabout-day-panel
                             (applyZoom)="applyZoom($event)"

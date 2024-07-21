@@ -28,7 +28,7 @@
                     {{ listEntry.locationHistoryEntries.length }}
                 </td>
                 <td style="text-align: center">
-                    <p-button label="Edit" severity="secondary" />
+                    <p-button label="Delete" [text]="true" [plain]="true" severity="danger" (onClick)="deleteList(listEntry.id)" />
                 </td>
             </tr>
         </ng-template>
@@ -37,7 +37,7 @@
 <div *ngIf="selectedLocationList">
     <div class="list-header">
         <p-button icon="pi pi-arrow-circle-left" [rounded]="true" [text]="true" (onClick)="deleteSelection()" />
-        <h3>{{selectedLocationList.name}}</h3>
+        <h3>{{getLocationListForSelection().name}}</h3>
     </div>
     <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px; padding-bottom: 20px;">
         <p-button icon="pi pi-map-marker" label="Locate" severity="info"
@@ -45,17 +45,9 @@
                   showDelay="500"
                   [rounded]="true"
                   (onClick)="locateDayView()"></p-button>
-        <p-button icon="pi pi-image" label="Photos" severity="secondary"
-                  pTooltip="View the current day in Google Photos." tooltipPosition="top" showDelay="500"
-                  [rounded]="true"
-                  (onClick)="openGooglePhotos()"></p-button>
-        <p-button label="New List" severity="secondary"
-                  pTooltip="Create a new list" tooltipPosition="top" showDelay="500"
-                  [rounded]="true"
-                  (onClick)="createNewList()"></p-button>
     </div>
     <p-table
-            [value]="selectedLocationList?.locationHistoryEntries || []"
+            [value]="getLocationListForSelection().locationHistoryEntries || []"
             selectionMode="multiple"
             [(selection)]="selectedLocationEntries"
             styleClass="p-datatable-sm"
@@ -66,7 +58,11 @@
             [metaKeySelection]="false" dataKey="id">
         <ng-template pTemplate="caption">
             <div class="flex flex-wrap justify-content-end gap-2">
-                <p-button label="Remove from list" icon="pi pi-trash" severity="danger" text
+                <p-button label="Photos" icon="pi pi-image" text
+                          pTooltip="Open Google Photos for the selected entry." tooltipPosition="left" showDelay="500"
+                          (onClick)="openGooglePhotos()"
+                          [disabled]="notSingleLocationSelected()"/>
+                <p-button label="Remove" icon="pi pi-trash" severity="danger" text
                           pTooltip="Remove the selected entry from the list." tooltipPosition="left" showDelay="500"
                           (onClick)="removeFromList()"
                           [disabled]="notAtLeastOneLocationSelected()"/>
@@ -91,7 +87,7 @@
                 <td style="text-align: center">
                     <p-tableCheckbox [value]="locationEntry" [pSelectableRow]="locationEntry"/>
                 </td>
-                <td style="text-align: center">{{ convertToLocalTime(locationEntry.timestamp) }}</td>
+                <td style="text-align: center">{{ convertToLocalDateTime(locationEntry.timestamp) }}</td>
                 <td style="text-align: center">
                     <i class="fa-solid fa-message" *ngIf="locationEntry.note"
                        pTooltip="{{ locationEntry.note }}" tooltipPosition="top"></i>
@@ -111,6 +107,6 @@
     </div>
     <div class="flex justify-content-end gap-2">
         <p-button label="Cancel" severity="secondary" (click)="cancelListEdit()"/>
-        <p-button label="Save" (click)="saveListEdit()"/>
+        <p-button label="Save" (click)="createLocationHistoryList()"/>
     </div>
 </p-dialog>

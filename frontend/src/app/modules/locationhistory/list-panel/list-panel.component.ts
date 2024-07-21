@@ -9,8 +9,7 @@ import {TooltipModule} from "primeng/tooltip";
 import {FormsModule} from "@angular/forms";
 import {
     LocationHistoryEntry, LocationHistoryList,
-    LocationListService,
-    LocationService
+    LocationListService
 } from "../../../../../generated/backend-api/thereabout";
 import {DialogModule} from "primeng/dialog";
 import {InputNumberModule} from "primeng/inputnumber";
@@ -42,7 +41,6 @@ import {InputTextModule} from "primeng/inputtext";
 })
 export class ListPanelComponent {
 
-    @Input() exactDate!: Date;
     @Input() center = {lat: 47.3919661, lng: 8.3};
     @Input() highlightedLocationEntry: LocationHistoryEntry | undefined;
     @Input() selectedLocationEntries: LocationHistoryEntry[] = [];
@@ -52,26 +50,23 @@ export class ListPanelComponent {
 
     @Output() applyZoom = new EventEmitter<number>();
     @Output() centerChange = new EventEmitter<{ lat: number, lng: number }>()
-    @Output() exactDateChange = new EventEmitter<Date>();
     @Output() highlightedLocationEntryChange = new EventEmitter<LocationHistoryEntry | undefined>();
     @Output() selectedLocationEntriesChange = new EventEmitter<LocationHistoryEntry[]>();
 
     // New
     @Output() locationListsChange = new EventEmitter<LocationHistoryList[]>();
 
-    // Edit Modal
-    editModalVisible: boolean = false;
-    editDate: Date = new Date();
-
-
     // New
     selectedLocationList: LocationHistoryList | undefined;
     editListModalVisible:  boolean = false;
     editCurrentListName: string = '';
 
-    constructor(private readonly locationService: LocationService,
-                private readonly locationListService: LocationListService,
+    constructor(private readonly locationListService: LocationListService,
                 private messageService: MessageService,) {
+    }
+
+    getLocationListForSelection(){
+        return this.locationLists.filter(list => list.id === this.selectedLocationList?.id)[0];
     }
 
     locateDayView() {
@@ -83,8 +78,8 @@ export class ListPanelComponent {
             this.centerChange.emit(this.center);
             this.applyZoom.emit(16);
         } else {
-            if (this.selectedLocationList?.locationHistoryEntries.length == 0) return;
-            this.center = this.minifyDayViewData(this.selectedLocationList?.locationHistoryEntries || [])[0];
+            if (this.getLocationListForSelection().locationHistoryEntries.length == 0) return;
+            this.center = this.minifyDayViewData(this.getLocationListForSelection().locationHistoryEntries || [])[0];
             this.centerChange.emit(this.center);
             this.applyZoom.emit(11);
         }
@@ -96,8 +91,12 @@ export class ListPanelComponent {
         });
     }
 
+    notSingleLocationSelected() {
+        return !(this.selectedLocationEntries.length === 1);
+    }
+
     openGooglePhotos() {
-        window.open("https://photos.google.com/search/" + this.dateToString(this.exactDate), "_blank");
+        window.open("https://photos.google.com/search/" + this.dateToString(new Date(this.selectedLocationEntries[0].timestamp)), "_blank");
     }
 
     dateToString(date: Date) {
@@ -120,21 +119,12 @@ export class ListPanelComponent {
         }
     }
 
-    notSingleLocationSelected() {
-        return !(this.selectedLocationEntries.length === 1);
-    }
-
     notAtLeastOneLocationSelected() {
         return this.selectedLocationEntries.length === 0;
     }
 
-    showEditModal() {
-        this.editModalVisible = true;
-        this.editDate = new Date(this.selectedLocationEntries[0].timestamp);
-    }
-
-    convertToLocalTime(date: string) {
-        return new Date(date).toLocaleTimeString().slice(0, 5);
+    convertToLocalDateTime(date: string) {
+        return `${date.slice(0, 10)} ${new Date(date).toLocaleTimeString().slice(0, 5)}`;
     }
 
     shortCoordinates(lat: number, lng: number) {
@@ -150,7 +140,7 @@ export class ListPanelComponent {
         this.editListModalVisible = false;
     }
 
-    saveListEdit() {
+    createLocationHistoryList() {
         this.locationListService.createLocationHistoryList({
             id: 0,
             name: this.editCurrentListName,
@@ -163,6 +153,7 @@ export class ListPanelComponent {
             });
             this.locationListService.getLocationHistoryLists().subscribe(lists => {
                 this.locationLists = lists;
+                this.locationListsChange.emit(this.locationLists);
             });
         });
 
@@ -176,7 +167,7 @@ export class ListPanelComponent {
     }
 
     removeFromList() {
-        this.locationListService.removeLocationFromList(this.selectedLocationList!.id, {locationHistoryEntryId: this.selectedLocationEntries[0].id}).subscribe(() => {
+        this.locationListService.removeLocationFromList(this.getLocationListForSelection().id, {locationHistoryEntryId: this.selectedLocationEntries[0].id}).subscribe(() => {
             this.messageService.add({
                 severity: 'success',
                 summary: 'Location removed from list',
@@ -184,11 +175,26 @@ export class ListPanelComponent {
             });
             this.locationListService.getLocationHistoryLists().subscribe(lists => {
                 this.locationLists = lists;
+                this.locationListsChange.emit(this.locationLists);
             });
         });
     }
 
     deleteSelection() {
         this.selectedLocationList = undefined;
+    }
+
+    deleteList(listId: number) {
+        this.locationListService.deleteLocationHistoryList(listId).subscribe(() => {
+            this.messageService.add({
+                severity: 'success',
+                summary: 'List deleted',
+                detail: `The list was successfully deleted.`
+            });
+            this.locationListService.getLocationHistoryLists().subscribe(lists => {
+                this.locationLists = lists;
+                this.locationListsChange.emit(this.locationLists);
+            });
+        });
     }
 }

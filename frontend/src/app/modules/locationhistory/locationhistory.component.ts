@@ -134,10 +134,7 @@ export class LocationhistoryComponent implements OnInit {
     ngOnInit() {
         this.loadHeatmapData();
         this.loadDayViewData();
-
-        this.locationListService.getLocationHistoryLists().subscribe(lists => {
-            this.locationLists = lists;
-        });
+        this.loadLocationListData();
 
         this.route.queryParams.subscribe(params => {
             let tripId = params['tripId'] || null;
@@ -157,6 +154,12 @@ export class LocationhistoryComponent implements OnInit {
                     }
                 });
             }
+        });
+    }
+
+    private loadLocationListData() {
+        this.locationListService.getLocationHistoryLists().subscribe(lists => {
+            this.locationLists = lists;
         });
     }
 
@@ -312,5 +315,9 @@ export class LocationhistoryComponent implements OnInit {
             // otherwise select
             this.selectedLocationEntries = [closestPoint];
         }
+    }
+
+    reloadDataOnTabChange() {
+        this.loadLocationListData();
     }
 }

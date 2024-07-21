@@ -94,7 +94,7 @@
 
         <!-- List View Panel -->
         <div style="padding: 0 0 10px 10px; width: 400px; height: 100%">
-            <p-tabView>
+            <p-tabView (onChange)="reloadDataOnTabChange()">
                 <p-tabPanel header="Day View">
                     <thereabout-day-panel
                             (applyZoom)="applyZoom($event)"
@@ -113,7 +113,6 @@
                             (applyZoom)="applyZoom($event)"
                             [(center)]="center"
                             [(locationLists)]="locationLists"
-                            [(exactDate)]="exactDate"
                             [(highlightedLocationEntry)]="highlightedLocationEntry"
                             [(selectedLocationEntries)]="selectedLocationEntries"
                     ></thereabout-list-panel>

@@ -45,6 +45,10 @@ public class LocationListService {
         LocationListEntity locationList = locationListRepository.findById(listId)
                 .orElseThrow(() -> new ThereaboutException(HttpStatus.NOT_FOUND, "LocationHistoryList with id %s not found".formatted(listId)));
 
+        if(locationList.getLocationHistoryEntries().stream().anyMatch(entry -> entry.getId().equals(locationHistoryEntryId))) {
+            throw new ThereaboutException(HttpStatus.BAD_REQUEST, "LocationHistoryEntry with id %s already exists in LocationHistoryList with id %s".formatted(locationHistoryEntryId, listId));
+        }
+
         locationHistoryRepository.findById(locationHistoryEntryId)
                 .ifPresent(locationHistoryEntry -> locationList.getLocationHistoryEntries().add(locationHistoryEntry));
 

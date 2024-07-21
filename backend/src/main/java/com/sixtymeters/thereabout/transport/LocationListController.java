@@ -2,10 +2,12 @@ package com.sixtymeters.thereabout.transport;
 
 import com.sixtymeters.thereabout.domain.LocationListService;
 import com.sixtymeters.thereabout.generated.api.LocationListApi;
+import com.sixtymeters.thereabout.generated.model.GenAddLocationToListRequest;
 import com.sixtymeters.thereabout.generated.model.GenLocationHistoryList;
 import com.sixtymeters.thereabout.model.LocationListEntity;
 import com.sixtymeters.thereabout.transport.mapper.LocationListMapper;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,6 +21,12 @@ public class LocationListController implements LocationListApi {
 
     private final LocationListService locationListService;
     private static final LocationListMapper LOCATION_LIST_MAPPER = LocationListMapper.INSTANCE;
+
+    @Override
+    public ResponseEntity<Void> addLocationToList(BigDecimal id, GenAddLocationToListRequest genAddLocationToListRequest) {
+        locationListService.addLocationToList(id.longValue(), genAddLocationToListRequest.getLocationHistoryEntryId().longValue());
+        return ResponseEntity.noContent().build();
+    }
 
     @Override
     public ResponseEntity<GenLocationHistoryList> createLocationHistoryList(GenLocationHistoryList genLocationHistoryList) {
@@ -51,11 +59,14 @@ public class LocationListController implements LocationListApi {
     }
 
     @Override
+    public ResponseEntity<Void> removeLocationFromList(BigDecimal id, GenAddLocationToListRequest genAddLocationToListRequest) {
+        locationListService.removeLocationFromList(id.longValue(), genAddLocationToListRequest.getLocationHistoryEntryId().longValue());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
     public ResponseEntity<GenLocationHistoryList> updateLocationHistoryList(BigDecimal id, GenLocationHistoryList genLocationHistoryList) {
-        LocationListEntity locationHistoryList = LOCATION_LIST_MAPPER.map(genLocationHistoryList);
-        LocationListEntity updatedList = locationListService.updateLocationHistoryList(id.longValue(), locationHistoryList);
-        GenLocationHistoryList response = LOCATION_LIST_MAPPER.map(updatedList);
-        return ResponseEntity.ok(response);
+        throw new NotImplementedException("Not needed anymore");
     }
 }
 

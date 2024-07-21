@@ -46,6 +46,7 @@ public class LocationHistoryController implements LocationApi {
     public ResponseEntity<GenLocationHistoryEntry> addLocation(GenLocationHistoryEntry genLocationHistoryEntry) {
         final var locationHistoryEntryCreationRequest = LOCATION_HISTORY_MAPPER.map(genLocationHistoryEntry);
         locationHistoryEntryCreationRequest.setSource(LocationHistorySource.THEREABOUT_API);
+        locationHistoryEntryCreationRequest.setId(null);
 
         final var createdLocationHistoryEntry = locationHistoryService
                 .createLocationHistoryEntry(locationHistoryEntryCreationRequest);

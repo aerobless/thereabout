@@ -7,10 +7,15 @@ import {MessageService, SharedModule} from "primeng/api";
 import {TableModule} from "primeng/table";
 import {TooltipModule} from "primeng/tooltip";
 import {FormsModule} from "@angular/forms";
-import {LocationHistoryEntry, LocationService} from "../../../../../generated/backend-api/thereabout";
+import {
+    LocationHistoryEntry,
+    LocationHistoryList, LocationListService,
+    LocationService
+} from "../../../../../generated/backend-api/thereabout";
 import {DialogModule} from "primeng/dialog";
 import {InputNumberModule} from "primeng/inputnumber";
 import {InputTextareaModule} from "primeng/inputtextarea";
+import {DropdownModule} from "primeng/dropdown";
 
 @Component({
   selector: 'thereabout-day-panel',
@@ -26,7 +31,8 @@ import {InputTextareaModule} from "primeng/inputtextarea";
         FormsModule,
         DialogModule,
         InputNumberModule,
-        InputTextareaModule
+        InputTextareaModule,
+        DropdownModule
     ],
   templateUrl: './day-panel.component.html',
   styleUrl: './day-panel.component.scss'
@@ -38,6 +44,7 @@ export class DayPanelComponent {
     @Input() center = {lat: 47.3919661, lng: 8.3};
     @Input() highlightedLocationEntry: LocationHistoryEntry | undefined;
     @Input() selectedLocationEntries: LocationHistoryEntry[] = [];
+    @Input() locationLists!: LocationHistoryList[];
 
     @Output() loadDayViewData = new EventEmitter<number>();
     @Output() loadTripViewData = new EventEmitter<void>();
@@ -46,6 +53,7 @@ export class DayPanelComponent {
     @Output() exactDateChange = new EventEmitter<Date>();
     @Output() highlightedLocationEntryChange = new EventEmitter<LocationHistoryEntry | undefined>();
     @Output() selectedLocationEntriesChange = new EventEmitter<LocationHistoryEntry[]>();
+    @Output() locationListsChange = new EventEmitter<LocationHistoryList[]>();
 
     @ViewChild('exactDateCalendarInput')
     private exactDateCalendarInput: any;
@@ -53,8 +61,10 @@ export class DayPanelComponent {
     // Edit Modal
     editModalVisible: boolean = false;
     editDate: Date = new Date();
+    editLocationList: LocationHistoryList | undefined;
 
     constructor(private readonly locationService: LocationService,
+                private readonly locationListService: LocationListService,
                 private messageService: MessageService,) {
     }
 
@@ -192,9 +202,24 @@ export class DayPanelComponent {
                 summary: 'Location updated',
                 detail: `The location was successfully updated.`
             });
+
+            if(this.editLocationList){
+                this.locationListService.addLocationToList(this.editLocationList.id,
+                    {locationHistoryEntryId: this.selectedLocationEntries[0].id})
+                    .subscribe(() => {
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Location added to list',
+                        detail: `The location was successfully added to the list.`
+                    });
+                });
+            }
+
+            this.editLocationList = undefined;
             this.loadDayViewData.emit();
             this.loadTripViewData.emit();
         });
+
         this.editModalVisible = false;
     }
 

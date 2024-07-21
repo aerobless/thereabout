@@ -1,0 +1,116 @@
+<div class="list-selector" *ngIf="!selectedLocationList">
+    <p-table
+            [value]="locationLists || []"
+            scrollable="true"
+            scrollHeight="calc(100vh - 540px)"
+            selectionMode="single"
+            [(selection)]="selectedLocationList"
+            [metaKeySelection]="false" dataKey="id">
+        <ng-template pTemplate="caption">
+            <div class="flex flex-wrap justify-content-end gap-2">
+                <p-button label="Add new list" icon="pi pi-plus" text
+                          pTooltip="Add a new list" tooltipPosition="left" showDelay="500"
+                          (onClick)="createNewList()"/>
+            </div>
+        </ng-template>
+        <ng-template pTemplate="header">
+            <tr>
+                <th>Name</th>
+                <th style="text-align: center"><i class="fa-solid fa-map-location-dot"
+                                                  pTooltip="Number of locations" tooltipPosition="top"></i></th>
+                <th style="text-align: center">Tools</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-listEntry>
+            <tr [pSelectableRow]="listEntry">
+                <td style="font-size: large">{{ listEntry.name }}</td>
+                <td style="text-align: center">
+                    {{ listEntry.locationHistoryEntries.length }}
+                </td>
+                <td style="text-align: center">
+                    <p-button label="Edit" severity="secondary" />
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+<div *ngIf="selectedLocationList">
+    <div class="list-header">
+        <p-button icon="pi pi-arrow-circle-left" [rounded]="true" [text]="true" (onClick)="deleteSelection()" />
+        <h3>{{selectedLocationList.name}}</h3>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px; padding-bottom: 20px;">
+        <p-button icon="pi pi-map-marker" label="Locate" severity="info"
+                  pTooltip="Go to the selected entry or the first entry of the day." tooltipPosition="top"
+                  showDelay="500"
+                  [rounded]="true"
+                  (onClick)="locateDayView()"></p-button>
+        <p-button icon="pi pi-image" label="Photos" severity="secondary"
+                  pTooltip="View the current day in Google Photos." tooltipPosition="top" showDelay="500"
+                  [rounded]="true"
+                  (onClick)="openGooglePhotos()"></p-button>
+        <p-button label="New List" severity="secondary"
+                  pTooltip="Create a new list" tooltipPosition="top" showDelay="500"
+                  [rounded]="true"
+                  (onClick)="createNewList()"></p-button>
+    </div>
+    <p-table
+            [value]="selectedLocationList?.locationHistoryEntries || []"
+            selectionMode="multiple"
+            [(selection)]="selectedLocationEntries"
+            styleClass="p-datatable-sm"
+            scrollable="true"
+            scrollHeight="calc(100vh - 540px)"
+            (mouseleave)="onMouseOverLocationEntry($event, null)"
+            (selectionChange)="onSelectionChange($event)"
+            [metaKeySelection]="false" dataKey="id">
+        <ng-template pTemplate="caption">
+            <div class="flex flex-wrap justify-content-end gap-2">
+                <p-button label="Remove from list" icon="pi pi-trash" severity="danger" text
+                          pTooltip="Remove the selected entry from the list." tooltipPosition="left" showDelay="500"
+                          (onClick)="removeFromList()"
+                          [disabled]="notAtLeastOneLocationSelected()"/>
+            </div>
+        </ng-template>
+        <ng-template pTemplate="header">
+            <tr>
+                <th style="width: 2rem; text-align: center">
+                    <p-tableHeaderCheckbox/>
+                </th>
+                <th style="text-align: center"><i class="fa-solid fa-clock" pTooltip="Time"
+                                                  tooltipPosition="top"></i></th>
+                <th style="text-align: center"><i class="fa-solid fa-message"
+                                                  pTooltip="Note" tooltipPosition="top"></i></th>
+                <th style="text-align: center"><i class="fa-solid fa-map-location-dot"
+                                                  pTooltip="Coordinates" tooltipPosition="top"></i></th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-locationEntry>
+            <tr [pSelectableRow]="locationEntry"
+                (mouseenter)="onMouseOverLocationEntry($event, locationEntry)">
+                <td style="text-align: center">
+                    <p-tableCheckbox [value]="locationEntry" [pSelectableRow]="locationEntry"/>
+                </td>
+                <td style="text-align: center">{{ convertToLocalTime(locationEntry.timestamp) }}</td>
+                <td style="text-align: center">
+                    <i class="fa-solid fa-message" *ngIf="locationEntry.note"
+                       pTooltip="{{ locationEntry.note }}" tooltipPosition="top"></i>
+                </td>
+                <td style="text-align: center"><p
+                        style="font-size: small; white-space:pre-wrap; margin-top: 0; margin-bottom: 0">{{ shortCoordinates(locationEntry.latitude, locationEntry.longitude) }}</p>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<p-dialog header="Create List" [modal]="true" [(visible)]="editListModalVisible" [style]="{ width: '25rem' }">
+    <div class="flex align-items-center gap-3 mb-3">
+        <label for="editListName" class="font-semibold w-6rem">Name</label>
+        <input type="text" id="editListName" pInputText [(ngModel)]="editCurrentListName"/>
+    </div>
+    <div class="flex justify-content-end gap-2">
+        <p-button label="Cancel" severity="secondary" (click)="cancelListEdit()"/>
+        <p-button label="Save" (click)="saveListEdit()"/>
+    </div>
+</p-dialog>

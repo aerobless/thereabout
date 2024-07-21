@@ -8,7 +8,13 @@ import {
     MapMarkerClusterer,
     MapPolyline
 } from "@angular/google-maps";
-import {LocationHistoryEntry, LocationService, Trip, TripService} from "../../../../generated/backend-api/thereabout";
+import {
+    LocationHistoryEntry, LocationHistoryList,
+    LocationListService,
+    LocationService,
+    Trip,
+    TripService
+} from "../../../../generated/backend-api/thereabout";
 import {ToolbarModule} from "primeng/toolbar";
 import {InputTextModule} from "primeng/inputtext";
 import {CardModule} from "primeng/card";
@@ -32,6 +38,8 @@ import {TooltipModule} from "primeng/tooltip";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {TripPanelComponent} from "./trip-panel/trip-panel.component";
 import {DayPanelComponent} from "./day-panel/day-panel.component";
+import {ListPanelComponent} from "./list-panel/list-panel.component";
+import {TabViewModule} from "primeng/tabview";
 
 
 @Component({
@@ -65,6 +73,8 @@ import {DayPanelComponent} from "./day-panel/day-panel.component";
         InputTextareaModule,
         TripPanelComponent,
         DayPanelComponent,
+        ListPanelComponent,
+        TabViewModule,
     ],
     templateUrl: './locationhistory.component.html',
     styleUrl: './locationhistory.component.scss'
@@ -109,7 +119,11 @@ export class LocationhistoryComponent implements OnInit {
     currentTrip: Trip | null = null;
     tripViewDataFull: Array<LocationHistoryEntry> = [];
 
+    // Lists
+    locationLists: LocationHistoryList[] = [];
+
     constructor(private readonly locationService: LocationService,
+                private readonly locationListService: LocationListService,
                 private readonly geocodeService: MapGeocoder,
                 private messageService: MessageService,
                 private tripService: TripService,
@@ -120,6 +134,11 @@ export class LocationhistoryComponent implements OnInit {
     ngOnInit() {
         this.loadHeatmapData();
         this.loadDayViewData();
+
+        this.locationListService.getLocationHistoryLists().subscribe(lists => {
+            this.locationLists = lists;
+        });
+
         this.route.queryParams.subscribe(params => {
             let tripId = params['tripId'] || null;
             let date = params['date'] || null;

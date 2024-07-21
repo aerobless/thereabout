@@ -22,5 +22,10 @@ public class LocationListEntity {
     private String name;
 
     @OneToMany
+    @JoinTable(
+            name = "location_history_list_entries",
+            joinColumns = @JoinColumn(name = "location_history_list_id"),
+            inverseJoinColumns = @JoinColumn(name = "location_history_entry_id")
+    )
     private List<LocationHistoryEntity> locationHistoryEntries;
 }

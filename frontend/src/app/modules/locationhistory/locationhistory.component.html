@@ -92,18 +92,33 @@
             </p-panel>
         </div>
 
-        <!-- Day View Panel -->
+        <!-- List View Panel -->
         <div style="padding: 0 0 10px 10px; width: 400px; height: 100%">
-            <thereabout-day-panel
-                    (applyZoom)="applyZoom($event)"
-                    (loadDayViewData)="loadDayViewData($event)"
-                    (loadTripViewData)="loadTripViewData()"
-                    [(center)]="center"
-                    [dayViewDataFull]="dayViewDataFull"
-                    [(exactDate)]="exactDate"
-                    [(highlightedLocationEntry)]="highlightedLocationEntry"
-                    [(selectedLocationEntries)]="selectedLocationEntries"
-            ></thereabout-day-panel>
+            <p-tabView>
+                <p-tabPanel header="Day View">
+                    <thereabout-day-panel
+                            (applyZoom)="applyZoom($event)"
+                            (loadDayViewData)="loadDayViewData($event)"
+                            (loadTripViewData)="loadTripViewData()"
+                            [(center)]="center"
+                            [(locationLists)]="locationLists"
+                            [dayViewDataFull]="dayViewDataFull"
+                            [(exactDate)]="exactDate"
+                            [(highlightedLocationEntry)]="highlightedLocationEntry"
+                            [(selectedLocationEntries)]="selectedLocationEntries"
+                    ></thereabout-day-panel>
+                </p-tabPanel>
+                <p-tabPanel header="My Lists">
+                    <thereabout-list-panel
+                            (applyZoom)="applyZoom($event)"
+                            [(center)]="center"
+                            [(locationLists)]="locationLists"
+                            [(exactDate)]="exactDate"
+                            [(highlightedLocationEntry)]="highlightedLocationEntry"
+                            [(selectedLocationEntries)]="selectedLocationEntries"
+                    ></thereabout-list-panel>
+                </p-tabPanel>
+            </p-tabView>
         </div>
     </div>
 </div>

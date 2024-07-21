@@ -445,6 +445,65 @@ paths:
           description: The location history list was successfully deleted
         500:
           $ref: '#/components/responses/500'
+  /backend/api/v1/location-history-list/{id}/location:
+    post:
+      summary: Add a location history entry to a specific list.
+      tags:
+        - location list
+      operationId: addLocationToList
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 1
+          required: true
+          description: The id of the location history list to update
+      requestBody:
+        description: The location history entry id to add
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                locationHistoryEntryId:
+                  type: number
+                  example: 42
+      responses:
+        204:
+          description: Successful response indicating the location history entry was added
+        500:
+          $ref: '#/components/responses/500'
+    delete:
+      summary: Remove a location history entry from a specific list.
+      tags:
+        - location list
+      operationId: removeLocationFromList
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 1
+          required: true
+          description: The id of the location history list to update
+      requestBody:
+        description: The location history entry id to remove
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                locationHistoryEntryId:
+                  type: number
+                  example: 42
+      responses:
+        204:
+          description: Successful response indicating the location history entry was removed
+        500:
+          $ref: '#/components/responses/500'
 
 components:
   schemas:

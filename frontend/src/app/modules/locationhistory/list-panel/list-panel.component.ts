@@ -56,6 +56,8 @@ export class ListPanelComponent {
     // New
     @Output() locationListsChange = new EventEmitter<LocationHistoryList[]>();
 
+    @Output() goToDayView = new EventEmitter<Date>();
+
     // New
     selectedLocationList: LocationHistoryList | undefined;
     editListModalVisible:  boolean = false;
@@ -196,5 +198,9 @@ export class ListPanelComponent {
                 this.locationListsChange.emit(this.locationLists);
             });
         });
+    }
+
+    goToDay() {
+        this.goToDayView.emit(new Date(this.selectedLocationEntries[0].timestamp));
     }
 }

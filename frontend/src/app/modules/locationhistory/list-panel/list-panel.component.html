@@ -52,12 +52,16 @@
             [(selection)]="selectedLocationEntries"
             styleClass="p-datatable-sm"
             scrollable="true"
-            scrollHeight="calc(100vh - 540px)"
+            scrollHeight="calc(100vh - 380px)"
             (mouseleave)="onMouseOverLocationEntry($event, null)"
             (selectionChange)="onSelectionChange($event)"
             [metaKeySelection]="false" dataKey="id">
         <ng-template pTemplate="caption">
             <div class="flex flex-wrap justify-content-end gap-2">
+                <p-button label="Day" icon="pi pi-calendar" text
+                          pTooltip="Open Day View for this date." tooltipPosition="left" showDelay="500"
+                          (onClick)="goToDay()"
+                          [disabled]="notSingleLocationSelected()"/>
                 <p-button label="Photos" icon="pi pi-image" text
                           pTooltip="Open Google Photos for the selected entry." tooltipPosition="left" showDelay="500"
                           (onClick)="openGooglePhotos()"

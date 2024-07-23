@@ -40,6 +40,8 @@ import {TripPanelComponent} from "./trip-panel/trip-panel.component";
 import {DayPanelComponent} from "./day-panel/day-panel.component";
 import {ListPanelComponent} from "./list-panel/list-panel.component";
 import {TabViewModule} from "primeng/tabview";
+import {AvatarModule} from "primeng/avatar";
+import {InputSwitchModule} from "primeng/inputswitch";
 
 
 @Component({
@@ -75,6 +77,8 @@ import {TabViewModule} from "primeng/tabview";
         DayPanelComponent,
         ListPanelComponent,
         TabViewModule,
+        AvatarModule,
+        InputSwitchModule,
     ],
     templateUrl: './locationhistory.component.html',
     styleUrl: './locationhistory.component.scss'
@@ -91,6 +95,7 @@ export class LocationhistoryComponent implements OnInit {
     heatmapData: { lng: number; lat: number }[] = [];
     fromDate: Date = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
     toDate: Date = new Date();
+    alwaysShowHeatmap = true;
 
     // Day view
     dayViewDataFull: Array<LocationHistoryEntry> = [];
@@ -320,5 +325,11 @@ export class LocationhistoryComponent implements OnInit {
 
     reloadDataOnTabChange() {
         this.loadLocationListData();
+    }
+
+    goToDayView($event: Date) {
+        this.exactDate = $event;
+        this.tabIndex = 0;
+        this.loadDayViewData(this.selectedLocationEntries[0].id);
     }
 }

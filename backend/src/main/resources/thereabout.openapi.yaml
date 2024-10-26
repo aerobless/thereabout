@@ -504,6 +504,29 @@ paths:
           description: Successful response indicating the location history entry was removed
         500:
           $ref: '#/components/responses/500'
+  /backend/api/v1/health:
+    post:
+      summary: Submit health data
+      tags:
+        - health
+      operationId: submitHealthData
+      requestBody:
+        description: Health data containing metrics and workouts
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  $ref: "#/components/schemas/HealthData"
+      responses:
+        201:
+          description: Successful submission of health data
+        400:
+          $ref: '#/components/responses/400'
+        500:
+          $ref: '#/components/responses/500'
 
 components:
   schemas:
@@ -862,6 +885,385 @@ components:
           branch:
             type: string
             example: "main"
+    HealthData:
+      type: object
+      properties:
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthMetric"
+        workouts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Workout"
+    HealthMetric:
+      type: object
+      properties:
+        name:
+          type: string
+        units:
+          type: string
+        data:
+          type: array
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/MetricDataQuantity"
+              - $ref: "#/components/schemas/MetricDataBloodPressure"
+              - $ref: "#/components/schemas/MetricDataHeartRate"
+              - $ref: "#/components/schemas/MetricDataSleep"
+              - $ref: "#/components/schemas/MetricDataBloodGlucose"
+              - $ref: "#/components/schemas/MetricDataSexualActivity"
+              - $ref: "#/components/schemas/MetricDataHandwashing"
+              - $ref: "#/components/schemas/MetricDataToothbrushing"
+              - $ref: "#/components/schemas/MetricDataInsulin"
+              - $ref: "#/components/schemas/MetricDataHeartRateNotification"
+    MetricDataQuantity:
+      type: object
+      properties:
+        qty:
+          type: number
+        date:
+          type: string
+          format: date-time
+    MetricDataBloodPressure:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        systolic:
+          type: number
+        diastolic:
+          type: number
+    MetricDataHeartRate:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        Min:
+          type: number
+        Avg:
+          type: number
+        Max:
+          type: number
+    MetricDataSleep:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        asleep:
+          type: number
+        sleepStart:
+          type: string
+          format: date-time
+        sleepEnd:
+          type: string
+          format: date-time
+        sleepSource:
+          type: string
+        inBed:
+          type: number
+        inBedStart:
+          type: string
+          format: date-time
+        inBedEnd:
+          type: string
+          format: date-time
+        inBedSource:
+          type: string
+    MetricDataBloodGlucose:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        qty:
+          type: number
+        mealTime:
+          type: string
+          enum:
+            - "Before Meal"
+            - "After Meal"
+            - "Unspecified"
+    MetricDataSexualActivity:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        Unspecified:
+          type: number
+        Protection Used:
+          type: number
+        Protection Not Used:
+          type: number
+    MetricDataHandwashing:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        qty:
+          type: number
+        value:
+          type: string
+          enum:
+            - "Complete"
+            - "Incomplete"
+    MetricDataToothbrushing:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        qty:
+          type: number
+        value:
+          type: string
+          enum:
+            - "Complete"
+            - "Incomplete"
+    MetricDataInsulin:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        qty:
+          type: number
+        reason:
+          type: string
+          enum:
+            - "Bolus"
+            - "Basal"
+    MetricDataHeartRateNotification:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        threshold:
+          type: number
+        heartRate:
+          type: array
+          items:
+            type: object
+            properties:
+              hr:
+                type: number
+              units:
+                type: string
+                example: "bpm"
+              timestamp:
+                type: object
+                properties:
+                  start:
+                    type: string
+                    format: date-time
+                  end:
+                    type: string
+                    format: date-time
+                  interval:
+                    type: object
+                    properties:
+                      duration:
+                        type: number
+                      units:
+                        type: string
+                        example: "s"
+    Workout:
+      type: object
+      properties:
+        name:
+          type: string
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        heartRateData:
+          type: array
+          items:
+            $ref: "#/components/schemas/HeartRateData"
+        heartRateRecovery:
+          type: array
+          items:
+            $ref: "#/components/schemas/HeartRateRecovery"
+        route:
+          type: array
+          items:
+            $ref: "#/components/schemas/RouteData"
+        totalEnergy:
+          $ref: "#/components/schemas/Energy"
+        activeEnergy:
+          $ref: "#/components/schemas/Energy"
+        maxHeartRate:
+          $ref: "#/components/schemas/HeartRate"
+        avgHeartRate:
+          $ref: "#/components/schemas/HeartRate"
+        stepCount:
+          $ref: "#/components/schemas/StepData"
+        stepCadence:
+          $ref: "#/components/schemas/StepCadence"
+        totalSwimmingStrokeCount:
+          $ref: "#/components/schemas/SwimmingData"
+        swimCadence:
+          $ref: "#/components/schemas/SwimmingCadence"
+        distance:
+          $ref: "#/components/schemas/Distance"
+        speed:
+          $ref: "#/components/schemas/Speed"
+        flightsClimbed:
+          $ref: "#/components/schemas/FlightsClimbed"
+        intensity:
+          $ref: "#/components/schemas/Intensity"
+        temperature:
+          $ref: "#/components/schemas/Temperature"
+        humidity:
+          $ref: "#/components/schemas/Humidity"
+        elevation:
+          $ref: "#/components/schemas/Elevation"
+    HeartRateData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        qty:
+          type: number
+        units:
+          type: string
+          example: "count"
+    HeartRateRecovery:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        qty:
+          type: number
+        units:
+          type: string
+          example: "count"
+    RouteData:
+      type: object
+      properties:
+        lat:
+          type: number
+        lon:
+          type: number
+        altitude:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+    Energy:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+    HeartRate:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "bpm"
+    StepData:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "steps"
+    StepCadence:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "spm"
+    SwimmingData:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "count"
+    SwimmingCadence:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "spm"
+    Distance:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+    Speed:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+    FlightsClimbed:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "count"
+    Intensity:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "MET"
+    Temperature:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+    Humidity:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "%"
+    Elevation:
+      type: object
+      properties:
+        ascent:
+          type: number
+        descent:
+          type: number
+        units:
+          type: string
 
   responses:
     400:

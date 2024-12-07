@@ -1,13 +1,11 @@
 package com.sixtymeters.thereabout.domain.statistics;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.sql.Date;
 import java.time.LocalDate;
 
 @Getter
-@AllArgsConstructor
 public final class CountryVisitInfo {
     private final String country;
     private final Long dayCount;

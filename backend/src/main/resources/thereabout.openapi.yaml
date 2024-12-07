@@ -134,6 +134,7 @@ paths:
               properties:
                 locations:
                   type: array
+                  x-field-extra-annotation: "@lombok.Builder.Default"
                   items:
                     $ref: '#/components/schemas/GeoJsonLocation'
       responses:
@@ -556,6 +557,7 @@ components:
           description: The end of the trip
         visitedCountries:
           type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             type: object
             description: The countries visited during the trip
@@ -734,6 +736,7 @@ components:
               enum: [Point]
             coordinates:
               type: array
+              x-field-extra-annotation: "@lombok.Builder.Default"
               items:
                 type: number
               example: [-122.030581, 37.331800]
@@ -767,6 +770,7 @@ components:
               example: -1
             motion:
               type: array
+              x-field-extra-annotation: "@lombok.Builder.Default"
               items:
                 type: string
                 enum: [driving, walking, running, cycling, stationary]
@@ -890,10 +894,12 @@ components:
       properties:
         metrics:
           type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/HealthMetric"
         workouts:
           type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/Workout"
     HealthMetric:
@@ -905,6 +911,7 @@ components:
           type: string
         data:
           type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             oneOf:
               - $ref: "#/components/schemas/MetricDataQuantity"
@@ -1051,6 +1058,7 @@ components:
           type: number
         heartRate:
           type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             type: object
             properties:
@@ -1089,14 +1097,17 @@ components:
           format: date-time
         heartRateData:
           type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/HeartRateData"
         heartRateRecovery:
           type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/HeartRateRecovery"
         route:
           type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/RouteData"
         totalEnergy:

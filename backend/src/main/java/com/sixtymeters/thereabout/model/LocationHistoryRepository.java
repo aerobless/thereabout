@@ -15,12 +15,15 @@ public interface LocationHistoryRepository extends JpaRepository<LocationHistory
     List<LocationHistoryEntity> findAllByTimestampBetween(LocalDateTime from, LocalDateTime to);
 
     @Query("""
-            SELECT new com.sixtymeters.thereabout.domain.statistics.CountryVisitInfo(\
-            l.estimatedIsoCountryCode, \
-            COUNT(DISTINCT FUNCTION('DATE', l.timestamp)), \
-            MIN(FUNCTION('DATE', l.timestamp)), \
-            MAX(FUNCTION('DATE', l.timestamp))) \
-            FROM LocationHistoryEntity l \
-            GROUP BY l.estimatedIsoCountryCode""")
+        SELECT new com.sixtymeters.thereabout.domain.statistics.CountryVisitInfo(
+            l.estimatedIsoCountryCode,
+            COUNT(DISTINCT CAST(l.timestamp AS date)),
+            MIN(CAST(l.timestamp AS date)),
+            MAX(CAST(l.timestamp AS date))
+        )
+        FROM LocationHistoryEntity l
+        GROUP BY l.estimatedIsoCountryCode
+    """)
     List<CountryVisitInfo> countDaysSpentInCountries();
+
 }

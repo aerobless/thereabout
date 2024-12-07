@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.4</version>
+        <version>3.4.0</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.sixtymeters.thereabout</groupId>
@@ -15,13 +15,13 @@
     <description>backend</description>
     <properties>
         <java.version>21</java.version>
-        <spring-boot.version>3.2.4</spring-boot.version>
-        <swagger-annotations.version>2.2.21</swagger-annotations.version>
-        <springdoc-openapi-starter-webmvc-ui.version>2.5.0</springdoc-openapi-starter-webmvc-ui.version>
-        <openapi-generator-maven-plugin.version>7.4.0</openapi-generator-maven-plugin.version>
-        <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <spring-boot.version>3.4.0</spring-boot.version>
+        <swagger-annotations.version>2.2.26</swagger-annotations.version>
+        <springdoc-openapi-starter-webmvc-ui.version>2.7.0</springdoc-openapi-starter-webmvc-ui.version>
+        <openapi-generator-maven-plugin.version>7.10.0</openapi-generator-maven-plugin.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
         <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
-        <mapstruct-spring-annotations.version>1.1.1</mapstruct-spring-annotations.version>
+        <mapstruct-spring-annotations.version>1.1.2</mapstruct-spring-annotations.version>
         <gson-javatime-serialisers.version>1.1.2</gson-javatime-serialisers.version>
         <spring-dotenv.version>4.0.0</spring-dotenv.version>
         <guava.version>33.1.0-jre</guava.version>

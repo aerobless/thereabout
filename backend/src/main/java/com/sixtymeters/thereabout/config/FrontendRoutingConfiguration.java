@@ -27,7 +27,7 @@ public class FrontendRoutingConfiguration implements WebMvcConfigurer {
     @Value("${thereabout.config.routing.frontend-path:#{'/'}}")
     private String frontendLocation;
 
-    @Value("${thereabout.config.routing.frontend-path:#{'/'}}#{'/index.html'}")
+    @Value("${thereabout.config.routing.frontend-path:#{'/'}}#{'index.html'}")
     @Getter
     private String defaultResource;
 
@@ -44,21 +44,23 @@ public class FrontendRoutingConfiguration implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(final ResourceHandlerRegistry registry) {
         log.info("Enabling frontend routing configuration");
+
         registry.addResourceHandler("/**")
-          .addResourceLocations(new FileSystemResource(this.frontendLocation))
-          .resourceChain(true)
-          .addResolver(new PathResourceResolver() {
-              @Override
-              protected Resource getResource(@Nonnull final String resourcePath, @Nonnull final Resource location)
-                throws IOException {
-                  final var requestedResource = location.createRelative(resourcePath);
-                  if (requestedResource.exists() && requestedResource.isReadable()) {
-                      return requestedResource;
-                  } else {
-                      return new FileSystemResource(FrontendRoutingConfiguration.this.getDefaultResource());
-                  }
-              }
-          });
+            .addResourceLocations("file:" + frontendLocation) // Ensure proper "file:" prefix for file paths
+            .resourceChain(true)
+            .addResolver(new PathResourceResolver() {
+                @Override
+                protected Resource getResource(@Nonnull final String resourcePath, @Nonnull final Resource location)
+                        throws IOException {
+                    final var requestedResource = location.createRelative(resourcePath);
+                    if (requestedResource.exists() && requestedResource.isReadable()) {
+                        return requestedResource;
+                    } else {
+                        log.info("Falling back to default resource: {}", defaultResource);
+                        return new FileSystemResource(defaultResource);
+                    }
+                }
+            });
     }
 
     @Override

@@ -17,6 +17,21 @@
             "internalConsoleOptions": "openOnSessionStart"
         },
         {
+            "type": "java",
+            "name": "Thereabout Backend (Production DB)",
+            "request": "launch",
+            "mainClass": "com.sixtymeters.thereabout.ThereaboutApplication",
+            "projectName": "thereabout-backend",
+            "cwd": "${workspaceFolder}/backend",
+            "vmArgs": [
+                "-Dspring.profiles.active=development-prod-db",
+                "-Dserver.port=9050"
+            ],
+            "console": "internalConsole",
+            "stopOnEntry": false,
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
             "type": "node",
             "name": "Thereabout Frontend (Development)",
             "request": "launch",

@@ -76,7 +76,7 @@ public class LocationHistoryController implements LocationApi {
 
     @Override
     public ResponseEntity<List<GenSparseLocationHistoryEntry>> getSparseLocations(Optional<LocalDate> from, Optional<LocalDate> to) {
-        final var filteredLocationHistory =  locationHistoryService.getLocationHistory(
+        final var filteredLocationHistory =  locationHistoryService.getSparseLocationHistory(
                 from.orElse(LocalDate.now().minusYears(100L)),
                 to.orElse(LocalDate.now().plusYears(100L))
         );

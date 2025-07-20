@@ -38,6 +38,11 @@ public class LocationHistoryService {
         return locationHistoryRepository.findAllByTimestampBetween(from.atStartOfDay(), to.atStartOfDay().plusDays(1));
     }
 
+    public List<LocationHistoryEntity> getSparseLocationHistory(LocalDate from, LocalDate to) {
+        final var allTimestamps = locationHistoryRepository.findAllByTimestampBetweenSparseSample(from.atStartOfDay(), to.atStartOfDay().plusDays(1), 0.1);
+        return allTimestamps;
+    }
+
     public int getImportProgress() {
         return importProgress.get();
     }

@@ -16,6 +16,8 @@
         </p-iconField>
     </div>
     <div class="p-toolbar-group-end">
+        <p-button icon="pi pi-calendar" (onClick)="openDayView()" class="button toolbar-item" severity="secondary"
+                  pTooltip="Day View" tooltipPosition="bottom" showDelay="500"></p-button>
         <p-button icon="pi pi-star-fill" (onClick)="openTrips()" class="button toolbar-item" severity="secondary"
                   pTooltip="Trips" tooltipPosition="bottom" showDelay="500"></p-button>
         <p-button icon="pi pi-chart-line" (onClick)="openStatistics()" class="button toolbar-item" severity="secondary"

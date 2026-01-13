@@ -285,6 +285,10 @@ export class LocationhistoryComponent implements OnInit {
         this.router.navigate(['trips']);
     }
 
+    openDayView() {
+        this.router.navigate(['dayview']);
+    }
+
     closeTripView() {
         this.tripViewDataFull = [];
         this.currentTrip = null;

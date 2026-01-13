@@ -3,6 +3,7 @@ import {ConfigurationComponent} from "./modules/configuration/configuration.comp
 import {LocationhistoryComponent} from "./modules/locationhistory/locationhistory.component";
 import {StatisticsComponent} from "./modules/statistics/statistics.component";
 import {TripsComponent} from "./modules/trips/trips.component";
+import {DayviewComponent} from "./modules/dayview/dayview.component";
 
 export const routes: Routes = [
     {
@@ -20,5 +21,9 @@ export const routes: Routes = [
     {
         path: 'trips',
         component: TripsComponent
+    },
+    {
+        path: 'dayview',
+        component: DayviewComponent
     },
 ];

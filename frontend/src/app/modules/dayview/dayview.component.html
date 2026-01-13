@@ -1,0 +1,48 @@
+<p-toolbar>
+    <div class="p-toolbar-group-start" (click)="navigateBackToMap()">
+        <b style="padding-left: 5px; padding-right: 5px">Day View <img src="favicon.ico" alt="favicon" class="favicon"></b>
+        <i style="font-size: small">detailed daily timeline</i>
+    </div>
+    <div class="p-toolbar-group-center">
+        <div class="date-navigation">
+            <p-button icon="pi pi-chevron-left" (onClick)="goToPreviousDay()" 
+                      pTooltip="Previous Day" tooltipPosition="bottom" showDelay="500"
+                      severity="secondary" class="nav-button"></p-button>
+            <p-calendar [(ngModel)]="selectedDate" 
+                       dateFormat="dd.mm.yy" 
+                       (onSelect)="onDateChange()"
+                       class="date-selector"></p-calendar>
+            <p-button icon="pi pi-chevron-right" (onClick)="goToNextDay()" 
+                      pTooltip="Next Day" tooltipPosition="bottom" showDelay="500"
+                      severity="secondary" class="nav-button"></p-button>
+        </div>
+    </div>
+    <div class="p-toolbar-group-end">
+        <p-button icon="pi pi-arrow-circle-left" (onClick)="navigateBackToMap()" class="button toolbar-item"
+                  pTooltip="Back" tooltipPosition="bottom" showDelay="500"
+                  severity="secondary"></p-button>
+    </div>
+</p-toolbar>
+
+<!-- Google Maps Panel -->
+<div style="display: flex; justify-content: center; align-items: center; padding-top: 20px">
+    <div style="width: 90%; max-width: 1200px;">
+        <p-panel header="Location History Map">
+            <div class="map-container" style="height: 600px; width: 100%;">
+                <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
+                    <map-polyline [path]="minifyDayViewData(dayViewDataFull)" 
+                                  [options]="{strokeColor: 'blue', strokeWeight: 3}">
+                    </map-polyline>
+                </google-map>
+            </div>
+            <div style="margin-top: 10px; text-align: center;">
+                <small *ngIf="dayViewDataFull.length > 0">
+                    Showing {{ dayViewDataFull.length }} location{{ dayViewDataFull.length !== 1 ? 's' : '' }} for {{ selectedDate | date:'dd.MM.yyyy' }}
+                </small>
+                <small *ngIf="dayViewDataFull.length === 0">
+                    No location data available for {{ selectedDate | date:'dd.MM.yyyy' }}
+                </small>
+            </div>
+        </p-panel>
+    </div>
+</div> 

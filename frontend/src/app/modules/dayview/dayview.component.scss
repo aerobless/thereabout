@@ -1,0 +1,22 @@
+.toolbar-item {
+  margin-right: 10px;
+}
+
+.date-navigation {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-button {
+  margin: 0 5px;
+}
+
+.date-selector {
+  min-width: 120px;
+}
+
+.map-container {
+  border-radius: 8px;
+  overflow: hidden;
+} 

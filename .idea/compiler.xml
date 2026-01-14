@@ -28,16 +28,14 @@
         </processorPath>
         <module name="backend" />
       </profile>
-      <profile name="Annotation profile for thereabout-backend" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
+      <profile name="Annotation profile for thereabout-backend.main" enabled="true">
+        <sourceOutputDir name="../generated-sources/annotations" />
+        <sourceTestOutputDir name="../generated-test-sources/test-annotations" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.36/lombok-1.18.36.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/springframework/boot/spring-boot-configuration-processor/3.4.0/spring-boot-configuration-processor-3.4.0.jar" />
           <entry name="$MAVEN_REPOSITORY$/jakarta/persistence/jakarta.persistence-api/3.1.0/jakarta.persistence-api-3.1.0.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/mapstruct/mapstruct-processor/1.6.3/mapstruct-processor-1.6.3.jar" />
-          <entry name="$MAVEN_REPOSITORY$/org/mapstruct/mapstruct/1.6.3/mapstruct-1.6.3.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok-mapstruct-binding/0.2.0/lombok-mapstruct-binding-0.2.0.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/mapstruct/extensions/spring/mapstruct-spring-extensions/1.1.2/mapstruct-spring-extensions-1.1.2.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/mapstruct/extensions/spring/mapstruct-spring-annotations/1.1.2/mapstruct-spring-annotations-1.1.2.jar" />
@@ -46,7 +44,25 @@
           <entry name="$MAVEN_REPOSITORY$/com/squareup/javapoet/1.13.0/javapoet-1.13.0.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.17.0/commons-lang3-3.17.0.jar" />
         </processorPath>
-        <module name="thereabout-backend" />
+        <module name="thereabout-backend.main" />
+      </profile>
+      <profile name="Annotation profile for thereabout-backend.test" enabled="true">
+        <sourceOutputDir name="../generated-sources/annotations" />
+        <sourceTestOutputDir name="../generated-test-sources/test-annotations" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.36/lombok-1.18.36.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/springframework/boot/spring-boot-configuration-processor/3.4.0/spring-boot-configuration-processor-3.4.0.jar" />
+          <entry name="$MAVEN_REPOSITORY$/jakarta/persistence/jakarta.persistence-api/3.1.0/jakarta.persistence-api-3.1.0.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/mapstruct/mapstruct-processor/1.6.3/mapstruct-processor-1.6.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok-mapstruct-binding/0.2.0/lombok-mapstruct-binding-0.2.0.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/mapstruct/extensions/spring/mapstruct-spring-extensions/1.1.2/mapstruct-spring-extensions-1.1.2.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/mapstruct/extensions/spring/mapstruct-spring-annotations/1.1.2/mapstruct-spring-annotations-1.1.2.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/springframework/spring-core/5.0.0.RELEASE/spring-core-5.0.0.RELEASE.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/springframework/spring-jcl/5.0.0.RELEASE/spring-jcl-5.0.0.RELEASE.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/squareup/javapoet/1.13.0/javapoet-1.13.0.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.17.0/commons-lang3-3.17.0.jar" />
+        </processorPath>
+        <module name="thereabout-backend.test" />
       </profile>
     </annotationProcessing>
   </component>
@@ -54,6 +70,8 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="backend" options="-parameters" />
       <module name="thereabout-backend" options="-parameters" />
+      <module name="thereabout-backend.main" options="-parameters" />
+      <module name="thereabout-backend.test" options="-parameters" />
     </option>
   </component>
 </project>

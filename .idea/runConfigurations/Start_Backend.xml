@@ -2,7 +2,7 @@
   <configuration default="false" name="Start Backend" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <option name="ACTIVE_PROFILES" value="development" />
     <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
-    <module name="thereabout-backend" />
+    <module name="thereabout-backend.main" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="com.sixtymeters.thereabout.ThereaboutApplication" />
     <extension name="net.ashald.envfile">
       <option name="IS_ENABLED" value="false" />

@@ -399,35 +399,6 @@ paths:
                 $ref: "#/components/schemas/LocationHistoryList"
         500:
           $ref: '#/components/responses/500'
-    put:
-      summary: Update a specific location history list.
-      tags:
-        - location list
-      operationId: updateLocationHistoryList
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: number
-            example: 42
-          required: true
-          description: The id of the location history list to update
-      requestBody:
-        description: The location history list to update
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LocationHistoryList"
-      responses:
-        200:
-          description: Successful response containing the updated location history list.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LocationHistoryList"
-        500:
-          $ref: '#/components/responses/500'
     delete:
       summary: Delete a specific location history list.
       tags:

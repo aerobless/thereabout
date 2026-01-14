@@ -7,7 +7,6 @@ import com.sixtymeters.thereabout.generated.model.GenLocationHistoryList;
 import com.sixtymeters.thereabout.model.LocationListEntity;
 import com.sixtymeters.thereabout.transport.mapper.LocationListMapper;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -62,11 +61,6 @@ public class LocationListController implements LocationListApi {
     public ResponseEntity<Void> removeLocationFromList(BigDecimal id, GenAddLocationToListRequest genAddLocationToListRequest) {
         locationListService.removeLocationFromList(id.longValue(), genAddLocationToListRequest.getLocationHistoryEntryId().longValue());
         return ResponseEntity.noContent().build();
-    }
-
-    @Override
-    public ResponseEntity<GenLocationHistoryList> updateLocationHistoryList(BigDecimal id, GenLocationHistoryList genLocationHistoryList) {
-        throw new NotImplementedException("Not needed anymore");
     }
 }
 

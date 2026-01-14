@@ -194,9 +194,6 @@
                                     &#64;lombok.AllArgsConstructor
                                 </additionalModelTypeAnnotations>
                                 <importMappings>
-                                    <importMapping>
-                                        GenNlsString=ch.kessler.misng.shared.generated.model.GenNlsString
-                                    </importMapping>
                                     <importMapping>java.time.OffsetDateTime=java.time.LocalDateTime</importMapping>
                                     <importMapping>LocalDateTime=java.time.LocalDateTime</importMapping>
                                 </importMappings>

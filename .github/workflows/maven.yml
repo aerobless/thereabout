@@ -1,32 +1,26 @@
 # This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 name: Java CI with Maven
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
     inputs:
       name:
-        description: 'release'
+        description: "release"
         required: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     services:
       mariadb:
-        image: mariadb:latest
+        image: mariadb:11.4
         env:
           MARIADB_DATABASE: thereabout
           MARIADB_USER: thereabout
@@ -35,93 +29,101 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost"
-          --health-interval=10s
+          --health-cmd="mariadb-admin ping --host=127.0.0.1 --port=3306 --user=thereabout --password=secret --silent"
+          --health-interval=5s
           --health-timeout=5s
-          --health-retries=5
+          --health-retries=30
+          --health-start-period=30s
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    # BACKEND BUILD
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        cache: maven
-    - name: Wait for MariaDB to be ready
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y default-mysql-client
-        until mysqladmin ping -h 127.0.0.1 -P 3306 -u thereabout -psecret --silent; do
-          echo "Waiting for MariaDB to be ready..."
-          sleep 2
-        done
-        echo "MariaDB is ready!"
-    - name: Build with Maven
-      run: mvn clean install
-      working-directory: backend
-      env:
-        THEREABOUT_DATABASE: thereabout
-        THEREABOUT_DB_USER: thereabout
-        THEREABOUT_DB_PASSWORD: secret
+      # BACKEND BUILD
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
 
-    # FRONTEND BUILD
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-    - name: Build frontend
-      run: |
-        npm install
-        npm run openapi:generate
-        npm run build
-      working-directory: frontend
+      - name: Wait for MariaDB to be ready
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mariadb-client
+          until mariadb-admin ping -h 127.0.0.1 -P 3306 -u thereabout -psecret --silent; do
+            echo "Waiting for MariaDB to be ready..."
+            sleep 2
+          done
+          echo "MariaDB is ready!"
 
-    # BUILD AND PUSH DEVELOPMENT TAG
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-    - name: Build and push development
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: aerobless/thereabout:development
-        platforms: linux/amd64,linux/arm64
+      - name: Build with Maven
+        working-directory: backend
+        env:
+          THEREABOUT_DATABASE: thereabout
+          THEREABOUT_DB_USER: thereabout
+          THEREABOUT_DB_PASSWORD: secret
+        run: mvn -B clean install
 
-    # CONDITIONAL EXTRACT VERSION TAG
-    - name: Extract version tag from git.properties
-      id: extract_version
-      if: github.event_name == 'workflow_dispatch'
-      run: |
-        GIT_COMMIT_TIME=$(grep '^git.commit.time=' backend/target/classes/git.properties | cut -d'=' -f2)
-        CLEANED_GIT_COMMIT_TIME=$(echo $GIT_COMMIT_TIME | sed 's/\\//g')
-        VERSION_TAG=$(date -d "$CLEANED_GIT_COMMIT_TIME" '+%Y%m%d%H%M%S')
-        echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_ENV
+      # FRONTEND BUILD
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
 
-    # CONDITIONAL DOCKER BUILD & PUBLISH FOR RELEASE
-    - name: Set up Docker Buildx for release
-      if: github.event_name == 'workflow_dispatch'
-      uses: docker/setup-buildx-action@v3
-    - name: Login to Docker Hub for release
-      if: github.event_name == 'workflow_dispatch'
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-    - name: Build and push for release
-      if: github.event_name == 'workflow_dispatch'
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: |
-          aerobless/thereabout:latest
-          aerobless/thereabout:${{ env.VERSION_TAG }}
-        platforms: linux/amd64,linux/arm64
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run openapi:generate
+          npm run build
+
+      # BUILD AND PUSH DEVELOPMENT TAG
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build and push development
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: aerobless/thereabout:development
+          platforms: linux/amd64,linux/arm64
+
+      # CONDITIONAL EXTRACT VERSION TAG
+      - name: Extract version tag from git.properties
+        id: extract_version
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          GIT_COMMIT_TIME=$(grep '^git.commit.time=' backend/target/classes/git.properties | cut -d'=' -f2)
+          CLEANED_GIT_COMMIT_TIME=$(echo "$GIT_COMMIT_TIME" | sed 's/\\//g')
+          VERSION_TAG=$(date -d "$CLEANED_GIT_COMMIT_TIME" '+%Y%m%d%H%M%S')
+          echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_ENV
+
+      # CONDITIONAL DOCKER BUILD & PUBLISH FOR RELEASE
+      - name: Set up Docker Buildx for release
+        if: github.event_name == 'workflow_dispatch'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub for release
+        if: github.event_name == 'workflow_dispatch'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build and push for release
+        if: github.event_name == 'workflow_dispatch'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            aerobless/thereabout:latest
+            aerobless/thereabout:${{ env.VERSION_TAG }}
+          platforms: linux/amd64,linux/arm64

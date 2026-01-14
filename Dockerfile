@@ -1,4 +1,4 @@
-FROM openjdk:21-jdk AS builder
+FROM eclipse-temurin:21-jdk AS builder
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ COPY backend/target/thereabout-backend*.jar ./thereabout.jar
 
 RUN java -Djarmode=layertools -jar ./thereabout.jar extract
 
-FROM openjdk:21-jdk
+FROM eclipse-temurin:21-jdk
 
 # Download and extract dockerize directly using the ADD command
 ENV DOCKERIZE_VERSION v0.7.0

@@ -53,6 +53,30 @@
                 "group": "frontend",
                 "order": 1
             }
+        },
+        {
+            "name": "Run All Controller Tests",
+            "type": "java",
+            "request": "launch",
+            "mainClass": "com.sixtymeters.thereabout.ThereaboutApplication",
+            "projectName": "thereabout-backend",
+            "cwd": "${workspaceFolder}/backend",
+            "preLaunchTask": "Run All Controller Tests",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "noDebug": true
+        },
+        {
+            "name": "Run All Tests",
+            "type": "java",
+            "request": "launch",
+            "mainClass": "com.sixtymeters.thereabout.ThereaboutApplication",
+            "projectName": "thereabout-backend",
+            "cwd": "${workspaceFolder}/backend",
+            "preLaunchTask": "Run All Tests",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "noDebug": true
         }
     ]
-} 
+}

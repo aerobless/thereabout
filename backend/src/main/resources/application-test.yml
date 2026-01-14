@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:mariadb://localhost:3306/${THEREABOUT_DATABASE:thereabout}
+    username: ${THEREABOUT_DB_USER:thereabout}
+    password: ${THEREABOUT_DB_PASSWORD:secret}
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  flyway:
+    enabled: true
+    validate-on-migrate: false
+    clean-disabled: false
+
+thereabout:
+  apiKeys:
+    googleMaps: NO_KEY_NEEDED_FOR_TESTS
+  import:
+    import-folder: /tmp

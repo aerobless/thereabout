@@ -32,6 +32,32 @@ To stop the database when you're done:
 docker-compose -f docker-compose-development.yaml down
 ```
 
+## Testing
+
+### Assertions
+
+Use **AssertJ** for all assertions in tests. AssertJ provides a fluent API that is more readable and provides better error messages than JUnit assertions.
+
+**Example:**
+```java
+import static org.assertj.core.api.Assertions.assertThat;
+
+// Instead of:
+assertEquals(expected, actual);
+assertTrue(condition);
+assertFalse(condition);
+
+// Use:
+assertThat(actual).isEqualTo(expected);
+assertThat(condition).isTrue();
+assertThat(condition).isFalse();
+
+// For BigDecimal comparisons:
+assertThat(bigDecimal).isEqualByComparingTo(expected);
+```
+
+AssertJ is included in `spring-boot-starter-test`, so no additional dependency is needed.
+
 ## Notes
 
 - The test profile is configured to use the database connection settings from your environment variables

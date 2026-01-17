@@ -1,4 +1,4 @@
-package com.sixtymeters.thereabout.model;
+package com.sixtymeters.thereabout.model.location;
 
 import com.sixtymeters.thereabout.domain.statistics.CountryVisitInfo;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,8 +1,8 @@
 package com.sixtymeters.thereabout.domain;
 
-import com.sixtymeters.thereabout.model.LocationHistoryRepository;
-import com.sixtymeters.thereabout.model.LocationListEntity;
-import com.sixtymeters.thereabout.model.LocationListRepository;
+import com.sixtymeters.thereabout.model.location.LocationHistoryRepository;
+import com.sixtymeters.thereabout.model.location.LocationListEntity;
+import com.sixtymeters.thereabout.model.location.LocationListRepository;
 import com.sixtymeters.thereabout.support.ThereaboutException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

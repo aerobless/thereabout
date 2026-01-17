@@ -4,7 +4,7 @@ import com.sixtymeters.thereabout.domain.LocationListService;
 import com.sixtymeters.thereabout.generated.api.LocationListApi;
 import com.sixtymeters.thereabout.generated.model.GenAddLocationToListRequest;
 import com.sixtymeters.thereabout.generated.model.GenLocationHistoryList;
-import com.sixtymeters.thereabout.model.LocationListEntity;
+import com.sixtymeters.thereabout.model.location.LocationListEntity;
 import com.sixtymeters.thereabout.transport.mapper.LocationListMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

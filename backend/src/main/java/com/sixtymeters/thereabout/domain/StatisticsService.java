@@ -2,7 +2,7 @@ package com.sixtymeters.thereabout.domain;
 
 import com.sixtymeters.thereabout.domain.statistics.CountryVisitInfo;
 import com.sixtymeters.thereabout.generated.model.GenCountryStatistic;
-import com.sixtymeters.thereabout.model.LocationHistoryRepository;
+import com.sixtymeters.thereabout.model.location.LocationHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

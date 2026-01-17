@@ -7,7 +7,7 @@ import com.sixtymeters.thereabout.generated.model.GenAddGeoJsonLocation200Respon
 import com.sixtymeters.thereabout.generated.model.GenAddGeoJsonLocationRequest;
 import com.sixtymeters.thereabout.generated.model.GenLocationHistoryEntry;
 import com.sixtymeters.thereabout.generated.model.GenSparseLocationHistoryEntry;
-import com.sixtymeters.thereabout.model.LocationHistorySource;
+import com.sixtymeters.thereabout.model.location.LocationHistorySource;
 import com.sixtymeters.thereabout.transport.mapper.LocationHistoryMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

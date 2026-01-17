@@ -3,7 +3,7 @@ package com.sixtymeters.thereabout.transport.mapper;
 import com.sixtymeters.thereabout.generated.model.GenGeoJsonLocation;
 import com.sixtymeters.thereabout.generated.model.GenLocationHistoryEntry;
 import com.sixtymeters.thereabout.generated.model.GenSparseLocationHistoryEntry;
-import com.sixtymeters.thereabout.model.LocationHistoryEntity;
+import com.sixtymeters.thereabout.model.location.LocationHistoryEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;

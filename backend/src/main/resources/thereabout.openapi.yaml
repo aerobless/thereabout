@@ -903,6 +903,8 @@ components:
         date:
           type: string
           format: date-time
+        source:
+          type: string
     MetricDataBloodPressure:
       type: object
       properties:
@@ -931,7 +933,17 @@ components:
         date:
           type: string
           format: date
+        totalSleep:
+          type: number
         asleep:
+          type: number
+        awake:
+          type: number
+        core:
+          type: number
+        deep:
+          type: number
+        rem:
           type: number
         sleepStart:
           type: string
@@ -939,8 +951,6 @@ components:
         sleepEnd:
           type: string
           format: date-time
-        sleepSource:
-          type: string
         inBed:
           type: number
         inBedStart:
@@ -949,8 +959,6 @@ components:
         inBedEnd:
           type: string
           format: date-time
-        inBedSource:
-          type: string
     MetricDataBloodGlucose:
       type: object
       properties:
@@ -1057,7 +1065,15 @@ components:
                         example: "s"
     Workout:
       type: object
+      required:
+        - id
+        - name
+        - start
+        - end
+        - duration
       properties:
+        id:
+          type: string
         name:
           type: string
         start:
@@ -1066,52 +1082,114 @@ components:
         end:
           type: string
           format: date-time
-        heartRateData:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/HeartRateData"
-        heartRateRecovery:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/HeartRateRecovery"
-        route:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/RouteData"
-        totalEnergy:
+        duration:
+          type: number
+          description: Duration in seconds
+        location:
+          type: string
+          enum:
+            - "Indoor"
+            - "Outdoor"
+            - "Pool"
+            - "Open Water"
+        activeEnergyBurned:
           $ref: "#/components/schemas/Energy"
-        activeEnergy:
-          $ref: "#/components/schemas/Energy"
-        maxHeartRate:
-          $ref: "#/components/schemas/HeartRate"
-        avgHeartRate:
-          $ref: "#/components/schemas/HeartRate"
-        stepCount:
-          $ref: "#/components/schemas/StepData"
-        stepCadence:
-          $ref: "#/components/schemas/StepCadence"
-        totalSwimmingStrokeCount:
-          $ref: "#/components/schemas/SwimmingData"
-        swimCadence:
-          $ref: "#/components/schemas/SwimmingCadence"
-        distance:
-          $ref: "#/components/schemas/Distance"
-        speed:
-          $ref: "#/components/schemas/Speed"
-        flightsClimbed:
-          $ref: "#/components/schemas/FlightsClimbed"
         intensity:
           $ref: "#/components/schemas/Intensity"
+        distance:
+          $ref: "#/components/schemas/Distance"
         temperature:
           $ref: "#/components/schemas/Temperature"
         humidity:
           $ref: "#/components/schemas/Humidity"
-        elevation:
-          $ref: "#/components/schemas/Elevation"
-    HeartRateData:
+        avgSpeed:
+          $ref: "#/components/schemas/Speed"
+        maxSpeed:
+          $ref: "#/components/schemas/Speed"
+        elevationUp:
+          $ref: "#/components/schemas/Distance"
+        elevationDown:
+          $ref: "#/components/schemas/Distance"
+        lapLength:
+          $ref: "#/components/schemas/Distance"
+        strokeStyle:
+          type: string
+          enum:
+            - "Backstroke"
+            - "Breaststroke"
+            - "Butterfly"
+            - "Freestyle"
+            - "Mixed"
+            - "Kickboard"
+            - "Unknown"
+        swolfScore:
+          type: number
+        salinity:
+          type: string
+          enum:
+            - "Fresh Water"
+            - "Salt Water"
+        activeEnergy:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        basalEnergy:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        cyclingCadence:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        cyclingDistance:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        cyclingPower:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        cyclingSpeed:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        swimDistance:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        swimStroke:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        stepCount:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        walkingAndRunningDistance:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        heartRateData:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/WorkoutHeartRateData"
+        heartRateRecovery:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/WorkoutHeartRateData"
+    QuantityData:
       type: object
       properties:
         date:
@@ -1121,18 +1199,23 @@ components:
           type: number
         units:
           type: string
-          example: "count"
-    HeartRateRecovery:
+        source:
+          type: string
+    WorkoutHeartRateData:
       type: object
       properties:
         date:
           type: string
           format: date-time
-        qty:
+        Min:
+          type: number
+        Avg:
+          type: number
+        Max:
           type: number
         units:
           type: string
-          example: "count"
+          example: "bpm"
     RouteData:
       type: object
       properties:

@@ -5,7 +5,7 @@ import com.sixtymeters.thereabout.domain.TripsService;
 import com.sixtymeters.thereabout.generated.api.TripApi;
 import com.sixtymeters.thereabout.generated.model.GenTrip;
 import com.sixtymeters.thereabout.generated.model.GenTripVisitedCountriesInner;
-import com.sixtymeters.thereabout.model.LocationHistoryEntity;
+import com.sixtymeters.thereabout.model.location.LocationHistoryEntity;
 import com.sixtymeters.thereabout.model.TripEntity;
 import com.sixtymeters.thereabout.support.ThereaboutException;
 import com.sixtymeters.thereabout.transport.mapper.TripMapper;

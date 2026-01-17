@@ -2,9 +2,9 @@ package com.sixtymeters.thereabout.domain;
 
 import com.google.common.collect.Lists;
 import com.sixtymeters.thereabout.domain.importer.GoogleLocationHistoryImporter;
-import com.sixtymeters.thereabout.model.LocationHistoryEntity;
-import com.sixtymeters.thereabout.model.LocationHistoryRepository;
-import com.sixtymeters.thereabout.model.LocationHistorySource;
+import com.sixtymeters.thereabout.model.location.LocationHistoryEntity;
+import com.sixtymeters.thereabout.model.location.LocationHistoryRepository;
+import com.sixtymeters.thereabout.model.location.LocationHistorySource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;

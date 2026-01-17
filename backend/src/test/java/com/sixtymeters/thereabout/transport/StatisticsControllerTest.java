@@ -2,9 +2,9 @@ package com.sixtymeters.thereabout.transport;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sixtymeters.thereabout.generated.model.GenUserStatistics;
-import com.sixtymeters.thereabout.model.LocationHistoryEntity;
-import com.sixtymeters.thereabout.model.LocationHistoryRepository;
-import com.sixtymeters.thereabout.model.LocationHistorySource;
+import com.sixtymeters.thereabout.model.location.LocationHistoryEntity;
+import com.sixtymeters.thereabout.model.location.LocationHistoryRepository;
+import com.sixtymeters.thereabout.model.location.LocationHistorySource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

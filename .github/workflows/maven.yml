@@ -127,3 +127,8 @@ jobs:
             aerobless/thereabout:latest
             aerobless/thereabout:${{ env.VERSION_TAG }}
           platforms: linux/amd64,linux/arm64
+
+      - name: Trigger Portainer webhook (deploy)
+        if: ${{ success() && github.event_name != 'pull_request' }}
+        run: |
+          curl -fsS -X POST "${{ secrets.PORTAINER_WEBHOOK }}"

@@ -482,6 +482,13 @@ paths:
       tags:
         - health
       operationId: submitHealthData
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+          description: Bearer token for authorization
       requestBody:
         description: Health data containing metrics and workouts
         required: true
@@ -497,6 +504,8 @@ paths:
           description: Successful submission of health data
         400:
           $ref: '#/components/responses/400'
+        401:
+          $ref: '#/components/responses/401'
         500:
           $ref: '#/components/responses/500'
 
@@ -1333,6 +1342,12 @@ components:
   responses:
     400:
       description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThereaboutBaseErrorModel"
+    401:
+      description: Unauthorized
       content:
         application/json:
           schema:

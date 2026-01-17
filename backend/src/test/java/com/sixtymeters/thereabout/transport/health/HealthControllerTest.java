@@ -2,12 +2,16 @@ package com.sixtymeters.thereabout.transport.health;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sixtymeters.thereabout.generated.model.GenSubmitHealthDataRequest;
+import com.sixtymeters.thereabout.model.ConfigurationEntity;
+import com.sixtymeters.thereabout.model.ConfigurationKey;
+import com.sixtymeters.thereabout.model.ConfigurationRepository;
 import com.sixtymeters.thereabout.model.health.HealthMetricEntity;
 import com.sixtymeters.thereabout.model.health.HealthMetricHeartRateEntity;
 import com.sixtymeters.thereabout.model.health.HealthMetricRepository;
 import com.sixtymeters.thereabout.model.health.HealthMetricHeartRateRepository;
 import com.sixtymeters.thereabout.model.health.WorkoutEntity;
 import com.sixtymeters.thereabout.model.health.WorkoutRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -46,14 +50,42 @@ class HealthControllerTest {
     @Autowired
     private WorkoutRepository workoutRepository;
 
+    @Autowired
+    private ConfigurationRepository configurationRepository;
+
+    private String testApiKey;
+
+    @BeforeEach
+    void setUp() {
+        // Set up test API key
+        testApiKey = "test-api-key-12345";
+        ConfigurationEntity apiKeyConfig = ConfigurationEntity.builder()
+                .configKey(ConfigurationKey.THEREABOUT_API_KEY)
+                .configValue(testApiKey)
+                .build();
+        configurationRepository.save(apiKeyConfig);
+    }
+
     @Test
     void testSubmitHealthData() throws Exception {
         GenSubmitHealthDataRequest request = GenSubmitHealthDataRequest.builder().build();
 
         mockMvc.perform(post("/backend/api/v1/health")
+                        .header("Authorization", "Bearer " + testApiKey)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testSubmitHealthDataUnauthorized() throws Exception {
+        GenSubmitHealthDataRequest request = GenSubmitHealthDataRequest.builder().build();
+
+        mockMvc.perform(post("/backend/api/v1/health")
+                        .header("Authorization", "Bearer wrong-api-key")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -105,6 +137,7 @@ class HealthControllerTest {
                 """;
 
         mockMvc.perform(post("/backend/api/v1/health")
+                        .header("Authorization", "Bearer " + testApiKey)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(exampleJson))
                 .andExpect(status().isCreated());
@@ -150,6 +183,7 @@ class HealthControllerTest {
 
         // Submit initial data
         mockMvc.perform(post("/backend/api/v1/health")
+                        .header("Authorization", "Bearer " + testApiKey)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(initialJson))
                 .andExpect(status().isCreated());
@@ -218,6 +252,7 @@ class HealthControllerTest {
                 """;
 
         mockMvc.perform(post("/backend/api/v1/health")
+                        .header("Authorization", "Bearer " + testApiKey)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatedJson))
                 .andExpect(status().isCreated());

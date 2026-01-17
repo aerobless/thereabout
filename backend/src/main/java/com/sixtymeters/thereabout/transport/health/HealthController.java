@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.transport.health;
 
+import com.sixtymeters.thereabout.domain.AuthorizationService;
 import com.sixtymeters.thereabout.domain.health.HealthDataService;
 import com.sixtymeters.thereabout.generated.api.HealthApi;
 import com.sixtymeters.thereabout.generated.model.GenHealthData;
@@ -16,9 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class HealthController implements HealthApi {
 
     private final HealthDataService healthDataService;
+    private final AuthorizationService authorizationService;
 
     @Override
-    public ResponseEntity<Void> submitHealthData(GenSubmitHealthDataRequest genSubmitHealthDataRequest) {
+    public ResponseEntity<Void> submitHealthData(String authorization, GenSubmitHealthDataRequest genSubmitHealthDataRequest) {
+        authorizationService.isAuthorised(authorization);
         log.info("Received health data submission");
 
         if (genSubmitHealthDataRequest == null || genSubmitHealthDataRequest.getData() == null) {

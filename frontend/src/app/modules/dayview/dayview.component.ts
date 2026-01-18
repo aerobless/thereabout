@@ -130,10 +130,12 @@ export class DayviewComponent implements OnInit {
       } else {
         // If no date in URL, update URL with current date (use replaceUrl to avoid history entry)
         this.updateUrl(true);
-        this.loadDayViewData();
-        this.loadHealthData();
       }
     });
+    
+    // Load data immediately on initial load (regardless of URL params)
+    this.loadDayViewData();
+    this.loadHealthData();
   }
 
   loadDayViewData() {

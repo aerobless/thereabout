@@ -177,8 +177,12 @@ export class DayviewComponent implements OnInit {
 
     this.healthService.getHealthDataByDateRange(fromDateStr, selectedDateStr).subscribe({
       next: (response) => {
-        // Extract weight metric data
-        const weightMetrics = response.metrics?.['weight'] || response.metrics?.['body_mass'] || [];
+        // Extract weight metric data (backend uses weight_body_mass)
+        const weightMetrics =
+          response.metrics?.['weight_body_mass'] ||
+          response.metrics?.['weight'] ||
+          response.metrics?.['body_mass'] ||
+          [];
         
         // Prepare chart data
         this.weightData = weightMetrics

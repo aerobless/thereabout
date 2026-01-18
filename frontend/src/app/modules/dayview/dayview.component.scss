@@ -4,7 +4,6 @@
 :host {
   display: block;
   min-height: 100vh;
-  background-color: #f5f5f5;
 }
 
 // ============================================================================
@@ -144,17 +143,6 @@
 // ============================================================================
 // Mobile Responsive
 // ============================================================================
-@media (max-width: 768px) {
-  .cards-grid-container {
-    grid-template-columns: 1fr;
-  }
-
-  .card-location-history {
-    grid-column: span 1;
-  }
-}
-
-// Mobile responsive: single column layout
 @media (max-width: 768px) {
   .cards-grid-container {
     grid-template-columns: 1fr;

@@ -17,4 +17,8 @@ public interface HealthMetricRepository extends JpaRepository<HealthMetricEntity
     @Modifying
     @Query("DELETE FROM HealthMetricEntity h WHERE h.metricName = :metricName AND h.metricDate = :metricDate")
     void deleteByMetricNameAndMetricDate(@Param("metricName") String metricName, @Param("metricDate") LocalDate metricDate);
+
+    List<HealthMetricEntity> findByMetricNameAndMetricDateBetween(String metricName, LocalDate fromDate, LocalDate toDate);
+
+    List<HealthMetricEntity> findByMetricDateBetween(LocalDate fromDate, LocalDate toDate);
 }

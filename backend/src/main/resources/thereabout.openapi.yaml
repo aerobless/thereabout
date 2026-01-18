@@ -508,6 +508,38 @@ paths:
           $ref: '#/components/responses/401'
         500:
           $ref: '#/components/responses/500'
+  /backend/api/v1/health/data:
+    get:
+      summary: Get health data for a date range
+      tags:
+        - health
+      operationId: getHealthDataByDateRange
+      parameters:
+        - in: query
+          name: fromDate
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Start date (inclusive)
+        - in: query
+          name: toDate
+          required: false
+          schema:
+            type: string
+            format: date
+          description: End date (inclusive). Defaults to fromDate if not provided.
+      responses:
+        200:
+          description: Successful response containing health data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthDataResponse"
+        400:
+          $ref: '#/components/responses/400'
+        500:
+          $ref: '#/components/responses/500'
 
 components:
   schemas:
@@ -1337,6 +1369,67 @@ components:
         descent:
           type: number
         units:
+          type: string
+    HealthDataResponse:
+      type: object
+      properties:
+        fromDate:
+          type: string
+          format: date
+        toDate:
+          type: string
+          format: date
+        metrics:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: "#/components/schemas/DailyMetricValue"
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        workouts:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkoutSummary"
+          x-field-extra-annotation: "@lombok.Builder.Default"
+    DailyMetricValue:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        qty:
+          type: number
+        units:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        source:
+          type: string
+    WorkoutSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+        location:
+          type: string
+        activeEnergyBurnedQty:
+          type: number
+        activeEnergyBurnedUnits:
+          type: string
+        distanceQty:
+          type: number
+        distanceUnits:
           type: string
 
   responses:

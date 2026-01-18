@@ -14,8 +14,10 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -649,5 +651,64 @@ public class HealthDataService {
         } catch (Exception e) {
             return enumValue.toString();
         }
+    }
+
+    public HealthDataResponse getHealthData(LocalDate fromDate, LocalDate toDate) {
+        if (fromDate == null) {
+            throw new IllegalArgumentException("fromDate cannot be null");
+        }
+        if (toDate == null) {
+            toDate = fromDate;
+        }
+        if (toDate.isBefore(fromDate)) {
+            throw new IllegalArgumentException("toDate cannot be before fromDate");
+        }
+
+        // Retrieve all health metrics for the date range
+        List<HealthMetricEntity> metrics = healthMetricRepository.findByMetricDateBetween(fromDate, toDate);
+
+        // Group metrics by name and convert to DailyMetricValue
+        Map<String, List<DailyMetricValue>> metricsMap = metrics.stream()
+                .collect(Collectors.groupingBy(
+                        HealthMetricEntity::getMetricName,
+                        Collectors.mapping(
+                                entity -> DailyMetricValue.builder()
+                                        .date(entity.getMetricDate())
+                                        .qty(entity.getQty())
+                                        .units(entity.getUnits())
+                                        .timestamp(entity.getTimestamp())
+                                        .source(entity.getSource())
+                                        .build(),
+                                Collectors.toList()
+                        )
+                ));
+
+        // Retrieve workouts for the date range (convert LocalDate to LocalDateTime range)
+        LocalDateTime fromDateTime = fromDate.atStartOfDay();
+        LocalDateTime toDateTime = toDate.atTime(23, 59, 59, 999999999);
+        List<WorkoutEntity> workouts = workoutRepository.findByStartBetween(fromDateTime, toDateTime);
+
+        // Convert workouts to WorkoutSummary
+        List<WorkoutSummary> workoutSummaries = workouts.stream()
+                .map(workout -> WorkoutSummary.builder()
+                        .id(workout.getId())
+                        .name(workout.getName())
+                        .start(workout.getStart())
+                        .end(workout.getEnd())
+                        .duration(workout.getDuration())
+                        .location(workout.getLocation())
+                        .activeEnergyBurnedQty(workout.getActiveEnergyBurnedQty())
+                        .activeEnergyBurnedUnits(workout.getActiveEnergyBurnedUnits())
+                        .distanceQty(workout.getDistanceQty())
+                        .distanceUnits(workout.getDistanceUnits())
+                        .build())
+                .collect(Collectors.toList());
+
+        return HealthDataResponse.builder()
+                .fromDate(fromDate)
+                .toDate(toDate)
+                .metrics(metricsMap)
+                .workouts(workoutSummaries)
+                .build();
     }
 }

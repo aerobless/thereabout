@@ -45,4 +45,47 @@
             </div>
         </p-panel>
     </div>
+</div>
+
+<!-- Health Data Section -->
+<div style="display: flex; justify-content: center; align-items: center; padding-top: 20px">
+    <div style="width: 90%; max-width: 1200px;">
+        <p-card header="Weight">
+            <div class="health-data-container">
+                <!-- Weight Display Card -->
+                <div class="weight-display-card" *ngIf="selectedDayWeight !== null">
+                    <div class="weight-value">{{ selectedDayWeight }} kg</div>
+                    <div class="weight-label">Weight on {{ selectedDate | date:'dd.MM.yyyy' }}</div>
+                </div>
+                <div class="weight-display-card" *ngIf="selectedDayWeight === null">
+                    <div class="weight-value">--</div>
+                    <div class="weight-label">No weight data for {{ selectedDate | date:'dd.MM.yyyy' }}</div>
+                </div>
+
+                <!-- Trend Range Toggle -->
+                <div class="trend-range-toggle">
+                    <p-button 
+                        label="7 Days" 
+                        [severity]="trendRange === '7d' ? 'primary' : 'secondary'"
+                        (onClick)="onTrendRangeChange('7d')"
+                        class="toggle-button">
+                    </p-button>
+                    <p-button 
+                        label="30 Days" 
+                        [severity]="trendRange === '30d' ? 'primary' : 'secondary'"
+                        (onClick)="onTrendRangeChange('30d')"
+                        class="toggle-button">
+                    </p-button>
+                </div>
+
+                <!-- Chart -->
+                <div class="chart-container" *ngIf="chartData && weightData.length > 0">
+                    <p-chart type="line" [data]="chartData" [options]="chartOptions"></p-chart>
+                </div>
+                <div class="chart-container" *ngIf="weightData.length === 0">
+                    <p>No weight data available for the selected period.</p>
+                </div>
+            </div>
+        </p-card>
+    </div>
 </div> 

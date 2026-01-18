@@ -6,6 +6,8 @@ import {TooltipModule} from "primeng/tooltip";
 import {CalendarModule} from "primeng/calendar";
 import {FormsModule} from "@angular/forms";
 import {PanelModule} from "primeng/panel";
+import {CardModule} from "primeng/card";
+import {ChartModule} from "primeng/chart";
 import {NgIf, NgForOf, DatePipe} from "@angular/common";
 import {
     GoogleMap,
@@ -13,6 +15,7 @@ import {
     MapPolyline
 } from "@angular/google-maps";
 import {
+    HealthService,
     LocationHistoryEntry,
     LocationService
 } from "../../../../generated/backend-api/thereabout";
@@ -27,6 +30,8 @@ import {
     CalendarModule,
     FormsModule,
     PanelModule,
+    CardModule,
+    ChartModule,
     NgIf,
     NgForOf,
     DatePipe,
@@ -49,7 +54,18 @@ export class DayviewComponent implements OnInit {
   dayViewDataFull: Array<LocationHistoryEntry> = [];
   selectedLocationEntries: LocationHistoryEntry[] = [];
 
-  constructor(private router: Router, private locationService: LocationService) {
+  // Health data
+  weightData: { date: string, value: number }[] = [];
+  selectedDayWeight: number | null = null;
+  trendRange: '7d' | '30d' = '7d';
+  chartData: any;
+  chartOptions: any;
+
+  constructor(
+    private router: Router,
+    private locationService: LocationService,
+    private healthService: HealthService
+  ) {
   }
 
   navigateBackToMap() {
@@ -61,6 +77,7 @@ export class DayviewComponent implements OnInit {
     previousDay.setDate(previousDay.getDate() - 1);
     this.selectedDate = previousDay;
     this.loadDayViewData();
+    this.loadHealthData();
   }
 
   goToNextDay() {
@@ -68,16 +85,20 @@ export class DayviewComponent implements OnInit {
     nextDay.setDate(nextDay.getDate() + 1);
     this.selectedDate = nextDay;
     this.loadDayViewData();
+    this.loadHealthData();
   }
 
   onDateChange() {
     // Handle date change - can be extended with additional logic
     console.log('Date changed to:', this.selectedDate);
     this.loadDayViewData();
+    this.loadHealthData();
   }
 
   ngOnInit() {
     this.loadDayViewData();
+    this.loadHealthData();
+    this.setupChart();
   }
 
   loadDayViewData() {
@@ -106,5 +127,150 @@ export class DayviewComponent implements OnInit {
     return data.map(location => {
       return {lat: location.latitude, lng: location.longitude}
     });
+  }
+
+  loadHealthData() {
+    if (!this.selectedDate) return;
+
+    // Calculate date range based on trendRange
+    const selectedDateStr = this.dateToString(this.selectedDate);
+    const selectedDateObj = new Date(this.selectedDate);
+    const daysBack = this.trendRange === '7d' ? 7 : 30;
+    const fromDate = new Date(selectedDateObj);
+    fromDate.setDate(fromDate.getDate() - daysBack);
+    const fromDateStr = this.dateToString(fromDate);
+
+    this.healthService.getHealthDataByDateRange(fromDateStr, selectedDateStr).subscribe({
+      next: (response) => {
+        // Extract weight metric data
+        const weightMetrics = response.metrics?.['weight'] || response.metrics?.['body_mass'] || [];
+        
+        // Prepare chart data
+        this.weightData = weightMetrics
+          .filter(m => m.qty != null)
+          .map(m => ({
+            date: m.date || '',
+            value: m.qty || 0
+          }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+
+        // Find weight for selected day
+        const selectedDateStr = this.dateToString(this.selectedDate);
+        const selectedDayMetric = weightMetrics.find(m => m.date === selectedDateStr);
+        this.selectedDayWeight = selectedDayMetric?.qty || null;
+
+        // Update chart
+        this.updateChart();
+      },
+      error: (error) => {
+        console.error('Error loading health data:', error);
+        this.weightData = [];
+        this.selectedDayWeight = null;
+        this.updateChart();
+      }
+    });
+  }
+
+  onTrendRangeChange(range: '7d' | '30d') {
+    this.trendRange = range;
+    this.loadHealthData();
+  }
+
+  setupChart() {
+    const documentStyle = getComputedStyle(document.documentElement);
+    const textColor = documentStyle.getPropertyValue('--text-color');
+    const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
+    const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
+
+    this.chartOptions = {
+      plugins: {
+        legend: {
+          labels: {
+            color: textColor
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: textColorSecondary
+          },
+          grid: {
+            color: surfaceBorder
+          }
+        },
+        y: {
+          ticks: {
+            color: textColorSecondary
+          },
+          grid: {
+            color: surfaceBorder
+          }
+        }
+      }
+    };
+  }
+
+  updateChart() {
+    const labels = this.weightData.map(d => {
+      const date = new Date(d.date);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+    const data = this.weightData.map(d => d.value);
+
+    // Calculate trend line (linear regression)
+    const trendData = this.calculateTrendLine(data);
+
+    this.chartData = {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Weight (kg)',
+          data: data,
+          fill: false,
+          borderColor: '#42A5F5',
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        },
+        {
+          label: 'Trend',
+          data: trendData,
+          fill: false,
+          borderColor: '#FFA726',
+          borderDash: [5, 5],
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          tension: 0
+        }
+      ]
+    };
+  }
+
+  calculateTrendLine(data: number[]): number[] {
+    if (data.length === 0) return [];
+    if (data.length === 1) return [data[0]];
+
+    const n = data.length;
+    let sumX = 0;
+    let sumY = 0;
+    let sumXY = 0;
+    let sumXX = 0;
+
+    // Calculate linear regression coefficients
+    for (let i = 0; i < n; i++) {
+      const x = i;
+      const y = data[i];
+      sumX += x;
+      sumY += y;
+      sumXY += x * y;
+      sumXX += x * x;
+    }
+
+    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+
+    // Generate trend line points
+    return data.map((_, i) => slope * i + intercept);
   }
 } 

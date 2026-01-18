@@ -19,4 +19,49 @@
 .map-container {
   border-radius: 8px;
   overflow: hidden;
+}
+
+.health-data-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+}
+
+.weight-display-card {
+  text-align: center;
+  padding: 20px;
+  background: var(--surface-ground);
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+}
+
+.weight-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  margin-bottom: 8px;
+}
+
+.weight-label {
+  font-size: 0.9rem;
+  color: var(--text-color-secondary);
+}
+
+.trend-range-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.toggle-button {
+  min-width: 100px;
+}
+
+.chart-container {
+  margin-top: 20px;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 } 

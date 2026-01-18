@@ -286,7 +286,8 @@ export class LocationhistoryComponent implements OnInit {
     }
 
     openDayView() {
-        this.router.navigate(['dayview']);
+        const dateStr = this.dateToString(this.exactDate);
+        this.router.navigate(['dayview'], { queryParams: { date: dateStr } });
     }
 
     closeTripView() {

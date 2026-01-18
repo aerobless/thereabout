@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {ButtonModule} from "primeng/button";
 import {ToolbarModule} from "primeng/toolbar";
-import {Router} from "@angular/router";
+import {Router, ActivatedRoute} from "@angular/router";
 import {TooltipModule} from "primeng/tooltip";
 import {CalendarModule} from "primeng/calendar";
 import {FormsModule} from "@angular/forms";
@@ -63,6 +63,7 @@ export class DayviewComponent implements OnInit {
 
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private locationService: LocationService,
     private healthService: HealthService
   ) {
@@ -75,30 +76,64 @@ export class DayviewComponent implements OnInit {
   goToPreviousDay() {
     const previousDay = new Date(this.selectedDate);
     previousDay.setDate(previousDay.getDate() - 1);
-    this.selectedDate = previousDay;
-    this.loadDayViewData();
-    this.loadHealthData();
+    this.setDateAndUpdateUrl(previousDay);
   }
 
   goToNextDay() {
     const nextDay = new Date(this.selectedDate);
     nextDay.setDate(nextDay.getDate() + 1);
-    this.selectedDate = nextDay;
-    this.loadDayViewData();
-    this.loadHealthData();
+    this.setDateAndUpdateUrl(nextDay);
   }
 
   onDateChange() {
     // Handle date change - can be extended with additional logic
     console.log('Date changed to:', this.selectedDate);
+    this.updateUrl();
     this.loadDayViewData();
     this.loadHealthData();
   }
 
-  ngOnInit() {
+  private setDateAndUpdateUrl(date: Date) {
+    this.selectedDate = date;
+    this.updateUrl();
     this.loadDayViewData();
     this.loadHealthData();
+  }
+
+  private updateUrl(skipHistory = false) {
+    const dateStr = this.dateToString(this.selectedDate);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { date: dateStr },
+      queryParamsHandling: 'merge',
+      replaceUrl: skipHistory
+    });
+  }
+
+  ngOnInit() {
     this.setupChart();
+    // Read date from URL query params, default to today if not provided
+    this.route.queryParams.subscribe(params => {
+      const dateParam = params['date'];
+      if (dateParam) {
+        const parsedDate = new Date(dateParam);
+        if (!isNaN(parsedDate.getTime())) {
+          // Only update if the date actually changed (to avoid reloading when we update URL ourselves)
+          const newDateStr = this.dateToString(parsedDate);
+          const currentDateStr = this.dateToString(this.selectedDate);
+          if (newDateStr !== currentDateStr) {
+            this.selectedDate = parsedDate;
+            this.loadDayViewData();
+            this.loadHealthData();
+          }
+        }
+      } else {
+        // If no date in URL, update URL with current date (use replaceUrl to avoid history entry)
+        this.updateUrl(true);
+        this.loadDayViewData();
+        this.loadHealthData();
+      }
+    });
   }
 
   loadDayViewData() {

@@ -1,3 +1,15 @@
+// ============================================================================
+// Component Host
+// ============================================================================
+:host {
+  display: block;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+// ============================================================================
+// Toolbar
+// ============================================================================
 .toolbar-item {
   margin-right: 10px;
 }
@@ -16,52 +28,139 @@
   min-width: 120px;
 }
 
+// ============================================================================
+// Card Headers
+// ============================================================================
+.card-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  height: 50px;
+  box-sizing: border-box;
+
+  // Make buttons smaller to fit within fixed header height
+  ::ng-deep .p-button {
+    padding: 0.15rem 0.35rem;
+    font-size: 0.7rem;
+    line-height: 1.2;
+    height: auto;
+  }
+}
+
+.card-header-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.trend-range-toggle {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.toggle-button {
+  min-width: auto;
+}
+
+// ============================================================================
+// Card Content
+// ============================================================================
+.map-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+}
+
 .map-container {
+  height: 600px;
+  width: 100%;
   border-radius: 8px;
   overflow: hidden;
+}
+
+.map-footer {
+  text-align: center;
 }
 
 .health-data-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px;
+  gap: 10px;
+  padding: 10px;
 }
 
-.weight-display-card {
+.weight-display {
   text-align: center;
-  padding: 20px;
-  background: var(--surface-ground);
-  border-radius: 8px;
-  border: 1px solid var(--surface-border);
 }
 
 .weight-value {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: bold;
   color: var(--primary-color);
-  margin-bottom: 8px;
-}
-
-.weight-label {
-  font-size: 0.9rem;
-  color: var(--text-color-secondary);
-}
-
-.trend-range-toggle {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-
-.toggle-button {
-  min-width: 100px;
 }
 
 .chart-container {
-  margin-top: 20px;
-  height: 300px;
+  height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+// ============================================================================
+// Cards Grid Layout
+// ============================================================================
+.cards-grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+// Card grid positioning
+.card-location-history {
+  grid-column: span 2;
+}
+
+// Consistent card styling
+.card-location-history,
+.card-weight {
+  // Remove default padding to tighten whitespace
+  ::ng-deep .p-card-body {
+    padding: 0;
+  }
+
+  // Ensure consistent header height across all cards
+  ::ng-deep .p-card-header {
+    height: 50px;
+    min-height: 50px;
+  }
+}
+
+// ============================================================================
+// Mobile Responsive
+// ============================================================================
+@media (max-width: 768px) {
+  .cards-grid-container {
+    grid-template-columns: 1fr;
+  }
+
+  .card-location-history {
+    grid-column: span 1;
+  }
+}
+
+// Mobile responsive: single column layout
+@media (max-width: 768px) {
+  .cards-grid-container {
+    grid-template-columns: 1fr;
+  }
+
+  .card-location-history {
+    grid-column: span 1;
+  }
 } 

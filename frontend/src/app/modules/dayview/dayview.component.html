@@ -24,18 +24,24 @@
     </div>
 </p-toolbar>
 
-<!-- Google Maps Panel -->
-<div style="display: flex; justify-content: center; align-items: center; padding-top: 20px">
-    <div style="width: 90%; max-width: 1200px;">
-        <p-panel header="Location History Map">
-            <div class="map-container" style="height: 600px; width: 100%;">
+<!-- Cards Grid Container -->
+<div class="cards-grid-container">
+    <!-- Location History Map Card -->
+    <p-card class="card-location-history">
+        <ng-template pTemplate="header">
+            <div class="card-header-content">
+                <span class="card-header-title">Location History Map</span>
+            </div>
+        </ng-template>
+        <div class="map-content">
+            <div class="map-container">
                 <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
                     <map-polyline [path]="minifyDayViewData(dayViewDataFull)" 
                                   [options]="{strokeColor: 'blue', strokeWeight: 3}">
                     </map-polyline>
                 </google-map>
             </div>
-            <div style="margin-top: 10px; text-align: center;">
+            <div class="map-footer">
                 <small *ngIf="dayViewDataFull.length > 0">
                     Showing {{ dayViewDataFull.length }} location{{ dayViewDataFull.length !== 1 ? 's' : '' }} for {{ selectedDate | date:'dd.MM.yyyy' }}
                 </small>
@@ -43,49 +49,46 @@
                     No location data available for {{ selectedDate | date:'dd.MM.yyyy' }}
                 </small>
             </div>
-        </p-panel>
-    </div>
-</div>
+        </div>
+    </p-card>
 
-<!-- Health Data Section -->
-<div style="display: flex; justify-content: center; align-items: center; padding-top: 20px">
-    <div style="width: 90%; max-width: 1200px;">
-        <p-card header="Weight">
-            <div class="health-data-container">
-                <!-- Weight Display Card -->
-                <div class="weight-display-card" *ngIf="selectedDayWeight !== null">
-                    <div class="weight-value">{{ selectedDayWeight }} kg</div>
-                    <div class="weight-label">Weight on {{ selectedDate | date:'dd.MM.yyyy' }}</div>
-                </div>
-                <div class="weight-display-card" *ngIf="selectedDayWeight === null">
-                    <div class="weight-value">--</div>
-                    <div class="weight-label">No weight data for {{ selectedDate | date:'dd.MM.yyyy' }}</div>
-                </div>
-
-                <!-- Trend Range Toggle -->
+    <!-- Weight Card -->
+    <p-card class="card-weight">
+        <ng-template pTemplate="header">
+            <div class="card-header-content">
+                <span class="card-header-title">Weight</span>
                 <div class="trend-range-toggle">
-                    <p-button 
-                        label="7 Days" 
-                        [severity]="trendRange === '7d' ? 'primary' : 'secondary'"
-                        (onClick)="onTrendRangeChange('7d')"
-                        class="toggle-button">
+                    <p-button label="7d" 
+                              [severity]="trendRange === '7d' ? 'primary' : 'secondary'"
+                              (onClick)="onTrendRangeChange('7d')"
+                              size="small"
+                              class="toggle-button">
                     </p-button>
-                    <p-button 
-                        label="30 Days" 
-                        [severity]="trendRange === '30d' ? 'primary' : 'secondary'"
-                        (onClick)="onTrendRangeChange('30d')"
-                        class="toggle-button">
+                    <p-button label="30d" 
+                              [severity]="trendRange === '30d' ? 'primary' : 'secondary'"
+                              (onClick)="onTrendRangeChange('30d')"
+                              size="small"
+                              class="toggle-button">
                     </p-button>
-                </div>
-
-                <!-- Chart -->
-                <div class="chart-container" *ngIf="chartData && weightData.length > 0">
-                    <p-chart type="line" [data]="chartData" [options]="chartOptions"></p-chart>
-                </div>
-                <div class="chart-container" *ngIf="weightData.length === 0">
-                    <p>No weight data available for the selected period.</p>
                 </div>
             </div>
-        </p-card>
-    </div>
+        </ng-template>
+        <div class="health-data-container">
+            <!-- Weight Display -->
+            <div class="weight-display" *ngIf="selectedDayWeight !== null">
+                <div class="weight-value">{{ selectedDayWeight }} kg</div>
+            </div>
+            <div class="weight-display" *ngIf="selectedDayWeight === null">
+                <div class="weight-value">--</div>
+            </div>
+
+            <!-- Chart -->
+            <div class="chart-container" *ngIf="chartData && weightData.length > 0">
+                <p-chart type="line" [data]="chartData" [options]="chartOptions"></p-chart>
+            </div>
+            <div class="chart-container" *ngIf="weightData.length === 0">
+                <p>No weight data available for the selected period.</p>
+            </div>
+        </div>
+    </p-card>
 </div> 

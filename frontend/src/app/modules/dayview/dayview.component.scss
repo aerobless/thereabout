@@ -91,6 +91,32 @@
   padding: 10px;
 }
 
+.workouts-container {
+  padding: 10px;
+}
+
+.workouts-table {
+  // Make table responsive with horizontal scroll on smaller screens
+  ::ng-deep .p-datatable-wrapper {
+    overflow-x: auto;
+  }
+  
+  // Responsive column widths - allow wrapping on mobile
+  ::ng-deep th,
+  ::ng-deep td {
+    white-space: nowrap;
+    min-width: fit-content;
+  }
+  
+  // On mobile, allow horizontal scroll
+  @media (max-width: 768px) {
+    ::ng-deep .p-datatable-wrapper {
+      overflow-x: scroll;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+}
+
 .weight-display {
   text-align: center;
 }
@@ -109,25 +135,38 @@
 }
 
 // ============================================================================
-// Cards Grid Layout
+// Cards Lanes Layout
 // ============================================================================
-.cards-grid-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+.cards-lanes-container {
+  display: flex;
   gap: 20px;
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  align-items: flex-start;
 }
 
-// Card grid positioning
-.card-location-history {
-  grid-column: span 2;
+.cards-lane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cards-lane-wide {
+  flex: 2 1 0%;
+}
+
+.cards-lane-narrow {
+  flex: 1 1 0%;
 }
 
 // Consistent card styling
 .card-location-history,
-.card-weight {
+.card-weight,
+.card-workouts {
+  margin: 0;
+
   // Remove default padding to tighten whitespace
   ::ng-deep .p-card-body {
     padding: 0;
@@ -144,11 +183,27 @@
 // Mobile Responsive
 // ============================================================================
 @media (max-width: 768px) {
-  .cards-grid-container {
-    grid-template-columns: 1fr;
+  .cards-lanes-container {
+    flex-direction: column;
+    padding: 10px;
   }
 
-  .card-location-history {
-    grid-column: span 1;
+  .cards-lane {
+    gap: 10px;
+    width: 100%;
   }
-} 
+  
+  .card-location-history,
+  .card-weight,
+  .card-workouts {
+    width: 100%;
+  }
+
+  .workouts-table {
+    ::ng-deep th,
+    ::ng-deep td {
+      font-size: 0.85rem;
+      padding: 0.5rem;
+    }
+  }
+}

@@ -8,6 +8,7 @@ import {FormsModule} from "@angular/forms";
 import {PanelModule} from "primeng/panel";
 import {CardModule} from "primeng/card";
 import {ChartModule} from "primeng/chart";
+import {TableModule} from "primeng/table";
 import {NgIf, NgForOf, DatePipe} from "@angular/common";
 import {
     GoogleMap,
@@ -17,7 +18,8 @@ import {
 import {
     HealthService,
     LocationHistoryEntry,
-    LocationService
+    LocationService,
+    WorkoutSummary
 } from "../../../../generated/backend-api/thereabout";
 
 @Component({
@@ -32,6 +34,7 @@ import {
     PanelModule,
     CardModule,
     ChartModule,
+    TableModule,
     NgIf,
     NgForOf,
     DatePipe,
@@ -45,6 +48,7 @@ import {
 export class DayviewComponent implements OnInit {
 
   selectedDate: Date = new Date();
+  private hasLoadedInitialData = false;
   
   // Map configuration
   center = {lat: 47.3919661, lng: 8.3};
@@ -60,6 +64,7 @@ export class DayviewComponent implements OnInit {
   trendRange: '7d' | '30d' = '7d';
   chartData: any;
   chartOptions: any;
+  workouts: WorkoutSummary[] = [];
 
   constructor(
     private router: Router,
@@ -121,21 +126,22 @@ export class DayviewComponent implements OnInit {
           // Only update if the date actually changed (to avoid reloading when we update URL ourselves)
           const newDateStr = this.dateToString(parsedDate);
           const currentDateStr = this.dateToString(this.selectedDate);
-          if (newDateStr !== currentDateStr) {
+          if (!this.hasLoadedInitialData || newDateStr !== currentDateStr) {
             this.selectedDate = parsedDate;
             this.loadDayViewData();
             this.loadHealthData();
           }
+          this.hasLoadedInitialData = true;
         }
       } else {
         // If no date in URL, update URL with current date (use replaceUrl to avoid history entry)
         this.updateUrl(true);
+        // Load data for default date (today) since updateUrl doesn't trigger reload
+        this.loadDayViewData();
+        this.loadHealthData();
+        this.hasLoadedInitialData = true;
       }
     });
-    
-    // Load data immediately on initial load (regardless of URL params)
-    this.loadDayViewData();
-    this.loadHealthData();
   }
 
   loadDayViewData() {
@@ -200,6 +206,20 @@ export class DayviewComponent implements OnInit {
         const selectedDayMetric = weightMetrics.find(m => m.date === selectedDateStr);
         this.selectedDayWeight = selectedDayMetric?.qty || null;
 
+        // Extract and filter workouts for selected day
+        const allWorkouts = response.workouts || [];
+        this.workouts = allWorkouts
+          .filter(workout => {
+            if (!workout.start) return false;
+            const workoutDate = new Date(workout.start);
+            const workoutDateStr = this.dateToString(workoutDate);
+            return workoutDateStr === selectedDateStr;
+          })
+          .sort((a, b) => {
+            if (!a.start || !b.start) return 0;
+            return new Date(a.start).getTime() - new Date(b.start).getTime();
+          });
+
         // Update chart
         this.updateChart();
       },
@@ -207,6 +227,7 @@ export class DayviewComponent implements OnInit {
         console.error('Error loading health data:', error);
         this.weightData = [];
         this.selectedDayWeight = null;
+        this.workouts = [];
         this.updateChart();
       }
     });
@@ -313,5 +334,40 @@ export class DayviewComponent implements OnInit {
 
     // Generate trend line points
     return data.map((_, i) => slope * i + intercept);
+  }
+
+  formatWorkoutTime(start: string | undefined): string {
+    if (!start) return '--';
+    return new Date(start).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+
+  formatDuration(seconds: number | undefined): string {
+    if (!seconds) return '--';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (hours > 0 && minutes > 0) {
+      return `${hours}h ${minutes}m`;
+    } else if (hours > 0) {
+      return `${hours}h`;
+    } else {
+      return `${minutes}m`;
+    }
+  }
+
+  getLocationSymbol(location: string | undefined): string {
+    if (!location) return '--';
+    return location === 'Outdoor' ? '🌳' : '🏠';
+  }
+
+  formatEnergy(energy: number | undefined, units: string | undefined): string {
+    if (energy === undefined || energy === null) return '--';
+    const unitsStr = units || '';
+    return `${Math.round(energy)} ${unitsStr}`.trim();
+  }
+
+  formatDistance(distance: number | undefined, units: string | undefined): string {
+    if (distance === undefined || distance === null || !units) return '--';
+    return `${distance.toFixed(2)} ${units}`;
   }
 } 

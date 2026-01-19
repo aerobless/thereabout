@@ -95,6 +95,71 @@
   padding: 10px;
 }
 
+.energy-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  align-items: center;
+}
+
+.active-energy-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.energy-icon-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.energy-icon-active {
+  font-size: 1.5rem;
+  color: var(--primary-color);
+}
+
+.energy-icon-basal {
+  font-size: 1rem;
+  color: var(--text-color-secondary);
+}
+
+.energy-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.active-energy-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  text-align: center;
+}
+
+.basal-energy-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding-top: 10px;
+  border-top: 1px solid var(--surface-border);
+}
+
+.basal-energy-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+  text-align: center;
+}
+
 .workouts-container {
   padding: 10px;
 }
@@ -168,6 +233,7 @@
 // Consistent card styling
 .card-location-history,
 .card-weight,
+.card-energy,
 .card-workouts {
   margin: 0;
 
@@ -199,8 +265,25 @@
   
   .card-location-history,
   .card-weight,
+  .card-energy,
   .card-workouts {
     width: 100%;
+  }
+
+  .active-energy-value {
+    font-size: 2rem;
+  }
+
+  .basal-energy-value {
+    font-size: 1.25rem;
+  }
+
+  .energy-icon-active {
+    font-size: 1.25rem;
+  }
+
+  .energy-icon-basal {
+    font-size: 0.9rem;
   }
 
   .workouts-table {

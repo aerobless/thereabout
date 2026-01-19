@@ -98,6 +98,44 @@
                 </div>
             </p-card>
 
+        <!-- Energy Card -->
+        <p-card class="card-energy">
+            <ng-template pTemplate="header">
+                <div class="card-header-content">
+                    <span class="card-header-title">Energy</span>
+                </div>
+            </ng-template>
+            <div class="energy-container">
+                <!-- Active Energy Display -->
+                <div class="active-energy-display">
+                    <div class="energy-icon-label">
+                        <i class="fa-solid fa-fire energy-icon-active"></i>
+                        <span class="energy-label">Active</span>
+                    </div>
+                    <div class="active-energy-value">
+                        <span *ngIf="selectedDayActiveEnergy !== null">
+                            {{ formatDailyEnergy(selectedDayActiveEnergy) }} {{ energyUnits }}
+                        </span>
+                        <span *ngIf="selectedDayActiveEnergy === null">--</span>
+                    </div>
+                </div>
+                
+                <!-- Basal Energy Display -->
+                <div class="basal-energy-display">
+                    <div class="energy-icon-label">
+                        <i class="fa-solid fa-bed energy-icon-basal"></i>
+                        <span class="energy-label">Basal</span>
+                    </div>
+                    <div class="basal-energy-value">
+                        <span *ngIf="selectedDayBasalEnergy !== null">
+                            {{ formatDailyEnergy(selectedDayBasalEnergy) }} {{ energyUnits }}
+                        </span>
+                        <span *ngIf="selectedDayBasalEnergy === null">--</span>
+                    </div>
+                </div>
+            </div>
+        </p-card>
+
         <!-- Workouts Card -->
         <p-card class="card-workouts">
             <ng-template pTemplate="header">

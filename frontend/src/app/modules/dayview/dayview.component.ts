@@ -65,6 +65,11 @@ export class DayviewComponent implements OnInit {
   chartData: any;
   chartOptions: any;
   workouts: WorkoutSummary[] = [];
+  
+  // Energy data
+  selectedDayActiveEnergy: number | null = null;
+  selectedDayBasalEnergy: number | null = null;
+  energyUnits: string = 'kcal';
 
   constructor(
     private router: Router,
@@ -211,6 +216,34 @@ export class DayviewComponent implements OnInit {
         const selectedDayMetric = weightMetrics.find(m => m.date === selectedDateStr);
         this.selectedDayWeight = selectedDayMetric?.qty || null;
 
+        // Extract energy metrics
+        const activeEnergyMetrics =
+          response.metrics?.['active_energy'] ||
+          response.metrics?.['activeEnergy'] ||
+          [];
+        const basalEnergyMetrics =
+          response.metrics?.['basal_energy'] ||
+          response.metrics?.['basalEnergy'] ||
+          [];
+
+        // Find energy for selected day
+        const selectedDayActiveEnergyMetric = activeEnergyMetrics.find((m: any) => m.date === selectedDateStr);
+        const selectedDayBasalEnergyMetric = basalEnergyMetrics.find((m: any) => m.date === selectedDateStr);
+        
+        this.selectedDayActiveEnergy = selectedDayActiveEnergyMetric?.qty != null 
+          ? Number(selectedDayActiveEnergyMetric.qty) 
+          : null;
+        this.selectedDayBasalEnergy = selectedDayBasalEnergyMetric?.qty != null 
+          ? Number(selectedDayBasalEnergyMetric.qty) 
+          : null;
+        
+        // Extract units (use from active energy if available, otherwise default)
+        if (selectedDayActiveEnergyMetric?.units) {
+          this.energyUnits = selectedDayActiveEnergyMetric.units;
+        } else if (selectedDayBasalEnergyMetric?.units) {
+          this.energyUnits = selectedDayBasalEnergyMetric.units;
+        }
+
         // Extract and filter workouts for selected day
         const allWorkouts = response.workouts || [];
         this.workouts = allWorkouts
@@ -232,6 +265,8 @@ export class DayviewComponent implements OnInit {
         console.error('Error loading health data:', error);
         this.weightData = [];
         this.selectedDayWeight = null;
+        this.selectedDayActiveEnergy = null;
+        this.selectedDayBasalEnergy = null;
         this.workouts = [];
         this.updateChart();
       }
@@ -374,5 +409,10 @@ export class DayviewComponent implements OnInit {
   formatDistance(distance: number | undefined, units: string | undefined): string {
     if (distance === undefined || distance === null || !units) return '--';
     return `${distance.toFixed(2)} ${units}`;
+  }
+
+  formatDailyEnergy(energy: number | null): string {
+    if (energy === null || energy === undefined) return '--';
+    return Math.round(energy).toString();
   }
 } 

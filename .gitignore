@@ -32,3 +32,4 @@ replay_pid*
 /frontend/dist/
 /.env
 /backend/.env
+.idea/jarRepositories.xml

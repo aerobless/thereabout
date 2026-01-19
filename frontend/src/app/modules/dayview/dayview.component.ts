@@ -90,6 +90,11 @@ export class DayviewComponent implements OnInit {
     this.setDateAndUpdateUrl(nextDay);
   }
 
+  goToToday() {
+    const today = new Date();
+    this.setDateAndUpdateUrl(today);
+  }
+
   onDateChange() {
     // Handle date change - can be extended with additional logic
     console.log('Date changed to:', this.selectedDate);

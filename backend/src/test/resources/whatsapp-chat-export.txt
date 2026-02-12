@@ -1,0 +1,11 @@
+[15.03.2024, 09:12:30] Alice Miller: Good morning!
+[15.03.2024, 09:13:01] Bob Smith: Morning, how are you?
+[15.03.2024, 09:14:22] Alice Miller: ‎image omitted
+[15.03.2024, 09:15:45] Bob Smith: Shopping list:
+- bread
+- butter
+- milk
+[15.03.2024, 09:16:30] Alice Miller: Check this out: https://example.com/path?foo=bar&baz=qux
+[15.03.2024, 09:17:00] Bob Smith: ‎sticker omitted
+[15.03.2024, 09:18:10] Alice Miller: Great idea! Let's do it 🎉
+[15.03.2024, 09:19:00] Bob Smith: Sure thing 👍

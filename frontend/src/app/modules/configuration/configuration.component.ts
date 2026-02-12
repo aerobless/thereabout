@@ -10,7 +10,7 @@ import {FieldsetModule} from "primeng/fieldset";
 import {CardModule} from "primeng/card";
 import {TabViewModule} from "primeng/tabview";
 import {PanelModule} from "primeng/panel";
-import {FileUploadErrorEvent, FileUploadModule} from "primeng/fileupload";
+import {FileUploadErrorEvent, FileUploadHandlerEvent, FileUploadModule} from "primeng/fileupload";
 import {
     FileImportStatus,
     FrontendConfigurationResponse,
@@ -21,6 +21,17 @@ import {NgIf} from "@angular/common";
 import {catchError, interval, Observable, of, switchMap, takeWhile} from "rxjs";
 import {ChipModule} from "primeng/chip";
 import {TooltipModule} from "primeng/tooltip";
+import {DropdownModule} from "primeng/dropdown";
+import {FormsModule} from "@angular/forms";
+import {HttpClient} from "@angular/common/http";
+import {ProgressBarModule} from "primeng/progressbar";
+
+interface ImportTypeOption {
+    label: string;
+    value: string;
+    accept: string;
+    description: string;
+}
 
 @Component({
   selector: 'app-configuration',
@@ -39,7 +50,10 @@ import {TooltipModule} from "primeng/tooltip";
         FileUploadModule,
         NgIf,
         ChipModule,
-        TooltipModule
+        TooltipModule,
+        DropdownModule,
+        FormsModule,
+        ProgressBarModule
     ],
   templateUrl: './configuration.component.html',
   styleUrl: './configuration.component.scss'
@@ -51,7 +65,28 @@ export class ConfigurationComponent implements OnInit {
     importDisabled = false;
     thereaboutConfig?: FrontendConfigurationResponse;
 
-    constructor(private router: Router, private messageService: MessageService, private frontendService: FrontendService) {
+    importTypeOptions: ImportTypeOption[] = [
+        {
+            label: 'Google Maps Records.json',
+            value: 'GOOGLE_MAPS_RECORDS',
+            accept: '.json',
+            description: 'Upload your <a href="https://takeout.google.com/" target="_blank">Google Maps <b>Records.json</b></a> here. It will then be imported into Thereabout. Beware that for large files, the import may take a while.'
+        },
+        {
+            label: 'WhatsApp Chat History',
+            value: 'WHATSAPP_CHAT',
+            accept: '.txt',
+            description: 'Upload your WhatsApp chat export (.txt) here. It will be imported into Thereabout. The chat must be a 1:1 conversation (no group chats).'
+        }
+    ];
+    selectedImportType: ImportTypeOption = this.importTypeOptions[0];
+
+    constructor(
+        private router: Router,
+        private messageService: MessageService,
+        private frontendService: FrontendService,
+        private http: HttpClient
+    ) {
     }
 
     navigateBackToMap() {
@@ -66,6 +101,25 @@ export class ConfigurationComponent implements OnInit {
     onUpload() {
         this.messageService.add({severity: 'info', summary: 'Import in progress', detail: 'Successfully uploaded file is now processing...'});
         this.updateOrPollImportStatus();
+    }
+
+    customUpload(event: FileUploadHandlerEvent) {
+        const file = event.files[0];
+        const formData = new FormData();
+        formData.append('file', file, file.name);
+        formData.append('importType', this.selectedImportType.value);
+
+        this.importDisabled = true;
+
+        this.http.post('/backend/api/v1/config/import-file', formData).subscribe({
+            next: () => {
+                this.onUpload();
+            },
+            error: (err) => {
+                this.messageService.add({severity: 'error', summary: 'Upload failed', detail: err?.error?.message || 'Upload failed'});
+                this.importDisabled = false;
+            }
+        });
     }
 
     private updateOrPollImportStatus() {
@@ -111,10 +165,6 @@ export class ConfigurationComponent implements OnInit {
     }
 
     protected readonly FileImportStatus = FileImportStatus;
-
-    onSelect() {
-        this.importDisabled = true;
-    }
 
     configureOverland() {
         const url = `${window.location.protocol}//${window.location.host}/backend/api/v1/location/geojson`;

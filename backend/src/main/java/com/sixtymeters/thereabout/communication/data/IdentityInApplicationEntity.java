@@ -19,7 +19,7 @@ public class IdentityInApplicationEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "identity_id", nullable = false)
+    @JoinColumn(name = "identity_id")
     private IdentityEntity identity;
 
     @Column(nullable = false)

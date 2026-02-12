@@ -30,12 +30,12 @@ paths:
         500:
           $ref: '../thereabout.openapi.yaml#/components/responses/500'
     post:
-      summary: Import location data from a file.
+      summary: Import data from a file.
       tags:
         - frontend
       operationId: importFromFile
       requestBody:
-          description: The file to import
+          description: The file to import along with the import type.
           required: true
           content:
             multipart/form-data:
@@ -45,6 +45,8 @@ paths:
                   file:
                     type: string
                     format: binary
+                  importType:
+                    $ref: '#/components/schemas/ImportType'
       responses:
         204:
           description: The file is successfully being imported.
@@ -104,3 +106,9 @@ components:
           type: number
           example: 60
           description: The progress of the file import process from 0 to 100.
+    ImportType:
+      type: string
+      description: The type of file being imported.
+      enum:
+        - GOOGLE_MAPS_RECORDS
+        - WHATSAPP_CHAT

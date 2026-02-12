@@ -77,6 +77,8 @@ components:
       $ref: 'openapi/client.yaml#/components/schemas/VersionDetails'
     FileImportStatus:
       $ref: 'openapi/client.yaml#/components/schemas/FileImportStatus'
+    ImportType:
+      $ref: 'openapi/client.yaml#/components/schemas/ImportType'
 
     # Location
     Trip:

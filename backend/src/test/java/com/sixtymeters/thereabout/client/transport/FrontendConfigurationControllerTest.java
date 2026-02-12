@@ -97,7 +97,8 @@ class FrontendConfigurationControllerTest {
         );
 
         mockMvc.perform(multipart("/backend/api/v1/config/import-file")
-                        .file(file))
+                        .file(file)
+                        .param("importType", "GOOGLE_MAPS_RECORDS"))
                 .andExpect(status().isNoContent());
     }
 }

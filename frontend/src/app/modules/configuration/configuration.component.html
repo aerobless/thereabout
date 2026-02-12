@@ -14,25 +14,27 @@
 
 <div style="display: flex; justify-content: center; align-items: center; padding-top: 10px">
     <div style="width: 500px">
-        <p-panel header="Location History Import">
-            <p>
-                You upload your <a href="https://takeout.google.com/" target="_blank">Google Maps
-                <b>Records.json</b></a> here. It will then be imported into Thereabout.
-                Beware that for large files, the import may take a while.
-            </p>
+        <p-panel header="Data Import">
+            <div style="margin-bottom: 10px">
+                <p-dropdown [options]="importTypeOptions"
+                            [(ngModel)]="selectedImportType"
+                            optionLabel="label"
+                            [style]="{'width': '100%'}">
+                </p-dropdown>
+            </div>
+            <p [innerHTML]="selectedImportType.description"></p>
             <p-fileUpload *ngIf="importStatus == FileImportStatus.StatusEnum.Idle"
                           name="file"
                           mode="basic"
                           chooseIcon="pi pi-upload"
-                          url="/backend/api/v1/config/import-file"
-                          accept=".json"
+                          [accept]="selectedImportType.accept"
                           maxFileSize="5073741824"
                           fileLimit="1"
                           [auto]="true"
                           [disabled]="importDisabled"
+                          [customUpload]="true"
+                          (uploadHandler)="customUpload($event)"
                           (onError)="onError($event)"
-                          (onUpload)="onUpload()"
-                          (onSelect)="onSelect()"
                           chooseLabel="Browse"/>
             <p-progressBar [value]="importStatusProgress"
                            *ngIf="importStatus == FileImportStatus.StatusEnum.InProgress"/>

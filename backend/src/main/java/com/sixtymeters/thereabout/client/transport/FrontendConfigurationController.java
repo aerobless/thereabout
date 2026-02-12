@@ -1,10 +1,12 @@
 package com.sixtymeters.thereabout.client.transport;
 
 import com.sixtymeters.thereabout.client.service.ConfigurationService;
+import com.sixtymeters.thereabout.communication.service.importer.FileImporter;
 import com.sixtymeters.thereabout.location.service.LocationHistoryService;
 import com.sixtymeters.thereabout.generated.api.FrontendApi;
 import com.sixtymeters.thereabout.generated.model.GenFileImportStatus;
 import com.sixtymeters.thereabout.generated.model.GenFrontendConfigurationResponse;
+import com.sixtymeters.thereabout.generated.model.GenImportType;
 import com.sixtymeters.thereabout.generated.model.GenVersionDetails;
 import com.sixtymeters.thereabout.config.ThereaboutException;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +25,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @RestController
@@ -36,6 +40,7 @@ public class FrontendConfigurationController implements FrontendApi {
     private final LocationHistoryService locationHistoryService;
     private final ConfigurationService configurationService;
     private final GitProperties gitProperties;
+    private final List<FileImporter> fileImporters;
 
     @Override
     public ResponseEntity<GenFileImportStatus> fileImportStatus() {
@@ -75,11 +80,22 @@ public class FrontendConfigurationController implements FrontendApi {
     }
 
     @Override
-    public ResponseEntity<Void> importFromFile(MultipartFile file) {
-        log.info("Received file %s via HTTP Endpoint /backend/api/v1/config/import-file".formatted(file.getOriginalFilename()));
+    public ResponseEntity<Void> importFromFile(MultipartFile file, GenImportType importType) {
+        log.info("Received file %s with import type %s via HTTP Endpoint /backend/api/v1/config/import-file".formatted(file.getOriginalFilename(), importType));
 
         final var importDataToBeProcessed = persistTempFileForProcessing(file);
-        locationHistoryService.importGoogleLocationHistory(importDataToBeProcessed);
+        final var resolvedImportType = importType != null ? importType : GenImportType.GOOGLE_MAPS_RECORDS;
+
+        if (resolvedImportType == GenImportType.GOOGLE_MAPS_RECORDS) {
+            locationHistoryService.importGoogleLocationHistory(importDataToBeProcessed);
+        } else {
+            FileImporter importer = fileImporters.stream()
+                    .filter(fi -> fi.getSupportedImportType() == resolvedImportType)
+                    .findFirst()
+                    .orElseThrow(() -> new ThereaboutException(HttpStatusCode.valueOf(400),
+                            "No importer found for import type: %s".formatted(importType)));
+            CompletableFuture.runAsync(() -> importer.importFile(importDataToBeProcessed));
+        }
 
         return ResponseEntity.noContent().build();
     }

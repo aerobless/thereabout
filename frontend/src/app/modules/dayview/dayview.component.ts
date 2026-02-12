@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {ButtonModule} from "primeng/button";
-import {ToolbarModule} from "primeng/toolbar";
 import {Router, ActivatedRoute} from "@angular/router";
+import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 import {TooltipModule} from "primeng/tooltip";
 import {CalendarModule} from "primeng/calendar";
 import {FormsModule} from "@angular/forms";
@@ -27,7 +27,7 @@ import {
   standalone: true,
   imports: [
     ButtonModule,
-    ToolbarModule,
+    ToolbarComponent,
     TooltipModule,
     CalendarModule,
     FormsModule,
@@ -77,10 +77,6 @@ export class DayviewComponent implements OnInit {
     private locationService: LocationService,
     private healthService: HealthService
   ) {
-  }
-
-  navigateBackToMap() {
-    this.router.navigate(['']);
   }
 
   goToPreviousDay() {

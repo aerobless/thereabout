@@ -5,9 +5,8 @@ import {InputTextModule} from "primeng/inputtext";
 import {NgIf} from "@angular/common";
 import {PanelModule} from "primeng/panel";
 import {ProgressBarModule} from "primeng/progressbar";
-import {ToolbarModule} from "primeng/toolbar";
-import {Router} from "@angular/router";
 import {MessageService} from "primeng/api";
+import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 import {CountryStatistic, FrontendService, StatisticsService} from "../../../../generated/backend-api/thereabout";
 import {CardModule} from "primeng/card";
 import {TableModule} from "primeng/table";
@@ -25,7 +24,7 @@ import {TooltipModule} from "primeng/tooltip";
         NgIf,
         PanelModule,
         ProgressBarModule,
-        ToolbarModule,
+        ToolbarComponent,
         CardModule,
         TableModule,
         ReformatDatePipe,
@@ -38,17 +37,13 @@ export class StatisticsComponent implements OnInit {
 
   visitedCountries: Array<CountryStatistic> = [];
 
-  constructor(private router: Router, private messageService: MessageService, private statisticsService: StatisticsService) {
+  constructor(private messageService: MessageService, private statisticsService: StatisticsService) {
   }
 
   ngOnInit(): void {
     this.statisticsService.getStatistics().subscribe(statistics => {
       this.visitedCountries = statistics.visitedCountries.sort((a, b) => b.numberOfDaysSpent - a.numberOfDaysSpent);
     });
-  }
-
-  navigateBackToMap() {
-    this.router.navigate(['']);
   }
 
   countryNameFormat(countryStats: CountryStatistic): string {

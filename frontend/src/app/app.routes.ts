@@ -8,6 +8,10 @@ import {DayviewComponent} from "./modules/dayview/dayview.component";
 export const routes: Routes = [
     {
         path: '',
+        component: DayviewComponent
+    },
+    {
+        path: 'locationhistory',
         component: LocationhistoryComponent
     },
     {
@@ -21,9 +25,5 @@ export const routes: Routes = [
     {
         path: 'trips',
         component: TripsComponent
-    },
-    {
-        path: 'dayview',
-        component: DayviewComponent
     },
 ];

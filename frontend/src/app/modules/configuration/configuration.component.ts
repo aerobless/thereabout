@@ -4,8 +4,7 @@ import {IconFieldModule} from "primeng/iconfield";
 import {InputIconModule} from "primeng/inputicon";
 import {InputTextModule} from "primeng/inputtext";
 import {ReactiveFormsModule} from "@angular/forms";
-import {ToolbarModule} from "primeng/toolbar";
-import {Router} from "@angular/router";
+import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 import {FieldsetModule} from "primeng/fieldset";
 import {CardModule} from "primeng/card";
 import {TabViewModule} from "primeng/tabview";
@@ -42,7 +41,7 @@ interface ImportTypeOption {
         InputIconModule,
         InputTextModule,
         ReactiveFormsModule,
-        ToolbarModule,
+        ToolbarComponent,
         FieldsetModule,
         CardModule,
         TabViewModule,
@@ -82,15 +81,10 @@ export class ConfigurationComponent implements OnInit {
     selectedImportType: ImportTypeOption = this.importTypeOptions[0];
 
     constructor(
-        private router: Router,
         private messageService: MessageService,
         private frontendService: FrontendService,
         private http: HttpClient
     ) {
-    }
-
-    navigateBackToMap() {
-        this.router.navigate(['']);
     }
 
     onError($event: FileUploadErrorEvent) {

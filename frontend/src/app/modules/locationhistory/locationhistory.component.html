@@ -1,31 +1,14 @@
-<p-toolbar>
-    <div class="p-toolbar-group-start">
-        <b style="padding-left: 5px; padding-right: 5px">Thereabout <img src="favicon.ico" alt="favicon"
-                                                                         class="favicon"></b>
-        <i style="font-size: small">near that place or time</i>
-    </div>
-    <div class="p-toolbar-group-center">
-        <p-iconField iconPosition="left" class="toolbar-item">
-            <p-inputIcon styleClass="pi pi-search"/>
-            <input type="text" pInputText placeholder="Jump to location" (keydown)="geocodeAddress($event)"
-                   style="width: 400px;"
-                   [(ngModel)]="searchValue"/>
-            <p-button icon="pi pi-times" (onClick)="resetSearch()" class="reset-button" [text]="true"
-                      *ngIf="searchValue"
-                      severity="secondary"></p-button>
-        </p-iconField>
-    </div>
-    <div class="p-toolbar-group-end">
-        <p-button icon="pi pi-calendar" (onClick)="openDayView()" class="button toolbar-item" severity="secondary"
-                  pTooltip="Day View" tooltipPosition="bottom" showDelay="500"></p-button>
-        <p-button icon="pi pi-star-fill" (onClick)="openTrips()" class="button toolbar-item" severity="secondary"
-                  pTooltip="Trips" tooltipPosition="bottom" showDelay="500"></p-button>
-        <p-button icon="pi pi-chart-line" (onClick)="openStatistics()" class="button toolbar-item" severity="secondary"
-                  pTooltip="Statistics" tooltipPosition="bottom" showDelay="500"></p-button>
-        <p-button icon="pi pi-cog" (onClick)="openConfiguration()" class="button toolbar-item" severity="secondary"
-                  pTooltip="Configuration" tooltipPosition="bottom" showDelay="500"></p-button>
-    </div>
-</p-toolbar>
+<thereabout-toolbar>
+    <p-iconField iconPosition="left" class="toolbar-item">
+        <p-inputIcon styleClass="pi pi-search"/>
+        <input type="text" pInputText placeholder="Jump to location" (keydown)="geocodeAddress($event)"
+               style="width: 400px;"
+               [(ngModel)]="searchValue"/>
+        <p-button icon="pi pi-times" (onClick)="resetSearch()" class="reset-button" [text]="true"
+                  *ngIf="searchValue"
+                  severity="secondary"></p-button>
+    </p-iconField>
+</thereabout-toolbar>
 <br>
 
 <div style="display: flex; height: calc(100vh - 100px);">

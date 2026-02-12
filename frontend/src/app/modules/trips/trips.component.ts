@@ -1,7 +1,7 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {ButtonModule} from "primeng/button";
-import {ToolbarModule} from "primeng/toolbar";
 import {Router} from "@angular/router";
+import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 import {MenuItem, MessageService} from "primeng/api";
 import {AvatarModule} from "primeng/avatar";
 import {PanelModule} from "primeng/panel";
@@ -16,7 +16,6 @@ import {InputTextModule} from "primeng/inputtext";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {CalendarModule} from "primeng/calendar";
 import {FormsModule} from "@angular/forms";
-import QuickFilterDateCombo from "../locationhistory/quick-filter-date-combo";
 import {FloatLabelModule} from "primeng/floatlabel";
 import {GoogleMap, MapHeatmapLayer, MapMarker, MapPolyline} from "@angular/google-maps";
 import {TableModule} from "primeng/table";
@@ -28,7 +27,7 @@ import {ReformatDatePipe} from "../../util/reformat-date.pipe";
   standalone: true,
     imports: [
         ButtonModule,
-        ToolbarModule,
+        ToolbarComponent,
         AvatarModule,
         PanelModule,
         ChipModule,
@@ -88,10 +87,6 @@ export class TripsComponent implements OnInit {
     }
 
     constructor(private router: Router, private messageService: MessageService, private tripService: TripService) {
-    }
-
-    navigateBackToMap() {
-        this.router.navigate(['']);
     }
 
     getYears(): string[] {
@@ -182,9 +177,7 @@ export class TripsComponent implements OnInit {
     }
 
     viewTrip(trip: Trip){
-        this.router.navigate([''], {queryParams: {tripId: trip.id}});
+        this.router.navigate(['locationhistory'], {queryParams: {tripId: trip.id}});
     }
-
-    protected readonly QuickFilterDateCombo = QuickFilterDateCombo;
 
 }

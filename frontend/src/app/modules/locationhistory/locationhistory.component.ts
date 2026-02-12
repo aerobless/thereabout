@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {
     GoogleMap,
     MapAdvancedMarker,
@@ -15,7 +15,6 @@ import {
     Trip,
     TripService
 } from "../../../../generated/backend-api/thereabout";
-import {ToolbarModule} from "primeng/toolbar";
 import {InputTextModule} from "primeng/inputtext";
 import {CardModule} from "primeng/card";
 import {IconFieldModule} from "primeng/iconfield";
@@ -42,6 +41,7 @@ import {ListPanelComponent} from "./list-panel/list-panel.component";
 import {TabViewModule} from "primeng/tabview";
 import {AvatarModule} from "primeng/avatar";
 import {InputSwitchModule} from "primeng/inputswitch";
+import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 
 
 @Component({
@@ -50,7 +50,7 @@ import {InputSwitchModule} from "primeng/inputswitch";
     imports: [
         GoogleMap,
         MapHeatmapLayer,
-        ToolbarModule,
+        ToolbarComponent,
         InputTextModule,
         CardModule,
         IconFieldModule,
@@ -260,14 +260,6 @@ export class LocationhistoryComponent implements OnInit {
         }
     }
 
-    openConfiguration() {
-        this.router.navigate(['configuration']);
-    }
-
-    openStatistics() {
-        this.router.navigate(['statistics']);
-    }
-
     markerDragged(entry: LocationHistoryEntry, $event: google.maps.MapMouseEvent) {
         entry.latitude = $event.latLng!.lat();
         entry.longitude = $event.latLng!.lng();
@@ -281,19 +273,10 @@ export class LocationhistoryComponent implements OnInit {
         });
     }
 
-    openTrips() {
-        this.router.navigate(['trips']);
-    }
-
-    openDayView() {
-        const dateStr = this.dateToString(this.exactDate);
-        this.router.navigate(['dayview'], { queryParams: { date: dateStr } });
-    }
-
     closeTripView() {
         this.tripViewDataFull = [];
         this.currentTrip = null;
-        this.router.navigate(['']);
+        this.router.navigate(['locationhistory']);
     }
 
     dayLineClick($event: google.maps.PolyMouseEvent) {

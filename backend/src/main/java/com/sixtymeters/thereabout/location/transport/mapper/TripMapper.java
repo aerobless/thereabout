@@ -1,0 +1,18 @@
+package com.sixtymeters.thereabout.location.transport.mapper;
+
+import com.sixtymeters.thereabout.generated.model.GenTrip;
+import com.sixtymeters.thereabout.location.data.TripEntity;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
+
+@Mapper
+public interface TripMapper {
+    TripMapper INSTANCE = Mappers.getMapper(TripMapper.class);
+
+    @Mapping(target = "visitedCountries", ignore = true)
+    GenTrip mapToGenTrip(final TripEntity tripEntity);
+
+    @Mapping(target = "id", ignore = true)
+    TripEntity mapToTripEntity(final GenTrip genTrip);
+}

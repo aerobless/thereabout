@@ -3,849 +3,51 @@ info:
   title: Frontend REST API
   version: "1.0"
 paths:
+  # Location
   /backend/api/v1/location/sparse:
-    get:
-      summary: Get all sparse location history entries for the given date range. If no date range is provided, all entries are returned.
-      tags:
-        - location
-      operationId: getSparseLocations
-      parameters:
-        - in: query
-          name: from
-          schema:
-            type: string
-            format: date
-            example: "2012-01-31"
-          required: false
-          description: the start of the date range, if no date is provided -infinity is assumed
-        - in: query
-          name: to
-          schema:
-            type: string
-            format: date
-            example: "2012-01-31"
-          required: false
-          description: the end of the date range, if no date is provided +infinity is assumed
-      responses:
-        200:
-          description: Successful response containing a json object with all location history entries
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SparseLocationHistoryResponse"
-        500:
-          $ref: '#/components/responses/500'
+    $ref: 'openapi/location.yaml#/paths/LocationSparse'
   /backend/api/v1/location:
-    get:
-      summary: Get all location history entries for the given date range. If no date range is provided, all entries are returned.
-      tags:
-        - location
-      operationId: getLocations
-      parameters:
-        - in: query
-          name: from
-          schema:
-            type: string
-            format: date
-            example: "2012-01-31"
-          required: false
-          description: the start of the date range, if no date is provided -infinity is assumed
-        - in: query
-          name: to
-          schema:
-            type: string
-            format: date
-            example: "2012-01-31"
-          required: false
-          description: the end of the date range, if no date is provided +infinity is assumed
-      responses:
-        200:
-          description: Successful response containing a json object with all location history entries
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LocationHistoryResponse"
-        500:
-          $ref: '#/components/responses/500'
-    post:
-      summary: Add a new location history entry.
-      tags:
-        - location
-      operationId: addLocation
-      requestBody:
-        description: location history entry to be added
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LocationHistoryEntry"
-      responses:
-        200:
-          description: Successful response containing the newly created location history entry
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LocationHistoryEntry"
-        400:
-          $ref: '#/components/responses/400'
-        500:
-          $ref: '#/components/responses/500'
-    delete:
-      summary: Delete a list of location entries.
-      tags:
-        - location
-      operationId: deleteLocations
-      parameters:
-        - in: query
-          name: ids
-          schema:
-            type: array
-            items:
-              type: number
-              example: 42
-            example: [42, 43]
-          required: true
-          description: the ids of the location history entries to be deleted
-      responses:
-        204:
-          description: The location history entry was successfully deleted
-        500:
-          $ref: '#/components/responses/500'
+    $ref: 'openapi/location.yaml#/paths/Location'
   /backend/api/v1/location/geojson:
-    post:
-      summary: Post GeoJson location data
-      tags:
-        - location
-      description: Endpoint for posting geojson location data, e.g. from a client such as Overland
-      operationId: addGeoJsonLocation
-      parameters:
-        - in: header
-          name: Authorization
-          required: true
-          schema:
-            type: string
-          description: Bearer token for authorization
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                locations:
-                  type: array
-                  x-field-extra-annotation: "@lombok.Builder.Default"
-                  items:
-                    $ref: '#/components/schemas/GeoJsonLocation'
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  result:
-                    type: string
-                    example: "ok"
-        500:
-          $ref: '#/components/responses/500'
-
+    $ref: 'openapi/location.yaml#/paths/LocationGeojson'
   /backend/api/v1/location/{id}:
-    put:
-      summary: Update a specific location history entry.
-      tags:
-        - location
-      operationId: updateLocation
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: number
-            example: 42
-          required: true
-          description: the id of the location history entry to be updated
-      requestBody:
-        description: location history entry to be updated
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LocationHistoryEntry"
-      responses:
-        200:
-          description: Successful response containing the updated location history entry
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LocationHistoryEntry"
-        500:
-          $ref: '#/components/responses/500'
-
-  /backend/api/v1/config:
-    get:
-      summary: Get the frontend configuration.
-      tags:
-        - frontend
-      operationId: getFrontendConfiguration
-      responses:
-        200:
-          description: Successful response containing the frontend configuration, e.g. Google Maps API Key etc.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FrontendConfigurationResponse"
-        500:
-          $ref: '#/components/responses/500'
-  /backend/api/v1/config/import-file:
-    get:
-      summary: The status of the file import process.
-      tags:
-        - frontend
-      operationId: fileImportStatus
-      responses:
-        200:
-          description: Successful response containing the status of the file import process.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FileImportStatus'
-        500:
-          $ref: '#/components/responses/500'
-    post:
-      summary: Import location data from a file.
-      tags:
-        - frontend
-      operationId: importFromFile
-      requestBody:
-          description: The file to import
-          required: true
-          content:
-            multipart/form-data:
-              schema:
-                type: object
-                properties:
-                  file:
-                    type: string
-                    format: binary
-      responses:
-        204:
-          description: The file is successfully being imported.
-        500:
-          $ref: '#/components/responses/500'
-
+    $ref: 'openapi/location.yaml#/paths/LocationById'
   /backend/api/v1/statistics:
-    get:
-      summary: Statistics about the user's location history.
-      tags:
-        - statistics
-      operationId: getStatistics
-      responses:
-        200:
-          description: Successful response containing the users statistics.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserStatistics'
-        500:
-          $ref: '#/components/responses/500'
-
+    $ref: 'openapi/location.yaml#/paths/Statistics'
   /backend/api/v1/trip:
-    get:
-      summary: A list of all the trips the user has taken.
-      tags:
-        - trip
-      operationId: getTrips
-      responses:
-        200:
-          description: Successful response containing the users trips.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Trip'
-                x-field-extra-annotation: "@lombok.Builder.Default"
-        500:
-          $ref: '#/components/responses/500'
-    post:
-      summary: Add a new trip.
-      tags:
-        - trip
-      operationId: addTrip
-      requestBody:
-        description: the trip to be added
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Trip"
-      responses:
-        200:
-          description: Successful response containing the newly created trip
-          content:
-            application/json:
-              schema:
-                  $ref: "#/components/schemas/Trip"
-        500:
-          $ref: '#/components/responses/500'
+    $ref: 'openapi/location.yaml#/paths/Trip'
   /backend/api/v1/trip/{id}:
-    put:
-      summary: Update a specific trip.
-      tags:
-        - trip
-      operationId: updateTrip
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: number
-            example: 42
-          description: the id of the trip to be updated
-          required: true
-      requestBody:
-        description: the trip to be updated
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Trip"
-      responses:
-        200:
-          description: Successful response containing the updated trip
-          content:
-            application/json:
-                schema:
-                  $ref: "#/components/schemas/Trip"
-        500:
-          $ref: '#/components/responses/500'
-    delete:
-      summary: Delete a specific trip.
-      tags:
-        - trip
-      operationId: deleteTrip
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: number
-            example: 42
-          description: the id of the trip to be deleted
-          required: true
-      responses:
-        204:
-          description: The trip was successfully deleted
-        500:
-          $ref: '#/components/responses/500'
-
+    $ref: 'openapi/location.yaml#/paths/TripById'
   /backend/api/v1/location-history-list:
-    get:
-      summary: Get all location history lists.
-      tags:
-        - location list
-      operationId: getLocationHistoryLists
-      responses:
-        200:
-          description: Successful response containing a list of all location history lists.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/LocationHistoryList"
-        500:
-          $ref: '#/components/responses/500'
-    post:
-      summary: Create a new location history list.
-      tags:
-        - location list
-      operationId: createLocationHistoryList
-      requestBody:
-        description: The location history list to create
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LocationHistoryList"
-      responses:
-        200:
-          description: Successful response containing the newly created location history list.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LocationHistoryList"
-        500:
-          $ref: '#/components/responses/500'
+    $ref: 'openapi/location.yaml#/paths/LocationHistoryList'
   /backend/api/v1/location-history-list/{id}:
-    get:
-      summary: Get a specific location history list.
-      tags:
-        - location list
-      operationId: getLocationHistoryList
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: number
-            example: 42
-          required: true
-          description: The id of the location history list to retrieve
-      responses:
-        200:
-          description: Successful response containing the requested location history list.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LocationHistoryList"
-        500:
-          $ref: '#/components/responses/500'
-    delete:
-      summary: Delete a specific location history list.
-      tags:
-        - location list
-      operationId: deleteLocationHistoryList
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: number
-            example: 42
-          required: true
-          description: The id of the location history list to delete
-      responses:
-        204:
-          description: The location history list was successfully deleted
-        500:
-          $ref: '#/components/responses/500'
+    $ref: 'openapi/location.yaml#/paths/LocationHistoryListById'
   /backend/api/v1/location-history-list/{id}/location:
-    post:
-      summary: Add a location history entry to a specific list.
-      tags:
-        - location list
-      operationId: addLocationToList
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: number
-            example: 1
-          required: true
-          description: The id of the location history list to update
-      requestBody:
-        description: The location history entry id to add
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                locationHistoryEntryId:
-                  type: number
-                  example: 42
-      responses:
-        204:
-          description: Successful response indicating the location history entry was added
-        500:
-          $ref: '#/components/responses/500'
-    delete:
-      summary: Remove a location history entry from a specific list.
-      tags:
-        - location list
-      operationId: removeLocationFromList
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: number
-            example: 1
-          required: true
-          description: The id of the location history list to update
-      requestBody:
-        description: The location history entry id to remove
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                locationHistoryEntryId:
-                  type: number
-                  example: 42
-      responses:
-        204:
-          description: Successful response indicating the location history entry was removed
-        500:
-          $ref: '#/components/responses/500'
+    $ref: 'openapi/location.yaml#/paths/LocationHistoryListLocation'
+
+  # Client
+  /backend/api/v1/config:
+    $ref: 'openapi/client.yaml#/paths/Config'
+  /backend/api/v1/config/import-file:
+    $ref: 'openapi/client.yaml#/paths/ConfigImportFile'
+
+  # Health
   /backend/api/v1/health:
-    post:
-      summary: Submit health data
-      tags:
-        - health
-      operationId: submitHealthData
-      parameters:
-        - in: header
-          name: Authorization
-          required: true
-          schema:
-            type: string
-          description: Bearer token for authorization
-      requestBody:
-        description: Health data containing metrics and workouts
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                data:
-                  $ref: "#/components/schemas/HealthData"
-      responses:
-        201:
-          description: Successful submission of health data
-        400:
-          $ref: '#/components/responses/400'
-        401:
-          $ref: '#/components/responses/401'
-        500:
-          $ref: '#/components/responses/500'
+    $ref: 'openapi/health.yaml#/paths/Health'
   /backend/api/v1/health/data:
-    get:
-      summary: Get health data for a date range
-      tags:
-        - health
-      operationId: getHealthDataByDateRange
-      parameters:
-        - in: query
-          name: fromDate
-          required: true
-          schema:
-            type: string
-            format: date
-          description: Start date (inclusive)
-        - in: query
-          name: toDate
-          required: false
-          schema:
-            type: string
-            format: date
-          description: End date (inclusive). Defaults to fromDate if not provided.
-      responses:
-        200:
-          description: Successful response containing health data
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthDataResponse"
-        400:
-          $ref: '#/components/responses/400'
-        500:
-          $ref: '#/components/responses/500'
+    $ref: 'openapi/health.yaml#/paths/HealthData'
+
+  # Communication
+  /backend/api/v1/identity:
+    $ref: 'openapi/communication.yaml#/paths/Identity'
+  /backend/api/v1/identity/{id}:
+    $ref: 'openapi/communication.yaml#/paths/IdentityById'
+  /backend/api/v1/message:
+    $ref: 'openapi/communication.yaml#/paths/Message'
 
 components:
   schemas:
-    Trip:
-      description: A trip the user has taken.
-      type: object
-      required:
-          - id
-          - start
-          - end
-          - description
-          - title
-      properties:
-        id:
-          type: number
-          description: The unique identifier of the trip
-          example: 42
-        start:
-          type: string
-          format: date
-          example: "2012-01-15"
-          description: The start of the trip
-        end:
-          type: string
-          format: date
-          example: "2012-01-31"
-          description: The end of the trip
-        visitedCountries:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            type: object
-            description: The countries visited during the trip
-            properties:
-              countryIsoCode:
-                type: string
-                example: "CH"
-                description: The ISO 3166-1 alpha-2 country code
-              countryName:
-                type: string
-                example: "Switzerland"
-                description: The full english name of the country
-        description:
-          type: string
-          example: "A trip to the mountains"
-          description: A description of the trip
-        title:
-          type: string
-          example: "Mountain trip"
-          description: The title of the trip
-
-    UserStatistics:
-      description: The status of the file import process.
-      type: object
-      required:
-        - visitedCountries
-      properties:
-        visitedCountries:
-          type: array
-          items:
-            $ref: "#/components/schemas/CountryStatistic"
-          x-field-extra-annotation: "@lombok.Builder.Default"
-    CountryStatistic:
-      type: object
-      required:
-        - countryIsoCode
-        - countryName
-        - continent
-        - firstVisit
-        - lastVisit
-        - numberOfDaysSpent
-      properties:
-        countryIsoCode:
-          type: string
-          example: "CH"
-          description: The ISO 3166-1 alpha-2 country code
-        countryName:
-          type: string
-          example: "Switzerland"
-          description: The full english name of the country
-        continent:
-          type: string
-          example: "EU"
-          description: The continent the country is located in
-        firstVisit:
-          type: string
-          format: date
-          example: "2012-01-31"
-          description: The first time the country was visited by the user
-        lastVisit:
-          type: string
-          format: date
-          example: "2012-01-31"
-          description: The last time the country was visited by the user
-        numberOfDaysSpent:
-          type: number
-          description: The number of days spent in the country
-
-    FileImportStatus:
-      description: The status of the file import process.
-      type: object
-      required:
-        - status
-        - progress
-      properties:
-        status:
-          type: string
-          example: "IN_PROGRESS"
-          enum:
-            - IN_PROGRESS
-            - IDLE
-        progress:
-          type: number
-          example: 60
-          description: The progress of the file import process from 0 to 100.
-    SparseLocationHistoryResponse:
-      type: array
-      items:
-        $ref: "#/components/schemas/SparseLocationHistoryEntry"
-      x-field-extra-annotation: "@lombok.Builder.Default"
-    LocationHistoryResponse:
-      type: array
-      items:
-        $ref: "#/components/schemas/LocationHistoryEntry"
-      x-field-extra-annotation: "@lombok.Builder.Default"
-    SparseLocationHistoryEntry:
-      type: object
-      required:
-        - longitude
-        - latitude
-      properties:
-        longitude:
-          type: number
-          format: double
-          description: The longitude of the location history entry
-          example: 103.8470393
-        latitude:
-          type: number
-          format: double
-          description: The latitude of the location history entry
-          example: 1.2842441
-    LocationHistoryEntry:
-      allOf:
-        - $ref: '#/components/schemas/SparseLocationHistoryEntry'
-        - type: object
-          required:
-            - id
-            - timestamp
-          properties:
-            id:
-              type: number
-              description: The unique identifier of the location history entry
-              example: 42
-            timestamp:
-              type: string
-              format: date-time
-              description: The timestamp of the location history entry
-              example: 2024-01-01T00:15:10.145Z
-            horizontalAccuracy:
-              type: number
-              description: Approximate accuracy radius of the location measurement, in meters. A lower value means better precision.
-              example: 20
-            verticalAccuracy:
-              type: number
-              description: Approximate accuracy of the altitude measurement, in meters. A lower value means better precision.
-              example: 5
-            altitude:
-              type: number
-              description: Altitude above the WGS84 reference ellipsoid, in meters.
-              example: 150
-            heading:
-              type: number
-              description: Heading in degrees east of true north, from 0 to 359.
-              example: 90
-            velocity:
-              type: number
-              description: Measured velocity (ground speed) in meters per second.
-              example: 5
-            source:
-              type: string
-              enum:
-                - GOOGLE_IMPORT
-                - THEREABOUT_API
-                - THEREABOUT_API_UPDATE
-              description: The source of the location measurement
-              example: GOOGLE_IMPORT
-            estimatedIsoCountryCode:
-              type: string
-              description: The estimated ISO 3166-1 alpha-2 country code of the location.
-              example: CH
-            note:
-              type: string
-              description: A note about the location history entry
-              example: "A good spot for a barbecue."
-    GeoJsonLocation:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: [Feature]
-        geometry:
-          type: object
-          properties:
-            type:
-              type: string
-              enum: [Point]
-            coordinates:
-              type: array
-              x-field-extra-annotation: "@lombok.Builder.Default"
-              items:
-                type: number
-              example: [-122.030581, 37.331800]
-        properties:
-          type: object
-          properties:
-            timestamp:
-              type: string
-              format: date-time
-              example: "2015-10-01T08:00:00-0700"
-            altitude:
-              type: number
-              example: 0
-            speed:
-              type: number
-              example: 4
-            course:
-              type: number
-              example: 90
-            horizontal_accuracy:
-              type: number
-              example: 30
-            vertical_accuracy:
-              type: number
-              example: -1
-            speed_accuracy:
-              type: number
-              example: -1
-            course_accuracy:
-              type: number
-              example: -1
-            motion:
-              type: array
-              x-field-extra-annotation: "@lombok.Builder.Default"
-              items:
-                type: string
-                enum: [driving, walking, running, cycling, stationary]
-              example: ["driving", "stationary"]
-            battery_state:
-              type: string
-              enum: [unknown, charging, full, unplugged]
-              example: "charging"
-            battery_level:
-              type: number
-              format: float
-              example: 0.80
-            wifi:
-              type: string
-              example: ""
-            device_id:
-              type: string
-              example: ""
-            unique_id:
-              type: string
-              example: ""
-            pauses:
-              type: boolean
-              example: false
-            activity:
-              type: string
-              enum: [automotive_navigation, fitness, other_navigation, other]
-              example: "other_navigation"
-            desired_accuracy:
-              type: number
-              example: 100
-            deferred:
-              type: number
-              example: 1000
-            significant_change:
-              type: string
-              enum: [disabled, enabled, exclusive]
-              example: "disabled"
-            locations_in_payload:
-              type: number
-              example: 1
-    LocationHistoryList:
-      description: A list of location history entries.
-      type: object
-      required:
-        - id
-        - name
-        - locationHistoryEntries
-      properties:
-        id:
-          type: number
-          description: The unique identifier of the location history list
-          example: 1
-        name:
-          type: string
-          description: The name of the location history list
-          example: "Vacation Spots"
-        locationHistoryEntries:
-          type: array
-          items:
-            $ref: '#/components/schemas/LocationHistoryEntry'
-          x-field-extra-annotation: "@lombok.Builder.Default"
-
+    # Shared
     ThereaboutBaseErrorModel:
       type: object
       required:
@@ -867,570 +69,108 @@ components:
           type: string
         stacktrace:
           type: string
+
+    # Client
     FrontendConfigurationResponse:
-      type: object
-      required:
-        - googleMapsApiKey
-      properties:
-        googleMapsApiKey:
-          type: string
-          example: TEST_KEY_ASJHKASHDASJDDSA
-        thereaboutApiKey:
-          type: string
-          example: UUID-2342-4556345
-        versionDetails:
-          $ref: "#/components/schemas/VersionDetails"
+      $ref: 'openapi/client.yaml#/components/schemas/FrontendConfigurationResponse'
     VersionDetails:
-        type: object
-        required:
-            - version
-            - commitTime
-            - commitRef
-            - branch
-        properties:
-          version:
-            type: string
-            example: "1.0.0"
-          commitTime:
-            type: string
-            format: date-time
-            example: "2024-01-01T00:15:10.145Z"
-          commitRef:
-            type: string
-            example: "4faee41"
-          branch:
-            type: string
-            example: "main"
+      $ref: 'openapi/client.yaml#/components/schemas/VersionDetails'
+    FileImportStatus:
+      $ref: 'openapi/client.yaml#/components/schemas/FileImportStatus'
+
+    # Location
+    Trip:
+      $ref: 'openapi/location.yaml#/components/schemas/Trip'
+    UserStatistics:
+      $ref: 'openapi/location.yaml#/components/schemas/UserStatistics'
+    CountryStatistic:
+      $ref: 'openapi/location.yaml#/components/schemas/CountryStatistic'
+    SparseLocationHistoryResponse:
+      $ref: 'openapi/location.yaml#/components/schemas/SparseLocationHistoryResponse'
+    LocationHistoryResponse:
+      $ref: 'openapi/location.yaml#/components/schemas/LocationHistoryResponse'
+    SparseLocationHistoryEntry:
+      $ref: 'openapi/location.yaml#/components/schemas/SparseLocationHistoryEntry'
+    LocationHistoryEntry:
+      $ref: 'openapi/location.yaml#/components/schemas/LocationHistoryEntry'
+    GeoJsonLocation:
+      $ref: 'openapi/location.yaml#/components/schemas/GeoJsonLocation'
+    LocationHistoryList:
+      $ref: 'openapi/location.yaml#/components/schemas/LocationHistoryList'
+
+    # Health
     HealthData:
-      type: object
-      properties:
-        metrics:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/HealthMetric"
-        workouts:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/Workout"
+      $ref: 'openapi/health.yaml#/components/schemas/HealthData'
     HealthMetric:
-      type: object
-      properties:
-        name:
-          type: string
-        units:
-          type: string
-        data:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            oneOf:
-              - $ref: "#/components/schemas/MetricDataQuantity"
-              - $ref: "#/components/schemas/MetricDataBloodPressure"
-              - $ref: "#/components/schemas/MetricDataHeartRate"
-              - $ref: "#/components/schemas/MetricDataSleep"
-              - $ref: "#/components/schemas/MetricDataBloodGlucose"
-              - $ref: "#/components/schemas/MetricDataSexualActivity"
-              - $ref: "#/components/schemas/MetricDataHandwashing"
-              - $ref: "#/components/schemas/MetricDataToothbrushing"
-              - $ref: "#/components/schemas/MetricDataInsulin"
-              - $ref: "#/components/schemas/MetricDataHeartRateNotification"
+      $ref: 'openapi/health.yaml#/components/schemas/HealthMetric'
     MetricDataQuantity:
-      type: object
-      properties:
-        qty:
-          type: number
-        date:
-          type: string
-          format: date-time
-        source:
-          type: string
+      $ref: 'openapi/health.yaml#/components/schemas/MetricDataQuantity'
     MetricDataBloodPressure:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date-time
-        systolic:
-          type: number
-        diastolic:
-          type: number
+      $ref: 'openapi/health.yaml#/components/schemas/MetricDataBloodPressure'
     MetricDataHeartRate:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date-time
-        Min:
-          type: number
-        Avg:
-          type: number
-        Max:
-          type: number
+      $ref: 'openapi/health.yaml#/components/schemas/MetricDataHeartRate'
     MetricDataSleep:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date
-        totalSleep:
-          type: number
-        asleep:
-          type: number
-        awake:
-          type: number
-        core:
-          type: number
-        deep:
-          type: number
-        rem:
-          type: number
-        sleepStart:
-          type: string
-          format: date-time
-        sleepEnd:
-          type: string
-          format: date-time
-        inBed:
-          type: number
-        inBedStart:
-          type: string
-          format: date-time
-        inBedEnd:
-          type: string
-          format: date-time
+      $ref: 'openapi/health.yaml#/components/schemas/MetricDataSleep'
     MetricDataBloodGlucose:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date-time
-        qty:
-          type: number
-        mealTime:
-          type: string
-          enum:
-            - "Before Meal"
-            - "After Meal"
-            - "Unspecified"
+      $ref: 'openapi/health.yaml#/components/schemas/MetricDataBloodGlucose'
     MetricDataSexualActivity:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date-time
-        Unspecified:
-          type: number
-        Protection Used:
-          type: number
-        Protection Not Used:
-          type: number
+      $ref: 'openapi/health.yaml#/components/schemas/MetricDataSexualActivity'
     MetricDataHandwashing:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date-time
-        qty:
-          type: number
-        value:
-          type: string
-          enum:
-            - "Complete"
-            - "Incomplete"
+      $ref: 'openapi/health.yaml#/components/schemas/MetricDataHandwashing'
     MetricDataToothbrushing:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date-time
-        qty:
-          type: number
-        value:
-          type: string
-          enum:
-            - "Complete"
-            - "Incomplete"
+      $ref: 'openapi/health.yaml#/components/schemas/MetricDataToothbrushing'
     MetricDataInsulin:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date-time
-        qty:
-          type: number
-        reason:
-          type: string
-          enum:
-            - "Bolus"
-            - "Basal"
+      $ref: 'openapi/health.yaml#/components/schemas/MetricDataInsulin'
     MetricDataHeartRateNotification:
-      type: object
-      properties:
-        start:
-          type: string
-          format: date-time
-        end:
-          type: string
-          format: date-time
-        threshold:
-          type: number
-        heartRate:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            type: object
-            properties:
-              hr:
-                type: number
-              units:
-                type: string
-                example: "bpm"
-              timestamp:
-                type: object
-                properties:
-                  start:
-                    type: string
-                    format: date-time
-                  end:
-                    type: string
-                    format: date-time
-                  interval:
-                    type: object
-                    properties:
-                      duration:
-                        type: number
-                      units:
-                        type: string
-                        example: "s"
+      $ref: 'openapi/health.yaml#/components/schemas/MetricDataHeartRateNotification'
     Workout:
-      type: object
-      required:
-        - id
-        - name
-        - start
-        - end
-        - duration
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        start:
-          type: string
-          format: date-time
-        end:
-          type: string
-          format: date-time
-        duration:
-          type: number
-          description: Duration in seconds
-        location:
-          type: string
-          enum:
-            - "Indoor"
-            - "Outdoor"
-            - "Pool"
-            - "Open Water"
-        activeEnergyBurned:
-          $ref: "#/components/schemas/Energy"
-        intensity:
-          $ref: "#/components/schemas/Intensity"
-        distance:
-          $ref: "#/components/schemas/Distance"
-        temperature:
-          $ref: "#/components/schemas/Temperature"
-        humidity:
-          $ref: "#/components/schemas/Humidity"
-        avgSpeed:
-          $ref: "#/components/schemas/Speed"
-        maxSpeed:
-          $ref: "#/components/schemas/Speed"
-        elevationUp:
-          $ref: "#/components/schemas/Distance"
-        elevationDown:
-          $ref: "#/components/schemas/Distance"
-        lapLength:
-          $ref: "#/components/schemas/Distance"
-        strokeStyle:
-          type: string
-          enum:
-            - "Backstroke"
-            - "Breaststroke"
-            - "Butterfly"
-            - "Freestyle"
-            - "Mixed"
-            - "Kickboard"
-            - "Unknown"
-        swolfScore:
-          type: number
-        salinity:
-          type: string
-          enum:
-            - "Fresh Water"
-            - "Salt Water"
-        activeEnergy:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/QuantityData"
-        basalEnergy:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/QuantityData"
-        cyclingCadence:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/QuantityData"
-        cyclingDistance:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/QuantityData"
-        cyclingPower:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/QuantityData"
-        cyclingSpeed:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/QuantityData"
-        swimDistance:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/QuantityData"
-        swimStroke:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/QuantityData"
-        stepCount:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/QuantityData"
-        walkingAndRunningDistance:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/QuantityData"
-        heartRateData:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/WorkoutHeartRateData"
-        heartRateRecovery:
-          type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
-          items:
-            $ref: "#/components/schemas/WorkoutHeartRateData"
+      $ref: 'openapi/health.yaml#/components/schemas/Workout'
     QuantityData:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date-time
-        qty:
-          type: number
-        units:
-          type: string
-        source:
-          type: string
+      $ref: 'openapi/health.yaml#/components/schemas/QuantityData'
     WorkoutHeartRateData:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date-time
-        Min:
-          type: number
-        Avg:
-          type: number
-        Max:
-          type: number
-        units:
-          type: string
-          example: "bpm"
+      $ref: 'openapi/health.yaml#/components/schemas/WorkoutHeartRateData'
     RouteData:
-      type: object
-      properties:
-        lat:
-          type: number
-        lon:
-          type: number
-        altitude:
-          type: number
-        timestamp:
-          type: string
-          format: date-time
+      $ref: 'openapi/health.yaml#/components/schemas/RouteData'
     Energy:
-      type: object
-      properties:
-        qty:
-          type: number
-        units:
-          type: string
+      $ref: 'openapi/health.yaml#/components/schemas/Energy'
     HeartRate:
-      type: object
-      properties:
-        qty:
-          type: number
-        units:
-          type: string
-          example: "bpm"
+      $ref: 'openapi/health.yaml#/components/schemas/HeartRate'
     StepData:
-      type: object
-      properties:
-        qty:
-          type: number
-        units:
-          type: string
-          example: "steps"
+      $ref: 'openapi/health.yaml#/components/schemas/StepData'
     StepCadence:
-      type: object
-      properties:
-        qty:
-          type: number
-        units:
-          type: string
-          example: "spm"
+      $ref: 'openapi/health.yaml#/components/schemas/StepCadence'
     SwimmingData:
-      type: object
-      properties:
-        qty:
-          type: number
-        units:
-          type: string
-          example: "count"
+      $ref: 'openapi/health.yaml#/components/schemas/SwimmingData'
     SwimmingCadence:
-      type: object
-      properties:
-        qty:
-          type: number
-        units:
-          type: string
-          example: "spm"
+      $ref: 'openapi/health.yaml#/components/schemas/SwimmingCadence'
     Distance:
-      type: object
-      properties:
-        qty:
-          type: number
-        units:
-          type: string
+      $ref: 'openapi/health.yaml#/components/schemas/Distance'
     Speed:
-      type: object
-      properties:
-        qty:
-          type: number
-        units:
-          type: string
+      $ref: 'openapi/health.yaml#/components/schemas/Speed'
     FlightsClimbed:
-      type: object
-      properties:
-        qty:
-          type: number
-        units:
-          type: string
-          example: "count"
+      $ref: 'openapi/health.yaml#/components/schemas/FlightsClimbed'
     Intensity:
-      type: object
-      properties:
-        qty:
-          type: number
-        units:
-          type: string
-          example: "MET"
+      $ref: 'openapi/health.yaml#/components/schemas/Intensity'
     Temperature:
-      type: object
-      properties:
-        qty:
-          type: number
-        units:
-          type: string
+      $ref: 'openapi/health.yaml#/components/schemas/Temperature'
     Humidity:
-      type: object
-      properties:
-        qty:
-          type: number
-        units:
-          type: string
-          example: "%"
+      $ref: 'openapi/health.yaml#/components/schemas/Humidity'
     Elevation:
-      type: object
-      properties:
-        ascent:
-          type: number
-        descent:
-          type: number
-        units:
-          type: string
+      $ref: 'openapi/health.yaml#/components/schemas/Elevation'
     HealthDataResponse:
-      type: object
-      properties:
-        fromDate:
-          type: string
-          format: date
-        toDate:
-          type: string
-          format: date
-        metrics:
-          type: object
-          additionalProperties:
-            type: array
-            items:
-              $ref: "#/components/schemas/DailyMetricValue"
-          x-field-extra-annotation: "@lombok.Builder.Default"
-        workouts:
-          type: array
-          items:
-            $ref: "#/components/schemas/WorkoutSummary"
-          x-field-extra-annotation: "@lombok.Builder.Default"
+      $ref: 'openapi/health.yaml#/components/schemas/HealthDataResponse'
     DailyMetricValue:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date
-        qty:
-          type: number
-        units:
-          type: string
-        timestamp:
-          type: string
-          format: date-time
-        source:
-          type: string
+      $ref: 'openapi/health.yaml#/components/schemas/DailyMetricValue'
     WorkoutSummary:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        start:
-          type: string
-          format: date-time
-        end:
-          type: string
-          format: date-time
-        duration:
-          type: integer
-        location:
-          type: string
-        activeEnergyBurnedQty:
-          type: number
-        activeEnergyBurnedUnits:
-          type: string
-        distanceQty:
-          type: number
-        distanceUnits:
-          type: string
+      $ref: 'openapi/health.yaml#/components/schemas/WorkoutSummary'
+
+    # Communication
+    Identity:
+      $ref: 'openapi/communication.yaml#/components/schemas/Identity'
+    IdentityInApplication:
+      $ref: 'openapi/communication.yaml#/components/schemas/IdentityInApplication'
+    Message:
+      $ref: 'openapi/communication.yaml#/components/schemas/Message'
 
   responses:
     400:

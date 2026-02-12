@@ -25,29 +25,25 @@ public class HealthMetricEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "metric_name", nullable = false)
+    @Column(nullable = false)
     private String metricName;
 
-    @Column(name = "metric_date", nullable = false)
+    @Column(nullable = false)
     private LocalDate metricDate;
 
-    @Column(name = "timestamp")
     private LocalDateTime timestamp;
 
-    @Column(name = "units")
     private String units;
 
-    @Column(name = "qty", precision = 10, scale = 2)
+    @Column(precision = 10, scale = 2)
     private BigDecimal qty;
 
-    @Column(name = "source")
     private String source;
 
     @CreatedDate
-    @Column(name = "created_at", updatable = false)
+    @Column(updatable = false)
     private Instant createdAt;
 
     @LastModifiedDate
-    @Column(name = "updated_at")
     private Instant updatedAt;
 }

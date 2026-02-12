@@ -20,6 +20,6 @@ public class HealthMetricBloodGlucoseEntity {
     @JoinColumn(name = "health_metric_id", nullable = false)
     private HealthMetricEntity healthMetric;
 
-    @Column(name = "meal_time", length = 50)
+    @Column(length = 50)
     private String mealTime;
 }

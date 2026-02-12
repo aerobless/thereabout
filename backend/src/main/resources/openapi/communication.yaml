@@ -1,0 +1,222 @@
+paths:
+  Identity:
+    get:
+      summary: Get all identities.
+      tags:
+        - identity
+      operationId: getIdentities
+      responses:
+        200:
+          description: Successful response containing all identities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Identity'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+    post:
+      summary: Create a new identity.
+      tags:
+        - identity
+      operationId: createIdentity
+      requestBody:
+        description: The identity to create
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Identity'
+      responses:
+        200:
+          description: Successful response containing the newly created identity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identity'
+        400:
+          $ref: '../thereabout.openapi.yaml#/components/responses/400'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  IdentityById:
+    put:
+      summary: Update an existing identity.
+      tags:
+        - identity
+      operationId: updateIdentity
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 42
+          required: true
+          description: The id of the identity to update
+      requestBody:
+        description: The identity data to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Identity'
+      responses:
+        200:
+          description: Successful response containing the updated identity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identity'
+        404:
+          $ref: '../thereabout.openapi.yaml#/components/responses/404'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+    delete:
+      summary: Delete an identity.
+      tags:
+        - identity
+      operationId: deleteIdentity
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 42
+          required: true
+          description: The id of the identity to delete
+      responses:
+        204:
+          description: The identity was successfully deleted
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  Message:
+    get:
+      summary: Get all messages for a given day.
+      tags:
+        - message
+      operationId: getMessages
+      parameters:
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+            example: "2024-01-15"
+          required: true
+          description: The date to retrieve messages for
+      responses:
+        200:
+          description: Successful response containing all messages for the given day
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        400:
+          $ref: '../thereabout.openapi.yaml#/components/responses/400'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+
+components:
+  schemas:
+    Identity:
+      description: A person or contact identity.
+      type: object
+      required:
+        - id
+        - shortName
+      properties:
+        id:
+          type: number
+          description: The unique identifier of the identity
+          example: 1
+        shortName:
+          type: string
+          description: A short name or alias for the identity
+          example: "johndoe"
+        firstName:
+          type: string
+          description: The first name of the identity
+          example: "John"
+        lastName:
+          type: string
+          description: The last name of the identity
+          example: "Doe"
+        email:
+          type: string
+          description: The email address of the identity
+          example: "john.doe@example.com"
+        relationship:
+          type: string
+          description: The relationship to the user
+          example: "friend"
+        identityInApplications:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: '#/components/schemas/IdentityInApplication'
+    IdentityInApplication:
+      description: An identity's presence in a specific application (e.g. phone number in WhatsApp).
+      type: object
+      required:
+        - id
+        - application
+        - identifier
+      properties:
+        id:
+          type: number
+          description: The unique identifier
+          example: 1
+        application:
+          type: string
+          description: The application name
+          example: "WhatsApp"
+        identifier:
+          type: string
+          description: The identifier within the application (e.g. phone number, username)
+          example: "+41791234567"
+    Message:
+      description: A message between two identities.
+      type: object
+      required:
+        - id
+        - type
+        - source
+        - sender
+        - receiver
+        - timestamp
+      properties:
+        id:
+          type: number
+          description: The unique identifier of the message
+          example: 1
+        type:
+          type: string
+          description: The type of message
+          example: "text"
+        source:
+          type: string
+          description: The source application of the message
+          example: "WhatsApp"
+        sourceIdentifier:
+          type: string
+          description: An identifier for the source conversation or thread
+          example: "chat-12345"
+        sender:
+          $ref: '#/components/schemas/IdentityInApplication'
+        receiver:
+          $ref: '#/components/schemas/IdentityInApplication'
+        subject:
+          type: string
+          description: The subject of the message
+          example: "Hello"
+        body:
+          type: string
+          description: The body content of the message
+          example: "Hey, how are you?"
+        timestamp:
+          type: string
+          format: date-time
+          description: The timestamp when the message was sent
+          example: "2024-01-15T10:30:00Z"

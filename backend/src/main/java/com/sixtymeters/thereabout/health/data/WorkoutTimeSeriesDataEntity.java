@@ -23,27 +23,26 @@ public class WorkoutTimeSeriesDataEntity {
     @JoinColumn(name = "workout_id", nullable = false)
     private WorkoutEntity workout;
 
-    @Column(name = "data_type", nullable = false, length = 50)
+    @Column(nullable = false, length = 50)
     private String dataType;
 
-    @Column(name = "timestamp", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime timestamp;
 
-    @Column(name = "qty", precision = 10, scale = 2)
+    @Column(precision = 10, scale = 2)
     private BigDecimal qty;
 
-    @Column(name = "units", length = 50)
+    @Column(length = 50)
     private String units;
 
-    @Column(name = "source", length = 255)
     private String source;
 
-    @Column(name = "min_value", precision = 10, scale = 2)
+    @Column(precision = 10, scale = 2)
     private BigDecimal minValue;
 
-    @Column(name = "avg_value", precision = 10, scale = 2)
+    @Column(precision = 10, scale = 2)
     private BigDecimal avgValue;
 
-    @Column(name = "max_value", precision = 10, scale = 2)
+    @Column(precision = 10, scale = 2)
     private BigDecimal maxValue;
 }

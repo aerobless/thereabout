@@ -23,12 +23,12 @@ public class HealthMetricHeartRateNotificationEntity {
     @JoinColumn(name = "health_metric_id", nullable = false)
     private HealthMetricEntity healthMetric;
 
-    @Column(name = "start", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime start;
 
-    @Column(name = "end", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime end;
 
-    @Column(name = "threshold", nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal threshold;
 }

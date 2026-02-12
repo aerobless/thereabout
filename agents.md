@@ -58,6 +58,10 @@ assertThat(bigDecimal).isEqualByComparingTo(expected);
 
 AssertJ is included in `spring-boot-starter-test`, so no additional dependency is needed.
 
+## JPA Entities
+
+Do not use `@Column(name = "...")` when the column name matches Hibernate's automatic camelCase-to-snake_case conversion (e.g. `firstName` already maps to `first_name`). Only use `@Column` when specifying constraints like `nullable`, `precision`, `length`, or `updatable`.
+
 ## Notes
 
 - The test profile is configured to use the database connection settings from your environment variables

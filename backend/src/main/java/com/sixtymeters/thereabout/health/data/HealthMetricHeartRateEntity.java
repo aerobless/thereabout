@@ -22,12 +22,12 @@ public class HealthMetricHeartRateEntity {
     @JoinColumn(name = "health_metric_id", nullable = false)
     private HealthMetricEntity healthMetric;
 
-    @Column(name = "min_value", nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal minValue;
 
-    @Column(name = "avg_value", nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal avgValue;
 
-    @Column(name = "max_value", nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal maxValue;
 }

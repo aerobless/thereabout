@@ -23,21 +23,19 @@ public class HealthMetricHeartRateNotificationDataEntity {
     @JoinColumn(name = "health_metric_hrn_id", nullable = false)
     private HealthMetricHeartRateNotificationEntity healthMetricHeartRateNotification;
 
-    @Column(name = "hr", nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal hr;
 
-    @Column(name = "units", length = 50)
+    @Column(length = 50)
     private String units;
 
-    @Column(name = "timestamp_start")
     private LocalDateTime timestampStart;
 
-    @Column(name = "timestamp_end")
     private LocalDateTime timestampEnd;
 
-    @Column(name = "interval_duration", precision = 10, scale = 2)
+    @Column(precision = 10, scale = 2)
     private BigDecimal intervalDuration;
 
-    @Column(name = "interval_units", length = 50)
+    @Column(length = 50)
     private String intervalUnits;
 }

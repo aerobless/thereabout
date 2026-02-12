@@ -20,6 +20,6 @@ public class HealthMetricHandwashingEntity {
     @JoinColumn(name = "health_metric_id", nullable = false)
     private HealthMetricEntity healthMetric;
 
-    @Column(name = "value", length = 50)
+    @Column(length = 50)
     private String value;
 }

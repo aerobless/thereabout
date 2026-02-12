@@ -1,0 +1,598 @@
+paths:
+  Health:
+    post:
+      summary: Submit health data
+      tags:
+        - health
+      operationId: submitHealthData
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+          description: Bearer token for authorization
+      requestBody:
+        description: Health data containing metrics and workouts
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  $ref: "#/components/schemas/HealthData"
+      responses:
+        201:
+          description: Successful submission of health data
+        400:
+          $ref: '../thereabout.openapi.yaml#/components/responses/400'
+        401:
+          $ref: '../thereabout.openapi.yaml#/components/responses/401'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  HealthData:
+    get:
+      summary: Get health data for a date range
+      tags:
+        - health
+      operationId: getHealthDataByDateRange
+      parameters:
+        - in: query
+          name: fromDate
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Start date (inclusive)
+        - in: query
+          name: toDate
+          required: false
+          schema:
+            type: string
+            format: date
+          description: End date (inclusive). Defaults to fromDate if not provided.
+      responses:
+        200:
+          description: Successful response containing health data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthDataResponse"
+        400:
+          $ref: '../thereabout.openapi.yaml#/components/responses/400'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+
+components:
+  schemas:
+    HealthData:
+      type: object
+      properties:
+        metrics:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/HealthMetric"
+        workouts:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/Workout"
+    HealthMetric:
+      type: object
+      properties:
+        name:
+          type: string
+        units:
+          type: string
+        data:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/MetricDataQuantity"
+              - $ref: "#/components/schemas/MetricDataBloodPressure"
+              - $ref: "#/components/schemas/MetricDataHeartRate"
+              - $ref: "#/components/schemas/MetricDataSleep"
+              - $ref: "#/components/schemas/MetricDataBloodGlucose"
+              - $ref: "#/components/schemas/MetricDataSexualActivity"
+              - $ref: "#/components/schemas/MetricDataHandwashing"
+              - $ref: "#/components/schemas/MetricDataToothbrushing"
+              - $ref: "#/components/schemas/MetricDataInsulin"
+              - $ref: "#/components/schemas/MetricDataHeartRateNotification"
+    MetricDataQuantity:
+      type: object
+      properties:
+        qty:
+          type: number
+        date:
+          type: string
+          format: date-time
+        source:
+          type: string
+    MetricDataBloodPressure:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        systolic:
+          type: number
+        diastolic:
+          type: number
+    MetricDataHeartRate:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        Min:
+          type: number
+        Avg:
+          type: number
+        Max:
+          type: number
+    MetricDataSleep:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        totalSleep:
+          type: number
+        asleep:
+          type: number
+        awake:
+          type: number
+        core:
+          type: number
+        deep:
+          type: number
+        rem:
+          type: number
+        sleepStart:
+          type: string
+          format: date-time
+        sleepEnd:
+          type: string
+          format: date-time
+        inBed:
+          type: number
+        inBedStart:
+          type: string
+          format: date-time
+        inBedEnd:
+          type: string
+          format: date-time
+    MetricDataBloodGlucose:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        qty:
+          type: number
+        mealTime:
+          type: string
+          enum:
+            - "Before Meal"
+            - "After Meal"
+            - "Unspecified"
+    MetricDataSexualActivity:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        Unspecified:
+          type: number
+        Protection Used:
+          type: number
+        Protection Not Used:
+          type: number
+    MetricDataHandwashing:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        qty:
+          type: number
+        value:
+          type: string
+          enum:
+            - "Complete"
+            - "Incomplete"
+    MetricDataToothbrushing:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        qty:
+          type: number
+        value:
+          type: string
+          enum:
+            - "Complete"
+            - "Incomplete"
+    MetricDataInsulin:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        qty:
+          type: number
+        reason:
+          type: string
+          enum:
+            - "Bolus"
+            - "Basal"
+    MetricDataHeartRateNotification:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        threshold:
+          type: number
+        heartRate:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            type: object
+            properties:
+              hr:
+                type: number
+              units:
+                type: string
+                example: "bpm"
+              timestamp:
+                type: object
+                properties:
+                  start:
+                    type: string
+                    format: date-time
+                  end:
+                    type: string
+                    format: date-time
+                  interval:
+                    type: object
+                    properties:
+                      duration:
+                        type: number
+                      units:
+                        type: string
+                        example: "s"
+    Workout:
+      type: object
+      required:
+        - id
+        - name
+        - start
+        - end
+        - duration
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        duration:
+          type: number
+          description: Duration in seconds
+        location:
+          type: string
+          enum:
+            - "Indoor"
+            - "Outdoor"
+            - "Pool"
+            - "Open Water"
+        activeEnergyBurned:
+          $ref: "#/components/schemas/Energy"
+        intensity:
+          $ref: "#/components/schemas/Intensity"
+        distance:
+          $ref: "#/components/schemas/Distance"
+        temperature:
+          $ref: "#/components/schemas/Temperature"
+        humidity:
+          $ref: "#/components/schemas/Humidity"
+        avgSpeed:
+          $ref: "#/components/schemas/Speed"
+        maxSpeed:
+          $ref: "#/components/schemas/Speed"
+        elevationUp:
+          $ref: "#/components/schemas/Distance"
+        elevationDown:
+          $ref: "#/components/schemas/Distance"
+        lapLength:
+          $ref: "#/components/schemas/Distance"
+        strokeStyle:
+          type: string
+          enum:
+            - "Backstroke"
+            - "Breaststroke"
+            - "Butterfly"
+            - "Freestyle"
+            - "Mixed"
+            - "Kickboard"
+            - "Unknown"
+        swolfScore:
+          type: number
+        salinity:
+          type: string
+          enum:
+            - "Fresh Water"
+            - "Salt Water"
+        activeEnergy:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        basalEnergy:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        cyclingCadence:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        cyclingDistance:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        cyclingPower:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        cyclingSpeed:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        swimDistance:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        swimStroke:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        stepCount:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        walkingAndRunningDistance:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/QuantityData"
+        heartRateData:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/WorkoutHeartRateData"
+        heartRateRecovery:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: "#/components/schemas/WorkoutHeartRateData"
+    QuantityData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        qty:
+          type: number
+        units:
+          type: string
+        source:
+          type: string
+    WorkoutHeartRateData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        Min:
+          type: number
+        Avg:
+          type: number
+        Max:
+          type: number
+        units:
+          type: string
+          example: "bpm"
+    RouteData:
+      type: object
+      properties:
+        lat:
+          type: number
+        lon:
+          type: number
+        altitude:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+    Energy:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+    HeartRate:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "bpm"
+    StepData:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "steps"
+    StepCadence:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "spm"
+    SwimmingData:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "count"
+    SwimmingCadence:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "spm"
+    Distance:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+    Speed:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+    FlightsClimbed:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "count"
+    Intensity:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "MET"
+    Temperature:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+    Humidity:
+      type: object
+      properties:
+        qty:
+          type: number
+        units:
+          type: string
+          example: "%"
+    Elevation:
+      type: object
+      properties:
+        ascent:
+          type: number
+        descent:
+          type: number
+        units:
+          type: string
+    HealthDataResponse:
+      type: object
+      properties:
+        fromDate:
+          type: string
+          format: date
+        toDate:
+          type: string
+          format: date
+        metrics:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: "#/components/schemas/DailyMetricValue"
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        workouts:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkoutSummary"
+          x-field-extra-annotation: "@lombok.Builder.Default"
+    DailyMetricValue:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        qty:
+          type: number
+        units:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        source:
+          type: string
+    WorkoutSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+        location:
+          type: string
+        activeEnergyBurnedQty:
+          type: number
+        activeEnergyBurnedUnits:
+          type: string
+        distanceQty:
+          type: number
+        distanceUnits:
+          type: string

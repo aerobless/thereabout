@@ -1,0 +1,704 @@
+paths:
+  LocationSparse:
+    get:
+      summary: Get all sparse location history entries for the given date range. If no date range is provided, all entries are returned.
+      tags:
+        - location
+      operationId: getSparseLocations
+      parameters:
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date
+            example: "2012-01-31"
+          required: false
+          description: the start of the date range, if no date is provided -infinity is assumed
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date
+            example: "2012-01-31"
+          required: false
+          description: the end of the date range, if no date is provided +infinity is assumed
+      responses:
+        200:
+          description: Successful response containing a json object with all location history entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SparseLocationHistoryResponse"
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  Location:
+    get:
+      summary: Get all location history entries for the given date range. If no date range is provided, all entries are returned.
+      tags:
+        - location
+      operationId: getLocations
+      parameters:
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date
+            example: "2012-01-31"
+          required: false
+          description: the start of the date range, if no date is provided -infinity is assumed
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date
+            example: "2012-01-31"
+          required: false
+          description: the end of the date range, if no date is provided +infinity is assumed
+      responses:
+        200:
+          description: Successful response containing a json object with all location history entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationHistoryResponse"
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+    post:
+      summary: Add a new location history entry.
+      tags:
+        - location
+      operationId: addLocation
+      requestBody:
+        description: location history entry to be added
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationHistoryEntry"
+      responses:
+        200:
+          description: Successful response containing the newly created location history entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationHistoryEntry"
+        400:
+          $ref: '../thereabout.openapi.yaml#/components/responses/400'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+    delete:
+      summary: Delete a list of location entries.
+      tags:
+        - location
+      operationId: deleteLocations
+      parameters:
+        - in: query
+          name: ids
+          schema:
+            type: array
+            items:
+              type: number
+              example: 42
+            example: [42, 43]
+          required: true
+          description: the ids of the location history entries to be deleted
+      responses:
+        204:
+          description: The location history entry was successfully deleted
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  LocationGeojson:
+    post:
+      summary: Post GeoJson location data
+      tags:
+        - location
+      description: Endpoint for posting geojson location data, e.g. from a client such as Overland
+      operationId: addGeoJsonLocation
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+          description: Bearer token for authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                locations:
+                  type: array
+                  x-field-extra-annotation: "@lombok.Builder.Default"
+                  items:
+                    $ref: '#/components/schemas/GeoJsonLocation'
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: "ok"
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  LocationById:
+    put:
+      summary: Update a specific location history entry.
+      tags:
+        - location
+      operationId: updateLocation
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 42
+          required: true
+          description: the id of the location history entry to be updated
+      requestBody:
+        description: location history entry to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationHistoryEntry"
+      responses:
+        200:
+          description: Successful response containing the updated location history entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationHistoryEntry"
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  Statistics:
+    get:
+      summary: Statistics about the user's location history.
+      tags:
+        - statistics
+      operationId: getStatistics
+      responses:
+        200:
+          description: Successful response containing the users statistics.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStatistics'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  Trip:
+    get:
+      summary: A list of all the trips the user has taken.
+      tags:
+        - trip
+      operationId: getTrips
+      responses:
+        200:
+          description: Successful response containing the users trips.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trip'
+                x-field-extra-annotation: "@lombok.Builder.Default"
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+    post:
+      summary: Add a new trip.
+      tags:
+        - trip
+      operationId: addTrip
+      requestBody:
+        description: the trip to be added
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Trip"
+      responses:
+        200:
+          description: Successful response containing the newly created trip
+          content:
+            application/json:
+              schema:
+                  $ref: "#/components/schemas/Trip"
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  TripById:
+    put:
+      summary: Update a specific trip.
+      tags:
+        - trip
+      operationId: updateTrip
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 42
+          description: the id of the trip to be updated
+          required: true
+      requestBody:
+        description: the trip to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Trip"
+      responses:
+        200:
+          description: Successful response containing the updated trip
+          content:
+            application/json:
+                schema:
+                  $ref: "#/components/schemas/Trip"
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+    delete:
+      summary: Delete a specific trip.
+      tags:
+        - trip
+      operationId: deleteTrip
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 42
+          description: the id of the trip to be deleted
+          required: true
+      responses:
+        204:
+          description: The trip was successfully deleted
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  LocationHistoryList:
+    get:
+      summary: Get all location history lists.
+      tags:
+        - location list
+      operationId: getLocationHistoryLists
+      responses:
+        200:
+          description: Successful response containing a list of all location history lists.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LocationHistoryList"
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+    post:
+      summary: Create a new location history list.
+      tags:
+        - location list
+      operationId: createLocationHistoryList
+      requestBody:
+        description: The location history list to create
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationHistoryList"
+      responses:
+        200:
+          description: Successful response containing the newly created location history list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationHistoryList"
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  LocationHistoryListById:
+    get:
+      summary: Get a specific location history list.
+      tags:
+        - location list
+      operationId: getLocationHistoryList
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 42
+          required: true
+          description: The id of the location history list to retrieve
+      responses:
+        200:
+          description: Successful response containing the requested location history list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationHistoryList"
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+    delete:
+      summary: Delete a specific location history list.
+      tags:
+        - location list
+      operationId: deleteLocationHistoryList
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 42
+          required: true
+          description: The id of the location history list to delete
+      responses:
+        204:
+          description: The location history list was successfully deleted
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  LocationHistoryListLocation:
+    post:
+      summary: Add a location history entry to a specific list.
+      tags:
+        - location list
+      operationId: addLocationToList
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 1
+          required: true
+          description: The id of the location history list to update
+      requestBody:
+        description: The location history entry id to add
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                locationHistoryEntryId:
+                  type: number
+                  example: 42
+      responses:
+        204:
+          description: Successful response indicating the location history entry was added
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+    delete:
+      summary: Remove a location history entry from a specific list.
+      tags:
+        - location list
+      operationId: removeLocationFromList
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 1
+          required: true
+          description: The id of the location history list to update
+      requestBody:
+        description: The location history entry id to remove
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                locationHistoryEntryId:
+                  type: number
+                  example: 42
+      responses:
+        204:
+          description: Successful response indicating the location history entry was removed
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+
+components:
+  schemas:
+    Trip:
+      description: A trip the user has taken.
+      type: object
+      required:
+          - id
+          - start
+          - end
+          - description
+          - title
+      properties:
+        id:
+          type: number
+          description: The unique identifier of the trip
+          example: 42
+        start:
+          type: string
+          format: date
+          example: "2012-01-15"
+          description: The start of the trip
+        end:
+          type: string
+          format: date
+          example: "2012-01-31"
+          description: The end of the trip
+        visitedCountries:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            type: object
+            description: The countries visited during the trip
+            properties:
+              countryIsoCode:
+                type: string
+                example: "CH"
+                description: The ISO 3166-1 alpha-2 country code
+              countryName:
+                type: string
+                example: "Switzerland"
+                description: The full english name of the country
+        description:
+          type: string
+          example: "A trip to the mountains"
+          description: A description of the trip
+        title:
+          type: string
+          example: "Mountain trip"
+          description: The title of the trip
+    UserStatistics:
+      description: The status of the file import process.
+      type: object
+      required:
+        - visitedCountries
+      properties:
+        visitedCountries:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountryStatistic"
+          x-field-extra-annotation: "@lombok.Builder.Default"
+    CountryStatistic:
+      type: object
+      required:
+        - countryIsoCode
+        - countryName
+        - continent
+        - firstVisit
+        - lastVisit
+        - numberOfDaysSpent
+      properties:
+        countryIsoCode:
+          type: string
+          example: "CH"
+          description: The ISO 3166-1 alpha-2 country code
+        countryName:
+          type: string
+          example: "Switzerland"
+          description: The full english name of the country
+        continent:
+          type: string
+          example: "EU"
+          description: The continent the country is located in
+        firstVisit:
+          type: string
+          format: date
+          example: "2012-01-31"
+          description: The first time the country was visited by the user
+        lastVisit:
+          type: string
+          format: date
+          example: "2012-01-31"
+          description: The last time the country was visited by the user
+        numberOfDaysSpent:
+          type: number
+          description: The number of days spent in the country
+    SparseLocationHistoryResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/SparseLocationHistoryEntry"
+      x-field-extra-annotation: "@lombok.Builder.Default"
+    LocationHistoryResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/LocationHistoryEntry"
+      x-field-extra-annotation: "@lombok.Builder.Default"
+    SparseLocationHistoryEntry:
+      type: object
+      required:
+        - longitude
+        - latitude
+      properties:
+        longitude:
+          type: number
+          format: double
+          description: The longitude of the location history entry
+          example: 103.8470393
+        latitude:
+          type: number
+          format: double
+          description: The latitude of the location history entry
+          example: 1.2842441
+    LocationHistoryEntry:
+      allOf:
+        - $ref: '#/components/schemas/SparseLocationHistoryEntry'
+        - type: object
+          required:
+            - id
+            - timestamp
+          properties:
+            id:
+              type: number
+              description: The unique identifier of the location history entry
+              example: 42
+            timestamp:
+              type: string
+              format: date-time
+              description: The timestamp of the location history entry
+              example: 2024-01-01T00:15:10.145Z
+            horizontalAccuracy:
+              type: number
+              description: Approximate accuracy radius of the location measurement, in meters. A lower value means better precision.
+              example: 20
+            verticalAccuracy:
+              type: number
+              description: Approximate accuracy of the altitude measurement, in meters. A lower value means better precision.
+              example: 5
+            altitude:
+              type: number
+              description: Altitude above the WGS84 reference ellipsoid, in meters.
+              example: 150
+            heading:
+              type: number
+              description: Heading in degrees east of true north, from 0 to 359.
+              example: 90
+            velocity:
+              type: number
+              description: Measured velocity (ground speed) in meters per second.
+              example: 5
+            source:
+              type: string
+              enum:
+                - GOOGLE_IMPORT
+                - THEREABOUT_API
+                - THEREABOUT_API_UPDATE
+              description: The source of the location measurement
+              example: GOOGLE_IMPORT
+            estimatedIsoCountryCode:
+              type: string
+              description: The estimated ISO 3166-1 alpha-2 country code of the location.
+              example: CH
+            note:
+              type: string
+              description: A note about the location history entry
+              example: "A good spot for a barbecue."
+    GeoJsonLocation:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [Feature]
+        geometry:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [Point]
+            coordinates:
+              type: array
+              x-field-extra-annotation: "@lombok.Builder.Default"
+              items:
+                type: number
+              example: [-122.030581, 37.331800]
+        properties:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+              example: "2015-10-01T08:00:00-0700"
+            altitude:
+              type: number
+              example: 0
+            speed:
+              type: number
+              example: 4
+            course:
+              type: number
+              example: 90
+            horizontal_accuracy:
+              type: number
+              example: 30
+            vertical_accuracy:
+              type: number
+              example: -1
+            speed_accuracy:
+              type: number
+              example: -1
+            course_accuracy:
+              type: number
+              example: -1
+            motion:
+              type: array
+              x-field-extra-annotation: "@lombok.Builder.Default"
+              items:
+                type: string
+                enum: [driving, walking, running, cycling, stationary]
+              example: ["driving", "stationary"]
+            battery_state:
+              type: string
+              enum: [unknown, charging, full, unplugged]
+              example: "charging"
+            battery_level:
+              type: number
+              format: float
+              example: 0.80
+            wifi:
+              type: string
+              example: ""
+            device_id:
+              type: string
+              example: ""
+            unique_id:
+              type: string
+              example: ""
+            pauses:
+              type: boolean
+              example: false
+            activity:
+              type: string
+              enum: [automotive_navigation, fitness, other_navigation, other]
+              example: "other_navigation"
+            desired_accuracy:
+              type: number
+              example: 100
+            deferred:
+              type: number
+              example: 1000
+            significant_change:
+              type: string
+              enum: [disabled, enabled, exclusive]
+              example: "disabled"
+            locations_in_payload:
+              type: number
+              example: 1
+    LocationHistoryList:
+      description: A list of location history entries.
+      type: object
+      required:
+        - id
+        - name
+        - locationHistoryEntries
+      properties:
+        id:
+          type: number
+          description: The unique identifier of the location history list
+          example: 1
+        name:
+          type: string
+          description: The name of the location history list
+          example: "Vacation Spots"
+        locationHistoryEntries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationHistoryEntry'
+          x-field-extra-annotation: "@lombok.Builder.Default"

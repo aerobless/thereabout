@@ -22,9 +22,9 @@ public class HealthMetricBloodPressureEntity {
     @JoinColumn(name = "health_metric_id", nullable = false)
     private HealthMetricEntity healthMetric;
 
-    @Column(name = "systolic", nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal systolic;
 
-    @Column(name = "diastolic", nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal diastolic;
 }

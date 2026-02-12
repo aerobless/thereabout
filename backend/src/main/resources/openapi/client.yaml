@@ -1,0 +1,106 @@
+paths:
+  Config:
+    get:
+      summary: Get the frontend configuration.
+      tags:
+        - frontend
+      operationId: getFrontendConfiguration
+      responses:
+        200:
+          description: Successful response containing the frontend configuration, e.g. Google Maps API Key etc.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FrontendConfigurationResponse"
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  ConfigImportFile:
+    get:
+      summary: The status of the file import process.
+      tags:
+        - frontend
+      operationId: fileImportStatus
+      responses:
+        200:
+          description: Successful response containing the status of the file import process.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileImportStatus'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+    post:
+      summary: Import location data from a file.
+      tags:
+        - frontend
+      operationId: importFromFile
+      requestBody:
+          description: The file to import
+          required: true
+          content:
+            multipart/form-data:
+              schema:
+                type: object
+                properties:
+                  file:
+                    type: string
+                    format: binary
+      responses:
+        204:
+          description: The file is successfully being imported.
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+
+components:
+  schemas:
+    FrontendConfigurationResponse:
+      type: object
+      required:
+        - googleMapsApiKey
+      properties:
+        googleMapsApiKey:
+          type: string
+          example: TEST_KEY_ASJHKASHDASJDDSA
+        thereaboutApiKey:
+          type: string
+          example: UUID-2342-4556345
+        versionDetails:
+          $ref: "#/components/schemas/VersionDetails"
+    VersionDetails:
+        type: object
+        required:
+            - version
+            - commitTime
+            - commitRef
+            - branch
+        properties:
+          version:
+            type: string
+            example: "1.0.0"
+          commitTime:
+            type: string
+            format: date-time
+            example: "2024-01-01T00:15:10.145Z"
+          commitRef:
+            type: string
+            example: "4faee41"
+          branch:
+            type: string
+            example: "main"
+    FileImportStatus:
+      description: The status of the file import process.
+      type: object
+      required:
+        - status
+        - progress
+      properties:
+        status:
+          type: string
+          example: "IN_PROGRESS"
+          enum:
+            - IN_PROGRESS
+            - IDLE
+        progress:
+          type: number
+          example: 60
+          description: The progress of the file import process from 0 to 100.

@@ -1,6 +1,7 @@
 package com.sixtymeters.thereabout.client.transport;
 
 import com.sixtymeters.thereabout.client.service.ConfigurationService;
+import com.sixtymeters.thereabout.client.service.ImportProgressService;
 import com.sixtymeters.thereabout.communication.service.importer.FileImporter;
 import com.sixtymeters.thereabout.location.service.LocationHistoryService;
 import com.sixtymeters.thereabout.generated.api.FrontendApi;
@@ -39,12 +40,13 @@ public class FrontendConfigurationController implements FrontendApi {
 
     private final LocationHistoryService locationHistoryService;
     private final ConfigurationService configurationService;
+    private final ImportProgressService importProgressService;
     private final GitProperties gitProperties;
     private final List<FileImporter> fileImporters;
 
     @Override
     public ResponseEntity<GenFileImportStatus> fileImportStatus() {
-        final var importProgress = locationHistoryService.getImportProgress();
+        final var importProgress = importProgressService.getProgress();
 
         return ResponseEntity.ok(GenFileImportStatus.builder()
                 .status(mapImportProgressToStatus(importProgress))

@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.communication.service.importer;
 
+import com.sixtymeters.thereabout.client.service.ImportProgressService;
 import com.sixtymeters.thereabout.communication.data.*;
 import com.sixtymeters.thereabout.config.ThereaboutException;
 import com.sixtymeters.thereabout.generated.model.GenImportType;
@@ -35,6 +36,7 @@ public class WhatsAppChatImporter implements FileImporter {
 
     private final IdentityInApplicationRepository identityInApplicationRepository;
     private final MessageRepository messageRepository;
+    private final ImportProgressService importProgressService;
 
     @Override
     public GenImportType getSupportedImportType() {
@@ -44,20 +46,45 @@ public class WhatsAppChatImporter implements FileImporter {
     @Override
     public void importFile(File file) {
         log.info("Starting WhatsApp chat import from file: {}", file.getName());
+        importProgressService.setProgress(1);
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), java.nio.charset.StandardCharsets.UTF_8))) {
-            processFile(reader);
+        try {
+            long totalMessages = countMessages(file);
+            log.info("Counted {} messages in WhatsApp chat file: {}", totalMessages, file.getName());
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+                processFile(reader, totalMessages);
+            }
         } catch (IOException e) {
             throw new ThereaboutException(HttpStatusCode.valueOf(400),
                     "Failed to read WhatsApp chat file '%s': %s".formatted(file.getName(), e.getMessage()));
         } finally {
+            importProgressService.reset();
             cleanupTempFile(file);
         }
 
         log.info("Finished WhatsApp chat import from file: {}", file.getName());
     }
 
-    private void processFile(BufferedReader reader) throws IOException {
+    /**
+     * Fast first pass: count the number of message lines (lines matching the message pattern)
+     * to use as the total for percentage calculation.
+     */
+    private long countMessages(File file) throws IOException {
+        long count = 0;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = LEADING_UNICODE_FORMATTING.matcher(line).replaceFirst("");
+                if (MESSAGE_PATTERN.matcher(line).matches()) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private void processFile(BufferedReader reader, long totalMessages) throws IOException {
         Map<String, IdentityInApplicationEntity> identityCache = new HashMap<>();
         Set<String> knownHashes = new HashSet<>();
         List<MessageEntity> batch = new ArrayList<>(BATCH_SIZE);
@@ -69,6 +96,7 @@ public class WhatsAppChatImporter implements FileImporter {
         LocalDateTime currentTimestamp = null;
         long totalImported = 0;
         long skippedDuplicates = 0;
+        long messagesProcessed = 0;
 
         while ((line = reader.readLine()) != null) {
             // Strip leading Unicode formatting characters (e.g. LRM \u200E) that WhatsApp prepends to some lines
@@ -86,6 +114,9 @@ public class WhatsAppChatImporter implements FileImporter {
                     } else {
                         skippedDuplicates++;
                     }
+
+                    messagesProcessed++;
+                    updateProgress(totalMessages, messagesProcessed);
 
                     // Once the second participant is discovered, fix up any earlier messages
                     // where sender == receiver (because only one participant was known at the time)
@@ -123,6 +154,7 @@ public class WhatsAppChatImporter implements FileImporter {
             } else {
                 skippedDuplicates++;
             }
+            messagesProcessed++;
         }
 
         // Fix up receivers if this is the very end and both are now known
@@ -133,10 +165,24 @@ public class WhatsAppChatImporter implements FileImporter {
         // Flush any remaining messages in the batch
         if (!batch.isEmpty()) {
             totalImported += flushBatch(batch);
+            updateProgress(totalMessages, messagesProcessed);
         }
 
         log.info("Imported {} WhatsApp messages, skipped {} duplicates, {} participants.",
                 totalImported, skippedDuplicates, identityCache.size());
+    }
+
+    private void updateProgress(long totalMessages, long messagesProcessed) {
+        if (totalMessages <= 0) {
+            return;
+        }
+        int percentage = (int) ((messagesProcessed / (float) totalMessages) * 100);
+        percentage = Math.max(percentage, 1);
+        int previous = importProgressService.getProgress();
+        importProgressService.setProgress(percentage);
+        if (percentage != previous) {
+            log.info("Imported {}% of WhatsApp messages.", percentage);
+        }
     }
 
     /**

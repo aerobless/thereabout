@@ -1,6 +1,7 @@
 package com.sixtymeters.thereabout.location.service;
 
 import com.google.common.collect.Lists;
+import com.sixtymeters.thereabout.client.service.ImportProgressService;
 import com.sixtymeters.thereabout.location.service.importer.GoogleLocationHistoryImporter;
 import com.sixtymeters.thereabout.location.data.LocationHistoryEntity;
 import com.sixtymeters.thereabout.location.data.LocationHistoryRepository;
@@ -16,7 +17,6 @@ import uk.recurse.geocoding.reverse.ReverseGeocoder;
 import java.io.File;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
@@ -25,12 +25,11 @@ import java.util.concurrent.atomic.AtomicLong;
 public class LocationHistoryService {
     private final GoogleLocationHistoryImporter locationHistoryImporter;
     private final LocationHistoryRepository locationHistoryRepository;
+    private final ImportProgressService importProgressService;
 
     private final ReverseGeocoder reverseGeocoder = new ReverseGeocoder();
 
     private final static int CHUNK_SIZE = 10000;
-
-    private final static AtomicInteger importProgress = new AtomicInteger(0);
 
     private final int MANUAL_ACCURACY = 0;
 
@@ -43,13 +42,9 @@ public class LocationHistoryService {
         return allTimestamps;
     }
 
-    public int getImportProgress() {
-        return importProgress.get();
-    }
-
     @Async
     public void importGoogleLocationHistory(File file) {
-        importProgress.set(1);
+        importProgressService.setProgress(1);
         final var locationHistory = locationHistoryImporter.importLocationHistory(file);
         computeAdditionalFields(locationHistory);
 
@@ -57,12 +52,12 @@ public class LocationHistoryService {
         Lists.partition(locationHistory, CHUNK_SIZE).forEach(chunk -> {
             importedCount.addAndGet(chunk.size());
             locationHistoryRepository.saveAll(chunk);
-            importProgress.set(calculatePercentage(locationHistory.size(), importedCount.get()));
-            log.info("Imported %d%% of Google Location History.".formatted(importProgress.get()));
+            importProgressService.setProgress(calculatePercentage(locationHistory.size(), importedCount.get()));
+            log.info("Imported %d%% of Google Location History.".formatted(importProgressService.getProgress()));
         });
 
         locationHistoryRepository.flush();
-        importProgress.set(0);
+        importProgressService.reset();
         log.info("Finished importing %d entries of Google Location History.".formatted(locationHistory.size()));
     }
 

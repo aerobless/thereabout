@@ -3,6 +3,9 @@
 // ============================================================================
 :host {
   display: block;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .thereabout-toolbar {
@@ -59,21 +62,30 @@
 // ============================================================================
 // Navigation
 // ============================================================================
-.nav-group {
+.desktop-nav {
   display: flex;
   align-items: center;
   gap: 0.25rem;
+}
+
+// Mobile hamburger hidden by default (desktop)
+.mobile-nav-toggle {
+  display: none;
 }
 
 // ============================================================================
 // Mobile Responsive
 // ============================================================================
 @media (max-width: 768px) {
-  .brand-tagline {
+  .brand-text {
     display: none;
   }
 
-  .nav-group {
-    gap: 0;
+  .desktop-nav {
+    display: none;
+  }
+
+  .mobile-nav-toggle {
+    display: inline-flex;
   }
 }

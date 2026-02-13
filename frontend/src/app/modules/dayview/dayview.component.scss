@@ -19,7 +19,12 @@
 }
 
 .date-selector {
-  min-width: 130px;
+  width: 7.5rem;
+
+  ::ng-deep .p-inputtext {
+    width: 7.5rem;
+    padding: 0.4rem 0.5rem;
+  }
 }
 
 // ============================================================================

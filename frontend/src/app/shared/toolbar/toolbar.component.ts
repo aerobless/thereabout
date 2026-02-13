@@ -6,7 +6,6 @@ import {TooltipModule} from 'primeng/tooltip';
 
 @Component({
     selector: 'thereabout-toolbar',
-    standalone: true,
     imports: [
         ToolbarModule,
         ButtonModule,

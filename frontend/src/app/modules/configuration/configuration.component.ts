@@ -7,7 +7,6 @@ import {ReactiveFormsModule} from "@angular/forms";
 import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 import {FieldsetModule} from "primeng/fieldset";
 import {CardModule} from "primeng/card";
-import {TabViewModule} from "primeng/tabview";
 import {PanelModule} from "primeng/panel";
 import {FileUploadErrorEvent, FileUploadHandlerEvent, FileUploadModule} from "primeng/fileupload";
 import {
@@ -16,13 +15,13 @@ import {
     FrontendService
 } from "../../../../generated/backend-api/thereabout";
 import {MessageService} from "primeng/api";
-import {NgIf} from "@angular/common";
+
 import {catchError, interval, Observable, of, switchMap, takeWhile} from "rxjs";
 import {ChipModule} from "primeng/chip";
 import {TooltipModule} from "primeng/tooltip";
-import {DropdownModule} from "primeng/dropdown";
+import {SelectModule} from "primeng/select";
 import {FormsModule} from "@angular/forms";
-import {HttpClient} from "@angular/common/http";
+import { HttpClient } from "@angular/common/http";
 import {ProgressBarModule} from "primeng/progressbar";
 
 interface ImportTypeOption {
@@ -33,29 +32,26 @@ interface ImportTypeOption {
 }
 
 @Component({
-  selector: 'app-configuration',
-  standalone: true,
+    selector: 'app-configuration',
     imports: [
-        ButtonModule,
-        IconFieldModule,
-        InputIconModule,
-        InputTextModule,
-        ReactiveFormsModule,
-        ToolbarComponent,
-        FieldsetModule,
-        CardModule,
-        TabViewModule,
-        PanelModule,
-        FileUploadModule,
-        NgIf,
-        ChipModule,
-        TooltipModule,
-        DropdownModule,
-        FormsModule,
-        ProgressBarModule
-    ],
-  templateUrl: './configuration.component.html',
-  styleUrl: './configuration.component.scss'
+    ButtonModule,
+    IconFieldModule,
+    InputIconModule,
+    InputTextModule,
+    ReactiveFormsModule,
+    ToolbarComponent,
+    FieldsetModule,
+    CardModule,
+    PanelModule,
+    FileUploadModule,
+    ChipModule,
+    TooltipModule,
+    SelectModule,
+    FormsModule,
+    ProgressBarModule
+],
+    templateUrl: './configuration.component.html',
+    styleUrl: './configuration.component.scss'
 })
 export class ConfigurationComponent implements OnInit {
 

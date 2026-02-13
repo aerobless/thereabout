@@ -1,7 +1,7 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {ButtonModule} from "primeng/button";
-import {CalendarModule} from "primeng/calendar";
-import {NgIf} from "@angular/common";
+import {DatePickerModule} from "primeng/datepicker";
+
 import {PanelModule} from "primeng/panel";
 import {MessageService, SharedModule} from "primeng/api";
 import {TableModule} from "primeng/table";
@@ -14,28 +14,26 @@ import {
 } from "../../../../../generated/backend-api/thereabout";
 import {DialogModule} from "primeng/dialog";
 import {InputNumberModule} from "primeng/inputnumber";
-import {InputTextareaModule} from "primeng/inputtextarea";
-import {DropdownModule} from "primeng/dropdown";
+import {TextareaModule} from "primeng/textarea";
+import {SelectModule} from "primeng/select";
 
 @Component({
-  selector: 'thereabout-day-panel',
-  standalone: true,
+    selector: 'thereabout-day-panel',
     imports: [
-        ButtonModule,
-        CalendarModule,
-        NgIf,
-        PanelModule,
-        SharedModule,
-        TableModule,
-        TooltipModule,
-        FormsModule,
-        DialogModule,
-        InputNumberModule,
-        InputTextareaModule,
-        DropdownModule
-    ],
-  templateUrl: './day-panel.component.html',
-  styleUrl: './day-panel.component.scss'
+    ButtonModule,
+    DatePickerModule,
+    PanelModule,
+    SharedModule,
+    TableModule,
+    TooltipModule,
+    FormsModule,
+    DialogModule,
+    InputNumberModule,
+    TextareaModule,
+    SelectModule
+],
+    templateUrl: './day-panel.component.html',
+    styleUrl: './day-panel.component.scss'
 })
 export class DayPanelComponent {
 

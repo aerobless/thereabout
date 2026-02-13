@@ -1,11 +1,9 @@
 import {Component, OnInit} from '@angular/core';
 import {
     GoogleMap,
-    MapAdvancedMarker,
     MapGeocoder,
     MapHeatmapLayer,
     MapMarker,
-    MapMarkerClusterer,
     MapPolyline
 } from "@angular/google-maps";
 import {
@@ -21,9 +19,9 @@ import {IconFieldModule} from "primeng/iconfield";
 import {InputIconModule} from "primeng/inputicon";
 import {FormsModule} from "@angular/forms";
 import {ButtonModule} from "primeng/button";
-import {CalendarModule} from "primeng/calendar";
+import {DatePickerModule} from "primeng/datepicker";
 import {PanelModule} from "primeng/panel";
-import {NgForOf, NgIf} from "@angular/common";
+
 import {FloatLabelModule} from "primeng/floatlabel";
 import QuickFilterDateCombo from "./quick-filter-date-combo";
 import {TableModule} from "primeng/table";
@@ -34,52 +32,47 @@ import {DialogModule} from "primeng/dialog";
 import {InputNumberModule} from "primeng/inputnumber";
 import {StyleClassModule} from "primeng/styleclass";
 import {TooltipModule} from "primeng/tooltip";
-import {InputTextareaModule} from "primeng/inputtextarea";
+import {TextareaModule} from "primeng/textarea";
 import {TripPanelComponent} from "./trip-panel/trip-panel.component";
 import {DayPanelComponent} from "./day-panel/day-panel.component";
 import {ListPanelComponent} from "./list-panel/list-panel.component";
-import {TabViewModule} from "primeng/tabview";
+import {TabsModule} from "primeng/tabs";
 import {AvatarModule} from "primeng/avatar";
-import {InputSwitchModule} from "primeng/inputswitch";
+import {ToggleSwitchModule} from "primeng/toggleswitch";
 import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 
 
 @Component({
     selector: 'app-locationhistory',
-    standalone: true,
     imports: [
-        GoogleMap,
-        MapHeatmapLayer,
-        ToolbarComponent,
-        InputTextModule,
-        CardModule,
-        IconFieldModule,
-        InputIconModule,
-        FormsModule,
-        ButtonModule,
-        CalendarModule,
-        PanelModule,
-        NgIf,
-        MapPolyline,
-        MapMarker,
-        MapMarkerClusterer,
-        MapAdvancedMarker,
-        FloatLabelModule,
-        TableModule,
-        ToastModule,
-        NgForOf,
-        DialogModule,
-        InputNumberModule,
-        StyleClassModule,
-        TooltipModule,
-        InputTextareaModule,
-        TripPanelComponent,
-        DayPanelComponent,
-        ListPanelComponent,
-        TabViewModule,
-        AvatarModule,
-        InputSwitchModule,
-    ],
+    GoogleMap,
+    MapHeatmapLayer,
+    ToolbarComponent,
+    InputTextModule,
+    CardModule,
+    IconFieldModule,
+    InputIconModule,
+    FormsModule,
+    ButtonModule,
+    DatePickerModule,
+    PanelModule,
+    MapPolyline,
+    MapMarker,
+    FloatLabelModule,
+    TableModule,
+    ToastModule,
+    DialogModule,
+    InputNumberModule,
+    StyleClassModule,
+    TooltipModule,
+    TextareaModule,
+    TripPanelComponent,
+    DayPanelComponent,
+    ListPanelComponent,
+    TabsModule,
+    AvatarModule,
+    ToggleSwitchModule
+],
     templateUrl: './locationhistory.component.html',
     styleUrl: './locationhistory.component.scss'
 })

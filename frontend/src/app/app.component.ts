@@ -1,15 +1,12 @@
 import {Component, OnInit} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import {LocationhistoryComponent} from "./modules/locationhistory/locationhistory.component";
-import {NgIf} from "@angular/common";
 import {ToastModule} from "primeng/toast";
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [RouterOutlet, LocationhistoryComponent, NgIf, ToastModule],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+    selector: 'app-root',
+    imports: [RouterOutlet, ToastModule],
+    templateUrl: './app.component.html',
+    styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit{
   title = 'thereabout';

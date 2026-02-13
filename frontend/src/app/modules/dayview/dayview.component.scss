@@ -1,199 +1,137 @@
+@use '../../shared/styles/card-layout' as layout;
+
 // ============================================================================
 // Component Host
 // ============================================================================
 :host {
   display: block;
   min-height: 100vh;
+  background: var(--p-surface-50);
 }
 
 // ============================================================================
-// Toolbar
+// Date Navigation (toolbar center content)
 // ============================================================================
-.toolbar-item {
-  margin-right: 10px;
-}
-
 .date-navigation {
   display: flex;
   align-items: center;
-  gap: 10px;
-}
-
-.nav-button {
-  margin: 0 5px;
+  gap: 0.5rem;
 }
 
 .date-selector {
-  min-width: 120px;
-}
-
-.today-button {
-  margin: 0 5px;
+  min-width: 130px;
 }
 
 // ============================================================================
-// Card Headers
+// Masonry Card Container
 // ============================================================================
-.card-header-content {
+.card-container {
+  @include layout.card-masonry($max-columns: 3);
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+// ============================================================================
+// Card Header
+// ============================================================================
+.card-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  width: 100%;
+  gap: 0.6rem;
   padding: 0.75rem 1rem;
-  height: 50px;
-  box-sizing: border-box;
+  border-bottom: 1px solid var(--p-surface-100);
+}
 
-  // Make buttons smaller to fit within fixed header height
-  ::ng-deep .p-button {
-    padding: 0.15rem 0.35rem;
-    font-size: 0.7rem;
-    line-height: 1.2;
-    height: auto;
-  }
+.card-header-icon {
+  font-size: 0.9rem;
+  color: var(--p-primary-500);
+  width: 1.25rem;
+  text-align: center;
 }
 
 .card-header-title {
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 600;
+  color: var(--p-surface-700);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  flex: 1;
 }
 
-.trend-range-toggle {
+.card-header-actions {
   display: flex;
-  gap: 5px;
+  gap: 0.25rem;
   align-items: center;
-}
 
-.toggle-button {
-  min-width: auto;
+  ::ng-deep .p-button {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+  }
 }
 
 // ============================================================================
-// Card Content
+// Map Card
 // ============================================================================
 .map-content {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 10px;
 }
 
-.map-container {
-  height: 600px;
+.map-wrapper {
+  height: 450px;
   width: 100%;
-  border-radius: 8px;
   overflow: hidden;
 }
 
 .map-footer {
+  padding: 0.6rem 1rem;
   text-align: center;
+  border-top: 1px solid var(--p-surface-100);
 }
 
-.health-data-container {
+.map-footer-text {
+  font-size: 0.8rem;
+  color: var(--p-surface-600);
+
+  &.muted {
+    color: var(--p-surface-400);
+    font-style: italic;
+  }
+}
+
+// ============================================================================
+// Weight Card
+// ============================================================================
+.weight-content {
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 10px;
+  gap: 0.75rem;
 }
 
-.energy-container {
+.metric-hero {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 20px;
-  align-items: center;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0;
 }
 
-.active-energy-display {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
+.metric-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--p-primary-600);
+  line-height: 1;
+
+  &.muted {
+    color: var(--p-surface-300);
+  }
 }
 
-.energy-icon-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-.energy-icon-active {
-  font-size: 1.5rem;
-  color: var(--primary-color);
-}
-
-.energy-icon-basal {
+.metric-unit {
   font-size: 1rem;
-  color: var(--text-color-secondary);
-}
-
-.energy-label {
-  font-size: 0.85rem;
   font-weight: 500;
-  color: var(--text-color-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.active-energy-value {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: var(--primary-color);
-  text-align: center;
-}
-
-.basal-energy-display {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding-top: 10px;
-  border-top: 1px solid var(--surface-border);
-}
-
-.basal-energy-value {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-color-secondary);
-  text-align: center;
-}
-
-.workouts-container {
-  padding: 10px;
-}
-
-.workouts-table {
-  // Make table responsive with horizontal scroll on smaller screens
-  ::ng-deep .p-datatable-wrapper {
-    overflow-x: auto;
-  }
-  
-  // Responsive column widths - allow wrapping on mobile
-  ::ng-deep th,
-  ::ng-deep td {
-    white-space: nowrap;
-    min-width: fit-content;
-  }
-  
-  // On mobile, allow horizontal scroll
-  @media (max-width: 768px) {
-    ::ng-deep .p-datatable-wrapper {
-      overflow-x: scroll;
-      -webkit-overflow-scrolling: touch;
-    }
-  }
-}
-
-.weight-display {
-  text-align: center;
-}
-
-.weight-value {
-  font-size: 2rem;
-  font-weight: bold;
-  color: var(--primary-color);
+  color: var(--p-surface-500);
 }
 
 .chart-container {
@@ -203,94 +141,163 @@
   justify-content: center;
 }
 
-// ============================================================================
-// Cards Lanes Layout
-// ============================================================================
-.cards-lanes-container {
-  display: flex;
-  gap: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  align-items: flex-start;
+.empty-state {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--p-surface-400);
+  font-size: 0.85rem;
+  font-style: italic;
 }
 
-.cards-lane {
+// ============================================================================
+// Energy Card
+// ============================================================================
+.energy-content {
+  padding: 1rem;
+}
+
+.energy-row {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.energy-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 8px;
 }
 
-.cards-lane-wide {
-  flex: 2 1 0%;
+.energy-active {
+  background: var(--p-blue-50);
 }
 
-.cards-lane-narrow {
-  flex: 1 1 0%;
+.energy-basal {
+  background: var(--p-surface-50);
 }
 
-// Consistent card styling
-.card-location-history,
-.card-weight,
-.card-energy,
-.card-workouts {
-  margin: 0;
+.energy-label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
 
-  // Remove default padding to tighten whitespace
-  ::ng-deep .p-card-body {
-    padding: 0;
+.energy-icon {
+  font-size: 0.85rem;
+}
+
+.energy-active .energy-icon {
+  color: var(--p-primary-500);
+}
+
+.energy-basal .energy-icon {
+  color: var(--p-surface-500);
+}
+
+.energy-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--p-surface-600);
+}
+
+.energy-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.energy-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--p-surface-800);
+
+  &.muted {
+    color: var(--p-surface-300);
   }
+}
 
-  // Ensure consistent header height across all cards
-  ::ng-deep .p-card-header {
-    height: 50px;
-    min-height: 50px;
+.energy-active .energy-value {
+  color: var(--p-primary-600);
+}
+
+.energy-unit {
+  font-size: 0.75rem;
+  color: var(--p-surface-500);
+}
+
+.energy-divider {
+  width: 1px;
+  background: var(--p-surface-200);
+}
+
+// ============================================================================
+// Workouts Card
+// ============================================================================
+.workouts-content {
+  padding: 0;
+
+  ::ng-deep .p-datatable {
+    .p-datatable-thead > tr > th {
+      background: var(--p-surface-50);
+      font-size: 0.8rem;
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--p-surface-200);
+    }
+
+    .p-datatable-tbody > tr > td {
+      font-size: 0.85rem;
+      padding: 0.6rem 0.75rem;
+    }
   }
+}
+
+.th-label {
+  margin-left: 0.35rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.empty-table-message {
+  text-align: center;
+  color: var(--p-surface-400);
+  font-style: italic;
+  padding: 1.5rem !important;
 }
 
 // ============================================================================
 // Mobile Responsive
 // ============================================================================
 @media (max-width: 768px) {
-  .cards-lanes-container {
+  .map-wrapper {
+    height: 300px;
+  }
+
+  .metric-value {
+    font-size: 1.75rem;
+  }
+
+  .energy-value {
+    font-size: 1.25rem;
+  }
+
+  .energy-row {
     flex-direction: column;
-    padding: 10px;
+    gap: 0.75rem;
   }
 
-  .cards-lane {
-    gap: 10px;
+  .energy-divider {
     width: 100%;
-  }
-  
-  .card-location-history,
-  .card-weight,
-  .card-energy,
-  .card-workouts {
-    width: 100%;
+    height: 1px;
   }
 
-  .active-energy-value {
-    font-size: 2rem;
-  }
-
-  .basal-energy-value {
-    font-size: 1.25rem;
-  }
-
-  .energy-icon-active {
-    font-size: 1.25rem;
-  }
-
-  .energy-icon-basal {
-    font-size: 0.9rem;
-  }
-
-  .workouts-table {
-    ::ng-deep th,
-    ::ng-deep td {
-      font-size: 0.85rem;
-      padding: 0.5rem;
-    }
+  .th-label {
+    display: none;
   }
 }

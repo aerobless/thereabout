@@ -8,49 +8,43 @@ import {PanelModule} from "primeng/panel";
 import {ChipModule} from "primeng/chip";
 import {TagModule} from "primeng/tag";
 import {SplitButtonModule} from "primeng/splitbutton";
+import {TooltipModule} from "primeng/tooltip";
 import {Trip, TripService} from "../../../../generated/backend-api/thereabout";
-import {NgForOf, NgIf} from "@angular/common";
+
 import {getFlagEmoji} from "../../util/country-util";
 import {DialogModule} from "primeng/dialog";
 import {InputTextModule} from "primeng/inputtext";
-import {InputTextareaModule} from "primeng/inputtextarea";
-import {CalendarModule} from "primeng/calendar";
+import {TextareaModule} from "primeng/textarea";
+import {DatePickerModule} from "primeng/datepicker";
 import {FormsModule} from "@angular/forms";
 import {FloatLabelModule} from "primeng/floatlabel";
-import {GoogleMap, MapHeatmapLayer, MapMarker, MapPolyline} from "@angular/google-maps";
 import {TableModule} from "primeng/table";
 import {ProgressSpinnerModule} from "primeng/progressspinner";
 import {ReformatDatePipe} from "../../util/reformat-date.pipe";
 
 @Component({
-  selector: 'app-trips',
-  standalone: true,
+    selector: 'app-trips',
     imports: [
-        ButtonModule,
-        ToolbarComponent,
-        AvatarModule,
-        PanelModule,
-        ChipModule,
-        TagModule,
-        SplitButtonModule,
-        NgForOf,
-        DialogModule,
-        InputTextModule,
-        InputTextareaModule,
-        CalendarModule,
-        NgIf,
-        FormsModule,
-        FloatLabelModule,
-        GoogleMap,
-        MapHeatmapLayer,
-        MapMarker,
-        MapPolyline,
-        TableModule,
-        ProgressSpinnerModule,
-        ReformatDatePipe
-    ],
-  templateUrl: './trips.component.html',
-  styleUrl: './trips.component.scss'
+    ButtonModule,
+    ToolbarComponent,
+    AvatarModule,
+    PanelModule,
+    ChipModule,
+    TagModule,
+    SplitButtonModule,
+    TooltipModule,
+    DialogModule,
+    InputTextModule,
+    TextareaModule,
+    DatePickerModule,
+    FormsModule,
+    FloatLabelModule,
+    TableModule,
+    ProgressSpinnerModule,
+    ReformatDatePipe
+],
+    templateUrl: './trips.component.html',
+    styleUrl: './trips.component.scss'
 })
 export class TripsComponent implements OnInit {
 

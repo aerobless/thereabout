@@ -1,27 +1,38 @@
-<p-toolbar>
-    <div class="p-toolbar-group-start" style="cursor: pointer" (click)="navigateHome()">
-        <b style="padding-left: 5px; padding-right: 5px">Thereabout <img src="favicon.ico" alt="favicon"
-                                                                         class="favicon"></b>
-        <i style="font-size: small">near that place or time</i>
+<p-toolbar class="thereabout-toolbar">
+    <div class="p-toolbar-group-start">
+        <div class="brand" (click)="navigateHome()">
+            <img src="favicon.ico" alt="Thereabout" class="brand-icon">
+            <div class="brand-text">
+                <span class="brand-name">Thereabout</span>
+                <span class="brand-tagline">near that place or time</span>
+            </div>
+        </div>
     </div>
     <div class="p-toolbar-group-center">
         <ng-content></ng-content>
     </div>
     <div class="p-toolbar-group-end">
-        <p-button icon="pi pi-calendar" (onClick)="navigate('')" class="button toolbar-item"
-                  [severity]="isActive('') ? 'primary' : 'secondary'"
-                  pTooltip="Day View" tooltipPosition="bottom" showDelay="500"></p-button>
-        <p-button icon="pi pi-map" (onClick)="navigate('locationhistory')" class="button toolbar-item"
-                  [severity]="isActive('locationhistory') ? 'primary' : 'secondary'"
-                  pTooltip="Location History" tooltipPosition="bottom" showDelay="500"></p-button>
-        <p-button icon="pi pi-star-fill" (onClick)="navigate('trips')" class="button toolbar-item"
-                  [severity]="isActive('trips') ? 'primary' : 'secondary'"
-                  pTooltip="Trips" tooltipPosition="bottom" showDelay="500"></p-button>
-        <p-button icon="pi pi-chart-line" (onClick)="navigate('statistics')" class="button toolbar-item"
-                  [severity]="isActive('statistics') ? 'primary' : 'secondary'"
-                  pTooltip="Statistics" tooltipPosition="bottom" showDelay="500"></p-button>
-        <p-button icon="pi pi-cog" (onClick)="navigate('configuration')" class="button toolbar-item"
-                  [severity]="isActive('configuration') ? 'primary' : 'secondary'"
-                  pTooltip="Configuration" tooltipPosition="bottom" showDelay="500"></p-button>
+        <nav class="nav-group">
+            <p-button icon="pi pi-calendar" (onClick)="navigate('')"
+                      [severity]="isActive('') ? 'primary' : 'secondary'"
+                      [text]="!isActive('')"
+                      pTooltip="Day View" tooltipPosition="bottom" showDelay="500"></p-button>
+            <p-button icon="pi pi-map" (onClick)="navigate('locationhistory')"
+                      [severity]="isActive('locationhistory') ? 'primary' : 'secondary'"
+                      [text]="!isActive('locationhistory')"
+                      pTooltip="Location History" tooltipPosition="bottom" showDelay="500"></p-button>
+            <p-button icon="pi pi-star-fill" (onClick)="navigate('trips')"
+                      [severity]="isActive('trips') ? 'primary' : 'secondary'"
+                      [text]="!isActive('trips')"
+                      pTooltip="Trips" tooltipPosition="bottom" showDelay="500"></p-button>
+            <p-button icon="pi pi-chart-line" (onClick)="navigate('statistics')"
+                      [severity]="isActive('statistics') ? 'primary' : 'secondary'"
+                      [text]="!isActive('statistics')"
+                      pTooltip="Statistics" tooltipPosition="bottom" showDelay="500"></p-button>
+            <p-button icon="pi pi-cog" (onClick)="navigate('configuration')"
+                      [severity]="isActive('configuration') ? 'primary' : 'secondary'"
+                      [text]="!isActive('configuration')"
+                      pTooltip="Configuration" tooltipPosition="bottom" showDelay="500"></p-button>
+        </nav>
     </div>
 </p-toolbar>

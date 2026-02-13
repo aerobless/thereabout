@@ -3,16 +3,15 @@ import {ButtonModule} from "primeng/button";
 import {Router, ActivatedRoute} from "@angular/router";
 import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 import {TooltipModule} from "primeng/tooltip";
-import {CalendarModule} from "primeng/calendar";
+import {DatePickerModule} from "primeng/datepicker";
 import {FormsModule} from "@angular/forms";
 import {PanelModule} from "primeng/panel";
 import {CardModule} from "primeng/card";
 import {ChartModule} from "primeng/chart";
 import {TableModule} from "primeng/table";
-import {NgIf, NgForOf, DatePipe} from "@angular/common";
+import { DatePipe } from "@angular/common";
 import {
     GoogleMap,
-    MapMarker,
     MapPolyline
 } from "@angular/google-maps";
 import {
@@ -23,27 +22,23 @@ import {
 } from "../../../../generated/backend-api/thereabout";
 
 @Component({
-  selector: 'app-dayview',
-  standalone: true,
-  imports: [
+    selector: 'app-dayview',
+    imports: [
     ButtonModule,
     ToolbarComponent,
     TooltipModule,
-    CalendarModule,
+    DatePickerModule,
     FormsModule,
     PanelModule,
     CardModule,
     ChartModule,
     TableModule,
-    NgIf,
-    NgForOf,
     DatePipe,
     GoogleMap,
-    MapMarker,
     MapPolyline
-  ],
-  templateUrl: './dayview.component.html',
-  styleUrl: './dayview.component.scss'
+],
+    templateUrl: './dayview.component.html',
+    styleUrl: './dayview.component.scss'
 })
 export class DayviewComponent implements OnInit {
 

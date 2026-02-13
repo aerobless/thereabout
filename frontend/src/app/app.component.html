@@ -1,3 +1,7 @@
-<div *ngIf="!googleMapsIntegrationReady">Loading Thereabout application...</div>
-<router-outlet *ngIf="googleMapsIntegrationReady"></router-outlet>
+@if (!googleMapsIntegrationReady) {
+  <div>Loading Thereabout application...</div>
+}
+@if (googleMapsIntegrationReady) {
+  <router-outlet></router-outlet>
+}
 <p-toast />

@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {ButtonModule} from "primeng/button";
 import {FileUploadModule} from "primeng/fileupload";
 import {InputTextModule} from "primeng/inputtext";
-import {NgIf} from "@angular/common";
+
 import {PanelModule} from "primeng/panel";
 import {ProgressBarModule} from "primeng/progressbar";
 import {MessageService} from "primeng/api";
@@ -15,23 +15,21 @@ import {getFlagEmoji} from "../../util/country-util";
 import {TooltipModule} from "primeng/tooltip";
 
 @Component({
-  selector: 'app-statistics',
-  standalone: true,
+    selector: 'app-statistics',
     imports: [
-        ButtonModule,
-        FileUploadModule,
-        InputTextModule,
-        NgIf,
-        PanelModule,
-        ProgressBarModule,
-        ToolbarComponent,
-        CardModule,
-        TableModule,
-        ReformatDatePipe,
-        TooltipModule
-    ],
-  templateUrl: './statistics.component.html',
-  styleUrl: './statistics.component.scss'
+    ButtonModule,
+    FileUploadModule,
+    InputTextModule,
+    PanelModule,
+    ProgressBarModule,
+    ToolbarComponent,
+    CardModule,
+    TableModule,
+    ReformatDatePipe,
+    TooltipModule
+],
+    templateUrl: './statistics.component.html',
+    styleUrl: './statistics.component.scss'
 })
 export class StatisticsComponent implements OnInit {
 

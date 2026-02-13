@@ -1,129 +1,146 @@
 <thereabout-toolbar>
-    <p-iconField iconPosition="left" class="toolbar-item">
-        <p-inputIcon styleClass="pi pi-search"/>
-        <input type="text" pInputText placeholder="Jump to location" (keydown)="geocodeAddress($event)"
-               style="width: 400px;"
-               [(ngModel)]="searchValue"/>
-        <p-button icon="pi pi-times" (onClick)="resetSearch()" class="reset-button" [text]="true"
-                  *ngIf="searchValue"
-                  severity="secondary"></p-button>
-    </p-iconField>
+  <p-iconField iconPosition="left" class="toolbar-item">
+    <p-inputIcon styleClass="pi pi-search"/>
+    <input type="text" pInputText placeholder="Jump to location" (keydown)="geocodeAddress($event)"
+      style="width: 400px;"
+      [(ngModel)]="searchValue"/>
+    @if (searchValue) {
+      <p-button icon="pi pi-times" (onClick)="resetSearch()" class="reset-button" [text]="true"
+      severity="secondary"></p-button>
+    }
+  </p-iconField>
 </thereabout-toolbar>
 <br>
 
-<div style="display: flex; height: calc(100vh - 100px);">
+  <div style="display: flex; height: calc(100vh - 100px);">
     <!-- Google Maps Section -->
     <div class="google-maps-container p-panel" tabindex="-1">
-        <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
-            <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions" *ngIf="alwaysShowHeatmap || tabIndex==1"></map-heatmap-layer>
-            <map-polyline [path]="minifyDayViewData(tripViewDataFull)" *ngIf="tabIndex===0"
-                          [options]="{strokeColor: 'grey', strokeOpacity: 0, icons: [{icon: lineSymbol, offset: '0', repeat: '15px'}]}"></map-polyline>
-            <map-polyline [path]="minifyDayViewData(dayViewDataFull)" [options]="{strokeColor: 'blue'}"
-                          (polylineClick)="dayLineClick($event)" *ngIf="tabIndex===0"></map-polyline>
-            <map-marker *ngFor="let entry of selectedLocationEntries"
-                        [position]="{lat: entry.latitude, lng: entry.longitude}" [options]="{draggable: true}"
-                        (mapDragend)="markerDragged(entry, $event)"></map-marker>
-            <map-marker *ngIf="highlightedLocationEntry"
-                        [position]="{lat: highlightedLocationEntry.latitude, lng: highlightedLocationEntry.longitude}"
-                        [icon]="blueHighlightMarker"></map-marker>
-        </google-map>
+      <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
+        @if (alwaysShowHeatmap || tabIndex==1) {
+          <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions"></map-heatmap-layer>
+        }
+        @if (tabIndex===0) {
+          <map-polyline [path]="minifyDayViewData(tripViewDataFull)"
+          [options]="{strokeColor: 'grey', strokeOpacity: 0, icons: [{icon: lineSymbol, offset: '0', repeat: '15px'}]}"></map-polyline>
+        }
+        @if (tabIndex===0) {
+          <map-polyline [path]="minifyDayViewData(dayViewDataFull)" [options]="{strokeColor: 'blue'}"
+          (polylineClick)="dayLineClick($event)"></map-polyline>
+        }
+        @for (entry of selectedLocationEntries; track entry) {
+          <map-marker
+            [position]="{lat: entry.latitude, lng: entry.longitude}" [options]="{draggable: true}"
+          (mapDragend)="markerDragged(entry, $event)"></map-marker>
+        }
+        @if (highlightedLocationEntry) {
+          <map-marker
+            [position]="{lat: highlightedLocationEntry.latitude, lng: highlightedLocationEntry.longitude}"
+          [icon]="blueHighlightMarker"></map-marker>
+        }
+      </google-map>
     </div>
 
     <!-- Right Side Panels -->
     <div style="display: flex; flex-direction: column; height: calc(100vh - 100px); overflow: hidden">
 
-        <!-- Trip Panel -->
-        <div style="padding: 0 0 10px 10px; width: 400px;" *ngIf="currentTrip">
-            <thereabout-trip-panel [trip]="currentTrip"
-                                   [tripViewDataFull]="tripViewDataFull"
-                                   (closeTripView)="closeTripView()">
-            </thereabout-trip-panel>
+      <!-- Trip Panel -->
+      @if (currentTrip) {
+        <div style="padding: 0 0 10px 10px; width: 400px;">
+          <thereabout-trip-panel [trip]="currentTrip"
+            [tripViewDataFull]="tripViewDataFull"
+            (closeTripView)="closeTripView()">
+          </thereabout-trip-panel>
         </div>
+      }
 
-        <!-- List View Panel -->
-        <div style="padding: 0 0 10px 10px; width: 400px; height: 100%">
-            <p-tabView (onChange)="reloadDataOnTabChange()" [(activeIndex)]="tabIndex">
-                <p-tabPanel>
-                    <ng-template pTemplate="header">
-                        <div class="flex align-items-center gap-2">
-                            <i class="fa-solid fa-calendar-day"></i>
-                            <span class="white-space-nowrap m-0">Day View</span>
-                        </div>
-                    </ng-template>
-                    <thereabout-day-panel
-                            (applyZoom)="applyZoom($event)"
-                            (loadDayViewData)="loadDayViewData($event)"
-                            (loadTripViewData)="loadTripViewData()"
-                            [(center)]="center"
-                            [(locationLists)]="locationLists"
-                            [dayViewDataFull]="dayViewDataFull"
-                            [(exactDate)]="exactDate"
-                            [(highlightedLocationEntry)]="highlightedLocationEntry"
-                            [(selectedLocationEntries)]="selectedLocationEntries"
-                    ></thereabout-day-panel>
-                </p-tabPanel>
-                <p-tabPanel>
-                    <ng-template pTemplate="header">
-                        <div class="flex align-items-center gap-2">
-                            <i class="fa-solid fa-fire"></i>
-                            <span class="white-space-nowrap m-0">Heatmap</span>
-                        </div>
-                    </ng-template>
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">
-                        <p-floatLabel style="padding-right: 10px">
-                            <p-calendar [(ngModel)]="fromDate" (ngModelChange)="loadHeatmapData()"
-                                        [iconDisplay]="'input'"
-                                        [showIcon]="true" class="toolbar-item" id="from-date"
-                                        dateFormat="dd.mm.yy"></p-calendar>
-                            <label for="from-date">From</label>
-                        </p-floatLabel>
-                        <p-floatLabel>
-                            <p-calendar [(ngModel)]="toDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
-                                        [showIcon]="true" class="toolbar-item" id="to-date"
-                                        dateFormat="dd.mm.yy"></p-calendar>
-                            <label for="to-date">To</label>
-                        </p-floatLabel>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">
-                        <p-button label="YTD" [rounded]="true" severity="secondary"
-                                  pTooltip="Load heatmap data for the current year." tooltipPosition="top"
-                                  showDelay="500"
-                                  (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.YTD)"></p-button>
-                        <p-button label="1 year" [rounded]="true" severity="secondary"
-                                  pTooltip="Load heatmap data from 1 year ago until now." tooltipPosition="top"
-                                  showDelay="500"
-                                  (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.ONE_YEAR)"></p-button>
-                        <p-button label="5 years" [rounded]="true" severity="secondary"
-                                  pTooltip="Load heatmap data from 5 years ago until now." tooltipPosition="top"
-                                  showDelay="500"
-                                  (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.FIVE_YEARS)"></p-button>
-                        <p-button label="Full" [rounded]="true" severity="secondary"
-                                  pTooltip="Load all heatmap data. WARNING: Potentially laggy for a long history."
-                                  tooltipPosition="left" showDelay="500"
-                                  (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.FULL_HISTORY)"></p-button>
-                    </div>
-                    <div style="display: flex; justify-content: left; align-items: center; padding-top: 20px">
-                        <label for="always-show-heatmap-switch" style="padding-right: 10px">Always show heatmap</label>
-                        <p-inputSwitch id="always-show-heatmap-switch" [(ngModel)]="alwaysShowHeatmap" />
-                    </div>
-                </p-tabPanel>
-                <p-tabPanel>
-                    <ng-template pTemplate="header">
-                        <div class="flex align-items-center gap-2">
-                            <i class="fa-solid fa-list"></i>
-                            <span class="white-space-nowrap m-0">My Lists</span>
-                        </div>
-                    </ng-template>
-                    <thereabout-list-panel
-                            (applyZoom)="applyZoom($event)"
-                            (goToDayView)="goToDayView($event)"
-                            [(center)]="center"
-                            [(locationLists)]="locationLists"
-                            [(highlightedLocationEntry)]="highlightedLocationEntry"
-                            [(selectedLocationEntries)]="selectedLocationEntries"
-                    ></thereabout-list-panel>
-                </p-tabPanel>
-            </p-tabView>
-        </div>
+      <!-- List View Panel -->
+      <div style="padding: 0 0 10px 10px; width: 400px; height: 100%">
+        <p-tabs [(value)]="tabIndex" (valueChange)="reloadDataOnTabChange()">
+          <p-tablist>
+            <p-tab [value]="0">
+              <div class="flex align-items-center gap-2">
+                <i class="fa-solid fa-calendar-day"></i>
+                <span class="white-space-nowrap m-0">Day View</span>
+              </div>
+            </p-tab>
+            <p-tab [value]="1">
+              <div class="flex align-items-center gap-2">
+                <i class="fa-solid fa-fire"></i>
+                <span class="white-space-nowrap m-0">Heatmap</span>
+              </div>
+            </p-tab>
+            <p-tab [value]="2">
+              <div class="flex align-items-center gap-2">
+                <i class="fa-solid fa-list"></i>
+                <span class="white-space-nowrap m-0">My Lists</span>
+              </div>
+            </p-tab>
+          </p-tablist>
+          <p-tabpanels>
+            <p-tabpanel [value]="0">
+              <thereabout-day-panel
+                (applyZoom)="applyZoom($event)"
+                (loadDayViewData)="loadDayViewData($event)"
+                (loadTripViewData)="loadTripViewData()"
+                [(center)]="center"
+                [(locationLists)]="locationLists"
+                [dayViewDataFull]="dayViewDataFull"
+                [(exactDate)]="exactDate"
+                [(highlightedLocationEntry)]="highlightedLocationEntry"
+                [(selectedLocationEntries)]="selectedLocationEntries"
+              ></thereabout-day-panel>
+            </p-tabpanel>
+            <p-tabpanel [value]="1">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">
+                <p-floatLabel style="padding-right: 10px">
+                  <p-datepicker [(ngModel)]="fromDate" (ngModelChange)="loadHeatmapData()"
+                    [iconDisplay]="'input'"
+                    [showIcon]="true" class="toolbar-item" id="from-date"
+                  dateFormat="dd.mm.yy"></p-datepicker>
+                  <label for="from-date">From</label>
+                </p-floatLabel>
+                <p-floatLabel>
+                  <p-datepicker [(ngModel)]="toDate" (ngModelChange)="loadHeatmapData()" [iconDisplay]="'input'"
+                    [showIcon]="true" class="toolbar-item" id="to-date"
+                  dateFormat="dd.mm.yy"></p-datepicker>
+                  <label for="to-date">To</label>
+                </p-floatLabel>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">
+                <p-button label="YTD" [rounded]="true" severity="secondary"
+                  pTooltip="Load heatmap data for the current year." tooltipPosition="top"
+                  showDelay="500"
+                (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.YTD)"></p-button>
+                <p-button label="1 year" [rounded]="true" severity="secondary"
+                  pTooltip="Load heatmap data from 1 year ago until now." tooltipPosition="top"
+                  showDelay="500"
+                (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.ONE_YEAR)"></p-button>
+                <p-button label="5 years" [rounded]="true" severity="secondary"
+                  pTooltip="Load heatmap data from 5 years ago until now." tooltipPosition="top"
+                  showDelay="500"
+                (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.FIVE_YEARS)"></p-button>
+                <p-button label="Full" [rounded]="true" severity="secondary"
+                  pTooltip="Load all heatmap data. WARNING: Potentially laggy for a long history."
+                  tooltipPosition="left" showDelay="500"
+                (onClick)="setQuickFilterForHeatmap(QuickFilterDateCombo.FULL_HISTORY)"></p-button>
+              </div>
+              <div style="display: flex; justify-content: left; align-items: center; padding-top: 20px">
+                <label for="always-show-heatmap-switch" style="padding-right: 10px">Always show heatmap</label>
+                <p-toggleswitch id="always-show-heatmap-switch" [(ngModel)]="alwaysShowHeatmap" />
+              </div>
+            </p-tabpanel>
+            <p-tabpanel [value]="2">
+              <thereabout-list-panel
+                (applyZoom)="applyZoom($event)"
+                (goToDayView)="goToDayView($event)"
+                [(center)]="center"
+                [(locationLists)]="locationLists"
+                [(highlightedLocationEntry)]="highlightedLocationEntry"
+                [(selectedLocationEntries)]="selectedLocationEntries"
+              ></thereabout-list-panel>
+            </p-tabpanel>
+          </p-tabpanels>
+        </p-tabs>
+      </div>
     </div>
-</div>
+  </div>

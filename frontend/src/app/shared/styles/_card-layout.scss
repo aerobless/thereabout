@@ -1,0 +1,33 @@
+// ============================================================================
+// Reusable Masonry Card Layout
+// ============================================================================
+// Usage: @use 'path/to/card-layout' as layout;
+//        .my-container { @include layout.card-masonry; }
+//
+// Cards flow top-to-bottom, left-to-right in 1-4 columns depending on
+// viewport width. Each card's height is determined by its own content.
+// ============================================================================
+
+@mixin card-masonry($max-columns: 4, $gap: 1.25rem, $padding: 1.25rem) {
+  column-count: $max-columns;
+  column-gap: $gap;
+  padding: $padding;
+
+  > * {
+    break-inside: avoid;
+    margin-bottom: $gap;
+    display: inline-block; // ensures break-inside works across all browsers
+    width: 100%;
+  }
+
+  @if $max-columns >= 4 {
+    @media (max-width: 1400px) { column-count: 3; }
+  }
+  @if $max-columns >= 3 {
+    @media (max-width: 1024px) { column-count: 2; }
+  }
+  @media (max-width: 768px) {
+    column-count: 1;
+    padding: $padding * 0.75;
+  }
+}

@@ -5,15 +5,14 @@ import {TooltipModule} from "primeng/tooltip";
 import {LocationHistoryEntry, Trip} from "../../../../../generated/backend-api/thereabout";
 
 @Component({
-  selector: 'thereabout-trip-panel',
-  standalone: true,
-  imports: [
-    PanelModule,
-    ButtonModule,
-    TooltipModule
-  ],
-  templateUrl: './trip-panel.component.html',
-  styleUrl: './trip-panel.component.scss'
+    selector: 'thereabout-trip-panel',
+    imports: [
+        PanelModule,
+        ButtonModule,
+        TooltipModule
+    ],
+    templateUrl: './trip-panel.component.html',
+    styleUrl: './trip-panel.component.scss'
 })
 export class TripPanelComponent {
 

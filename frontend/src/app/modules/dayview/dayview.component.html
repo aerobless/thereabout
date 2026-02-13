@@ -16,179 +16,240 @@
   </div>
 </thereabout-toolbar>
 
-<!-- Masonry Card Container -->
+<!-- Two-Column Card Container -->
 <div class="card-container">
 
-  <!-- Location History Map Card -->
-  <p-card class="dayview-card card-map">
-    <ng-template pTemplate="header">
-      <div class="card-header">
-        <i class="pi pi-map-marker card-header-icon"></i>
-        <span class="card-header-title">Location History</span>
-      </div>
-    </ng-template>
-    <div class="map-content">
-      <div class="map-wrapper">
-        <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
-          <map-polyline [path]="minifyDayViewData(dayViewDataFull)"
-            [options]="{strokeColor: '#3B82F6', strokeWeight: 3}">
-          </map-polyline>
-        </google-map>
-      </div>
-      <div class="map-footer">
-        @if (dayViewDataFull.length > 0) {
-          <span class="map-footer-text">
-            {{ dayViewDataFull.length }} location{{ dayViewDataFull.length !== 1 ? 's' : '' }} recorded
-          </span>
-        }
-        @if (dayViewDataFull.length === 0) {
-          <span class="map-footer-text muted">
-            No location data for {{ selectedDate | date:'dd.MM.yyyy' }}
-          </span>
-        }
-      </div>
-    </div>
-  </p-card>
+  <!-- Left Column: compact cards -->
+  <div class="column-left">
 
-  <!-- Weight Card -->
-  <p-card class="dayview-card card-weight">
-    <ng-template pTemplate="header">
-      <div class="card-header">
-        <i class="fa-solid fa-weight-scale card-header-icon"></i>
-        <span class="card-header-title">Weight</span>
-        <div class="card-header-actions">
-          <p-button label="7d"
-            [severity]="trendRange === '7d' ? 'primary' : 'secondary'"
-            [text]="trendRange !== '7d'"
-            (onClick)="onTrendRangeChange('7d')"
-            size="small">
-          </p-button>
-          <p-button label="30d"
-            [severity]="trendRange === '30d' ? 'primary' : 'secondary'"
-            [text]="trendRange !== '30d'"
-            (onClick)="onTrendRangeChange('30d')"
-            size="small">
-          </p-button>
+    <!-- Location History Map Card -->
+    <p-card class="dayview-card card-map">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <i class="pi pi-map-marker card-header-icon"></i>
+          <span class="card-header-title">Location History</span>
+        </div>
+      </ng-template>
+      <div class="map-content">
+        <div class="map-wrapper">
+          <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
+            <map-polyline [path]="minifyDayViewData(dayViewDataFull)"
+              [options]="{strokeColor: '#3B82F6', strokeWeight: 3}">
+            </map-polyline>
+          </google-map>
+        </div>
+        <div class="map-footer">
+          @if (dayViewDataFull.length > 0) {
+            <span class="map-footer-text">
+              {{ dayViewDataFull.length }} location{{ dayViewDataFull.length !== 1 ? 's' : '' }} recorded
+            </span>
+          }
+          @if (dayViewDataFull.length === 0) {
+            <span class="map-footer-text muted">
+              No location data for {{ selectedDate | date:'dd.MM.yyyy' }}
+            </span>
+          }
         </div>
       </div>
-    </ng-template>
-    <div class="weight-content">
-      <div class="metric-hero">
-        @if (selectedDayWeight !== null) {
-          <span class="metric-value">{{ selectedDayWeight }}</span>
-          <span class="metric-unit">kg</span>
-        }
-        @if (selectedDayWeight === null) {
-          <span class="metric-value muted">--</span>
-        }
-      </div>
-      @if (chartData && weightData.length > 0) {
-        <div class="chart-container">
-          <p-chart type="line" [data]="chartData" [options]="chartOptions"></p-chart>
-        </div>
-      }
-      @if (weightData.length === 0) {
-        <div class="empty-state">
-          <span>No weight data for this period</span>
-        </div>
-      }
-    </div>
-  </p-card>
+    </p-card>
 
-  <!-- Energy Card -->
-  <p-card class="dayview-card card-energy">
-    <ng-template pTemplate="header">
-      <div class="card-header">
-        <i class="fa-solid fa-bolt card-header-icon"></i>
-        <span class="card-header-title">Energy</span>
-      </div>
-    </ng-template>
-    <div class="energy-content">
-      <div class="energy-row">
-        <div class="energy-item energy-active">
-          <div class="energy-label-row">
-            <i class="fa-solid fa-fire energy-icon"></i>
-            <span class="energy-label">Active</span>
-          </div>
-          <div class="energy-value-row">
-            @if (selectedDayActiveEnergy !== null) {
-              <span class="energy-value">{{ formatDailyEnergy(selectedDayActiveEnergy) }}</span>
-              <span class="energy-unit">{{ energyUnits }}</span>
-            }
-            @if (selectedDayActiveEnergy === null) {
-              <span class="energy-value muted">--</span>
-            }
+    <!-- Weight Card -->
+    <p-card class="dayview-card card-weight">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <i class="fa-solid fa-weight-scale card-header-icon"></i>
+          <span class="card-header-title">Weight</span>
+          <div class="card-header-actions">
+            <p-button label="7d"
+              [severity]="trendRange === '7d' ? 'primary' : 'secondary'"
+              [text]="trendRange !== '7d'"
+              (onClick)="onTrendRangeChange('7d')"
+              size="small">
+            </p-button>
+            <p-button label="30d"
+              [severity]="trendRange === '30d' ? 'primary' : 'secondary'"
+              [text]="trendRange !== '30d'"
+              (onClick)="onTrendRangeChange('30d')"
+              size="small">
+            </p-button>
           </div>
         </div>
-        <div class="energy-divider"></div>
-        <div class="energy-item energy-basal">
-          <div class="energy-label-row">
-            <i class="fa-solid fa-bed energy-icon"></i>
-            <span class="energy-label">Basal</span>
-          </div>
-          <div class="energy-value-row">
-            @if (selectedDayBasalEnergy !== null) {
-              <span class="energy-value">{{ formatDailyEnergy(selectedDayBasalEnergy) }}</span>
-              <span class="energy-unit">{{ energyUnits }}</span>
-            }
-            @if (selectedDayBasalEnergy === null) {
-              <span class="energy-value muted">--</span>
-            }
-          </div>
+      </ng-template>
+      <div class="weight-content">
+        <div class="metric-hero">
+          @if (selectedDayWeight !== null) {
+            <span class="metric-value">{{ selectedDayWeight }}</span>
+            <span class="metric-unit">kg</span>
+          }
+          @if (selectedDayWeight === null) {
+            <span class="metric-value muted">--</span>
+          }
         </div>
+        @if (chartData && weightData.length > 0) {
+          <div class="chart-container">
+            <p-chart type="line" [data]="chartData" [options]="chartOptions"></p-chart>
+          </div>
+        }
+        @if (weightData.length === 0) {
+          <div class="empty-state">
+            <span>No weight data for this period</span>
+          </div>
+        }
       </div>
-    </div>
-  </p-card>
+    </p-card>
 
-  <!-- Workouts Card -->
-  <p-card class="dayview-card card-workouts">
-    <ng-template pTemplate="header">
-      <div class="card-header">
-        <i class="fa-solid fa-dumbbell card-header-icon"></i>
-        <span class="card-header-title">Workouts</span>
+    <!-- Energy Card -->
+    <p-card class="dayview-card card-energy">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <i class="fa-solid fa-bolt card-header-icon"></i>
+          <span class="card-header-title">Energy</span>
+        </div>
+      </ng-template>
+      <div class="energy-content">
+        <div class="energy-row">
+          <div class="energy-item energy-active">
+            <div class="energy-label-row">
+              <i class="fa-solid fa-fire energy-icon"></i>
+              <span class="energy-label">Active</span>
+            </div>
+            <div class="energy-value-row">
+              @if (selectedDayActiveEnergy !== null) {
+                <span class="energy-value">{{ formatDailyEnergy(selectedDayActiveEnergy) }}</span>
+                <span class="energy-unit">{{ energyUnits }}</span>
+              }
+              @if (selectedDayActiveEnergy === null) {
+                <span class="energy-value muted">--</span>
+              }
+            </div>
+          </div>
+          <div class="energy-divider"></div>
+          <div class="energy-item energy-basal">
+            <div class="energy-label-row">
+              <i class="fa-solid fa-bed energy-icon"></i>
+              <span class="energy-label">Basal</span>
+            </div>
+            <div class="energy-value-row">
+              @if (selectedDayBasalEnergy !== null) {
+                <span class="energy-value">{{ formatDailyEnergy(selectedDayBasalEnergy) }}</span>
+                <span class="energy-unit">{{ energyUnits }}</span>
+              }
+              @if (selectedDayBasalEnergy === null) {
+                <span class="energy-value muted">--</span>
+              }
+            </div>
+          </div>
+        </div>
       </div>
-    </ng-template>
-    <div class="workouts-content">
-      <p-table
-        [value]="workouts"
-        styleClass="p-datatable-sm">
-        <ng-template pTemplate="header">
-          <tr>
-            <th>
-              <i class="fa-solid fa-clock" pTooltip="Time" tooltipPosition="top"></i>
-              <span class="th-label">Time</span>
-            </th>
-            <th>
-              <i class="fa-solid fa-dumbbell" pTooltip="Activity" tooltipPosition="top"></i>
-              <span class="th-label">Activity</span>
-            </th>
-            <th>
-              <i class="fa-solid fa-hourglass-half" pTooltip="Duration" tooltipPosition="top"></i>
-              <span class="th-label">Duration</span>
-            </th>
-            <th>
-              <i class="fa-solid fa-fire" pTooltip="Energy" tooltipPosition="top"></i>
-              <span class="th-label">Energy</span>
-            </th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-workout>
-          <tr>
-            <td>{{ formatWorkoutTime(workout.start) }}</td>
-            <td>{{ workout.name || '--' }}</td>
-            <td>{{ formatDuration(workout.duration) }}</td>
-            <td>{{ formatEnergy(workout.activeEnergyBurnedQty, workout.activeEnergyBurnedUnits) }}</td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="4" class="empty-table-message">
-              No workouts for {{ selectedDate | date:'dd.MM.yyyy' }}
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </div>
-  </p-card>
+    </p-card>
+
+  </div>
+
+  <!-- Right Column: wider cards -->
+  <div class="column-right">
+
+    <!-- Workouts Card -->
+    <p-card class="dayview-card card-workouts">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <i class="fa-solid fa-dumbbell card-header-icon"></i>
+          <span class="card-header-title">Workouts</span>
+        </div>
+      </ng-template>
+      <div class="workouts-content">
+        <p-table
+          [value]="workouts"
+          styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>
+                <i class="fa-solid fa-clock" pTooltip="Time" tooltipPosition="top"></i>
+                <span class="th-label">Time</span>
+              </th>
+              <th>
+                <i class="fa-solid fa-dumbbell" pTooltip="Activity" tooltipPosition="top"></i>
+                <span class="th-label">Activity</span>
+              </th>
+              <th>
+                <i class="fa-solid fa-hourglass-half" pTooltip="Duration" tooltipPosition="top"></i>
+                <span class="th-label">Duration</span>
+              </th>
+              <th>
+                <i class="fa-solid fa-fire" pTooltip="Energy" tooltipPosition="top"></i>
+                <span class="th-label">Energy</span>
+              </th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-workout>
+            <tr>
+              <td>{{ formatWorkoutTime(workout.start) }}</td>
+              <td>{{ workout.name || '--' }}</td>
+              <td>{{ formatDuration(workout.duration) }}</td>
+              <td>{{ formatEnergy(workout.activeEnergyBurnedQty, workout.activeEnergyBurnedUnits) }}</td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="4" class="empty-table-message">
+                No workouts for {{ selectedDate | date:'dd.MM.yyyy' }}
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </p-card>
+
+    <!-- Messages Card -->
+    <p-card class="dayview-card card-messages">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <i class="fa-solid fa-envelope card-header-icon"></i>
+          <span class="card-header-title">Messages</span>
+        </div>
+      </ng-template>
+      <div class="messages-content">
+        <p-table
+          [value]="messages"
+          styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>
+                <i class="fa-solid fa-clock" pTooltip="Time" tooltipPosition="top"></i>
+                <span class="th-label">Time</span>
+              </th>
+              <th>
+                <i class="fa-solid fa-mobile-screen" pTooltip="Source" tooltipPosition="top"></i>
+                <span class="th-label">Source</span>
+              </th>
+              <th>
+                <i class="fa-solid fa-user" pTooltip="Sender" tooltipPosition="top"></i>
+                <span class="th-label">Sender</span>
+              </th>
+              <th>
+                <i class="fa-solid fa-comment" pTooltip="Message" tooltipPosition="top"></i>
+                <span class="th-label">Message</span>
+              </th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-message>
+            <tr>
+              <td>{{ formatMessageTime(message.timestamp) }}</td>
+              <td>{{ message.source || '--' }}</td>
+              <td>{{ message.sender?.identifier || '--' }}</td>
+              <td>{{ message.body || message.subject || '--' }}</td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="4" class="empty-table-message">
+                No messages for {{ selectedDate | date:'dd.MM.yyyy' }}
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </p-card>
+
+  </div>
 
 </div>

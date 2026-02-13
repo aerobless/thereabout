@@ -45,6 +45,8 @@ class MessageControllerTest {
 
     @BeforeEach
     void setUp() {
+        messageRepository.deleteAll();
+
         IdentityEntity senderIdentity = IdentityEntity.builder()
                 .shortName("sender")
                 .firstName("John")

@@ -24,7 +24,11 @@ import java.util.regex.Pattern;
 public class WhatsAppChatImporter implements FileImporter {
 
     private static final Pattern MESSAGE_PATTERN = Pattern.compile(
-            "^\\[(\\d{2}\\.\\d{2}\\.\\d{4}), (\\d{2}:\\d{2}:\\d{2})] ([^:]+): (.*)$"
+            "^\\[(\\d{2}\\.\\d{2}\\.\\d{4}), (\\d{2}:\\d{2}:\\d{2})] ([^:]+): ?(.*)$"
+    );
+    // Unicode formatting characters that WhatsApp prepends to some lines (e.g. LRM before "image omitted")
+    private static final Pattern LEADING_UNICODE_FORMATTING = Pattern.compile(
+            "^[\\u200E\\u200F\\u200B\\u200C\\u200D\\uFEFF]+"
     );
     private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy, HH:mm:ss");
     private static final int BATCH_SIZE = 1000;
@@ -67,6 +71,8 @@ public class WhatsAppChatImporter implements FileImporter {
         long skippedDuplicates = 0;
 
         while ((line = reader.readLine()) != null) {
+            // Strip leading Unicode formatting characters (e.g. LRM \u200E) that WhatsApp prepends to some lines
+            line = LEADING_UNICODE_FORMATTING.matcher(line).replaceFirst("");
             Matcher matcher = MESSAGE_PATTERN.matcher(line);
 
             if (matcher.matches()) {

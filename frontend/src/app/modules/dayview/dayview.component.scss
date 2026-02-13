@@ -1,5 +1,3 @@
-@use '../../shared/styles/card-layout' as layout;
-
 // ============================================================================
 // Component Host
 // ============================================================================
@@ -28,12 +26,22 @@
 }
 
 // ============================================================================
-// Masonry Card Container
+// Two-Column Card Container
 // ============================================================================
 .card-container {
-  @include layout.card-masonry($max-columns: 3);
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 1.25rem;
+  padding: 1.25rem;
   max-width: 1600px;
   margin: 0 auto;
+}
+
+.column-left,
+.column-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 // ============================================================================
@@ -277,9 +285,55 @@
 }
 
 // ============================================================================
+// Messages Card
+// ============================================================================
+.messages-content {
+  padding: 0;
+
+  ::ng-deep .p-datatable {
+    table {
+      table-layout: fixed;
+      width: 100%;
+    }
+
+    .p-datatable-thead > tr > th {
+      background: var(--p-surface-50);
+      font-size: 0.8rem;
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--p-surface-200);
+      white-space: nowrap;
+
+      &:nth-child(1) { width: 5.5rem; }  // Time
+      &:nth-child(2) { width: 6rem; }     // Source
+      &:nth-child(3) { width: 8rem; }     // Sender
+      // Message column auto-fills remaining space
+    }
+
+    .p-datatable-tbody > tr > td {
+      font-size: 0.85rem;
+      padding: 0.6rem 0.75rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      // Message column: allow multiline wrapping
+      &:nth-child(4) {
+        white-space: normal;
+        word-break: break-word;
+      }
+    }
+  }
+}
+
+// ============================================================================
 // Mobile Responsive
 // ============================================================================
 @media (max-width: 768px) {
+  .card-container {
+    grid-template-columns: 1fr;
+    padding: 0.9375rem;
+  }
+
   .map-wrapper {
     height: 300px;
   }

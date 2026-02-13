@@ -55,7 +55,7 @@ class WhatsAppChatImporterTest {
 
         // Then
         List<MessageEntity> messages = messageRepository.findAll();
-        assertThat(messages).hasSize(8);
+        assertThat(messages).hasSize(12);
 
         // Verify application identities were created
         var aliceIdentity = identityInApplicationRepository.findByApplicationAndIdentifier("WHATSAPP", "Alice Miller");
@@ -112,6 +112,36 @@ class WhatsAppChatImporterTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(emojiMessage.getBody()).contains("\uD83C\uDF89"); // 🎉
+
+        // Verify LRM-prefixed lines are parsed as separate messages (not merged into previous)
+        long lrmImageMessages = messages.stream()
+                .filter(m -> m.getBody().contains("image omitted"))
+                .count();
+        assertThat(lrmImageMessages).isEqualTo(3); // 1 normal + 2 LRM-prefixed
+
+        // Verify the LRM-prefixed messages have correct timestamps (not merged)
+        MessageEntity lrmMessage = messages.stream()
+                .filter(m -> m.getTimestamp().equals(LocalDateTime.of(2024, 3, 15, 9, 19, 30)))
+                .findFirst()
+                .orElseThrow();
+        assertThat(lrmMessage.getSender().getIdentifier()).isEqualTo("Alice Miller");
+        assertThat(lrmMessage.getBody()).contains("image omitted");
+
+        // Verify empty-body message (no space after colon) is parsed as its own message
+        MessageEntity emptyBodyMessage = messages.stream()
+                .filter(m -> m.getTimestamp().equals(LocalDateTime.of(2024, 3, 15, 9, 19, 45)))
+                .findFirst()
+                .orElseThrow();
+        assertThat(emptyBodyMessage.getSender().getIdentifier()).isEqualTo("Bob Smith");
+        assertThat(emptyBodyMessage.getBody()).isEmpty();
+
+        // Verify LRM-prefixed document omitted message after empty-body message
+        MessageEntity documentMessage = messages.stream()
+                .filter(m -> m.getBody().contains("document omitted"))
+                .findFirst()
+                .orElseThrow();
+        assertThat(documentMessage.getSender().getIdentifier()).isEqualTo("Bob Smith");
+        assertThat(documentMessage.getTimestamp()).isEqualTo(LocalDateTime.of(2024, 3, 15, 9, 19, 46));
     }
 
     @Test
@@ -129,6 +159,6 @@ class WhatsAppChatImporterTest {
 
         // Messages should also not be duplicated (dedup via sourceIdentifier hash)
         List<MessageEntity> messages = messageRepository.findAll();
-        assertThat(messages).hasSize(8);
+        assertThat(messages).hasSize(12);
     }
 }

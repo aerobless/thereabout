@@ -18,6 +18,8 @@ import {
     HealthService,
     LocationHistoryEntry,
     LocationService,
+    Message,
+    MessageService as MessageApiService,
     WorkoutSummary
 } from "../../../../generated/backend-api/thereabout";
 
@@ -60,6 +62,9 @@ export class DayviewComponent implements OnInit {
   chartData: any;
   chartOptions: any;
   workouts: WorkoutSummary[] = [];
+
+  // Messages data
+  messages: Message[] = [];
   
   // Energy data
   selectedDayActiveEnergy: number | null = null;
@@ -70,7 +75,8 @@ export class DayviewComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private locationService: LocationService,
-    private healthService: HealthService
+    private healthService: HealthService,
+    private messageApiService: MessageApiService
   ) {
   }
 
@@ -95,15 +101,13 @@ export class DayviewComponent implements OnInit {
     // Handle date change - can be extended with additional logic
     console.log('Date changed to:', this.selectedDate);
     this.updateUrl();
-    this.loadDayViewData();
-    this.loadHealthData();
+    this.loadAllData();
   }
 
   private setDateAndUpdateUrl(date: Date) {
     this.selectedDate = date;
     this.updateUrl();
-    this.loadDayViewData();
-    this.loadHealthData();
+    this.loadAllData();
   }
 
   private updateUrl(skipHistory = false) {
@@ -129,8 +133,7 @@ export class DayviewComponent implements OnInit {
           const currentDateStr = this.dateToString(this.selectedDate);
           if (!this.hasLoadedInitialData || newDateStr !== currentDateStr) {
             this.selectedDate = parsedDate;
-            this.loadDayViewData();
-            this.loadHealthData();
+            this.loadAllData();
           }
           this.hasLoadedInitialData = true;
         }
@@ -138,11 +141,16 @@ export class DayviewComponent implements OnInit {
         // If no date in URL, update URL with current date (use replaceUrl to avoid history entry)
         this.updateUrl(true);
         // Load data for default date (today) since updateUrl doesn't trigger reload
-        this.loadDayViewData();
-        this.loadHealthData();
+        this.loadAllData();
         this.hasLoadedInitialData = true;
       }
     });
+  }
+
+  private loadAllData() {
+    this.loadDayViewData();
+    this.loadHealthData();
+    this.loadMessages();
   }
 
   loadDayViewData() {
@@ -365,6 +373,25 @@ export class DayviewComponent implements OnInit {
 
     // Generate trend line points
     return data.map((_, i) => slope * i + intercept);
+  }
+
+  loadMessages() {
+    if (!this.selectedDate) return;
+    const dateStr = this.dateToString(this.selectedDate);
+    this.messageApiService.getMessages(dateStr).subscribe({
+      next: (messages) => {
+        this.messages = messages;
+      },
+      error: (error) => {
+        console.error('Error loading messages:', error);
+        this.messages = [];
+      }
+    });
+  }
+
+  formatMessageTime(timestamp: string | undefined): string {
+    if (!timestamp) return '--';
+    return new Date(timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
   }
 
   formatWorkoutTime(start: string | undefined): string {

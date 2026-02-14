@@ -89,6 +89,80 @@ paths:
           description: The identity was successfully deleted
         500:
           $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  IdentityInApplicationUnlinked:
+    get:
+      summary: Get all unlinked application identities.
+      tags:
+        - identity-in-application
+      operationId: getUnlinkedIdentityInApplications
+      responses:
+        200:
+          description: Successful response containing all unlinked application identities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IdentityInApplication'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  IdentityInApplicationLink:
+    put:
+      summary: Link an application identity to an identity.
+      tags:
+        - identity-in-application
+      operationId: linkIdentityInApplication
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 1
+          required: true
+          description: The id of the application identity to link
+        - in: path
+          name: identityId
+          schema:
+            type: number
+            example: 42
+          required: true
+          description: The id of the identity to link to
+      responses:
+        200:
+          description: Successful response containing the linked application identity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityInApplication'
+        404:
+          $ref: '../thereabout.openapi.yaml#/components/responses/404'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  IdentityInApplicationUnlink:
+    put:
+      summary: Unlink an application identity from its identity.
+      tags:
+        - identity-in-application
+      operationId: unlinkIdentityInApplication
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: number
+            example: 1
+          required: true
+          description: The id of the application identity to unlink
+      responses:
+        200:
+          description: Successful response containing the unlinked application identity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityInApplication'
+        404:
+          $ref: '../thereabout.openapi.yaml#/components/responses/404'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
   Message:
     get:
       summary: Get all messages for a given day.
@@ -204,9 +278,9 @@ components:
           description: An identifier for the source conversation or thread
           example: "chat-12345"
         sender:
-          $ref: '#/components/schemas/IdentityInApplication'
+          $ref: '#/components/schemas/MessageParticipant'
         receiver:
-          $ref: '#/components/schemas/IdentityInApplication'
+          $ref: '#/components/schemas/MessageParticipant'
         subject:
           type: string
           description: The subject of the message
@@ -220,3 +294,17 @@ components:
           format: date-time
           description: The timestamp when the message was sent
           example: "2024-01-15T10:30:00Z"
+    MessageParticipant:
+      description: A resolved participant in a message conversation.
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Display name - identity short name if linked, otherwise the application identifier
+          example: "johndoe"
+        identityId:
+          type: number
+          description: The id of the linked identity, or null if unlinked
+          example: 42

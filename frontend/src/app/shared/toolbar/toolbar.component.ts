@@ -24,6 +24,7 @@ export class ToolbarComponent {
         { label: 'Location History', icon: 'pi pi-map', command: () => this.navigate('locationhistory') },
         { label: 'Trips', icon: 'pi pi-star-fill', command: () => this.navigate('trips') },
         { label: 'Statistics', icon: 'pi pi-chart-line', command: () => this.navigate('statistics') },
+        { label: 'Identities', icon: 'pi pi-users', command: () => this.navigate('identities') },
         { label: 'Configuration', icon: 'pi pi-cog', command: () => this.navigate('configuration') },
     ];
 

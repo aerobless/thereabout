@@ -1,0 +1,31 @@
+.identities-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  gap: 10px;
+
+  > p-card {
+    width: 100%;
+    max-width: 1100px;
+  }
+}
+
+.table-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-top: 0.5rem;
+}
+
+.linked-app-identities {
+  h4 {
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+  }
+}

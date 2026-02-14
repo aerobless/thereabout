@@ -42,6 +42,12 @@ paths:
     $ref: 'openapi/communication.yaml#/paths/Identity'
   /backend/api/v1/identity/{id}:
     $ref: 'openapi/communication.yaml#/paths/IdentityById'
+  /backend/api/v1/identity-in-application/unlinked:
+    $ref: 'openapi/communication.yaml#/paths/IdentityInApplicationUnlinked'
+  /backend/api/v1/identity-in-application/{id}/link/{identityId}:
+    $ref: 'openapi/communication.yaml#/paths/IdentityInApplicationLink'
+  /backend/api/v1/identity-in-application/{id}/unlink:
+    $ref: 'openapi/communication.yaml#/paths/IdentityInApplicationUnlink'
   /backend/api/v1/message:
     $ref: 'openapi/communication.yaml#/paths/Message'
 
@@ -173,6 +179,8 @@ components:
       $ref: 'openapi/communication.yaml#/components/schemas/IdentityInApplication'
     Message:
       $ref: 'openapi/communication.yaml#/components/schemas/Message'
+    MessageParticipant:
+      $ref: 'openapi/communication.yaml#/components/schemas/MessageParticipant'
 
   responses:
     400:

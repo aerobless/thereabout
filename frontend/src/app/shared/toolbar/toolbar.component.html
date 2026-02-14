@@ -30,6 +30,10 @@
                       [severity]="isActive('statistics') ? 'primary' : 'secondary'"
                       [text]="!isActive('statistics')"
                       pTooltip="Statistics" tooltipPosition="bottom" showDelay="500"></p-button>
+            <p-button icon="pi pi-users" (onClick)="navigate('identities')"
+                      [severity]="isActive('identities') ? 'primary' : 'secondary'"
+                      [text]="!isActive('identities')"
+                      pTooltip="Identities" tooltipPosition="bottom" showDelay="500"></p-button>
             <p-button icon="pi pi-cog" (onClick)="navigate('configuration')"
                       [severity]="isActive('configuration') ? 'primary' : 'secondary'"
                       [text]="!isActive('configuration')"

@@ -1,0 +1,204 @@
+<thereabout-toolbar></thereabout-toolbar>
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="identities-container">
+
+  <!-- Section 1: Identity Table -->
+  <p-card header="Identities">
+    <p-table
+      [value]="identities"
+      [paginator]="true"
+      [rows]="15"
+      [rowsPerPageOptions]="[15, 25, 50]"
+      sortField="shortName"
+      [sortOrder]="1"
+      styleClass="p-datatable-striped"
+      [globalFilterFields]="['shortName', 'firstName', 'lastName', 'email', 'relationship']"
+      [tableStyle]="{'min-width': '60rem'}">
+      <ng-template pTemplate="caption">
+        <div class="table-header">
+          <p-button label="New Identity" icon="pi pi-plus" (onClick)="showNewIdentityDialog()"></p-button>
+        </div>
+      </ng-template>
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="shortName">Short Name <p-sortIcon field="shortName"/></th>
+          <th pSortableColumn="firstName">First Name <p-sortIcon field="firstName"/></th>
+          <th pSortableColumn="lastName">Last Name <p-sortIcon field="lastName"/></th>
+          <th pSortableColumn="email">Email <p-sortIcon field="email"/></th>
+          <th pSortableColumn="relationship">Relationship <p-sortIcon field="relationship"/></th>
+          <th style="text-align: center">App Identities</th>
+          <th style="text-align: center">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-identity>
+        <tr>
+          <td>{{ identity.shortName }}</td>
+          <td>{{ identity.firstName }}</td>
+          <td>{{ identity.lastName }}</td>
+          <td>{{ identity.email }}</td>
+          <td>{{ identity.relationship }}</td>
+          <td style="text-align: center">
+            <p-tag [value]="'' + getAppIdentityCount(identity)"
+                   [severity]="getAppIdentityCount(identity) > 0 ? 'info' : 'secondary'"
+                   pTooltip="Linked application identities"
+                   tooltipPosition="top"></p-tag>
+          </td>
+          <td style="text-align: center">
+            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true"
+                      pTooltip="Edit" tooltipPosition="top"
+                      (onClick)="showEditIdentityDialog(identity)"></p-button>
+            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                      pTooltip="Delete" tooltipPosition="top"
+                      (onClick)="confirmDeleteIdentity(identity)"></p-button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" style="text-align: center">No identities found.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+
+  <!-- Section 2: Unlinked Application Identities -->
+  <p-card header="Unlinked Application Identities">
+    <p-table
+      [value]="unlinkedAppIdentities"
+      [paginator]="true"
+      [rows]="15"
+      [rowsPerPageOptions]="[15, 25, 50]"
+      sortField="application"
+      [sortOrder]="1"
+      styleClass="p-datatable-striped"
+      [globalFilterFields]="['application', 'identifier']"
+      [tableStyle]="{'min-width': '30rem'}">
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="application">Application <p-sortIcon field="application"/></th>
+          <th pSortableColumn="identifier">Identifier <p-sortIcon field="identifier"/></th>
+          <th style="text-align: center">Action</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-appIdentity>
+        <tr>
+          <td>{{ appIdentity.application }}</td>
+          <td>{{ appIdentity.identifier }}</td>
+          <td style="text-align: center">
+            <p-button icon="pi pi-link" label="Link" [text]="true"
+                      pTooltip="Link to an identity" tooltipPosition="top"
+                      (onClick)="showLinkDialog(appIdentity)"></p-button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="3" style="text-align: center">No unlinked application identities.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+</div>
+
+<!-- Identity Edit/Create Dialog -->
+<p-dialog
+  [header]="isNewIdentity ? 'New Identity' : 'Edit Identity'"
+  [(visible)]="identityDialogVisible"
+  [modal]="true"
+  [style]="{width: '550px'}">
+  <div class="dialog-form">
+    <p-floatlabel>
+      <input pInputText id="shortName" [(ngModel)]="editingIdentity.shortName" style="width: 100%" />
+      <label for="shortName">Short Name *</label>
+    </p-floatlabel>
+
+    <p-floatlabel>
+      <input pInputText id="firstName" [(ngModel)]="editingIdentity.firstName" style="width: 100%" />
+      <label for="firstName">First Name</label>
+    </p-floatlabel>
+
+    <p-floatlabel>
+      <input pInputText id="lastName" [(ngModel)]="editingIdentity.lastName" style="width: 100%" />
+      <label for="lastName">Last Name</label>
+    </p-floatlabel>
+
+    <p-floatlabel>
+      <input pInputText id="email" [(ngModel)]="editingIdentity.email" style="width: 100%" />
+      <label for="email">Email</label>
+    </p-floatlabel>
+
+    <p-floatlabel>
+      <input pInputText id="relationship" [(ngModel)]="editingIdentity.relationship" style="width: 100%" />
+      <label for="relationship">Relationship</label>
+    </p-floatlabel>
+
+    @if (!isNewIdentity && editingIdentity.identityInApplications && editingIdentity.identityInApplications.length > 0) {
+      <div class="linked-app-identities">
+        <h4>Linked Application Identities</h4>
+        <p-table [value]="editingIdentity.identityInApplications" styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Application</th>
+              <th>Identifier</th>
+              <th style="text-align: center">Action</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-appIdentity>
+            <tr>
+              <td>{{ appIdentity.application }}</td>
+              <td>{{ appIdentity.identifier }}</td>
+              <td style="text-align: center">
+                <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger"
+                          pTooltip="Unlink" tooltipPosition="top"
+                          (onClick)="unlinkAppIdentity(appIdentity)"></p-button>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="identityDialogVisible = false"></p-button>
+    <p-button label="Save" icon="pi pi-check" (onClick)="saveIdentity()"
+              [disabled]="!editingIdentity.shortName"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- Link Application Identity Dialog -->
+<p-dialog
+  header="Link Application Identity"
+  [(visible)]="linkDialogVisible"
+  [modal]="true"
+  [style]="{width: '450px'}">
+  <div class="dialog-form">
+    @if (linkingAppIdentity) {
+      <p>Link <b>{{ linkingAppIdentity.application }}: {{ linkingAppIdentity.identifier }}</b> to an identity:</p>
+    }
+    <p-select
+      [options]="identities"
+      [(ngModel)]="selectedIdentityForLink"
+      [optionLabel]="'shortName'"
+      placeholder="Select an identity"
+      [filter]="true"
+      filterBy="shortName,firstName,lastName"
+      appendTo="body"
+      [style]="{'width': '100%'}">
+      <ng-template let-identity pTemplate="item">
+        <span>{{ identityLabel(identity) }}</span>
+      </ng-template>
+      <ng-template let-identity pTemplate="selectedItem">
+        <span>{{ identityLabel(identity) }}</span>
+      </ng-template>
+    </p-select>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="linkDialogVisible = false"></p-button>
+    <p-button label="Link" icon="pi pi-link" (onClick)="linkAppIdentity()"
+              [disabled]="!selectedIdentityForLink"></p-button>
+  </ng-template>
+</p-dialog>

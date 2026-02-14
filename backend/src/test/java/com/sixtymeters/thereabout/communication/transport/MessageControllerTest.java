@@ -3,6 +3,7 @@ package com.sixtymeters.thereabout.communication.transport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sixtymeters.thereabout.communication.data.IdentityEntity;
 import com.sixtymeters.thereabout.communication.data.IdentityInApplicationEntity;
+import com.sixtymeters.thereabout.communication.data.IdentityInApplicationRepository;
 import com.sixtymeters.thereabout.communication.data.IdentityRepository;
 import com.sixtymeters.thereabout.communication.data.MessageEntity;
 import com.sixtymeters.thereabout.communication.data.MessageRepository;
@@ -36,6 +37,9 @@ class MessageControllerTest {
 
     @Autowired
     private IdentityRepository identityRepository;
+
+    @Autowired
+    private IdentityInApplicationRepository identityInApplicationRepository;
 
     @Autowired
     private MessageRepository messageRepository;
@@ -81,7 +85,7 @@ class MessageControllerTest {
     }
 
     @Test
-    void testGetMessagesByDate() throws Exception {
+    void testGetMessagesByDate_linkedIdentities() throws Exception {
         LocalDate queryDate = LocalDate.of(2026, 2, 10);
 
         MessageEntity messageOnDate = MessageEntity.builder()
@@ -120,7 +124,51 @@ class MessageControllerTest {
         assertThat(response).hasSize(1);
         assertThat(response[0].getSubject()).isEqualTo("Morning");
         assertThat(response[0].getBody()).isEqualTo("Hello there");
-        assertThat(response[0].getSender().getIdentifier()).isEqualTo("+4100000001");
-        assertThat(response[0].getReceiver().getIdentifier()).isEqualTo("+4100000002");
+        // Linked identities resolve to identity shortName
+        assertThat(response[0].getSender().getName()).isEqualTo("sender");
+        assertThat(response[0].getSender().getIdentityId()).isNotNull();
+        assertThat(response[0].getReceiver().getName()).isEqualTo("receiver");
+        assertThat(response[0].getReceiver().getIdentityId()).isNotNull();
+    }
+
+    @Test
+    void testGetMessagesByDate_unlinkedSenderFallsBackToIdentifier() throws Exception {
+        LocalDate queryDate = LocalDate.of(2026, 2, 10);
+
+        // Create an unlinked app identity (no parent identity)
+        IdentityInApplicationEntity unlinkedSender = IdentityInApplicationEntity.builder()
+                .application("Telegram")
+                .identifier("@unknown_user")
+                .build();
+        unlinkedSender = identityInApplicationRepository.save(unlinkedSender);
+
+        MessageEntity message = MessageEntity.builder()
+                .type("text")
+                .source("Telegram")
+                .sourceIdentifier("chat-3")
+                .sender(unlinkedSender)
+                .receiver(receiverApplication)
+                .subject("Hi")
+                .body("From an unlinked sender")
+                .timestamp(queryDate.atTime(14, 0))
+                .build();
+        messageRepository.save(message);
+
+        String responseContent = mockMvc.perform(get("/backend/api/v1/message")
+                        .param("date", queryDate.toString()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        GenMessage[] response = objectMapper.readValue(responseContent, GenMessage[].class);
+
+        assertThat(response).hasSize(1);
+        // Unlinked sender falls back to app identifier
+        assertThat(response[0].getSender().getName()).isEqualTo("@unknown_user");
+        assertThat(response[0].getSender().getIdentityId()).isNull();
+        // Linked receiver still resolves to identity shortName
+        assertThat(response[0].getReceiver().getName()).isEqualTo("receiver");
+        assertThat(response[0].getReceiver().getIdentityId()).isNotNull();
     }
 }

@@ -1,6 +1,7 @@
 package com.sixtymeters.thereabout.communication.transport;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sixtymeters.thereabout.communication.data.CommunicationApplication;
 import com.sixtymeters.thereabout.communication.data.IdentityEntity;
 import com.sixtymeters.thereabout.communication.data.IdentityInApplicationEntity;
 import com.sixtymeters.thereabout.communication.data.IdentityInApplicationRepository;
@@ -60,7 +61,7 @@ class MessageControllerTest {
                 .build();
         senderApplication = IdentityInApplicationEntity.builder()
                 .identity(senderIdentity)
-                .application("WhatsApp")
+                .application(CommunicationApplication.WHATSAPP)
                 .identifier("+4100000001")
                 .build();
         senderIdentity.getIdentityInApplications().add(senderApplication);
@@ -76,7 +77,7 @@ class MessageControllerTest {
                 .build();
         receiverApplication = IdentityInApplicationEntity.builder()
                 .identity(receiverIdentity)
-                .application("WhatsApp")
+                .application(CommunicationApplication.WHATSAPP)
                 .identifier("+4100000002")
                 .build();
         receiverIdentity.getIdentityInApplications().add(receiverApplication);
@@ -90,7 +91,7 @@ class MessageControllerTest {
 
         MessageEntity messageOnDate = MessageEntity.builder()
                 .type("text")
-                .source("WhatsApp")
+                .source(CommunicationApplication.WHATSAPP)
                 .sourceIdentifier("chat-1")
                 .sender(senderApplication)
                 .receiver(receiverApplication)
@@ -102,7 +103,7 @@ class MessageControllerTest {
 
         MessageEntity messageDifferentDay = MessageEntity.builder()
                 .type("text")
-                .source("WhatsApp")
+                .source(CommunicationApplication.WHATSAPP)
                 .sourceIdentifier("chat-2")
                 .sender(senderApplication)
                 .receiver(receiverApplication)
@@ -137,14 +138,14 @@ class MessageControllerTest {
 
         // Create an unlinked app identity (no parent identity)
         IdentityInApplicationEntity unlinkedSender = IdentityInApplicationEntity.builder()
-                .application("Telegram")
+                .application(CommunicationApplication.TELEGRAM)
                 .identifier("@unknown_user")
                 .build();
         unlinkedSender = identityInApplicationRepository.save(unlinkedSender);
 
         MessageEntity message = MessageEntity.builder()
                 .type("text")
-                .source("Telegram")
+                .source(CommunicationApplication.TELEGRAM)
                 .sourceIdentifier("chat-3")
                 .sender(unlinkedSender)
                 .receiver(receiverApplication)

@@ -9,7 +9,7 @@ import java.util.Optional;
 @Repository
 public interface IdentityInApplicationRepository extends JpaRepository<IdentityInApplicationEntity, Long> {
 
-    Optional<IdentityInApplicationEntity> findByApplicationAndIdentifier(String application, String identifier);
+    Optional<IdentityInApplicationEntity> findByApplicationAndIdentifier(CommunicationApplication application, String identifier);
 
     List<IdentityInApplicationEntity> findByIdentityIsNull();
 }

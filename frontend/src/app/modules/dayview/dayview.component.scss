@@ -308,9 +308,9 @@ a {
       border-bottom: 1px solid var(--p-surface-200);
       white-space: nowrap;
 
-      &:nth-child(1) { width: 5.5rem; }  // Time
-      &:nth-child(2) { width: 6rem; }     // Source
-      &:nth-child(3) { width: 8rem; }     // Sender
+      &:nth-child(1) { width: 4rem; }  // Time
+      &:nth-child(2) { width: 7rem; }     // Source
+      &:nth-child(3) { width: 5.5rem; }   // Sender
       // Message column auto-fills remaining space
     }
 

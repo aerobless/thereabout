@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.communication.transport.mapper;
 
+import com.sixtymeters.thereabout.communication.data.CommunicationApplication;
 import com.sixtymeters.thereabout.communication.data.IdentityInApplicationEntity;
 import com.sixtymeters.thereabout.communication.data.MessageEntity;
 import com.sixtymeters.thereabout.generated.model.GenMessage;
@@ -21,7 +22,13 @@ public interface MessageMapper {
     @Mapping(source = "timestamp", target = "timestamp", qualifiedByName = "localDateTimeToOffsetDateTime")
     @Mapping(source = "sender", target = "sender", qualifiedByName = "toMessageParticipant")
     @Mapping(source = "receiver", target = "receiver", qualifiedByName = "toMessageParticipant")
+    @Mapping(source = "source", target = "source", qualifiedByName = "enumToDisplayName")
     GenMessage mapToGenMessage(MessageEntity entity);
+
+    @Named("enumToDisplayName")
+    default String enumToDisplayName(CommunicationApplication application) {
+        return application == null ? null : application.getDisplayName();
+    }
 
     @Named("toMessageParticipant")
     default GenMessageParticipant toMessageParticipant(IdentityInApplicationEntity entity) {

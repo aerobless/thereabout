@@ -22,8 +22,9 @@ public class MessageEntity {
     @Column(nullable = false)
     private String type;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String source;
+    private CommunicationApplication source;
 
     private String sourceIdentifier;
 

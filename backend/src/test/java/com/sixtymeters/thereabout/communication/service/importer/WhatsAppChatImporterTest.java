@@ -1,6 +1,9 @@
 package com.sixtymeters.thereabout.communication.service.importer;
 
-import com.sixtymeters.thereabout.communication.data.*;
+import com.sixtymeters.thereabout.communication.data.CommunicationApplication;
+import com.sixtymeters.thereabout.communication.data.IdentityInApplicationRepository;
+import com.sixtymeters.thereabout.communication.data.MessageEntity;
+import com.sixtymeters.thereabout.communication.data.MessageRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,18 +61,18 @@ class WhatsAppChatImporterTest {
         assertThat(messages).hasSize(12);
 
         // Verify application identities were created
-        var aliceIdentity = identityInApplicationRepository.findByApplicationAndIdentifier("WHATSAPP", "Alice Miller");
+        var aliceIdentity = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.WHATSAPP, "Alice Miller");
         assertThat(aliceIdentity).isPresent();
         assertThat(aliceIdentity.get().getIdentity()).isNull(); // orphan, not linked to identity yet
 
-        var bobIdentity = identityInApplicationRepository.findByApplicationAndIdentifier("WHATSAPP", "Bob Smith");
+        var bobIdentity = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.WHATSAPP, "Bob Smith");
         assertThat(bobIdentity).isPresent();
         assertThat(bobIdentity.get().getIdentity()).isNull();
 
         // Verify message properties
         assertThat(messages).allSatisfy(msg -> {
             assertThat(msg.getType()).isEqualTo("text");
-            assertThat(msg.getSource()).isEqualTo("WHATSAPP");
+            assertThat(msg.getSource()).isEqualTo(CommunicationApplication.WHATSAPP);
             assertThat(msg.getTimestamp()).isNotNull();
             assertThat(msg.getSourceIdentifier()).isNotBlank();
         });
@@ -151,10 +154,10 @@ class WhatsAppChatImporterTest {
         whatsAppChatImporter.importFile(copyTestFileToTemp());
 
         // Then - identities should not be duplicated
-        var aliceIdentities = identityInApplicationRepository.findByApplicationAndIdentifier("WHATSAPP", "Alice Miller");
+        var aliceIdentities = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.WHATSAPP, "Alice Miller");
         assertThat(aliceIdentities).isPresent();
 
-        var bobIdentities = identityInApplicationRepository.findByApplicationAndIdentifier("WHATSAPP", "Bob Smith");
+        var bobIdentities = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.WHATSAPP, "Bob Smith");
         assertThat(bobIdentities).isPresent();
 
         // Messages should also not be duplicated (dedup via sourceIdentifier hash)

@@ -200,7 +200,7 @@ public class WhatsAppChatImporter implements FileImporter {
 
         return MessageEntity.builder()
                 .type("text")
-                .source(CommunicationApplication.WHATSAPP.name())
+                .source(CommunicationApplication.WHATSAPP)
                 .sourceIdentifier(hash)
                 .sender(sender)
                 .receiver(receiver)
@@ -242,12 +242,11 @@ public class WhatsAppChatImporter implements FileImporter {
 
     private IdentityInApplicationEntity getOrCreateIdentity(String name, Map<String, IdentityInApplicationEntity> cache) {
         return cache.computeIfAbsent(name, n -> {
-            String application = CommunicationApplication.WHATSAPP.name();
-            return identityInApplicationRepository.findByApplicationAndIdentifier(application, n)
+            return identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.WHATSAPP, n)
                     .orElseGet(() -> {
                         log.info("Creating new application identity for WhatsApp user: {}", n);
                         IdentityInApplicationEntity entity = IdentityInApplicationEntity.builder()
-                                .application(application)
+                                .application(CommunicationApplication.WHATSAPP)
                                 .identifier(n)
                                 .build();
                         return identityInApplicationRepository.save(entity);

@@ -22,8 +22,9 @@ public class IdentityInApplicationEntity {
     @JoinColumn(name = "identity_id")
     private IdentityEntity identity;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String application;
+    private CommunicationApplication application;
 
     @Column(nullable = false)
     private String identifier;

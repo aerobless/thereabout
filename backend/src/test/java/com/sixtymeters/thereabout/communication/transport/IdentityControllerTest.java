@@ -1,6 +1,7 @@
 package com.sixtymeters.thereabout.communication.transport;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sixtymeters.thereabout.communication.data.CommunicationApplication;
 import com.sixtymeters.thereabout.communication.data.IdentityEntity;
 import com.sixtymeters.thereabout.communication.data.IdentityInApplicationEntity;
 import com.sixtymeters.thereabout.communication.data.IdentityRepository;
@@ -52,7 +53,7 @@ class IdentityControllerTest {
                 .build();
         IdentityInApplicationEntity senderApplication = IdentityInApplicationEntity.builder()
                 .identity(senderIdentity)
-                .application("WhatsApp")
+                .application(CommunicationApplication.WHATSAPP)
                 .identifier("+4100000001")
                 .build();
         senderIdentity.getIdentityInApplications().add(senderApplication);
@@ -67,7 +68,7 @@ class IdentityControllerTest {
                 .build();
         IdentityInApplicationEntity receiverApplication = IdentityInApplicationEntity.builder()
                 .identity(receiverIdentity)
-                .application("WhatsApp")
+                .application(CommunicationApplication.WHATSAPP)
                 .identifier("+4100000002")
                 .build();
         receiverIdentity.getIdentityInApplications().add(receiverApplication);

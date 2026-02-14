@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {ButtonModule} from "primeng/button";
-import {Router, ActivatedRoute} from "@angular/router";
+import {Router, ActivatedRoute, RouterModule} from "@angular/router";
 import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 import {TooltipModule} from "primeng/tooltip";
 import {DatePickerModule} from "primeng/datepicker";
@@ -27,6 +27,7 @@ import {
     selector: 'app-dayview',
     imports: [
     ButtonModule,
+    RouterModule,
     ToolbarComponent,
     TooltipModule,
     DatePickerModule,

@@ -235,7 +235,13 @@
             <tr>
               <td>{{ formatMessageTime(message.timestamp) }}</td>
               <td>{{ message.source || '--' }}</td>
-              <td>{{ message.sender?.name || '--' }}</td>
+              <td>
+                @if (message.sender?.identityId) {
+                  <a [routerLink]="['/identities', message.sender.identityId]">{{ message.sender.name }}</a>
+                } @else {
+                  {{ message.sender?.name || '--' }}
+                }
+              </td>
               <td>{{ message.body || message.subject || '--' }}</td>
             </tr>
           </ng-template>

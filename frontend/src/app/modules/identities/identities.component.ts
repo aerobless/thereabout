@@ -1,5 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {FormsModule} from '@angular/forms';
+import {RouterModule} from '@angular/router';
 import {ButtonModule} from 'primeng/button';
 import {CardModule} from 'primeng/card';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
@@ -24,6 +25,7 @@ import {
     selector: 'app-identities',
     imports: [
         FormsModule,
+        RouterModule,
         ButtonModule,
         CardModule,
         ConfirmDialogModule,

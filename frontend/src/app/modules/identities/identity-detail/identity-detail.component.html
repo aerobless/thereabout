@@ -1,0 +1,68 @@
+<thereabout-toolbar></thereabout-toolbar>
+
+<div class="detail-container">
+
+  <div class="back-row">
+    <p-button icon="pi pi-arrow-left" label="Back to Identities"
+              [text]="true" routerLink="/identities"></p-button>
+  </div>
+
+  @if (identity) {
+    <p-card header="Identity Details">
+      <div class="detail-fields">
+        <div class="detail-field">
+          <span class="field-label">Short Name</span>
+          <span class="field-value">{{ identity.shortName }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="field-label">First Name</span>
+          <span class="field-value">{{ identity.firstName || '--' }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="field-label">Last Name</span>
+          <span class="field-value">{{ identity.lastName || '--' }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="field-label">Email</span>
+          <span class="field-value">{{ identity.email || '--' }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="field-label">Relationship</span>
+          <span class="field-value">{{ identity.relationship || '--' }}</span>
+        </div>
+      </div>
+    </p-card>
+
+    <p-card header="Linked Application Identities">
+      <p-table
+        [value]="identity.identityInApplications || []"
+        styleClass="p-datatable-striped"
+        [tableStyle]="{'min-width': '20rem'}">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Application</th>
+            <th>Identifier</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-appIdentity>
+          <tr>
+            <td>{{ appIdentity.application }}</td>
+            <td>{{ appIdentity.identifier }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="2" style="text-align: center">No linked application identities.</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  }
+
+  @if (!identity) {
+    <p-card header="Identity Not Found">
+      <p>The requested identity could not be found.</p>
+    </p-card>
+  }
+
+</div>

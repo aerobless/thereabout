@@ -34,7 +34,7 @@
       </ng-template>
       <ng-template pTemplate="body" let-identity>
         <tr>
-          <td>{{ identity.shortName }}</td>
+          <td><a [routerLink]="['/identities', identity.id]">{{ identity.shortName }}</a></td>
           <td>{{ identity.firstName }}</td>
           <td>{{ identity.lastName }}</td>
           <td>{{ identity.email }}</td>

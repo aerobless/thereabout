@@ -8,23 +8,21 @@
   </div>
 
   @if (identity) {
-    <p-card header="Identity Details">
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <i class="pi pi-id-card card-header-icon"></i>
+          <span class="card-header-title">Identity Details</span>
+        </div>
+      </ng-template>
       <div class="detail-fields">
         <div class="detail-field">
           <span class="field-label">Short Name</span>
           <span class="field-value">{{ identity.shortName }}</span>
         </div>
         <div class="detail-field">
-          <span class="field-label">First Name</span>
-          <span class="field-value">{{ identity.firstName || '--' }}</span>
-        </div>
-        <div class="detail-field">
-          <span class="field-label">Last Name</span>
-          <span class="field-value">{{ identity.lastName || '--' }}</span>
-        </div>
-        <div class="detail-field">
-          <span class="field-label">Email</span>
-          <span class="field-value">{{ identity.email || '--' }}</span>
+          <span class="field-label">Group</span>
+          <span class="field-value">{{ identity.isGroup ? 'Yes' : 'No' }}</span>
         </div>
         <div class="detail-field">
           <span class="field-label">Relationship</span>
@@ -33,7 +31,13 @@
       </div>
     </p-card>
 
-    <p-card header="Linked Application Identities">
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <i class="pi pi-link card-header-icon"></i>
+          <span class="card-header-title">Linked Application Identities</span>
+        </div>
+      </ng-template>
       <p-table
         [value]="identity.identityInApplications || []"
         styleClass="p-datatable-striped"
@@ -60,7 +64,13 @@
   }
 
   @if (!identity) {
-    <p-card header="Identity Not Found">
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <i class="pi pi-exclamation-triangle card-header-icon"></i>
+          <span class="card-header-title">Identity Not Found</span>
+        </div>
+      </ng-template>
       <p>The requested identity could not be found.</p>
     </p-card>
   }

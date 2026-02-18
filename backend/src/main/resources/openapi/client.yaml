@@ -47,6 +47,9 @@ paths:
                     format: binary
                   importType:
                     $ref: '#/components/schemas/ImportType'
+                  receiver:
+                    type: string
+                    description: The receiver identifier (e.g. contact name or group name)
       responses:
         204:
           description: The file is successfully being imported.

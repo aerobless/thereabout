@@ -2,7 +2,40 @@
   margin-right: 10px;
 }
 
-.version-panel {
-  padding-top: 0;
-  padding-bottom: 0;
+.configuration-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  gap: 10px;
+
+  > p-card {
+    width: 100%;
+    max-width: 1100px;
+  }
+}
+
+.config-block {
+  margin-bottom: 10px;
+}
+
+.config-label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.config-input-full {
+  width: 100%;
+}
+
+.version-content {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+
+  b {
+    margin-right: 0.25rem;
+  }
 }

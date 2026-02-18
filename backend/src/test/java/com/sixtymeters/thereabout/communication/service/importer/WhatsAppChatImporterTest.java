@@ -1,7 +1,9 @@
 package com.sixtymeters.thereabout.communication.service.importer;
 
 import com.sixtymeters.thereabout.communication.data.CommunicationApplication;
+import com.sixtymeters.thereabout.communication.data.IdentityEntity;
 import com.sixtymeters.thereabout.communication.data.IdentityInApplicationRepository;
+import com.sixtymeters.thereabout.communication.data.IdentityRepository;
 import com.sixtymeters.thereabout.communication.data.MessageEntity;
 import com.sixtymeters.thereabout.communication.data.MessageRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,10 +36,14 @@ class WhatsAppChatImporterTest {
     @Autowired
     private IdentityInApplicationRepository identityInApplicationRepository;
 
+    @Autowired
+    private IdentityRepository identityRepository;
+
     @BeforeEach
     void setUp() {
         messageRepository.deleteAll();
         identityInApplicationRepository.deleteAll();
+        identityRepository.deleteAll();
     }
 
     private File copyTestFileToTemp() throws IOException {
@@ -54,7 +60,7 @@ class WhatsAppChatImporterTest {
         File testFile = copyTestFileToTemp();
 
         // When
-        whatsAppChatImporter.importFile(testFile);
+        whatsAppChatImporter.importFile(testFile, "Bob Smith");
 
         // Then
         List<MessageEntity> messages = messageRepository.findAll();
@@ -100,13 +106,10 @@ class WhatsAppChatImporterTest {
                 .orElseThrow();
         assertThat(urlMessage.getBody()).isEqualTo("Check this out: https://example.com/path?foo=bar&baz=qux");
 
-        // Verify sender/receiver assignment (1:1 chat)
+        // Verify all messages have the specified receiver
         messages.forEach(msg -> {
-            String senderName = msg.getSender().getIdentifier();
-            String receiverName = msg.getReceiver().getIdentifier();
-            assertThat(senderName).isNotEqualTo(receiverName);
-            assertThat(senderName).isIn("Alice Miller", "Bob Smith");
-            assertThat(receiverName).isIn("Alice Miller", "Bob Smith");
+            assertThat(msg.getReceiver().getIdentifier()).isEqualTo("Bob Smith");
+            assertThat(msg.getSender().getIdentifier()).isIn("Alice Miller", "Bob Smith");
         });
 
         // Verify emoji message
@@ -148,10 +151,49 @@ class WhatsAppChatImporterTest {
     }
 
     @Test
+    void testImportGroupChat() throws IOException {
+        // Given - create a group identity first (as user would in identity UI)
+        IdentityEntity groupIdentity = IdentityEntity.builder()
+                .shortName("Family Group")
+                .isGroup(true)
+                .build();
+        groupIdentity = identityRepository.save(groupIdentity);
+
+        File testFile = copyTestFileToTemp();
+
+        // When - import with receiver name matching the group identity
+        whatsAppChatImporter.importFile(testFile, "Family Group");
+
+        // Then
+        List<MessageEntity> messages = messageRepository.findAll();
+        assertThat(messages).hasSize(12);
+
+        // Verify receiver is linked to the group identity
+        var groupAppIdentity = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.WHATSAPP, "Family Group");
+        assertThat(groupAppIdentity).isPresent();
+        assertThat(groupAppIdentity.get().getIdentity()).isNotNull();
+        assertThat(groupAppIdentity.get().getIdentity().getId()).isEqualTo(groupIdentity.getId());
+        assertThat(groupAppIdentity.get().getIdentity().isGroup()).isTrue();
+
+        // Verify all messages have the group as receiver
+        messages.forEach(msg -> {
+            assertThat(msg.getReceiver().getIdentifier()).isEqualTo("Family Group");
+            assertThat(msg.getReceiver().getIdentity()).isNotNull();
+        });
+
+        // Verify senders are the individual participants
+        var senderNames = messages.stream()
+                .map(m -> m.getSender().getIdentifier())
+                .distinct()
+                .toList();
+        assertThat(senderNames).containsExactlyInAnyOrder("Alice Miller", "Bob Smith");
+    }
+
+    @Test
     void testImportDoesNotDuplicateMessages() throws IOException {
         // Given & When - import the same file twice
-        whatsAppChatImporter.importFile(copyTestFileToTemp());
-        whatsAppChatImporter.importFile(copyTestFileToTemp());
+        whatsAppChatImporter.importFile(copyTestFileToTemp(), "Bob Smith");
+        whatsAppChatImporter.importFile(copyTestFileToTemp(), "Bob Smith");
 
         // Then - identities should not be duplicated
         var aliceIdentities = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.WHATSAPP, "Alice Miller");

@@ -46,9 +46,6 @@ class IdentityControllerTest {
     void setUp() {
         IdentityEntity senderIdentity = IdentityEntity.builder()
                 .shortName("sender")
-                .firstName("John")
-                .lastName("Sender")
-                .email("sender@example.com")
                 .relationship("friend")
                 .build();
         IdentityInApplicationEntity senderApplication = IdentityInApplicationEntity.builder()
@@ -61,9 +58,6 @@ class IdentityControllerTest {
 
         IdentityEntity receiverIdentity = IdentityEntity.builder()
                 .shortName("receiver")
-                .firstName("Jane")
-                .lastName("Receiver")
-                .email("receiver@example.com")
                 .relationship("family")
                 .build();
         IdentityInApplicationEntity receiverApplication = IdentityInApplicationEntity.builder()
@@ -80,9 +74,6 @@ class IdentityControllerTest {
         GenIdentity request = GenIdentity.builder()
                 .id(BigDecimal.ZERO)
                 .shortName("new-contact")
-                .firstName("New")
-                .lastName("Contact")
-                .email("new@example.com")
                 .relationship("colleague")
                 .identityInApplications(List.of(
                         GenIdentityInApplication.builder()
@@ -135,9 +126,6 @@ class IdentityControllerTest {
         GenIdentity request = GenIdentity.builder()
                 .id(BigDecimal.valueOf(existing.getId()))
                 .shortName("sender-updated")
-                .firstName("John")
-                .lastName("Updated")
-                .email("sender-updated@example.com")
                 .relationship("best-friend")
                 .identityInApplications(List.of(
                         GenIdentityInApplication.builder()

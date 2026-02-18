@@ -12,7 +12,8 @@ import {FileUploadErrorEvent, FileUploadHandlerEvent, FileUploadModule} from "pr
 import {
     FileImportStatus,
     FrontendConfigurationResponse,
-    FrontendService
+    FrontendService,
+    IdentityInApplicationService
 } from "../../../../generated/backend-api/thereabout";
 import {MessageService} from "primeng/api";
 
@@ -23,6 +24,7 @@ import {SelectModule} from "primeng/select";
 import {FormsModule} from "@angular/forms";
 import { HttpClient } from "@angular/common/http";
 import {ProgressBarModule} from "primeng/progressbar";
+import {AutoCompleteCompleteEvent, AutoCompleteModule} from "primeng/autocomplete";
 
 interface ImportTypeOption {
     label: string;
@@ -48,7 +50,8 @@ interface ImportTypeOption {
     TooltipModule,
     SelectModule,
     FormsModule,
-    ProgressBarModule
+    ProgressBarModule,
+    AutoCompleteModule
 ],
     templateUrl: './configuration.component.html',
     styleUrl: './configuration.component.scss'
@@ -59,6 +62,11 @@ export class ConfigurationComponent implements OnInit {
     importStatusProgress: number = 0;
     importDisabled = false;
     thereaboutConfig?: FrontendConfigurationResponse;
+
+    // WhatsApp-specific fields
+    receiverName: string = '';
+    existingReceivers: string[] = [];
+    filteredReceivers: string[] = [];
 
     importTypeOptions: ImportTypeOption[] = [
         {
@@ -71,7 +79,7 @@ export class ConfigurationComponent implements OnInit {
             label: 'WhatsApp Chat History',
             value: 'WHATSAPP_CHAT',
             accept: '.txt',
-            description: 'Upload your WhatsApp chat export (.txt) here. It will be imported into Thereabout. The chat must be a 1:1 conversation (no group chats).'
+            description: 'Upload your WhatsApp chat export (.txt) here. It will be imported into Thereabout.'
         }
     ];
     selectedImportType: ImportTypeOption = this.importTypeOptions[0];
@@ -79,6 +87,7 @@ export class ConfigurationComponent implements OnInit {
     constructor(
         private messageService: MessageService,
         private frontendService: FrontendService,
+        private identityInApplicationService: IdentityInApplicationService,
         private http: HttpClient
     ) {
     }
@@ -98,6 +107,10 @@ export class ConfigurationComponent implements OnInit {
         const formData = new FormData();
         formData.append('file', file, file.name);
         formData.append('importType', this.selectedImportType.value);
+
+        if (this.selectedImportType.value === 'WHATSAPP_CHAT') {
+            formData.append('receiver', this.receiverName);
+        }
 
         this.importDisabled = true;
 
@@ -148,6 +161,28 @@ export class ConfigurationComponent implements OnInit {
             this.thereaboutConfig = e;
         })
         this.updateOrPollImportStatus();
+        this.loadWhatsAppReceivers();
+    }
+
+    loadWhatsAppReceivers() {
+        this.identityInApplicationService.getIdentityInApplicationsByApplication('WhatsApp').subscribe(identities => {
+            this.existingReceivers = identities.map(i => i.identifier);
+        });
+    }
+
+    filterReceivers(event: AutoCompleteCompleteEvent) {
+        const query = event.query.toLowerCase();
+        this.filteredReceivers = this.existingReceivers.filter(r => r.toLowerCase().includes(query));
+    }
+
+    get isWhatsAppImport(): boolean {
+        return this.selectedImportType.value === 'WHATSAPP_CHAT';
+    }
+
+    get isBrowseDisabled(): boolean {
+        if (this.importDisabled) return true;
+        if (this.isWhatsAppImport && !this.receiverName?.trim()) return true;
+        return false;
     }
 
     private updateImportStatus(): Observable<FileImportStatus> {

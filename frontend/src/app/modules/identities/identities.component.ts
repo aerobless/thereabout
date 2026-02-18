@@ -12,6 +12,7 @@ import {TagModule} from 'primeng/tag';
 import {ToastModule} from 'primeng/toast';
 import {TooltipModule} from 'primeng/tooltip';
 import {SelectModule} from 'primeng/select';
+import {CheckboxModule} from 'primeng/checkbox';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import {ToolbarComponent} from '../../shared/toolbar/toolbar.component';
 import {
@@ -37,6 +38,7 @@ import {
         ToastModule,
         TooltipModule,
         SelectModule,
+        CheckboxModule,
         ToolbarComponent,
     ],
     providers: [ConfirmationService, MessageService],
@@ -191,7 +193,7 @@ export class IdentitiesComponent implements OnInit {
     // --- Helpers ---
 
     private emptyIdentity(): Identity {
-        return {id: 0, shortName: '', firstName: '', lastName: '', email: '', relationship: '', identityInApplications: []};
+        return {id: 0, shortName: '', isGroup: false, relationship: '', identityInApplications: []};
     }
 
     getAppIdentityCount(identity: Identity): number {
@@ -199,10 +201,6 @@ export class IdentitiesComponent implements OnInit {
     }
 
     identityLabel(identity: Identity): string {
-        const parts = [identity.shortName];
-        if (identity.firstName || identity.lastName) {
-            parts.push(`(${[identity.firstName, identity.lastName].filter(Boolean).join(' ')})`);
-        }
-        return parts.join(' ');
+        return identity.isGroup ? `${identity.shortName} (group)` : identity.shortName;
     }
 }

@@ -12,4 +12,6 @@ public interface IdentityInApplicationRepository extends JpaRepository<IdentityI
     Optional<IdentityInApplicationEntity> findByApplicationAndIdentifier(CommunicationApplication application, String identifier);
 
     List<IdentityInApplicationEntity> findByIdentityIsNull();
+
+    List<IdentityInApplicationEntity> findByApplication(CommunicationApplication application);
 }

@@ -82,7 +82,7 @@ public class FrontendConfigurationController implements FrontendApi {
     }
 
     @Override
-    public ResponseEntity<Void> importFromFile(MultipartFile file, GenImportType importType) {
+    public ResponseEntity<Void> importFromFile(MultipartFile file, GenImportType importType, String receiver) {
         log.info("Received file %s with import type %s via HTTP Endpoint /backend/api/v1/config/import-file".formatted(file.getOriginalFilename(), importType));
 
         final var importDataToBeProcessed = persistTempFileForProcessing(file);
@@ -96,7 +96,7 @@ public class FrontendConfigurationController implements FrontendApi {
                     .findFirst()
                     .orElseThrow(() -> new ThereaboutException(HttpStatusCode.valueOf(400),
                             "No importer found for import type: %s".formatted(importType)));
-            CompletableFuture.runAsync(() -> importer.importFile(importDataToBeProcessed));
+            CompletableFuture.runAsync(() -> importer.importFile(importDataToBeProcessed, receiver));
         }
 
         return ResponseEntity.noContent().build();

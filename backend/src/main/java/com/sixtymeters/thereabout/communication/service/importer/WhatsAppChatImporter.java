@@ -35,6 +35,7 @@ public class WhatsAppChatImporter implements FileImporter {
     private static final int BATCH_SIZE = 1000;
 
     private final IdentityInApplicationRepository identityInApplicationRepository;
+    private final IdentityRepository identityRepository;
     private final MessageRepository messageRepository;
     private final ImportProgressService importProgressService;
 
@@ -44,16 +45,18 @@ public class WhatsAppChatImporter implements FileImporter {
     }
 
     @Override
-    public void importFile(File file) {
-        log.info("Starting WhatsApp chat import from file: {}", file.getName());
+    public void importFile(File file, String receiver) {
+        log.info("Starting WhatsApp chat import from file: {}, receiver: {}", file.getName(), receiver);
         importProgressService.setProgress(1);
 
         try {
             long totalMessages = countMessages(file);
             log.info("Counted {} messages in WhatsApp chat file: {}", totalMessages, file.getName());
 
+            IdentityInApplicationEntity receiverEntity = getOrCreateReceiver(receiver);
+
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-                processFile(reader, totalMessages);
+                processFile(reader, totalMessages, receiverEntity);
             }
         } catch (IOException e) {
             throw new ThereaboutException(HttpStatusCode.valueOf(400),
@@ -84,11 +87,39 @@ public class WhatsAppChatImporter implements FileImporter {
         return count;
     }
 
-    private void processFile(BufferedReader reader, long totalMessages) throws IOException {
+    /**
+     * Resolve the receiver: if an Identity with that shortName exists, use or create an IdentityInApplication
+     * linked to it; otherwise use or create an orphan IdentityInApplication.
+     */
+    private IdentityInApplicationEntity getOrCreateReceiver(String receiverName) {
+        return identityRepository.findByShortName(receiverName)
+                .map(identity -> identityInApplicationRepository
+                        .findByApplicationAndIdentifier(CommunicationApplication.WHATSAPP, receiverName)
+                        .orElseGet(() -> {
+                            log.info("Creating WhatsApp app identity linked to identity: {}", receiverName);
+                            IdentityInApplicationEntity entity = IdentityInApplicationEntity.builder()
+                                    .application(CommunicationApplication.WHATSAPP)
+                                    .identifier(receiverName)
+                                    .identity(identity)
+                                    .build();
+                            return identityInApplicationRepository.save(entity);
+                        }))
+                .orElseGet(() -> identityInApplicationRepository
+                        .findByApplicationAndIdentifier(CommunicationApplication.WHATSAPP, receiverName)
+                        .orElseGet(() -> {
+                            log.info("Creating new orphan application identity for WhatsApp receiver: {}", receiverName);
+                            IdentityInApplicationEntity entity = IdentityInApplicationEntity.builder()
+                                    .application(CommunicationApplication.WHATSAPP)
+                                    .identifier(receiverName)
+                                    .build();
+                            return identityInApplicationRepository.save(entity);
+                        }));
+    }
+
+    private void processFile(BufferedReader reader, long totalMessages, IdentityInApplicationEntity receiverEntity) throws IOException {
         Map<String, IdentityInApplicationEntity> identityCache = new HashMap<>();
         Set<String> knownHashes = new HashSet<>();
         List<MessageEntity> batch = new ArrayList<>(BATCH_SIZE);
-        boolean bothParticipantsKnown = false;
 
         String line;
         String currentSenderName = null;
@@ -106,7 +137,7 @@ public class WhatsAppChatImporter implements FileImporter {
             if (matcher.matches()) {
                 // Flush the previous message if there is one
                 if (currentSenderName != null && currentBody != null) {
-                    MessageEntity message = buildMessage(currentSenderName, currentBody.toString(), currentTimestamp, identityCache);
+                    MessageEntity message = buildMessage(currentSenderName, currentBody.toString(), currentTimestamp, identityCache, receiverEntity);
 
                     if (!isDuplicate(message.getSourceIdentifier(), knownHashes)) {
                         knownHashes.add(message.getSourceIdentifier());
@@ -117,13 +148,6 @@ public class WhatsAppChatImporter implements FileImporter {
 
                     messagesProcessed++;
                     updateProgress(totalMessages, messagesProcessed);
-
-                    // Once the second participant is discovered, fix up any earlier messages
-                    // where sender == receiver (because only one participant was known at the time)
-                    if (!bothParticipantsKnown && identityCache.size() == 2) {
-                        bothParticipantsKnown = true;
-                        fixupReceivers(batch, identityCache);
-                    }
 
                     if (batch.size() >= BATCH_SIZE) {
                         totalImported += flushBatch(batch);
@@ -148,18 +172,13 @@ public class WhatsAppChatImporter implements FileImporter {
 
         // Flush the last message
         if (currentSenderName != null && currentBody != null) {
-            MessageEntity message = buildMessage(currentSenderName, currentBody.toString(), currentTimestamp, identityCache);
+            MessageEntity message = buildMessage(currentSenderName, currentBody.toString(), currentTimestamp, identityCache, receiverEntity);
             if (!isDuplicate(message.getSourceIdentifier(), knownHashes)) {
                 batch.add(message);
             } else {
                 skippedDuplicates++;
             }
             messagesProcessed++;
-        }
-
-        // Fix up receivers if this is the very end and both are now known
-        if (!bothParticipantsKnown && identityCache.size() == 2) {
-            fixupReceivers(batch, identityCache);
         }
 
         // Flush any remaining messages in the batch
@@ -193,9 +212,9 @@ public class WhatsAppChatImporter implements FileImporter {
     }
 
     private MessageEntity buildMessage(String senderName, String body, LocalDateTime timestamp,
-                                       Map<String, IdentityInApplicationEntity> identityCache) {
+                                       Map<String, IdentityInApplicationEntity> identityCache,
+                                       IdentityInApplicationEntity receiverEntity) {
         IdentityInApplicationEntity sender = getOrCreateIdentity(senderName, identityCache);
-        IdentityInApplicationEntity receiver = findReceiver(senderName, identityCache);
         String hash = computeMessageHash(senderName, timestamp, body);
 
         return MessageEntity.builder()
@@ -203,7 +222,7 @@ public class WhatsAppChatImporter implements FileImporter {
                 .source(CommunicationApplication.WHATSAPP)
                 .sourceIdentifier(hash)
                 .sender(sender)
-                .receiver(receiver)
+                .receiver(receiverEntity)
                 .body(body)
                 .timestamp(timestamp)
                 .build();
@@ -224,22 +243,6 @@ public class WhatsAppChatImporter implements FileImporter {
         }
     }
 
-    /**
-     * Fix messages where sender == receiver (created before both participants were known).
-     * Sets the correct receiver for each such message.
-     */
-    private void fixupReceivers(List<MessageEntity> batch, Map<String, IdentityInApplicationEntity> identityCache) {
-        batch.stream()
-                .filter(msg -> msg.getSender().equals(msg.getReceiver()))
-                .forEach(msg -> {
-                    IdentityInApplicationEntity correctReceiver = identityCache.values().stream()
-                            .filter(id -> !id.equals(msg.getSender()))
-                            .findFirst()
-                            .orElse(msg.getSender());
-                    msg.setReceiver(correctReceiver);
-                });
-    }
-
     private IdentityInApplicationEntity getOrCreateIdentity(String name, Map<String, IdentityInApplicationEntity> cache) {
         return cache.computeIfAbsent(name, n -> {
             return identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.WHATSAPP, n)
@@ -252,19 +255,6 @@ public class WhatsAppChatImporter implements FileImporter {
                         return identityInApplicationRepository.save(entity);
                     });
         });
-    }
-
-    /**
-     * In a 1:1 WhatsApp chat, the receiver is the other participant.
-     * If we only know one participant so far, we use the sender as receiver temporarily
-     * (will be corrected once the second participant sends a message).
-     */
-    private IdentityInApplicationEntity findReceiver(String senderName, Map<String, IdentityInApplicationEntity> cache) {
-        return cache.entrySet().stream()
-                .filter(entry -> !entry.getKey().equals(senderName))
-                .map(Map.Entry::getValue)
-                .findFirst()
-                .orElse(cache.get(senderName));
     }
 
     private long flushBatch(List<MessageEntity> batch) {

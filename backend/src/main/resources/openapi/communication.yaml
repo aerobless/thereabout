@@ -89,6 +89,31 @@ paths:
           description: The identity was successfully deleted
         500:
           $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  IdentityInApplicationByApplication:
+    get:
+      summary: Get all application identities for a given application.
+      tags:
+        - identity-in-application
+      operationId: getIdentityInApplicationsByApplication
+      parameters:
+        - in: query
+          name: application
+          schema:
+            type: string
+            example: "WhatsApp"
+          required: true
+          description: The application name to filter by
+      responses:
+        200:
+          description: Successful response containing all application identities for the given application
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IdentityInApplication'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
   IdentityInApplicationUnlinked:
     get:
       summary: Get all unlinked application identities.
@@ -209,18 +234,10 @@ components:
           type: string
           description: A short name or alias for the identity
           example: "johndoe"
-        firstName:
-          type: string
-          description: The first name of the identity
-          example: "John"
-        lastName:
-          type: string
-          description: The last name of the identity
-          example: "Doe"
-        email:
-          type: string
-          description: The email address of the identity
-          example: "john.doe@example.com"
+        isGroup:
+          type: boolean
+          description: Whether this identity represents a group (e.g. a group chat)
+          example: false
         relationship:
           type: string
           description: The relationship to the user

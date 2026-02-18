@@ -13,8 +13,9 @@ public interface FileImporter {
      * Import data from the given file.
      *
      * @param file the file to import
+     * @param receiver the receiver identifier (e.g. contact name or group name)
      */
-    void importFile(File file);
+    void importFile(File file, String receiver);
 
     /**
      * @return the import type this importer supports

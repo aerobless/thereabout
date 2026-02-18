@@ -5,7 +5,16 @@
 <div class="identities-container">
 
   <!-- Section 1: Identity Table -->
-  <p-card header="Identities">
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="card-header">
+        <i class="pi pi-users card-header-icon"></i>
+        <span class="card-header-title">Identities</span>
+        <div class="card-header-actions">
+          <p-button label="New Identity" icon="pi pi-plus" (onClick)="showNewIdentityDialog()"></p-button>
+        </div>
+      </div>
+    </ng-template>
     <p-table
       [value]="identities"
       [paginator]="true"
@@ -14,20 +23,13 @@
       sortField="shortName"
       [sortOrder]="1"
       styleClass="p-datatable-striped"
-      [globalFilterFields]="['shortName', 'firstName', 'lastName', 'email', 'relationship']"
+      [globalFilterFields]="['shortName', 'relationship']"
       [tableStyle]="{'min-width': '60rem'}">
-      <ng-template pTemplate="caption">
-        <div class="table-header">
-          <p-button label="New Identity" icon="pi pi-plus" (onClick)="showNewIdentityDialog()"></p-button>
-        </div>
-      </ng-template>
       <ng-template pTemplate="header">
         <tr>
           <th pSortableColumn="shortName">Short Name <p-sortIcon field="shortName"/></th>
-          <th pSortableColumn="firstName">First Name <p-sortIcon field="firstName"/></th>
-          <th pSortableColumn="lastName">Last Name <p-sortIcon field="lastName"/></th>
-          <th pSortableColumn="email">Email <p-sortIcon field="email"/></th>
           <th pSortableColumn="relationship">Relationship <p-sortIcon field="relationship"/></th>
+          <th style="text-align: center">Group</th>
           <th style="text-align: center">App Identities</th>
           <th style="text-align: center">Actions</th>
         </tr>
@@ -35,10 +37,14 @@
       <ng-template pTemplate="body" let-identity>
         <tr>
           <td><a [routerLink]="['/identities', identity.id]">{{ identity.shortName }}</a></td>
-          <td>{{ identity.firstName }}</td>
-          <td>{{ identity.lastName }}</td>
-          <td>{{ identity.email }}</td>
           <td>{{ identity.relationship }}</td>
+          <td style="text-align: center">
+            @if (identity.isGroup) {
+              <p-tag value="Group" severity="info"></p-tag>
+            } @else {
+              <span>—</span>
+            }
+          </td>
           <td style="text-align: center">
             <p-tag [value]="'' + getAppIdentityCount(identity)"
                    [severity]="getAppIdentityCount(identity) > 0 ? 'info' : 'secondary'"
@@ -57,14 +63,20 @@
       </ng-template>
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="7" style="text-align: center">No identities found.</td>
+          <td colspan="5" style="text-align: center">No identities found.</td>
         </tr>
       </ng-template>
     </p-table>
   </p-card>
 
   <!-- Section 2: Unlinked Application Identities -->
-  <p-card header="Unlinked Application Identities">
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="card-header">
+        <i class="pi pi-link card-header-icon"></i>
+        <span class="card-header-title">Unlinked Application Identities</span>
+      </div>
+    </ng-template>
     <p-table
       [value]="unlinkedAppIdentities"
       [paginator]="true"
@@ -115,24 +127,16 @@
     </p-floatlabel>
 
     <p-floatlabel>
-      <input pInputText id="firstName" [(ngModel)]="editingIdentity.firstName" style="width: 100%" />
-      <label for="firstName">First Name</label>
-    </p-floatlabel>
-
-    <p-floatlabel>
-      <input pInputText id="lastName" [(ngModel)]="editingIdentity.lastName" style="width: 100%" />
-      <label for="lastName">Last Name</label>
-    </p-floatlabel>
-
-    <p-floatlabel>
-      <input pInputText id="email" [(ngModel)]="editingIdentity.email" style="width: 100%" />
-      <label for="email">Email</label>
-    </p-floatlabel>
-
-    <p-floatlabel>
       <input pInputText id="relationship" [(ngModel)]="editingIdentity.relationship" style="width: 100%" />
       <label for="relationship">Relationship</label>
     </p-floatlabel>
+
+    <div style="margin-bottom: 10px; display: flex; align-items: flex-start; gap: 8px">
+      <p-checkbox [(ngModel)]="editingIdentity.isGroup" [binary]="true" inputId="isGroup" label="Is a group"></p-checkbox>
+      <small style="flex: 1; color: var(--text-color-secondary); line-height: 1.4">
+        Use for group chats or other non-person identities.
+      </small>
+    </div>
 
     @if (!isNewIdentity && editingIdentity.identityInApplications && editingIdentity.identityInApplications.length > 0) {
       <div class="linked-app-identities">
@@ -184,7 +188,7 @@
       [optionLabel]="'shortName'"
       placeholder="Select an identity"
       [filter]="true"
-      filterBy="shortName,firstName,lastName"
+      filterBy="shortName"
       appendTo="body"
       [style]="{'width': '100%'}">
       <ng-template let-identity pTemplate="item">

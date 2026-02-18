@@ -54,9 +54,6 @@ class MessageControllerTest {
 
         IdentityEntity senderIdentity = IdentityEntity.builder()
                 .shortName("sender")
-                .firstName("John")
-                .lastName("Sender")
-                .email("sender@example.com")
                 .relationship("friend")
                 .build();
         senderApplication = IdentityInApplicationEntity.builder()
@@ -70,9 +67,6 @@ class MessageControllerTest {
 
         IdentityEntity receiverIdentity = IdentityEntity.builder()
                 .shortName("receiver")
-                .firstName("Jane")
-                .lastName("Receiver")
-                .email("receiver@example.com")
                 .relationship("family")
                 .build();
         receiverApplication = IdentityInApplicationEntity.builder()

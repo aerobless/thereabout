@@ -34,9 +34,7 @@ public class IdentityService {
                 .orElseThrow(() -> new ThereaboutException(HttpStatusCode.valueOf(404), "Identity with id %d not found".formatted(id)));
 
         existing.setShortName(updatedIdentity.getShortName());
-        existing.setFirstName(updatedIdentity.getFirstName());
-        existing.setLastName(updatedIdentity.getLastName());
-        existing.setEmail(updatedIdentity.getEmail());
+        existing.setGroup(updatedIdentity.isGroup());
         existing.setRelationship(updatedIdentity.getRelationship());
 
         // Sync the identity_in_application list

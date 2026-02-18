@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.communication.transport;
 
+import com.sixtymeters.thereabout.communication.data.CommunicationApplication;
 import com.sixtymeters.thereabout.communication.data.IdentityInApplicationEntity;
 import com.sixtymeters.thereabout.communication.service.IdentityInApplicationService;
 import com.sixtymeters.thereabout.communication.transport.mapper.IdentityMapper;
@@ -20,6 +21,15 @@ public class IdentityInApplicationController implements IdentityInApplicationApi
 
     private static final IdentityMapper IDENTITY_MAPPER = IdentityMapper.INSTANCE;
     private final IdentityInApplicationService identityInApplicationService;
+
+    @Override
+    public ResponseEntity<List<GenIdentityInApplication>> getIdentityInApplicationsByApplication(String application) {
+        CommunicationApplication app = IdentityMapper.INSTANCE.displayNameToEnum(application);
+        List<GenIdentityInApplication> result = identityInApplicationService.getByApplication(app).stream()
+                .map(IDENTITY_MAPPER::mapToGenIdentityInApplication)
+                .toList();
+        return ResponseEntity.ok(result);
+    }
 
     @Override
     public ResponseEntity<List<GenIdentityInApplication>> getUnlinkedIdentityInApplications() {

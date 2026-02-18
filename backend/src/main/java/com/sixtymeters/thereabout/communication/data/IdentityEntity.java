@@ -23,11 +23,8 @@ public class IdentityEntity {
     @Column(nullable = false)
     private String shortName;
 
-    private String firstName;
-
-    private String lastName;
-
-    private String email;
+    @Builder.Default
+    private boolean isGroup = false;
 
     private String relationship;
 

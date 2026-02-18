@@ -1,9 +1,6 @@
 package com.sixtymeters.thereabout.communication.service;
 
-import com.sixtymeters.thereabout.communication.data.IdentityEntity;
-import com.sixtymeters.thereabout.communication.data.IdentityInApplicationEntity;
-import com.sixtymeters.thereabout.communication.data.IdentityInApplicationRepository;
-import com.sixtymeters.thereabout.communication.data.IdentityRepository;
+import com.sixtymeters.thereabout.communication.data.*;
 import com.sixtymeters.thereabout.config.ThereaboutException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +20,10 @@ public class IdentityInApplicationService {
 
     public List<IdentityInApplicationEntity> getUnlinkedAppIdentities() {
         return identityInApplicationRepository.findByIdentityIsNull();
+    }
+
+    public List<IdentityInApplicationEntity> getByApplication(CommunicationApplication application) {
+        return identityInApplicationRepository.findByApplication(application);
     }
 
     @Transactional

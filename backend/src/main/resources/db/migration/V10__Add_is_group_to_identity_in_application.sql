@@ -1,0 +1,4 @@
+ALTER TABLE identity ADD COLUMN is_group BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE identity DROP COLUMN email;
+ALTER TABLE identity DROP COLUMN first_name;
+ALTER TABLE identity DROP COLUMN last_name;

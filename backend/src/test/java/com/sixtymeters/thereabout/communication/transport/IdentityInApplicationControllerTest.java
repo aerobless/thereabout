@@ -55,9 +55,6 @@ class IdentityInApplicationControllerTest {
 
         identity = IdentityEntity.builder()
                 .shortName("johndoe")
-                .firstName("John")
-                .lastName("Doe")
-                .email("john@example.com")
                 .relationship("friend")
                 .build();
         identity = identityRepository.save(identity);

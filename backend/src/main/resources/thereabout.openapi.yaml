@@ -42,6 +42,8 @@ paths:
     $ref: 'openapi/communication.yaml#/paths/Identity'
   /backend/api/v1/identity/{id}:
     $ref: 'openapi/communication.yaml#/paths/IdentityById'
+  /backend/api/v1/identity-in-application:
+    $ref: 'openapi/communication.yaml#/paths/IdentityInApplicationByApplication'
   /backend/api/v1/identity-in-application/unlinked:
     $ref: 'openapi/communication.yaml#/paths/IdentityInApplicationUnlinked'
   /backend/api/v1/identity-in-application/{id}/link/{identityId}:

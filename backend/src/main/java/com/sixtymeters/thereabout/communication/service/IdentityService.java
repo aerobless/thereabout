@@ -1,6 +1,7 @@
 package com.sixtymeters.thereabout.communication.service;
 
 import com.sixtymeters.thereabout.communication.data.IdentityEntity;
+import com.sixtymeters.thereabout.communication.data.IdentityInApplicationEntity;
 import com.sixtymeters.thereabout.communication.data.IdentityRepository;
 import com.sixtymeters.thereabout.config.ThereaboutException;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -24,7 +27,9 @@ public class IdentityService {
 
     @Transactional
     public IdentityEntity createIdentity(IdentityEntity identity) {
-        identity.getIdentityInApplications().forEach(app -> app.setIdentity(identity));
+        if (identity.getIdentityInApplications() != null) {
+            identity.getIdentityInApplications().forEach(app -> app.setIdentity(identity));
+        }
         return identityRepository.save(identity);
     }
 
@@ -37,12 +42,25 @@ public class IdentityService {
         existing.setGroup(updatedIdentity.isGroup());
         existing.setRelationship(updatedIdentity.getRelationship());
 
-        // Sync the identity_in_application list
-        existing.getIdentityInApplications().clear();
-        updatedIdentity.getIdentityInApplications().forEach(app -> {
-            app.setIdentity(existing);
-            existing.getIdentityInApplications().add(app);
-        });
+        // Sync the identity_in_application list (only when provided; null or empty means keep existing)
+        // Reuse existing entities when ids match to avoid duplicate key on (application, identifier)
+        List<IdentityInApplicationEntity> updatedApps = updatedIdentity.getIdentityInApplications();
+        if (updatedApps != null && !updatedApps.isEmpty()) {
+            List<IdentityInApplicationEntity> existingApps = existing.getIdentityInApplications();
+            Set<Long> updatedIds = updatedApps.stream()
+                    .map(IdentityInApplicationEntity::getId)
+                    .filter(appId -> appId != null && appId != 0)
+                    .collect(Collectors.toSet());
+
+            existingApps.removeIf(app -> app.getId() != null && !updatedIds.contains(app.getId()));
+
+            for (IdentityInApplicationEntity app : updatedApps) {
+                if (app.getId() == null || app.getId() == 0) {
+                    app.setIdentity(existing);
+                    existingApps.add(app);
+                }
+            }
+        }
 
         return identityRepository.save(existing);
     }

@@ -153,6 +153,74 @@ class IdentityControllerTest {
     }
 
     @Test
+    void testUpdateIdentityWithoutIdentityInApplications() throws Exception {
+        IdentityEntity existing = identityRepository.findAll().stream()
+                .filter(identity -> "receiver".equals(identity.getShortName()))
+                .findFirst()
+                .orElseThrow();
+
+        String requestBody = """
+                {"id":%d,"shortName":"receiver-updated","relationship":"colleague"}
+                """.formatted(existing.getId()).strip();
+
+        String responseContent = mockMvc.perform(put("/backend/api/v1/identity/{id}", existing.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        GenIdentity response = objectMapper.readValue(responseContent, GenIdentity.class);
+
+        assertThat(response.getId()).isEqualTo(BigDecimal.valueOf(existing.getId()));
+        assertThat(response.getShortName()).isEqualTo("receiver-updated");
+        assertThat(response.getRelationship()).isEqualTo("colleague");
+        assertThat(response.getIdentityInApplications()).hasSize(1);
+        assertThat(response.getIdentityInApplications().getFirst().getIdentifier()).isEqualTo("+4100000002");
+    }
+
+    @Test
+    void testUpdateIdentityPreservesExistingIdentityInApplications() throws Exception {
+        IdentityEntity existing = identityRepository.findAll().stream()
+                .filter(identity -> "sender".equals(identity.getShortName()))
+                .findFirst()
+                .orElseThrow();
+
+        IdentityInApplicationEntity existingApp = existing.getIdentityInApplications().getFirst();
+
+        GenIdentity request = GenIdentity.builder()
+                .id(BigDecimal.valueOf(existing.getId()))
+                .shortName("sender-edited")
+                .relationship("colleague")
+                .identityInApplications(List.of(
+                        GenIdentityInApplication.builder()
+                                .id(BigDecimal.valueOf(existingApp.getId()))
+                                .application("WhatsApp")
+                                .identifier("+4100000001")
+                                .build()
+                ))
+                .build();
+
+        String responseContent = mockMvc.perform(put("/backend/api/v1/identity/{id}", existing.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        GenIdentity response = objectMapper.readValue(responseContent, GenIdentity.class);
+
+        assertThat(response.getId()).isEqualTo(BigDecimal.valueOf(existing.getId()));
+        assertThat(response.getShortName()).isEqualTo("sender-edited");
+        assertThat(response.getIdentityInApplications()).hasSize(1);
+        assertThat(response.getIdentityInApplications().getFirst().getId()).isEqualTo(BigDecimal.valueOf(existingApp.getId()));
+        assertThat(response.getIdentityInApplications().getFirst().getApplication()).isEqualTo("WhatsApp");
+        assertThat(response.getIdentityInApplications().getFirst().getIdentifier()).isEqualTo("+4100000001");
+    }
+
+    @Test
     void testDeleteIdentity() throws Exception {
         IdentityEntity existing = identityRepository.findAll().stream()
                 .filter(identity -> "receiver".equals(identity.getShortName()))

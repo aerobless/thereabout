@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Mapper
@@ -30,12 +31,20 @@ public interface IdentityMapper {
     @Mapping(source = "application", target = "application", qualifiedByName = "enumToDisplayName")
     GenIdentityInApplication mapToGenIdentityInApplication(IdentityInApplicationEntity entity);
 
-    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "id", source = "id", qualifiedByName = "bigDecimalToLong")
     @Mapping(target = "identity", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(source = "application", target = "application", qualifiedByName = "displayNameToEnum")
     IdentityInApplicationEntity mapToIdentityInApplicationEntity(GenIdentityInApplication genIdentityInApplication);
+
+    @Named("bigDecimalToLong")
+    default Long bigDecimalToLong(BigDecimal value) {
+        if (value == null || value.longValue() == 0) {
+            return null;
+        }
+        return value.longValue();
+    }
 
     List<GenIdentityInApplication> mapToGenIdentityInApplicationList(List<IdentityInApplicationEntity> entities);
 

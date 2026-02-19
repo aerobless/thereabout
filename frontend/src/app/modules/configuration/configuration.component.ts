@@ -80,6 +80,12 @@ export class ConfigurationComponent implements OnInit {
             value: 'WHATSAPP_CHAT',
             accept: '.txt',
             description: 'Upload your WhatsApp chat export (.txt) here. It will be imported into Thereabout.'
+        },
+        {
+            label: 'Health Auto Export JSON',
+            value: 'HEALTH_AUTO_EXPORT_JSON',
+            accept: '.json',
+            description: 'Upload your Health Auto Export JSON (workouts, steps, metrics, etc.) here. It will be imported into Thereabout using the same health data storage as the REST API.'
         }
     ];
     selectedImportType: ImportTypeOption = this.importTypeOptions[0];

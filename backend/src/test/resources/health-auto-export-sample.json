@@ -1,0 +1,38 @@
+{
+  "data": {
+    "workouts": [
+      {
+        "id": "TEST-WORKOUT-001",
+        "name": "Outdoor Run",
+        "start": "2026-02-10 08:00:00 +0100",
+        "end": "2026-02-10 08:25:00 +0100",
+        "duration": 1500,
+        "location": "Outdoor",
+        "distance": { "qty": 3.5, "units": "km" },
+        "activeEnergyBurned": { "qty": 280, "units": "kcal" },
+        "speed": { "qty": 8.4, "units": "km/hr" }
+      },
+      {
+        "id": "TEST-WORKOUT-002",
+        "name": "Outdoor Walk",
+        "start": "2026-02-11 18:00:00 +0100",
+        "end": "2026-02-11 18:35:00 +0100",
+        "duration": 2100,
+        "location": "Outdoor",
+        "distance": { "qty": 2.1, "units": "km" },
+        "activeEnergyBurned": { "qty": 95, "units": "kcal" },
+        "speed": { "qty": 3.6, "units": "km/hr" }
+      }
+    ],
+    "metrics": [
+      {
+        "name": "step_count",
+        "units": "steps",
+        "data": [
+          { "qty": 8520, "date": "2026-02-10 00:00:00 +0100", "source": "Health" },
+          { "qty": 6230, "date": "2026-02-11 00:00:00 +0100", "source": "Health" }
+        ]
+      }
+    ]
+  }
+}

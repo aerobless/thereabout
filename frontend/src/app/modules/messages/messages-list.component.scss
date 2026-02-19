@@ -47,6 +47,17 @@
   color: var(--p-text-muted-color);
 }
 
+/* Sender/receiver links on messages page */
+a {
+  text-decoration: none;
+
+  &:hover,
+  &:focus,
+  &:active {
+    text-decoration: none;
+  }
+}
+
 .empty-table-message {
   text-align: center;
   padding: 2rem !important;

@@ -1,0 +1,142 @@
+<thereabout-toolbar></thereabout-toolbar>
+
+<div class="main-content">
+  <p-card class="messages-card">
+    <ng-template pTemplate="header">
+      <div class="card-header">
+        <i class="fa-solid fa-envelope card-header-icon"></i>
+        <span class="card-header-title">Messages</span>
+      </div>
+    </ng-template>
+    <p-table
+      #dt
+      [value]="messages"
+      [lazy]="true"
+      [paginator]="true"
+      [rows]="rows"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [sortField]="defaultSortField"
+      [sortOrder]="defaultSortOrder"
+      [filters]="tableFilters"
+      (onLazyLoad)="loadMessages($event)"
+      styleClass="p-datatable-sm"
+      [rowsPerPageOptions]="[10, 20, 50]"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} messages"
+      [filterDelay]="400"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="timestamp" style="min-width: 10rem">
+            <i class="fa-solid fa-clock" pTooltip="Date / Time" tooltipPosition="top"></i>
+            <span class="th-label">Date / Time </span>
+            <p-sortIcon field="timestamp"></p-sortIcon>
+          </th>
+          <th style="min-width: 6rem">
+            <i class="fa-solid fa-mobile-screen" pTooltip="Source" tooltipPosition="top"></i>
+            <span class="th-label">Source</span>
+          </th>
+          <th style="min-width: 8rem">
+            <i class="fa-solid fa-user" pTooltip="Sender" tooltipPosition="top"></i>
+            <span class="th-label">Sender</span>
+          </th>
+          <th style="min-width: 8rem">
+            <i class="fa-solid fa-user" pTooltip="Receiver" tooltipPosition="top"></i>
+            <span class="th-label">Receiver</span>
+          </th>
+          <th>
+            <i class="fa-solid fa-comment" pTooltip="Message" tooltipPosition="top"></i>
+            <span class="th-label">Message</span>
+          </th>
+        </tr>
+        <tr>
+          <th>
+            <p-columnFilter
+              field="timestamp"
+              type="date"
+              display="row"
+              [showMenu]="false"
+              placeholder="Date"
+            ></p-columnFilter>
+          </th>
+          <th>
+            <p-columnFilter
+              field="source"
+              type="text"
+              display="row"
+              matchMode="equals"
+              [showMenu]="false"
+            >
+              <ng-template #filter let-value let-filter="filterCallback">
+                <p-select
+                  [ngModel]="value"
+                  [options]="sourceOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  [showClear]="true"
+                  placeholder="Any"
+                  (onChange)="filter($event.value)"
+                ></p-select>
+              </ng-template>
+            </p-columnFilter>
+          </th>
+          <th>
+            <p-columnFilter
+              field="sender"
+              type="text"
+              display="row"
+              [showMenu]="false"
+              placeholder="Sender"
+            ></p-columnFilter>
+          </th>
+          <th>
+            <p-columnFilter
+              field="receiver"
+              type="text"
+              display="row"
+              [showMenu]="false"
+              placeholder="Receiver"
+            ></p-columnFilter>
+          </th>
+          <th>
+            <p-columnFilter
+              field="message"
+              type="text"
+              display="row"
+              [showMenu]="false"
+            ></p-columnFilter>
+          </th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-message>
+        <tr>
+          <td>
+            <span class="message-date">{{ formatMessageDate(message.timestamp) }}</span>
+            <span class="message-time">{{ formatMessageTime(message.timestamp) }}</span>
+          </td>
+          <td>{{ message.source ?? '--' }}</td>
+          <td>
+            @if (message.sender?.identityId) {
+              <a [routerLink]="['/identities', message.sender.identityId]">{{ message.sender.name }}</a>
+            } @else {
+              {{ message.sender?.name ?? '--' }}
+            }
+          </td>
+          <td>
+            @if (message.receiver?.identityId) {
+              <a [routerLink]="['/identities', message.receiver.identityId]">{{ message.receiver.name }}</a>
+            } @else {
+              {{ message.receiver?.name ?? '--' }}
+            }
+          </td>
+          <td>{{ message.body ?? message.subject ?? '--' }}</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5" class="empty-table-message">No messages found.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+</div>

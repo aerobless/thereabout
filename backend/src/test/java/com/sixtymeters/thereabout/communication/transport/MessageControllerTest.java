@@ -9,6 +9,7 @@ import com.sixtymeters.thereabout.communication.data.IdentityRepository;
 import com.sixtymeters.thereabout.communication.data.MessageEntity;
 import com.sixtymeters.thereabout.communication.data.MessageRepository;
 import com.sixtymeters.thereabout.generated.model.GenMessage;
+import com.sixtymeters.thereabout.generated.model.GenMessagePage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -165,5 +167,90 @@ class MessageControllerTest {
         // Linked receiver still resolves to identity shortName
         assertThat(response[0].getReceiver().getName()).isEqualTo("receiver");
         assertThat(response[0].getReceiver().getIdentityId()).isNotNull();
+    }
+
+    @Test
+    void testGetMessageList_paginationAndDefaultSort() throws Exception {
+        MessageEntity older = MessageEntity.builder()
+                .type("text")
+                .source(CommunicationApplication.WHATSAPP)
+                .sender(senderApplication)
+                .receiver(receiverApplication)
+                .body("First")
+                .timestamp(LocalDate.of(2026, 2, 1).atTime(10, 0))
+                .build();
+        MessageEntity newer = MessageEntity.builder()
+                .type("text")
+                .source(CommunicationApplication.WHATSAPP)
+                .sender(senderApplication)
+                .receiver(receiverApplication)
+                .body("Second")
+                .timestamp(LocalDate.of(2026, 2, 15).atTime(12, 0))
+                .build();
+        messageRepository.save(older);
+        messageRepository.save(newer);
+
+        String responseContent = mockMvc.perform(get("/backend/api/v1/message/list")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        GenMessagePage page = objectMapper.readValue(responseContent, GenMessagePage.class);
+
+        assertThat(page.getTotalElements()).isEqualTo(2);
+        assertThat(page.getContent()).hasSize(2);
+        // Default sort timestamp,desc: most recent first
+        assertThat(page.getContent().get(0).getBody()).isEqualTo("Second");
+        assertThat(page.getContent().get(1).getBody()).isEqualTo("First");
+    }
+
+    @Test
+    void testGetMessageList_searchFiltersByBodyOrSubject() throws Exception {
+        MessageEntity matchBody = MessageEntity.builder()
+                .type("text")
+                .source(CommunicationApplication.WHATSAPP)
+                .sender(senderApplication)
+                .receiver(receiverApplication)
+                .body("UniqueWordInBody")
+                .timestamp(LocalDate.of(2026, 2, 10).atTime(9, 0))
+                .build();
+        MessageEntity matchSubject = MessageEntity.builder()
+                .type("text")
+                .source(CommunicationApplication.WHATSAPP)
+                .sender(senderApplication)
+                .receiver(receiverApplication)
+                .subject("UniqueWordInSubject")
+                .body("Other")
+                .timestamp(LocalDate.of(2026, 2, 10).atTime(10, 0))
+                .build();
+        MessageEntity noMatch = MessageEntity.builder()
+                .type("text")
+                .source(CommunicationApplication.WHATSAPP)
+                .sender(senderApplication)
+                .receiver(receiverApplication)
+                .body("Nothing special")
+                .timestamp(LocalDate.of(2026, 2, 10).atTime(11, 0))
+                .build();
+        messageRepository.save(matchBody);
+        messageRepository.save(matchSubject);
+        messageRepository.save(noMatch);
+
+        String responseContent = mockMvc.perform(get("/backend/api/v1/message/list")
+                        .param("search", "UniqueWord"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        GenMessagePage page = objectMapper.readValue(responseContent, GenMessagePage.class);
+
+        assertThat(page.getTotalElements()).isEqualTo(2);
+        assertThat(page.getContent()).extracting(GenMessage::getBody, GenMessage::getSubject)
+                .containsExactlyInAnyOrder(
+                        tuple("UniqueWordInBody", null),
+                        tuple("Other", "UniqueWordInSubject"));
     }
 }

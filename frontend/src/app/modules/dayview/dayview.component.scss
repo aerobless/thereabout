@@ -254,6 +254,20 @@ a {
 // ============================================================================
 // Messages Card
 // ============================================================================
+.card-header-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: none;
+    color: inherit;
+  }
+}
+
 .messages-content {
   padding: 0;
 

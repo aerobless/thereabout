@@ -216,6 +216,77 @@ paths:
           $ref: '../thereabout.openapi.yaml#/components/responses/400'
         500:
           $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  MessageList:
+    get:
+      summary: Get messages with pagination, sort and search.
+      tags:
+        - message
+      operationId: getMessageList
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: Zero-based page index
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+          description: Page size
+        - in: query
+          name: sort
+          schema:
+            type: string
+            example: "timestamp,desc"
+          description: Sort in format field,direction (e.g. timestamp,desc). Default most recent first.
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Substring to search in message body and subject
+        - in: query
+          name: dateFrom
+          schema:
+            type: string
+            format: date
+            example: "2025-01-01"
+          description: Filter messages from this date (inclusive), ISO date
+        - in: query
+          name: dateTo
+          schema:
+            type: string
+            format: date
+            example: "2025-12-31"
+          description: Filter messages up to this date (inclusive), ISO date
+        - in: query
+          name: source
+          schema:
+            type: string
+            example: "WhatsApp"
+          description: Filter by source application (e.g. WhatsApp)
+        - in: query
+          name: sender
+          schema:
+            type: string
+          description: Substring to match in sender name or identifier
+        - in: query
+          name: receiver
+          schema:
+            type: string
+          description: Substring to match in receiver name or identifier
+      responses:
+        200:
+          description: Paginated list of messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessagePage'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
 
 components:
   schemas:
@@ -324,4 +395,20 @@ components:
         identityId:
           type: number
           description: The id of the linked identity, or null if unlinked
+          example: 42
+    MessagePage:
+      description: Paginated response of messages.
+      type: object
+      required:
+        - content
+        - totalElements
+      properties:
+        content:
+          type: array
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          items:
+            $ref: '#/components/schemas/Message'
+        totalElements:
+          type: integer
+          description: Total number of messages matching the request
           example: 42

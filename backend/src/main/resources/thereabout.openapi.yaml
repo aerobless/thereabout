@@ -52,6 +52,8 @@ paths:
     $ref: 'openapi/communication.yaml#/paths/IdentityInApplicationUnlink'
   /backend/api/v1/message:
     $ref: 'openapi/communication.yaml#/paths/Message'
+  /backend/api/v1/message/list:
+    $ref: 'openapi/communication.yaml#/paths/MessageList'
 
 components:
   schemas:
@@ -181,6 +183,8 @@ components:
       $ref: 'openapi/communication.yaml#/components/schemas/IdentityInApplication'
     Message:
       $ref: 'openapi/communication.yaml#/components/schemas/Message'
+    MessagePage:
+      $ref: 'openapi/communication.yaml#/components/schemas/MessagePage'
     MessageParticipant:
       $ref: 'openapi/communication.yaml#/components/schemas/MessageParticipant'
 

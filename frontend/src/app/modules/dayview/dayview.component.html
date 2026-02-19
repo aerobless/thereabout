@@ -202,8 +202,10 @@
     <p-card class="dayview-card card-messages">
       <ng-template pTemplate="header">
         <div class="card-header">
-          <i class="fa-solid fa-envelope card-header-icon"></i>
-          <span class="card-header-title">Messages</span>
+          <a routerLink="/messages" class="card-header-link">
+            <i class="fa-solid fa-envelope card-header-icon"></i>
+            <span class="card-header-title">Messages</span>
+          </a>
         </div>
       </ng-template>
       <div class="messages-content">

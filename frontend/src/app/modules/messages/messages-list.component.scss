@@ -1,0 +1,95 @@
+.main-content {
+  padding: 0.75rem 1rem;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.messages-card {
+  width: 100%;
+  box-sizing: border-box;
+
+  ::ng-deep .p-card-body {
+    padding: 1rem;
+  }
+
+  ::ng-deep .p-card-content {
+    padding: 0;
+  }
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .card-header-icon {
+    font-size: 1.1rem;
+  }
+
+  .card-header-title {
+    font-weight: 600;
+  }
+}
+
+.caption-bar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.message-date {
+  display: block;
+  font-weight: 500;
+}
+
+.message-time {
+  display: block;
+  font-size: 0.85em;
+  color: var(--p-text-muted-color);
+}
+
+.empty-table-message {
+  text-align: center;
+  padding: 2rem !important;
+  color: var(--p-text-muted-color);
+}
+
+::ng-deep .p-datatable {
+  table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .p-datatable-thead > tr > th {
+    white-space: nowrap;
+
+    &:nth-child(1) { width: 9rem; } // Date / Time
+    &:nth-child(2) { width: 7rem; } // Source
+    &:nth-child(3) { width: 10rem; } // Sender
+    &:nth-child(4) { width: 10rem; } // Receiver
+    // Message column uses remaining width
+
+    .th-label {
+      margin-left: 0.35rem;
+    }
+  }
+
+  .p-datatable-tbody > tr > td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Keep filter controls inside their own fixed columns */
+  .p-datatable-thead > tr:nth-child(2) > th {
+    box-sizing: border-box;
+  }
+
+  .p-datatable-thead > tr:nth-child(2) .p-column-filter,
+  .p-datatable-thead > tr:nth-child(2) .p-column-filter-element,
+  .p-datatable-thead > tr:nth-child(2) .p-inputtext,
+  .p-datatable-thead > tr:nth-child(2) .p-select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+}

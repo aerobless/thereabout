@@ -6,6 +6,7 @@ import {TripsComponent} from "./modules/trips/trips.component";
 import {DayviewComponent} from "./modules/dayview/dayview.component";
 import {IdentitiesComponent} from "./modules/identities/identities.component";
 import {IdentityDetailComponent} from "./modules/identities/identity-detail/identity-detail.component";
+import {MessagesListComponent} from "./modules/messages/messages-list.component";
 
 export const routes: Routes = [
     {
@@ -35,5 +36,9 @@ export const routes: Routes = [
     {
         path: 'identities/:id',
         component: IdentityDetailComponent
+    },
+    {
+        path: 'messages',
+        component: MessagesListComponent
     },
 ];

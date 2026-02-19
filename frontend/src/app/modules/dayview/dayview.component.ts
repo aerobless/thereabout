@@ -217,14 +217,8 @@ export class DayviewComponent implements OnInit {
         this.selectedDayWeight = selectedDayMetric?.qty || null;
 
         // Extract energy metrics
-        const activeEnergyMetrics =
-          response.metrics?.['active_energy'] ||
-          response.metrics?.['activeEnergy'] ||
-          [];
-        const basalEnergyMetrics =
-          response.metrics?.['basal_energy'] ||
-          response.metrics?.['basalEnergy'] ||
-          [];
+        const activeEnergyMetrics = response.metrics?.['active_energy'] || [];
+        const basalEnergyMetrics = response.metrics?.['basal_energy_burned'] || [];
 
         // Find energy for selected day
         const selectedDayActiveEnergyMetric = activeEnergyMetrics.find((m: any) => m.date === selectedDateStr);

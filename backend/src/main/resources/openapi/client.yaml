@@ -115,4 +115,5 @@ components:
       enum:
         - GOOGLE_MAPS_RECORDS
         - WHATSAPP_CHAT
+        - TELEGRAM_CHAT
         - HEALTH_AUTO_EXPORT_JSON

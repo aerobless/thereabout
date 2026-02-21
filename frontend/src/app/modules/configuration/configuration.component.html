@@ -11,12 +11,13 @@
     <div class="config-block">
       <p-select [options]="importTypeOptions"
         [(ngModel)]="selectedImportType"
+        (ngModelChange)="onImportTypeChange()"
         optionLabel="label"
         [style]="{'width': '100%'}">
       </p-select>
     </div>
     <p [innerHTML]="selectedImportType.description"></p>
-    @if (isWhatsAppImport) {
+    @if (isReceiverRequired) {
       <div class="config-block">
         <label for="receiver" class="config-label"
                pTooltip="Link with an existing application identity, if none exist create a new one."

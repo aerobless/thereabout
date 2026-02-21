@@ -1,0 +1,121 @@
+{
+  "name": "Test Chat",
+  "type": "personal_chat",
+  "id": 12345,
+  "messages": [
+    {
+      "id": 1001,
+      "type": "message",
+      "date": "2024-01-15T10:00:00",
+      "date_unixtime": "1705312800",
+      "from": "Alice Test",
+      "from_id": "user111",
+      "text": "Hello, this is a plain text message.",
+      "text_entities": [
+        {
+          "type": "plain",
+          "text": "Hello, this is a plain text message."
+        }
+      ]
+    },
+    {
+      "id": 1002,
+      "type": "message",
+      "date": "2024-01-15T10:01:00",
+      "date_unixtime": "1705312860",
+      "from": "Bob Test",
+      "from_id": "user222",
+      "text": [
+        {
+          "type": "link",
+          "text": "https://example.com/page"
+        },
+        {
+          "type": "plain",
+          "text": " - check this out"
+        }
+      ],
+      "text_entities": [
+        {
+          "type": "link",
+          "text": "https://example.com/page"
+        },
+        {
+          "type": "plain",
+          "text": " - check this out"
+        }
+      ]
+    },
+    {
+      "id": 1003,
+      "type": "message",
+      "date": "2024-01-15T10:02:00",
+      "date_unixtime": "1705312920",
+      "from": "Alice Test",
+      "from_id": "user111",
+      "photo": "(File not included.)",
+      "photo_file_size": 50000,
+      "media_type": "photo",
+      "width": 800,
+      "height": 600,
+      "text": "",
+      "text_entities": []
+    },
+    {
+      "id": 1004,
+      "type": "message",
+      "date": "2024-01-15T10:03:00",
+      "date_unixtime": "1705312980",
+      "from": "Bob Test",
+      "from_id": "user222",
+      "file_size": 1024,
+      "media_type": "voice_message",
+      "mime_type": "audio/ogg",
+      "duration_seconds": 5,
+      "text": "",
+      "text_entities": []
+    },
+    {
+      "id": 1005,
+      "type": "message",
+      "date": "2024-01-15T10:04:00",
+      "date_unixtime": "1705313040",
+      "from": "Alice Test",
+      "from_id": "user111",
+      "file": "(File not included.)",
+      "file_name": "sticker.webp",
+      "media_type": "sticker",
+      "sticker_emoji": "👍",
+      "text": "",
+      "text_entities": []
+    },
+    {
+      "id": 1006,
+      "type": "service",
+      "date": "2024-01-15T10:05:00",
+      "date_unixtime": "1705313100",
+      "actor": "Alice Test",
+      "actor_id": "user111",
+      "action": "phone_call",
+      "duration_seconds": 120,
+      "discard_reason": "hangup",
+      "text": "",
+      "text_entities": []
+    },
+    {
+      "id": 1007,
+      "type": "message",
+      "date": "2024-01-15T10:06:00",
+      "date_unixtime": "1705313160",
+      "from": "Bob Test",
+      "from_id": "user222",
+      "text": "Bye!",
+      "text_entities": [
+        {
+          "type": "plain",
+          "text": "Bye!"
+        }
+      ]
+    }
+  ]
+}

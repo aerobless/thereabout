@@ -39,7 +39,10 @@ export class MessagesListComponent {
   defaultSortOrder = -1; // desc
   rows = 20;
 
-  sourceOptions = [{ label: 'WhatsApp', value: 'WhatsApp' }];
+  sourceOptions = [
+    { label: 'WhatsApp', value: 'WhatsApp' },
+    { label: 'Telegram', value: 'Telegram' }
+  ];
   /** Bound to p-table [filters]; required for PrimeNG 21 column filter UI */
   tableFilters: { [s: string]: FilterMetadata | FilterMetadata[] } = {};
 

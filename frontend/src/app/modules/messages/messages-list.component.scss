@@ -4,6 +4,11 @@
   box-sizing: border-box;
 }
 
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .messages-card {
   width: 100%;
   box-sizing: border-box;
@@ -102,5 +107,70 @@ a {
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
+  }
+}
+
+/* Mobile: smaller table width, smaller font, horizontal scroll */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 0.5rem 0.5rem;
+  }
+
+  .messages-card ::ng-deep .p-card-body {
+    padding: 0.5rem;
+  }
+
+  .table-wrapper {
+    margin: 0 -0.5rem; /* extend scroll area to edges */
+  }
+
+  .messages-card ::ng-deep .p-datatable {
+    font-size: 0.8125rem; /* 13px – slightly smaller */
+
+    table {
+      table-layout: fixed;
+      min-width: 100%;
+    }
+
+    /* Hide Source column on mobile */
+    .p-datatable-thead > tr > th:nth-child(2),
+    .p-datatable-tbody > tr > td:nth-child(2) {
+      display: none;
+    }
+
+    .p-datatable-thead > tr > th {
+      font-size: inherit;
+      padding: 0.4rem 0.35rem;
+
+      /* Shorter fixed widths: Date, Sender, Receiver; Message takes the rest */
+      &:nth-child(1) { width: 4.5rem; }   /* Date/Time */
+      &:nth-child(3) { width: 4rem; }    /* Sender */
+      &:nth-child(4) { width: 4rem; }    /* Receiver */
+      &:nth-child(5) { width: auto; }     /* Message */
+
+      /* Icons only on mobile – hide text labels */
+      .th-label {
+        display: none;
+      }
+    }
+
+    .p-datatable-tbody > tr > td {
+      padding: 0.4rem 0.35rem;
+      font-size: inherit;
+    }
+
+    .p-datatable-wrapper,
+    .p-paginator {
+      font-size: inherit;
+    }
+
+    .message-date,
+    .message-time {
+      font-size: inherit;
+    }
+
+    .message-time {
+      font-size: 0.9em;
+    }
   }
 }

@@ -80,3 +80,10 @@ body {
   height: 100%;
   z-index: 1000;
 }
+
+// Day view toolbar: Today button icon-only on mobile (content is projected, so global style)
+@media (max-width: 768px) {
+  .p-toolbar-group-center .today-btn .p-button-label {
+    display: none !important;
+  }
+}

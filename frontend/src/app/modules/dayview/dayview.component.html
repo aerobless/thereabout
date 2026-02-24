@@ -231,55 +231,50 @@
       </p-card>
     </div>
 
-    <!-- Workouts Card -->
-    <p-card class="dayview-card card-workouts">
-      <ng-template pTemplate="header">
-        <div class="card-header">
-          <i class="fa-solid fa-dumbbell card-header-icon"></i>
-          <span class="card-header-title">Workouts</span>
+    <!-- Workouts Card (hidden when no workouts for the day) -->
+    @if (workouts.length > 0) {
+      <p-card class="dayview-card card-workouts">
+        <ng-template pTemplate="header">
+          <div class="card-header">
+            <i class="fa-solid fa-dumbbell card-header-icon"></i>
+            <span class="card-header-title">Workouts</span>
+          </div>
+        </ng-template>
+        <div class="workouts-content">
+          <p-table
+            [value]="workouts"
+            styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>
+                  <i class="fa-solid fa-clock" pTooltip="Time" tooltipPosition="top"></i>
+                </th>
+                <th>
+                  <i class="fa-solid fa-dumbbell" pTooltip="Activity" tooltipPosition="top"></i>
+                  <span class="th-label">Activity</span>
+                </th>
+                <th>
+                  <i class="fa-solid fa-hourglass-half" pTooltip="Duration" tooltipPosition="top"></i>
+                  <span class="th-label">Duration</span>
+                </th>
+                <th>
+                  <i class="fa-solid fa-fire" pTooltip="Energy" tooltipPosition="top"></i>
+                  <span class="th-label">Energy</span>
+                </th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-workout>
+              <tr>
+                <td>{{ formatWorkoutTime(workout.start) }}</td>
+                <td>{{ workout.name || '--' }}</td>
+                <td>{{ formatDuration(workout.duration) }}</td>
+                <td>{{ formatEnergy(workout.activeEnergyBurnedQty, workout.activeEnergyBurnedUnits) }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
         </div>
-      </ng-template>
-      <div class="workouts-content">
-        <p-table
-          [value]="workouts"
-          styleClass="p-datatable-sm">
-          <ng-template pTemplate="header">
-            <tr>
-              <th>
-                <i class="fa-solid fa-clock" pTooltip="Time" tooltipPosition="top"></i>
-              </th>
-              <th>
-                <i class="fa-solid fa-dumbbell" pTooltip="Activity" tooltipPosition="top"></i>
-                <span class="th-label">Activity</span>
-              </th>
-              <th>
-                <i class="fa-solid fa-hourglass-half" pTooltip="Duration" tooltipPosition="top"></i>
-                <span class="th-label">Duration</span>
-              </th>
-              <th>
-                <i class="fa-solid fa-fire" pTooltip="Energy" tooltipPosition="top"></i>
-                <span class="th-label">Energy</span>
-              </th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-workout>
-            <tr>
-              <td>{{ formatWorkoutTime(workout.start) }}</td>
-              <td>{{ workout.name || '--' }}</td>
-              <td>{{ formatDuration(workout.duration) }}</td>
-              <td>{{ formatEnergy(workout.activeEnergyBurnedQty, workout.activeEnergyBurnedUnits) }}</td>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="emptymessage">
-            <tr>
-              <td colspan="4" class="empty-table-message">
-                No workouts for {{ selectedDate | date:'dd.MM.yyyy' }}
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </div>
-    </p-card>
+      </p-card>
+    }
 
     <!-- Messages Card -->
     <p-card class="dayview-card card-messages">

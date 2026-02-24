@@ -77,6 +77,8 @@ export class DayviewComponent implements OnInit {
   selectedDayRestingHeartRate: number | null = null;
   selectedDayStandMinutes: number | null = null;
   selectedDayDistanceKm: number | null = null;
+  selectedDayHrvMs: number | null = null;
+  selectedDaySleepHours: number | null = null;
 
   constructor(
     private router: Router,
@@ -261,16 +263,22 @@ export class DayviewComponent implements OnInit {
         // Daily stats for selected day
         const stepMetrics = response.metrics?.['step_count'] || [];
         const restingHrMetrics = response.metrics?.['resting_heart_rate'] || [];
+        const hrvMetrics = response.metrics?.['heart_rate_variability'] || [];
         const standMetrics = response.metrics?.['apple_stand_time'] || [];
         const distanceMetrics = response.metrics?.['walking_running_distance'] || [];
+        const sleepMetrics = response.metrics?.['sleep_analysis'] || [];
         const stepForDay = stepMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
         const restingHrForDay = restingHrMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
+        const hrvForDay = hrvMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
         const standForDay = standMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
         const distanceForDay = distanceMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
+        const sleepForDay = sleepMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
         this.selectedDaySteps = stepForDay?.qty != null ? Number(stepForDay.qty) : null;
         this.selectedDayRestingHeartRate = restingHrForDay?.qty != null ? Number(restingHrForDay.qty) : null;
+        this.selectedDayHrvMs = hrvForDay?.qty != null ? Number(hrvForDay.qty) : null;
         this.selectedDayStandMinutes = standForDay?.qty != null ? Number(standForDay.qty) : null;
         this.selectedDayDistanceKm = distanceForDay?.qty != null ? Number(distanceForDay.qty) : null;
+        this.selectedDaySleepHours = sleepForDay?.qty != null ? Number(sleepForDay.qty) : null;
 
         // Update chart
         this.updateChart();
@@ -284,8 +292,10 @@ export class DayviewComponent implements OnInit {
         this.workouts = [];
         this.selectedDaySteps = null;
         this.selectedDayRestingHeartRate = null;
+        this.selectedDayHrvMs = null;
         this.selectedDayStandMinutes = null;
         this.selectedDayDistanceKm = null;
+        this.selectedDaySleepHours = null;
         this.updateChart();
       }
     });
@@ -466,5 +476,12 @@ export class DayviewComponent implements OnInit {
   formatStandMinutes(min: number | null): string {
     if (min === null || min === undefined) return '--';
     return Math.round(min).toString();
+  }
+
+  formatSleepHours(hours: number | null): string {
+    if (hours === null || hours === undefined) return '--';
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    return m === 0 ? `${h} hr` : `${h}h ${m}m`;
   }
 } 

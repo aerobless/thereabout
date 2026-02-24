@@ -244,6 +244,19 @@ a {
   flex-wrap: wrap;
 }
 
+.daily-stat-content-two {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.daily-stat-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
 .daily-stat-value {
   font-size: 1.5rem;
   font-weight: 700;

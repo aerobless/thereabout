@@ -154,32 +154,52 @@
         <ng-template pTemplate="header">
           <div class="card-header">
             <i class="fa-solid fa-shoe-prints card-header-icon"></i>
-            <span class="card-header-title">Steps</span>
+            <span class="card-header-title">Steps &amp; Distance</span>
           </div>
         </ng-template>
-        <div class="daily-stat-content">
-          @if (selectedDaySteps !== null) {
-            <span class="daily-stat-value">{{ formatSteps(selectedDaySteps) }}</span>
-            <span class="daily-stat-unit">steps</span>
-          } @else {
-            <span class="daily-stat-value muted">--</span>
-          }
+        <div class="daily-stat-content daily-stat-content-two">
+          <div class="daily-stat-line">
+            @if (selectedDaySteps !== null) {
+              <span class="daily-stat-value">{{ formatSteps(selectedDaySteps) }}</span>
+              <span class="daily-stat-unit">steps</span>
+            } @else {
+              <span class="daily-stat-value muted">--</span>
+            }
+          </div>
+          <div class="daily-stat-line">
+            @if (selectedDayDistanceKm !== null) {
+              <span class="daily-stat-value">{{ formatDistanceKm(selectedDayDistanceKm) }}</span>
+              <span class="daily-stat-unit">km</span>
+            } @else {
+              <span class="daily-stat-value muted">--</span>
+            }
+          </div>
         </div>
       </p-card>
       <p-card class="dayview-card daily-stat-card">
         <ng-template pTemplate="header">
           <div class="card-header">
             <i class="fa-solid fa-heart-pulse card-header-icon"></i>
-            <span class="card-header-title">Resting HR</span>
+            <span class="card-header-title">Heart rate</span>
           </div>
         </ng-template>
-        <div class="daily-stat-content">
-          @if (selectedDayRestingHeartRate !== null) {
-            <span class="daily-stat-value">{{ selectedDayRestingHeartRate }}</span>
-            <span class="daily-stat-unit">bpm</span>
-          } @else {
-            <span class="daily-stat-value muted">--</span>
-          }
+        <div class="daily-stat-content daily-stat-content-two">
+          <div class="daily-stat-line">
+            @if (selectedDayRestingHeartRate !== null) {
+              <span class="daily-stat-value">{{ selectedDayRestingHeartRate }}</span>
+              <span class="daily-stat-unit">bpm</span>
+            } @else {
+              <span class="daily-stat-value muted">--</span>
+            }
+          </div>
+          <div class="daily-stat-line">
+            @if (selectedDayHrvMs !== null) {
+              <span class="daily-stat-value">{{ selectedDayHrvMs }}</span>
+              <span class="daily-stat-unit">ms HRV</span>
+            } @else {
+              <span class="daily-stat-value muted">--</span>
+            }
+          </div>
         </div>
       </p-card>
       <p-card class="dayview-card daily-stat-card">
@@ -201,17 +221,12 @@
       <p-card class="dayview-card daily-stat-card">
         <ng-template pTemplate="header">
           <div class="card-header">
-            <i class="fa-solid fa-route card-header-icon"></i>
-            <span class="card-header-title">Distance</span>
+            <i class="fa-solid fa-moon card-header-icon"></i>
+            <span class="card-header-title">Sleep</span>
           </div>
         </ng-template>
         <div class="daily-stat-content">
-          @if (selectedDayDistanceKm !== null) {
-            <span class="daily-stat-value">{{ formatDistanceKm(selectedDayDistanceKm) }}</span>
-            <span class="daily-stat-unit">km</span>
-          } @else {
-            <span class="daily-stat-value muted">--</span>
-          }
+          <span class="daily-stat-value" [class.muted]="selectedDaySleepHours === null">{{ formatSleepHours(selectedDaySleepHours) }}</span>
         </div>
       </p-card>
     </div>

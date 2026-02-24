@@ -249,6 +249,9 @@ public class HealthDataService {
         } else if (dataItem instanceof GenMetricDataInsulin) {
             Number qty = ((GenMetricDataInsulin) dataItem).getQty();
             return qty != null ? BigDecimal.valueOf(qty.doubleValue()) : null;
+        } else if (dataItem instanceof GenMetricDataSleep) {
+            Number total = ((GenMetricDataSleep) dataItem).getTotalSleep();
+            return total != null ? BigDecimal.valueOf(total.doubleValue()) : null;
         }
         return null;
     }
@@ -669,18 +672,33 @@ public class HealthDataService {
         // Retrieve all health metrics for the date range
         List<HealthMetricEntity> metrics = healthMetricRepository.findByMetricDateBetween(fromDate, toDate);
 
+        // Enrich sleep_analysis with totalSleep from health_metric_sleep when entity.qty is null
+        List<HealthMetricEntity> sleepMetrics = metrics.stream()
+                .filter(m -> "sleep_analysis".equals(m.getMetricName()))
+                .toList();
+        Map<Long, BigDecimal> sleepQtyByMetricId = sleepMetrics.isEmpty()
+                ? Map.of()
+                : sleepRepository.findByHealthMetricIn(sleepMetrics).stream()
+                        .collect(Collectors.toMap(se -> se.getHealthMetric().getId(), HealthMetricSleepEntity::getTotalSleep, (a, b) -> a));
+
+        final Map<Long, BigDecimal> sleepQtyByMetricIdFinal = sleepQtyByMetricId;
         // Group metrics by name and convert to DailyMetricValue
         Map<String, List<DailyMetricValue>> metricsMap = metrics.stream()
                 .collect(Collectors.groupingBy(
                         HealthMetricEntity::getMetricName,
                         Collectors.mapping(
-                                entity -> DailyMetricValue.builder()
-                                        .date(entity.getMetricDate())
-                                        .qty(entity.getQty())
-                                        .units(entity.getUnits())
-                                        .timestamp(entity.getTimestamp())
-                                        .source(entity.getSource())
-                                        .build(),
+                                entity -> {
+                                    BigDecimal qty = "sleep_analysis".equals(entity.getMetricName()) && entity.getQty() == null
+                                            ? sleepQtyByMetricIdFinal.get(entity.getId())
+                                            : entity.getQty();
+                                    return DailyMetricValue.builder()
+                                            .date(entity.getMetricDate())
+                                            .qty(qty)
+                                            .units(entity.getUnits())
+                                            .timestamp(entity.getTimestamp())
+                                            .source(entity.getSource())
+                                            .build();
+                                },
                                 Collectors.toList()
                         )
                 ));

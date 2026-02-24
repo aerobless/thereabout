@@ -72,6 +72,12 @@ export class DayviewComponent implements OnInit {
   selectedDayBasalEnergy: number | null = null;
   energyUnits: string = 'kcal';
 
+  // Daily stats (above Workouts)
+  selectedDaySteps: number | null = null;
+  selectedDayRestingHeartRate: number | null = null;
+  selectedDayStandMinutes: number | null = null;
+  selectedDayDistanceKm: number | null = null;
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -252,6 +258,20 @@ export class DayviewComponent implements OnInit {
             return new Date(a.start).getTime() - new Date(b.start).getTime();
           });
 
+        // Daily stats for selected day
+        const stepMetrics = response.metrics?.['step_count'] || [];
+        const restingHrMetrics = response.metrics?.['resting_heart_rate'] || [];
+        const standMetrics = response.metrics?.['apple_stand_time'] || [];
+        const distanceMetrics = response.metrics?.['walking_running_distance'] || [];
+        const stepForDay = stepMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
+        const restingHrForDay = restingHrMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
+        const standForDay = standMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
+        const distanceForDay = distanceMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
+        this.selectedDaySteps = stepForDay?.qty != null ? Number(stepForDay.qty) : null;
+        this.selectedDayRestingHeartRate = restingHrForDay?.qty != null ? Number(restingHrForDay.qty) : null;
+        this.selectedDayStandMinutes = standForDay?.qty != null ? Number(standForDay.qty) : null;
+        this.selectedDayDistanceKm = distanceForDay?.qty != null ? Number(distanceForDay.qty) : null;
+
         // Update chart
         this.updateChart();
       },
@@ -262,6 +282,10 @@ export class DayviewComponent implements OnInit {
         this.selectedDayActiveEnergy = null;
         this.selectedDayBasalEnergy = null;
         this.workouts = [];
+        this.selectedDaySteps = null;
+        this.selectedDayRestingHeartRate = null;
+        this.selectedDayStandMinutes = null;
+        this.selectedDayDistanceKm = null;
         this.updateChart();
       }
     });
@@ -427,5 +451,20 @@ export class DayviewComponent implements OnInit {
   formatDailyEnergy(energy: number | null): string {
     if (energy === null || energy === undefined) return '--';
     return Math.round(energy).toString();
+  }
+
+  formatSteps(steps: number | null): string {
+    if (steps === null || steps === undefined) return '--';
+    return Math.round(steps).toLocaleString();
+  }
+
+  formatDistanceKm(km: number | null): string {
+    if (km === null || km === undefined) return '--';
+    return km.toFixed(2);
+  }
+
+  formatStandMinutes(min: number | null): string {
+    if (min === null || min === undefined) return '--';
+    return Math.round(min).toString();
   }
 } 

@@ -217,6 +217,51 @@ a {
 }
 
 // ============================================================================
+// Daily stats grid (4 small cards above Workouts)
+// ============================================================================
+.daily-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.daily-stat-card {
+  min-height: 0;
+
+  ::ng-deep .p-card-body {
+    padding: 0;
+  }
+
+  ::ng-deep .p-card-content {
+    padding: 0.75rem 1rem;
+  }
+}
+
+.daily-stat-content {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.daily-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--p-surface-800);
+  line-height: 1;
+
+  &.muted {
+    color: var(--p-surface-300);
+  }
+}
+
+.daily-stat-unit {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--p-surface-500);
+}
+
+// ============================================================================
 // Workouts Card
 // ============================================================================
 .workouts-content {
@@ -313,6 +358,14 @@ a {
   .card-container {
     grid-template-columns: 1fr;
     padding: 0.9375rem;
+  }
+
+  .daily-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .daily-stat-value {
+    font-size: 1.25rem;
   }
 
   .map-wrapper {

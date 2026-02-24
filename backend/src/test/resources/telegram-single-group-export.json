@@ -1,0 +1,17 @@
+{
+  "name": "My Group",
+  "type": "private_group",
+  "id": 9999,
+  "messages": [
+    {
+      "id": 1,
+      "type": "message",
+      "date": "2024-03-01T10:00:00",
+      "date_unixtime": "1709287200",
+      "from": "Alice Test",
+      "from_id": "user111",
+      "text": "Message in group.",
+      "text_entities": [{"type": "plain", "text": "Message in group."}]
+    }
+  ]
+}

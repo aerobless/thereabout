@@ -6,6 +6,7 @@ import com.sixtymeters.thereabout.communication.data.IdentityInApplicationReposi
 import com.sixtymeters.thereabout.communication.data.IdentityRepository;
 import com.sixtymeters.thereabout.communication.data.MessageEntity;
 import com.sixtymeters.thereabout.communication.data.MessageRepository;
+import com.sixtymeters.thereabout.config.ThereaboutException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -47,9 +49,13 @@ class TelegramChatImporterTest {
     }
 
     private File copyTestFileToTemp() throws IOException {
-        Path source = Path.of(getClass().getClassLoader().getResource("telegram-chat-export.json").getFile());
+        return copyTestResourceToTemp("telegram-chat-export.json");
+    }
+
+    private File copyTestResourceToTemp(String resourceName) throws IOException {
+        Path source = Path.of(getClass().getClassLoader().getResource(resourceName).getFile());
         Path tempDir = Files.createTempDirectory("telegram-test");
-        Path tempFile = tempDir.resolve("telegram-chat-export.json");
+        Path tempFile = tempDir.resolve(resourceName);
         Files.copy(source, tempFile);
         return tempFile.toFile();
     }
@@ -180,5 +186,53 @@ class TelegramChatImporterTest {
 
         var bobIdentity = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.TELEGRAM, "Bob Test|user222");
         assertThat(bobIdentity).isPresent();
+    }
+
+    @Test
+    void testImportMultiChatTelegram() throws IOException {
+        File testFile = copyTestResourceToTemp("telegram-multi-chat-export.json");
+
+        telegramChatImporter.importFile(testFile, "Provided Contact");
+
+        List<MessageEntity> messages = messageRepository.findAll();
+        assertThat(messages).hasSize(5);
+
+        List<MessageEntity> groupMessages = messages.stream()
+                .filter(m -> m.getReceiver().getIdentifier().equals("Test Group"))
+                .toList();
+        assertThat(groupMessages).hasSize(3);
+        assertThat(groupMessages).allSatisfy(m -> assertThat(m.getSourceIdentifier()).startsWith("telegram-1001-"));
+
+        List<MessageEntity> personalMessages = messages.stream()
+                .filter(m -> m.getReceiver().getIdentifier().equals("Provided Contact"))
+                .toList();
+        assertThat(personalMessages).hasSize(2);
+        assertThat(personalMessages).allSatisfy(m -> assertThat(m.getSourceIdentifier()).startsWith("telegram-1002-"));
+
+        assertThat(messages.stream().filter(m -> m.getBody().equals("Group chat message one.")).findFirst()).isPresent();
+        assertThat(messages.stream().filter(m -> m.getBody().equals("Personal chat hi.")).findFirst()).isPresent();
+    }
+
+    @Test
+    void testImportSingleChatGroupUsesChatName() throws IOException {
+        File testFile = copyTestResourceToTemp("telegram-single-group-export.json");
+
+        telegramChatImporter.importFile(testFile, "User Entered Name");
+
+        List<MessageEntity> messages = messageRepository.findAll();
+        assertThat(messages).hasSize(1);
+        assertThat(messages.get(0).getReceiver().getIdentifier()).isEqualTo("My Group");
+        assertThat(messages.get(0).getBody()).isEqualTo("Message in group.");
+    }
+
+    @Test
+    void testImportSingleChatPersonalRequiresReceiver() throws IOException {
+        assertThatThrownBy(() -> telegramChatImporter.importFile(copyTestFileToTemp(), ""))
+                .isInstanceOf(ThereaboutException.class)
+                .hasMessageContaining("receiver");
+
+        assertThatThrownBy(() -> telegramChatImporter.importFile(copyTestFileToTemp(), null))
+                .isInstanceOf(ThereaboutException.class)
+                .hasMessageContaining("receiver");
     }
 }

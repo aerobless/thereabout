@@ -27,6 +27,9 @@ public class TelegramChatImporter implements FileImporter {
     private static final DateTimeFormatter TELEGRAM_DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     private static final int BATCH_SIZE = 1000;
 
+    /** Chat types that use chat name as receiver; all others (e.g. personal_chat) use user-provided receiver. */
+    private static final Set<String> GROUP_CHAT_TYPES = Set.of("private_group", "private_supergroup");
+
     private final ObjectMapper objectMapper;
     private final IdentityInApplicationRepository identityInApplicationRepository;
     private final IdentityRepository identityRepository;
@@ -47,58 +50,59 @@ public class TelegramChatImporter implements FileImporter {
             String content = Files.readString(file.toPath(), StandardCharsets.UTF_8);
             JsonNode root = objectMapper.readTree(content);
 
-            JsonNode messagesNode = root.path("messages");
-            if (!messagesNode.isArray()) {
-                throw new ThereaboutException(HttpStatusCode.valueOf(400),
-                        "Telegram export JSON must contain a 'messages' array");
-            }
-
-            long totalMessages = messagesNode.size();
-            log.info("Counted {} messages in Telegram chat file: {}", totalMessages, file.getName());
-
-            Object chatIdNode = root.path("id").isNumber() ? root.path("id").asLong() : root.path("id").asText();
-            String chatId = String.valueOf(chatIdNode);
-
-            IdentityInApplicationEntity receiverEntity = getOrCreateReceiver(receiver);
-
+            boolean multiChat = root.has("chats") && root.path("chats").path("list").isArray();
             Map<String, IdentityInApplicationEntity> identityCache = new HashMap<>();
             Set<String> knownSourceIds = new HashSet<>();
             List<MessageEntity> batch = new ArrayList<>(BATCH_SIZE);
             long totalImported = 0;
             long skippedDuplicates = 0;
-            int processed = 0;
+            long totalMessages;
+            long[] processedHolder = new long[]{0};
 
-            for (JsonNode msgNode : messagesNode) {
-                String msgType = msgNode.has("type") ? msgNode.path("type").asText() : "message";
+            if (multiChat) {
+                JsonNode chatsList = root.path("chats").path("list");
+                if (!chatsList.isArray() || chatsList.isEmpty()) {
+                    log.info("Multi-chat export has empty chats.list, nothing to import.");
+                    return;
+                }
+                totalMessages = countMessagesInChatsList(chatsList);
+                log.info("Counted {} messages in {} chats (multi-chat file: {})", totalMessages, chatsList.size(), file.getName());
 
-                if ("service".equals(msgType)) {
-                    MessageEntity serviceMessage = buildServiceMessage(msgNode, chatId, receiverEntity, identityCache);
-                    if (serviceMessage != null && !isDuplicate(serviceMessage.getSourceIdentifier(), knownSourceIds)) {
-                        knownSourceIds.add(serviceMessage.getSourceIdentifier());
-                        batch.add(serviceMessage);
-                    } else if (serviceMessage != null) {
-                        skippedDuplicates++;
-                    }
-                } else {
-                    MessageEntity message = buildMessage(msgNode, chatId, receiverEntity, identityCache);
-                    if (message != null && !isDuplicate(message.getSourceIdentifier(), knownSourceIds)) {
-                        knownSourceIds.add(message.getSourceIdentifier());
-                        batch.add(message);
-                    } else if (message != null) {
-                        skippedDuplicates++;
-                    }
+                boolean hasPersonalChat = hasAnyPersonalChat(chatsList);
+                if (hasPersonalChat && (receiver == null || receiver.isBlank())) {
+                    throw new ThereaboutException(HttpStatusCode.valueOf(400),
+                            "Telegram export contains personal chats; please provide a receiver in the import form.");
                 }
 
-                processed++;
-                updateProgress(totalMessages, processed);
-
-                if (batch.size() >= BATCH_SIZE) {
-                    totalImported += flushBatch(batch);
+                for (JsonNode chatNode : chatsList) {
+                    String effectiveReceiver = resolveReceiver(chatNode, receiver);
+                    String chatId = chatIdFrom(chatNode);
+                    long[] result = processOneChat(chatNode, effectiveReceiver, chatId, identityCache, knownSourceIds,
+                            batch, totalMessages, processedHolder);
+                    totalImported += result[0];
+                    skippedDuplicates += result[1];
                 }
-            }
+            } else {
+                JsonNode messagesNode = root.path("messages");
+                if (!messagesNode.isArray()) {
+                    throw new ThereaboutException(HttpStatusCode.valueOf(400),
+                            "Telegram export JSON must contain a 'messages' array or a 'chats.list' array.");
+                }
+                totalMessages = messagesNode.size();
+                log.info("Counted {} messages in Telegram chat file: {}", totalMessages, file.getName());
 
-            if (!batch.isEmpty()) {
-                totalImported += flushBatch(batch);
+                boolean isPersonal = !isGroupChat(chatTypeFrom(root));
+                if (isPersonal && (receiver == null || receiver.isBlank())) {
+                    throw new ThereaboutException(HttpStatusCode.valueOf(400),
+                            "Telegram personal chat import requires a receiver; please provide one in the import form.");
+                }
+
+                String effectiveReceiver = resolveReceiver(root, receiver);
+                String chatId = chatIdFrom(root);
+                long[] result = processOneChat(root, effectiveReceiver, chatId, identityCache, knownSourceIds,
+                        batch, totalMessages, processedHolder);
+                totalImported += result[0];
+                skippedDuplicates += result[1];
             }
 
             log.info("Imported {} Telegram messages, skipped {} duplicates, {} participants.",
@@ -112,6 +116,104 @@ public class TelegramChatImporter implements FileImporter {
         }
 
         log.info("Finished Telegram chat import from file: {}", file.getName());
+    }
+
+    private static long countMessagesInChatsList(JsonNode chatsList) {
+        long total = 0;
+        for (JsonNode chat : chatsList) {
+            JsonNode messages = chat.path("messages");
+            if (messages.isArray()) {
+                total += messages.size();
+            }
+        }
+        return total;
+    }
+
+    private static boolean hasAnyPersonalChat(JsonNode chatsList) {
+        for (JsonNode chat : chatsList) {
+            if (!isGroupChat(chatTypeFrom(chat))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String chatTypeFrom(JsonNode chatNode) {
+        return chatNode.has("type") ? chatNode.path("type").asText() : "personal_chat";
+    }
+
+    private static boolean isGroupChat(String chatType) {
+        return GROUP_CHAT_TYPES.contains(chatType);
+    }
+
+    /**
+     * Resolve effective receiver for one chat: group chats use chat name, personal chats use user-provided receiver.
+     */
+    private static String resolveReceiver(JsonNode chatNode, String userProvidedReceiver) {
+        String chatName = chatNode.has("name") ? chatNode.path("name").asText() : "";
+        String chatType = chatTypeFrom(chatNode);
+        if (isGroupChat(chatType)) {
+            return chatName;
+        }
+        return userProvidedReceiver != null ? userProvidedReceiver : chatName;
+    }
+
+    private static String chatIdFrom(JsonNode chatNode) {
+        JsonNode idNode = chatNode.path("id");
+        return idNode.isNumber() ? String.valueOf(idNode.asLong()) : idNode.asText();
+    }
+
+    /**
+     * Process one chat (root for single-chat or one element of chats.list for multi-chat).
+     * Updates processedHolder and progress. Returns [imported count, skipped count] for this chat.
+     */
+    private long[] processOneChat(JsonNode chatNode, String effectiveReceiver, String chatId,
+                                  Map<String, IdentityInApplicationEntity> identityCache,
+                                  Set<String> knownSourceIds, List<MessageEntity> batch,
+                                  long totalMessages, long[] processedHolder) {
+        JsonNode messagesNode = chatNode.path("messages");
+        if (!messagesNode.isArray()) {
+            return new long[]{0, 0};
+        }
+
+        IdentityInApplicationEntity receiverEntity = getOrCreateReceiver(effectiveReceiver);
+        long imported = 0;
+        long skipped = 0;
+
+        for (JsonNode msgNode : messagesNode) {
+            String msgType = msgNode.has("type") ? msgNode.path("type").asText() : "message";
+
+            if ("service".equals(msgType)) {
+                MessageEntity serviceMessage = buildServiceMessage(msgNode, chatId, receiverEntity, identityCache);
+                if (serviceMessage != null && !isDuplicate(serviceMessage.getSourceIdentifier(), knownSourceIds)) {
+                    knownSourceIds.add(serviceMessage.getSourceIdentifier());
+                    batch.add(serviceMessage);
+                } else if (serviceMessage != null) {
+                    skipped++;
+                }
+            } else {
+                MessageEntity message = buildMessage(msgNode, chatId, receiverEntity, identityCache);
+                if (message != null && !isDuplicate(message.getSourceIdentifier(), knownSourceIds)) {
+                    knownSourceIds.add(message.getSourceIdentifier());
+                    batch.add(message);
+                } else if (message != null) {
+                    skipped++;
+                }
+            }
+
+            processedHolder[0]++;
+            updateProgress(totalMessages, processedHolder[0]);
+
+            if (batch.size() >= BATCH_SIZE) {
+                imported += flushBatch(batch);
+            }
+        }
+
+        if (!batch.isEmpty()) {
+            imported += flushBatch(batch);
+        }
+
+        return new long[]{imported, skipped};
     }
 
     private MessageEntity buildMessage(JsonNode msg, String chatId, IdentityInApplicationEntity receiverEntity,

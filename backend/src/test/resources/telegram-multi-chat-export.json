@@ -1,0 +1,73 @@
+{
+  "about": "Full Telegram data export (multi-chat).",
+  "chats": {
+    "about": "All chats from this export.",
+    "list": [
+      {
+        "name": "Test Group",
+        "type": "private_group",
+        "id": 1001,
+        "messages": [
+          {
+            "id": 2001,
+            "type": "service",
+            "date": "2024-02-01T12:00:00",
+            "date_unixtime": "1706788800",
+            "actor": "Alice Test",
+            "actor_id": "user111",
+            "action": "create_group",
+            "text": "",
+            "text_entities": []
+          },
+          {
+            "id": 2002,
+            "type": "message",
+            "date": "2024-02-01T12:01:00",
+            "date_unixtime": "1706788860",
+            "from": "Alice Test",
+            "from_id": "user111",
+            "text": "Group chat message one.",
+            "text_entities": [{"type": "plain", "text": "Group chat message one."}]
+          },
+          {
+            "id": 2003,
+            "type": "message",
+            "date": "2024-02-01T12:02:00",
+            "date_unixtime": "1706788920",
+            "from": "Bob Test",
+            "from_id": "user222",
+            "text": "Reply in group.",
+            "text_entities": [{"type": "plain", "text": "Reply in group."}]
+          }
+        ]
+      },
+      {
+        "name": "Test User",
+        "type": "personal_chat",
+        "id": 1002,
+        "messages": [
+          {
+            "id": 3001,
+            "type": "message",
+            "date": "2024-02-02T09:00:00",
+            "date_unixtime": "1706860800",
+            "from": "Test User",
+            "from_id": "user333",
+            "text": "Personal chat hi.",
+            "text_entities": [{"type": "plain", "text": "Personal chat hi."}]
+          },
+          {
+            "id": 3002,
+            "type": "message",
+            "date": "2024-02-02T09:01:00",
+            "date_unixtime": "1706860860",
+            "from": "Alice Test",
+            "from_id": "user111",
+            "text": "Hi back!",
+            "text_entities": [{"type": "plain", "text": "Hi back!"}]
+          }
+        ]
+      }
+    ]
+  }
+}

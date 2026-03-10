@@ -139,7 +139,7 @@
             <artifactId>reverse-country-code</artifactId>
             <version>${reverse-country-code.version}</version>
         </dependency>
-        <!-- TDLight: TDLib-based Telegram client for sync (no read receipts). Natives: one per platform; runtime loads the matching one (macos_arm64 for Apple Silicon). -->
+        <!-- TDLight: TDLib-based Telegram client for sync (no read receipts). Natives: one per platform; runtime loads the matching one. -->
         <dependency>
             <groupId>it.tdlight</groupId>
             <artifactId>tdlight-java</artifactId>
@@ -150,6 +150,12 @@
             <artifactId>tdlight-natives</artifactId>
             <version>4.0.558</version>
             <classifier>linux_amd64_gnu_ssl1</classifier>
+        </dependency>
+        <dependency>
+            <groupId>it.tdlight</groupId>
+            <artifactId>tdlight-natives</artifactId>
+            <version>4.0.558</version>
+            <classifier>linux_amd64_gnu_ssl3</classifier>
         </dependency>
         <dependency>
             <groupId>it.tdlight</groupId>

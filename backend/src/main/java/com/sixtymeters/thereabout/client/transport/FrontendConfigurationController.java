@@ -8,7 +8,12 @@ import com.sixtymeters.thereabout.generated.api.FrontendApi;
 import com.sixtymeters.thereabout.generated.model.GenFileImportStatus;
 import com.sixtymeters.thereabout.generated.model.GenFrontendConfigurationResponse;
 import com.sixtymeters.thereabout.generated.model.GenImportType;
+import com.sixtymeters.thereabout.generated.model.GenTelegramCodeRequest;
+import com.sixtymeters.thereabout.generated.model.GenTelegramConnectRequest;
+import com.sixtymeters.thereabout.generated.model.GenTelegramPasswordRequest;
+import com.sixtymeters.thereabout.generated.model.GenTelegramStatus;
 import com.sixtymeters.thereabout.generated.model.GenVersionDetails;
+import com.sixtymeters.thereabout.communication.telegram.TelegramConnectionService;
 import com.sixtymeters.thereabout.config.ThereaboutException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +24,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.validation.Valid;
+
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -26,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -43,6 +51,7 @@ public class FrontendConfigurationController implements FrontendApi {
     private final ImportProgressService importProgressService;
     private final GitProperties gitProperties;
     private final List<FileImporter> fileImporters;
+    private final TelegramConnectionService telegramConnectionService;
 
     @Override
     public ResponseEntity<GenFileImportStatus> fileImportStatus() {
@@ -114,5 +123,66 @@ public class FrontendConfigurationController implements FrontendApi {
         }
     }
 
+    @Override
+    public ResponseEntity<GenTelegramStatus> getTelegramStatus() {
+        String status = telegramConnectionService.getStatus();
+        GenTelegramStatus.StatusEnum statusEnum = mapToStatusEnum(status);
+        Optional<com.sixtymeters.thereabout.communication.data.TelegramConnectionEntity> conn =
+                telegramConnectionService.getConnection();
+        GenTelegramStatus body = GenTelegramStatus.builder()
+                .status(statusEnum)
+                .phoneNumber(conn.map(com.sixtymeters.thereabout.communication.data.TelegramConnectionEntity::getPhoneNumber).orElse(null))
+                .lastSyncAt(conn.flatMap(c -> c.getLastSyncAt() != null ? Optional.of(c.getLastSyncAt().atOffset(ZoneOffset.UTC)) : Optional.empty()).orElse(null))
+                .configured(telegramConnectionService.isConfigured())
+                .build();
+        return ResponseEntity.ok(body);
+    }
 
+    private static GenTelegramStatus.StatusEnum mapToStatusEnum(String status) {
+        try {
+            return GenTelegramStatus.StatusEnum.fromValue(status != null ? status : "DISCONNECTED");
+        } catch (IllegalArgumentException e) {
+            return GenTelegramStatus.StatusEnum.DISCONNECTED;
+        }
+    }
+
+    @Override
+    public ResponseEntity<Void> connectTelegram(@Valid GenTelegramConnectRequest genTelegramConnectRequest) {
+        String phone = genTelegramConnectRequest.getPhoneNumber();
+        if (phone == null || phone.isBlank()) {
+            throw new ThereaboutException(HttpStatusCode.valueOf(400), "phoneNumber is required");
+        }
+        telegramConnectionService.connect(phone);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> submitTelegramCode(@Valid GenTelegramCodeRequest genTelegramCodeRequest) {
+        String code = genTelegramCodeRequest.getCode();
+        if (code != null) {
+            telegramConnectionService.submitCode(code);
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> submitTelegramPassword(@Valid GenTelegramPasswordRequest genTelegramPasswordRequest) {
+        String password = genTelegramPasswordRequest.getPassword();
+        if (password != null) {
+            telegramConnectionService.submitPassword(password);
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> resyncTelegram() {
+        telegramConnectionService.triggerResync();
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> disconnectTelegram() {
+        telegramConnectionService.disconnect();
+        return ResponseEntity.noContent().build();
+    }
 }

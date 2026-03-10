@@ -55,6 +55,96 @@ paths:
           description: The file is successfully being imported.
         500:
           $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  ConfigTelegram:
+    get:
+      summary: Get Telegram connection status.
+      tags:
+        - frontend
+      operationId: getTelegramStatus
+      responses:
+        200:
+          description: Current Telegram connection status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelegramStatus'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  ConfigTelegramConnect:
+    post:
+      summary: Start Telegram connection with phone number.
+      tags:
+        - frontend
+      operationId: connectTelegram
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelegramConnectRequest'
+      responses:
+        204:
+          description: Connection started; poll status for code/password steps.
+        400:
+          $ref: '../thereabout.openapi.yaml#/components/responses/400'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  ConfigTelegramCode:
+    post:
+      summary: Submit Telegram login code (from SMS/app). Not stored.
+      tags:
+        - frontend
+      operationId: submitTelegramCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelegramCodeRequest'
+      responses:
+        204:
+          description: Code submitted.
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  ConfigTelegramPassword:
+    post:
+      summary: Submit Telegram 2FA password. Used only for this step; never stored.
+      tags:
+        - frontend
+      operationId: submitTelegramPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelegramPasswordRequest'
+      responses:
+        204:
+          description: Password submitted.
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  ConfigTelegramResync:
+    post:
+      summary: Trigger a manual resync of Telegram messages (no re-auth).
+      tags:
+        - frontend
+      operationId: resyncTelegram
+      responses:
+        204:
+          description: Resync triggered.
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  ConfigTelegramDisconnect:
+    delete:
+      summary: Disconnect Telegram and stop sync.
+      tags:
+        - frontend
+      operationId: disconnectTelegram
+      responses:
+        204:
+          description: Disconnected.
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
 
 components:
   schemas:
@@ -117,3 +207,51 @@ components:
         - WHATSAPP_CHAT
         - TELEGRAM_CHAT
         - HEALTH_AUTO_EXPORT_JSON
+    TelegramStatus:
+      type: object
+      required:
+        - status
+        - configured
+      properties:
+        status:
+          type: string
+          enum:
+            - DISCONNECTED
+            - CONNECTING
+            - WAIT_PHONE
+            - WAIT_CODE
+            - WAIT_PASSWORD
+            - READY
+            - SYNCING
+            - ERROR
+        phoneNumber:
+          type: string
+          description: Masked or last-used phone (optional).
+        lastSyncAt:
+          type: string
+          format: date-time
+        configured:
+          type: boolean
+          description: Whether api_id and api_hash are set.
+    TelegramConnectRequest:
+      type: object
+      required:
+        - phoneNumber
+      properties:
+        phoneNumber:
+          type: string
+    TelegramCodeRequest:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+    TelegramPasswordRequest:
+      type: object
+      required:
+        - password
+      properties:
+        password:
+          type: string
+          description: 2FA password; used only for this step and never stored.

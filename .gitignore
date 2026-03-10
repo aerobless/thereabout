@@ -33,3 +33,6 @@ replay_pid*
 /.env
 /backend/.env
 .idea/jarRepositories.xml
+
+# Runtime data (e.g. Telegram TDLib session/database)
+/backend/data/

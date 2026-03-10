@@ -13,7 +13,8 @@ import {
     FileImportStatus,
     FrontendConfigurationResponse,
     FrontendService,
-    IdentityInApplicationService
+    IdentityInApplicationService,
+    TelegramStatus
 } from "../../../../generated/backend-api/thereabout";
 import {MessageService} from "primeng/api";
 
@@ -25,6 +26,7 @@ import {FormsModule} from "@angular/forms";
 import { HttpClient } from "@angular/common/http";
 import {ProgressBarModule} from "primeng/progressbar";
 import {AutoCompleteCompleteEvent, AutoCompleteModule} from "primeng/autocomplete";
+import {DatePipe} from "@angular/common";
 
 interface ImportTypeOption {
     label: string;
@@ -51,7 +53,8 @@ interface ImportTypeOption {
     SelectModule,
     FormsModule,
     ProgressBarModule,
-    AutoCompleteModule
+    AutoCompleteModule,
+    DatePipe
 ],
     templateUrl: './configuration.component.html',
     styleUrl: './configuration.component.scss'
@@ -62,6 +65,12 @@ export class ConfigurationComponent implements OnInit {
     importStatusProgress: number = 0;
     importDisabled = false;
     thereaboutConfig?: FrontendConfigurationResponse;
+
+    telegramStatus: TelegramStatus | null = null;
+    telegramPhone = '';
+    telegramCode = '';
+    telegramPassword = '';
+    telegramPolling = false;
 
     // Receiver field for WhatsApp and Telegram imports
     receiverName: string = '';
@@ -175,7 +184,85 @@ export class ConfigurationComponent implements OnInit {
         })
         this.updateOrPollImportStatus();
         this.loadChatReceivers();
+        this.loadTelegramStatus();
     }
+
+    loadTelegramStatus() {
+        this.frontendService.getTelegramStatus().subscribe({
+            next: (s) => {
+                this.telegramStatus = s;
+                const wait = s.status === TelegramStatus.StatusEnum.WaitCode
+                    || s.status === TelegramStatus.StatusEnum.WaitPassword
+                    || s.status === TelegramStatus.StatusEnum.Connecting;
+                if (wait && !this.telegramPolling) {
+                    this.telegramPolling = true;
+                    interval(2000).pipe(
+                        switchMap(() => this.frontendService.getTelegramStatus()),
+                        takeWhile((next) =>
+                            next.status === TelegramStatus.StatusEnum.WaitCode
+                            || next.status === TelegramStatus.StatusEnum.WaitPassword
+                            || next.status === TelegramStatus.StatusEnum.Connecting,
+                            true
+                        ),
+                    ).subscribe({
+                        next: (next) => {
+                            this.telegramStatus = next;
+                            if (next.status === TelegramStatus.StatusEnum.Ready || next.status === TelegramStatus.StatusEnum.Error) {
+                                this.telegramPolling = false;
+                            }
+                        },
+                        complete: () => { this.telegramPolling = false; }
+                    });
+                }
+            },
+            error: () => { this.telegramStatus = null; }
+        });
+    }
+
+    connectTelegram() {
+        if (!this.telegramPhone?.trim()) return;
+        this.frontendService.connectTelegram({ phoneNumber: this.telegramPhone.trim() }).subscribe({
+            next: () => { this.loadTelegramStatus(); },
+            error: (err) => this.messageService.add({ severity: 'error', summary: 'Telegram connect failed', detail: err?.error?.message || 'Connect failed' })
+        });
+    }
+
+    submitTelegramCode() {
+        if (!this.telegramCode?.trim()) return;
+        this.frontendService.submitTelegramCode({ code: this.telegramCode.trim() }).subscribe({
+            next: () => { this.telegramCode = ''; this.loadTelegramStatus(); },
+            error: (err) => this.messageService.add({ severity: 'error', summary: 'Code failed', detail: err?.error?.message || 'Submit failed' })
+        });
+    }
+
+    submitTelegramPassword() {
+        if (!this.telegramPassword) return;
+        this.frontendService.submitTelegramPassword({ password: this.telegramPassword }).subscribe({
+            next: () => { this.telegramPassword = ''; this.loadTelegramStatus(); },
+            error: (err) => this.messageService.add({ severity: 'error', summary: 'Password failed', detail: err?.error?.message || 'Submit failed' })
+        });
+    }
+
+    disconnectTelegram() {
+        this.frontendService.disconnectTelegram().subscribe({
+            next: () => {
+                this.telegramPhone = '';
+                this.telegramCode = '';
+                this.telegramPassword = '';
+                this.loadTelegramStatus();
+            },
+            error: (err) => this.messageService.add({ severity: 'error', summary: 'Disconnect failed', detail: err?.error?.message })
+        });
+    }
+
+    resyncTelegram() {
+        this.frontendService.resyncTelegram().subscribe({
+            next: () => this.messageService.add({ severity: 'info', summary: 'Resync started', detail: 'Telegram messages are syncing in the background.' }),
+            error: (err) => this.messageService.add({ severity: 'error', summary: 'Resync failed', detail: err?.error?.message })
+        });
+    }
+
+    protected readonly TelegramStatus = TelegramStatus;
 
     loadChatReceivers() {
         combineLatest([

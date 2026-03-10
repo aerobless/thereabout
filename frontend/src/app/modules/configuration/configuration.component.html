@@ -72,6 +72,73 @@
   <p-card>
     <ng-template pTemplate="header">
       <div class="card-header">
+        <i class="pi pi-send card-header-icon"></i>
+        <span class="card-header-title">Telegram sync</span>
+      </div>
+    </ng-template>
+    @if (!telegramStatus?.configured) {
+      <p>Telegram sync is not configured. Set <code>TELEGRAM_API_ID</code> and <code>TELEGRAM_API_HASH</code> (from <a href="https://my.telegram.org" target="_blank">my.telegram.org</a>) in the server environment.</p>
+    } @else {
+      <p>Connect your Telegram account to continuously import messages into Thereabout. Your password is used only for login and is never stored.</p>
+      <p class="flex align-items-center gap-2">
+        <span>Status:</span>
+        @switch (telegramStatus?.status) {
+          @case (TelegramStatus.StatusEnum.Disconnected) { <span>Not connected</span> }
+          @case (TelegramStatus.StatusEnum.Connecting) { <span>Connecting…</span> }
+          @case (TelegramStatus.StatusEnum.WaitPhone) { <span>Enter your phone number</span> }
+          @case (TelegramStatus.StatusEnum.WaitCode) { <span>Waiting for login code</span> }
+          @case (TelegramStatus.StatusEnum.WaitPassword) { <span>Waiting for 2FA password</span> }
+          @case (TelegramStatus.StatusEnum.Ready) { <span>Connected</span> }
+          @case (TelegramStatus.StatusEnum.Syncing) { <span>Syncing</span> }
+          @case (TelegramStatus.StatusEnum.Error) { <span>Error</span> }
+          @default { <span>{{ telegramStatus?.status }}</span> }
+        }
+        @if (telegramStatus?.lastSyncAt) {
+          <span class="text-color-secondary">(last sync: {{ telegramStatus?.lastSyncAt | date:'short' }})</span>
+        }
+      </p>
+      @if (telegramStatus?.status === TelegramStatus.StatusEnum.Disconnected || telegramStatus?.status === TelegramStatus.StatusEnum.Error || telegramStatus?.status === TelegramStatus.StatusEnum.WaitPhone) {
+        <div class="config-block">
+          <label for="telegram-phone" class="config-label">Phone number</label>
+          <input id="telegram-phone" type="text" pInputText class="config-input-full" [(ngModel)]="telegramPhone" placeholder="+1234567890"/>
+          <p-button label="Connect Telegram" (onClick)="connectTelegram()" [disabled]="!telegramPhone.trim()"></p-button>
+        </div>
+      }
+      @if (telegramStatus?.status === TelegramStatus.StatusEnum.WaitCode || telegramStatus?.status === TelegramStatus.StatusEnum.Connecting) {
+        <div class="config-block">
+          <label for="telegram-code" class="config-label">Login code (from Telegram app/SMS)</label>
+          <input id="telegram-code" type="text" pInputText class="config-input-full" [(ngModel)]="telegramCode" placeholder="12345" (keyup.enter)="submitTelegramCode()"/>
+          <div class="flex gap-2 align-items-center">
+            <p-button label="Submit code" (onClick)="submitTelegramCode()" [disabled]="!telegramCode.trim()"></p-button>
+            <p-button label="Start over" severity="secondary" (onClick)="disconnectTelegram()"></p-button>
+          </div>
+        </div>
+      }
+      @if (telegramStatus?.status === TelegramStatus.StatusEnum.WaitPassword) {
+        <div class="config-block">
+          <label for="telegram-password" class="config-label">2FA password (used only for this step; never stored)</label>
+          <input id="telegram-password" type="password" pInputText class="config-input-full" [(ngModel)]="telegramPassword" placeholder="Cloud password" (keyup.enter)="submitTelegramPassword()"/>
+          <div class="flex gap-2 align-items-center">
+            <p-button label="Submit password" (onClick)="submitTelegramPassword()" [disabled]="!telegramPassword"></p-button>
+            <p-button label="Start over" severity="secondary" (onClick)="disconnectTelegram()"></p-button>
+          </div>
+        </div>
+      }
+      @if (telegramStatus?.status === TelegramStatus.StatusEnum.Ready) {
+        <div class="flex gap-2">
+          <p-button label="Resync now" (onClick)="resyncTelegram()"></p-button>
+          <p-button label="Disconnect" severity="secondary" (onClick)="disconnectTelegram()"></p-button>
+        </div>
+      }
+      @if (telegramStatus?.status === TelegramStatus.StatusEnum.Error) {
+        <p-button label="Start over" severity="secondary" (onClick)="disconnectTelegram()"></p-button>
+      }
+    }
+  </p-card>
+
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="card-header">
         <i class="pi pi-key card-header-icon"></i>
         <span class="card-header-title">API Authentication Key</span>
       </div>

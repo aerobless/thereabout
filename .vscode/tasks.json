@@ -23,7 +23,7 @@
         {
             "type": "shell",
             "label": "Run All Controller Tests",
-            "command": "mvn test -Dtest=\"*ControllerTest\"",
+            "command": "mvn -s ${workspaceFolder}/maven-settings.xml test -Dtest=\"*ControllerTest\"",
             "group": {
                 "kind": "test",
                 "isDefault": true
@@ -44,7 +44,7 @@
         {
             "type": "shell",
             "label": "Run All Tests",
-            "command": "mvn test",
+            "command": "mvn -s ${workspaceFolder}/maven-settings.xml test",
             "group": "test",
             "presentation": {
                 "echo": true,

@@ -27,6 +27,13 @@
         <guava.version>33.1.0-jre</guava.version>
         <reverse-country-code.version>1.0.0</reverse-country-code.version>
     </properties>
+    <repositories>
+        <repository>
+            <id>mchv</id>
+            <name>MCHV Apache Maven Packages</name>
+            <url>https://mvn.mchv.eu/repository/mchv/</url>
+        </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -131,6 +138,24 @@
             <groupId>uk.recurse</groupId>
             <artifactId>reverse-country-code</artifactId>
             <version>${reverse-country-code.version}</version>
+        </dependency>
+        <!-- TDLight: TDLib-based Telegram client for sync (no read receipts). Natives: one per platform; runtime loads the matching one (macos_arm64 for Apple Silicon). -->
+        <dependency>
+            <groupId>it.tdlight</groupId>
+            <artifactId>tdlight-java</artifactId>
+            <version>3.4.4+td.1.8.52</version>
+        </dependency>
+        <dependency>
+            <groupId>it.tdlight</groupId>
+            <artifactId>tdlight-natives</artifactId>
+            <version>4.0.558</version>
+            <classifier>linux_amd64_gnu_ssl1</classifier>
+        </dependency>
+        <dependency>
+            <groupId>it.tdlight</groupId>
+            <artifactId>tdlight-natives</artifactId>
+            <version>4.0.558</version>
+            <classifier>macos_arm64</classifier>
         </dependency>
     </dependencies>
 

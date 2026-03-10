@@ -30,6 +30,18 @@ paths:
     $ref: 'openapi/client.yaml#/paths/Config'
   /backend/api/v1/config/import-file:
     $ref: 'openapi/client.yaml#/paths/ConfigImportFile'
+  /backend/api/v1/config/telegram:
+    $ref: 'openapi/client.yaml#/paths/ConfigTelegram'
+  /backend/api/v1/config/telegram/connect:
+    $ref: 'openapi/client.yaml#/paths/ConfigTelegramConnect'
+  /backend/api/v1/config/telegram/code:
+    $ref: 'openapi/client.yaml#/paths/ConfigTelegramCode'
+  /backend/api/v1/config/telegram/password:
+    $ref: 'openapi/client.yaml#/paths/ConfigTelegramPassword'
+  /backend/api/v1/config/telegram/resync:
+    $ref: 'openapi/client.yaml#/paths/ConfigTelegramResync'
+  /backend/api/v1/config/telegram/disconnect:
+    $ref: 'openapi/client.yaml#/paths/ConfigTelegramDisconnect'
 
   # Health
   /backend/api/v1/health:
@@ -89,6 +101,14 @@ components:
       $ref: 'openapi/client.yaml#/components/schemas/FileImportStatus'
     ImportType:
       $ref: 'openapi/client.yaml#/components/schemas/ImportType'
+    TelegramStatus:
+      $ref: 'openapi/client.yaml#/components/schemas/TelegramStatus'
+    TelegramConnectRequest:
+      $ref: 'openapi/client.yaml#/components/schemas/TelegramConnectRequest'
+    TelegramCodeRequest:
+      $ref: 'openapi/client.yaml#/components/schemas/TelegramCodeRequest'
+    TelegramPasswordRequest:
+      $ref: 'openapi/client.yaml#/components/schemas/TelegramPasswordRequest'
 
     # Location
     Trip:

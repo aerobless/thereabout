@@ -6,6 +6,7 @@ import com.sixtymeters.thereabout.client.data.ConfigurationKey;
 import com.sixtymeters.thereabout.client.data.ConfigurationRepository;
 import com.sixtymeters.thereabout.generated.model.GenFileImportStatus;
 import com.sixtymeters.thereabout.generated.model.GenFrontendConfigurationResponse;
+import com.sixtymeters.thereabout.generated.model.GenTelegramStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,5 +101,38 @@ class FrontendConfigurationControllerTest {
                         .file(file)
                         .param("importType", "GOOGLE_MAPS_RECORDS"))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void testGetTelegramStatus() throws Exception {
+        String responseContent = mockMvc.perform(get("/backend/api/v1/config/telegram"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        GenTelegramStatus response = objectMapper.readValue(responseContent, GenTelegramStatus.class);
+        assertThat(response.getStatus()).isNotNull();
+        assertThat(response.getConfigured()).isFalse(); // test profile has no api_id/api_hash
+    }
+
+    @Test
+    void testDisconnectTelegram() throws Exception {
+        mockMvc.perform(delete("/backend/api/v1/config/telegram/disconnect"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void testResyncTelegram() throws Exception {
+        mockMvc.perform(post("/backend/api/v1/config/telegram/resync"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void testConnectTelegramWithoutConfigFails() throws Exception {
+        mockMvc.perform(post("/backend/api/v1/config/telegram/connect")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"phoneNumber\": \"+1234567890\"}"))
+                .andExpect(status().isBadRequest());
     }
 }

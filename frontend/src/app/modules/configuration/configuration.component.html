@@ -125,10 +125,18 @@
         </div>
       }
       @if (telegramStatus?.status === TelegramStatus.StatusEnum.Ready) {
-        <div class="flex gap-2">
-          <p-button label="Resync now" (onClick)="resyncTelegram()"></p-button>
-          <p-button label="Disconnect" severity="secondary" (onClick)="disconnectTelegram()"></p-button>
-        </div>
+        @if (isTelegramResyncInProgress) {
+          <div class="flex flex-column gap-2">
+            <p-progressBar [value]="telegramResyncProgress"></p-progressBar>
+            <p class="text-color-secondary">Syncing message history…</p>
+            <p-button label="Cancel resync" severity="secondary" (onClick)="cancelTelegramResync()"></p-button>
+          </div>
+        } @else {
+          <div class="flex gap-2">
+            <p-button label="Resync now" (onClick)="resyncTelegram()"></p-button>
+            <p-button label="Disconnect" severity="secondary" (onClick)="disconnectTelegram()"></p-button>
+          </div>
+        }
       }
       @if (telegramStatus?.status === TelegramStatus.StatusEnum.Error) {
         <p-button label="Start over" severity="secondary" (onClick)="disconnectTelegram()"></p-button>

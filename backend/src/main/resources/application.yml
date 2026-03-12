@@ -39,3 +39,5 @@ thereabout:
       api-hash: ${TELEGRAM_API_HASH:}
       database-directory: ${TELEGRAM_TDLIB_DATABASE_DIR:data/telegram-tdlib}
       history-batch-size: 100
+      # Delay in ms between GetChatHistory batches during resync (default 800). Increase if you hit rate limits.
+      resync-throttle-ms: 800

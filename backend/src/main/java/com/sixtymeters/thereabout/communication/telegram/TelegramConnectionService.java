@@ -74,11 +74,24 @@ public class TelegramConnectionService {
         }
     }
 
+    public String getResyncStatus() {
+        return tdlibService.getResyncStatus();
+    }
+
+    public int getResyncProgress() {
+        return tdlibService.getResyncProgress();
+    }
+
+    /** Request cancellation of the current resync. */
+    public void cancelResync() {
+        tdlibService.requestCancelResync();
+    }
+
     public boolean isConfigured() {
         return properties.isConfigured();
     }
 
-    /** If DB says we were connected (READY) and have a phone number, resume the Telegram client so syncing continues after restart. */
+    /** If DB says we were connected (READY) and have a phone number, resume the Telegram client after restart without auto-triggering a resync. */
     @Transactional(readOnly = true)
     public void resumeConnectionIfReady() {
         if (!properties.isConfigured()) return;

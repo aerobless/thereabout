@@ -71,6 +71,7 @@ export class ConfigurationComponent implements OnInit {
     telegramCode = '';
     telegramPassword = '';
     telegramPolling = false;
+    telegramResyncPolling = false;
 
     // Receiver field for WhatsApp and Telegram imports
     receiverName: string = '';
@@ -214,9 +215,36 @@ export class ConfigurationComponent implements OnInit {
                         complete: () => { this.telegramPolling = false; }
                     });
                 }
+                this.startResyncPollingIfNeeded(s);
             },
             error: () => { this.telegramStatus = null; }
         });
+    }
+
+    private startResyncPollingIfNeeded(s: TelegramStatus) {
+        const inProgress = s.resyncStatus === TelegramStatus.ResyncStatusEnum.InProgress;
+        if (inProgress && !this.telegramResyncPolling) {
+            this.telegramResyncPolling = true;
+            interval(2000).pipe(
+                switchMap(() => this.frontendService.getTelegramStatus()),
+                takeWhile((next) => next.resyncStatus === TelegramStatus.ResyncStatusEnum.InProgress, true),
+                catchError(() => of(null))
+            ).subscribe({
+                next: (next) => {
+                    if (next) {
+                        this.telegramStatus = next;
+                        if (next.resyncStatus !== TelegramStatus.ResyncStatusEnum.InProgress) {
+                            const severity = next.resyncStatus === TelegramStatus.ResyncStatusEnum.Complete ? 'success' :
+                                next.resyncStatus === TelegramStatus.ResyncStatusEnum.Cancelled ? 'info' : 'warn';
+                            const summary = next.resyncStatus === TelegramStatus.ResyncStatusEnum.Complete ? 'Resync complete' :
+                                next.resyncStatus === TelegramStatus.ResyncStatusEnum.Cancelled ? 'Resync cancelled' : 'Resync ended';
+                            this.messageService.add({ severity, summary, detail: 'Telegram backfill finished.' });
+                        }
+                    }
+                },
+                complete: () => { this.telegramResyncPolling = false; }
+            });
+        }
     }
 
     connectTelegram() {
@@ -257,9 +285,27 @@ export class ConfigurationComponent implements OnInit {
 
     resyncTelegram() {
         this.frontendService.resyncTelegram().subscribe({
-            next: () => this.messageService.add({ severity: 'info', summary: 'Resync started', detail: 'Telegram messages are syncing in the background.' }),
+            next: () => {
+                this.messageService.add({ severity: 'info', summary: 'Resync started', detail: 'Telegram messages are syncing. You can cancel anytime.' });
+                this.loadTelegramStatus();
+            },
             error: (err) => this.messageService.add({ severity: 'error', summary: 'Resync failed', detail: err?.error?.message })
         });
+    }
+
+    cancelTelegramResync() {
+        this.frontendService.cancelTelegramResync().subscribe({
+            next: () => { this.loadTelegramStatus(); },
+            error: (err) => this.messageService.add({ severity: 'error', summary: 'Cancel failed', detail: err?.error?.message })
+        });
+    }
+
+    get isTelegramResyncInProgress(): boolean {
+        return this.telegramStatus?.resyncStatus === TelegramStatus.ResyncStatusEnum.InProgress;
+    }
+
+    get telegramResyncProgress(): number {
+        return this.telegramStatus?.resyncProgress ?? 0;
     }
 
     protected readonly TelegramStatus = TelegramStatus;

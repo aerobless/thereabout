@@ -129,13 +129,21 @@ public class FrontendConfigurationController implements FrontendApi {
         GenTelegramStatus.StatusEnum statusEnum = mapToStatusEnum(status);
         Optional<com.sixtymeters.thereabout.communication.data.TelegramConnectionEntity> conn =
                 telegramConnectionService.getConnection();
-        GenTelegramStatus body = GenTelegramStatus.builder()
+        var bodyBuilder = GenTelegramStatus.builder()
                 .status(statusEnum)
                 .phoneNumber(conn.map(com.sixtymeters.thereabout.communication.data.TelegramConnectionEntity::getPhoneNumber).orElse(null))
                 .lastSyncAt(conn.flatMap(c -> c.getLastSyncAt() != null ? Optional.of(c.getLastSyncAt().atOffset(ZoneOffset.UTC)) : Optional.empty()).orElse(null))
                 .configured(telegramConnectionService.isConfigured())
-                .build();
-        return ResponseEntity.ok(body);
+                .resyncProgress(telegramConnectionService.getResyncProgress());
+        String resyncStatusStr = telegramConnectionService.getResyncStatus();
+        if (resyncStatusStr != null) {
+            try {
+                bodyBuilder.resyncStatus(GenTelegramStatus.ResyncStatusEnum.fromValue(resyncStatusStr));
+            } catch (IllegalArgumentException ignored) {
+                // leave resyncStatus null if unknown
+            }
+        }
+        return ResponseEntity.ok(bodyBuilder.build());
     }
 
     private static GenTelegramStatus.StatusEnum mapToStatusEnum(String status) {
@@ -177,6 +185,12 @@ public class FrontendConfigurationController implements FrontendApi {
     @Override
     public ResponseEntity<Void> resyncTelegram() {
         telegramConnectionService.triggerResync();
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> cancelTelegramResync() {
+        telegramConnectionService.cancelResync();
         return ResponseEntity.noContent().build();
     }
 

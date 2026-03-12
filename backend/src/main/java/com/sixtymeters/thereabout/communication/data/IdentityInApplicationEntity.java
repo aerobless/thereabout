@@ -29,6 +29,10 @@ public class IdentityInApplicationEntity {
     @Column(nullable = false)
     private String identifier;
 
+    private String usernameHint;
+
+    private boolean isGroup;
+
     @Column(updatable = false)
     private Instant createdAt;
 

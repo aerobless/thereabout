@@ -18,3 +18,7 @@ thereabout:
     googleMaps: NO_KEY_NEEDED_FOR_TESTS
   import:
     import-folder: /tmp
+  telegram:
+    tdlib:
+      api-id: 0
+      api-hash: ""

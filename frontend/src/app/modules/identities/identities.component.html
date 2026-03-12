@@ -69,35 +69,44 @@
     </p-table>
   </p-card>
 
-  <!-- Section 2: Unlinked Application Identities -->
+  <!-- Section 2: Unlinked Application Identities (persons only) -->
   <p-card>
     <ng-template pTemplate="header">
       <div class="card-header">
         <i class="pi pi-link card-header-icon"></i>
         <span class="card-header-title">Unlinked Application Identities</span>
+        <div class="card-header-actions">
+          <p-iconField iconPosition="left" class="header-search">
+            <p-inputIcon styleClass="pi pi-search"/>
+            <input type="text" pInputText [(ngModel)]="unlinkedFilter" (ngModelChange)="unlinkedTable.filterGlobal(unlinkedFilter, 'contains')"
+                   placeholder="Search by name..."/>
+          </p-iconField>
+        </div>
       </div>
     </ng-template>
-    <p-table
+    <p-table #unlinkedTable
       [value]="unlinkedAppIdentities"
       [paginator]="true"
       [rows]="15"
       [rowsPerPageOptions]="[15, 25, 50]"
-      sortField="application"
+      sortField="usernameHint"
       [sortOrder]="1"
       styleClass="p-datatable-striped"
-      [globalFilterFields]="['application', 'identifier']"
+      [globalFilterFields]="['usernameHint', 'identifier', 'application']"
       [tableStyle]="{'min-width': '30rem'}">
       <ng-template pTemplate="header">
         <tr>
-          <th pSortableColumn="application">Application <p-sortIcon field="application"/></th>
+          <th pSortableColumn="usernameHint">Name <p-sortIcon field="usernameHint"/></th>
           <th pSortableColumn="identifier">Identifier <p-sortIcon field="identifier"/></th>
+          <th pSortableColumn="application">Application <p-sortIcon field="application"/></th>
           <th style="text-align: center">Action</th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-appIdentity>
         <tr>
-          <td>{{ appIdentity.application }}</td>
+          <td>{{ appIdentity.usernameHint ?? '—' }}</td>
           <td>{{ appIdentity.identifier }}</td>
+          <td>{{ appIdentity.application }}</td>
           <td style="text-align: center">
             <p-button icon="pi pi-link" label="Link" [text]="true"
                       pTooltip="Link to an identity" tooltipPosition="top"
@@ -107,7 +116,60 @@
       </ng-template>
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="3" style="text-align: center">No unlinked application identities.</td>
+          <td colspan="4" style="text-align: center">No unlinked application identities.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+
+  <!-- Section 3: Unlinked Group Application Identities -->
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="card-header">
+        <i class="pi pi-users card-header-icon"></i>
+        <span class="card-header-title">Unlinked Group Application Identities</span>
+        <div class="card-header-actions">
+          <p-iconField iconPosition="left" class="header-search">
+            <p-inputIcon styleClass="pi pi-search"/>
+            <input type="text" pInputText [(ngModel)]="unlinkedGroupFilter" (ngModelChange)="unlinkedGroupTable.filterGlobal(unlinkedGroupFilter, 'contains')"
+                   placeholder="Search by name..."/>
+          </p-iconField>
+        </div>
+      </div>
+    </ng-template>
+    <p-table #unlinkedGroupTable
+      [value]="unlinkedGroupIdentities"
+      [paginator]="true"
+      [rows]="15"
+      [rowsPerPageOptions]="[15, 25, 50]"
+      sortField="usernameHint"
+      [sortOrder]="1"
+      styleClass="p-datatable-striped"
+      [globalFilterFields]="['usernameHint', 'identifier', 'application']"
+      [tableStyle]="{'min-width': '30rem'}">
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="usernameHint">Name <p-sortIcon field="usernameHint"/></th>
+          <th pSortableColumn="identifier">Identifier <p-sortIcon field="identifier"/></th>
+          <th pSortableColumn="application">Application <p-sortIcon field="application"/></th>
+          <th style="text-align: center">Action</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-appIdentity>
+        <tr>
+          <td>{{ appIdentity.usernameHint ?? '—' }}</td>
+          <td>{{ appIdentity.identifier }}</td>
+          <td>{{ appIdentity.application }}</td>
+          <td style="text-align: center">
+            <p-button icon="pi pi-link" label="Link" [text]="true"
+                      pTooltip="Link to a group identity" tooltipPosition="top"
+                      (onClick)="showLinkDialog(appIdentity)"></p-button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="4" style="text-align: center">No unlinked group application identities.</td>
         </tr>
       </ng-template>
     </p-table>

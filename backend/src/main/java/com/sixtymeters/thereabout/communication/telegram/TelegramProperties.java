@@ -37,6 +37,11 @@ public class TelegramProperties {
     private int historyBatchSize = 100;
 
     /**
+     * Delay in milliseconds between GetChatHistory batches during resync to avoid Telegram rate limits.
+     */
+    private long resyncThrottleMs = 800;
+
+    /**
      * Whether Telegram sync is enabled (requires apiId and apiHash to be set).
      */
     public boolean isConfigured() {

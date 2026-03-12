@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@TestPropertySource(properties = {
+        "thereabout.telegram.tdlib.api-id=0",
+        "thereabout.telegram.tdlib.api-hash="
+})
 @Transactional
 class FrontendConfigurationControllerTest {
 
@@ -125,6 +130,12 @@ class FrontendConfigurationControllerTest {
     @Test
     void testResyncTelegram() throws Exception {
         mockMvc.perform(post("/backend/api/v1/config/telegram/resync"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void testCancelTelegramResync() throws Exception {
+        mockMvc.perform(post("/backend/api/v1/config/telegram/resync/cancel"))
                 .andExpect(status().isNoContent());
     }
 

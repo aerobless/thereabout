@@ -72,14 +72,16 @@ class TelegramChatImporterTest {
         List<MessageEntity> messages = messageRepository.findAll();
         assertThat(messages).hasSize(7);
 
-        // Verify application identities use composite id: from|from_id
-        var aliceIdentity = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.TELEGRAM, "Alice Test|user111");
+        // Verify application identities use id only, username_hint for display name
+        var aliceIdentity = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.TELEGRAM, "user111");
         assertThat(aliceIdentity).isPresent();
         assertThat(aliceIdentity.get().getIdentity()).isNull();
+        assertThat(aliceIdentity.get().getUsernameHint()).isEqualTo("Alice Test");
 
-        var bobIdentity = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.TELEGRAM, "Bob Test|user222");
+        var bobIdentity = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.TELEGRAM, "user222");
         assertThat(bobIdentity).isPresent();
         assertThat(bobIdentity.get().getIdentity()).isNull();
+        assertThat(bobIdentity.get().getUsernameHint()).isEqualTo("Bob Test");
 
         var receiverIdentity = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.TELEGRAM, "Some Contact");
         assertThat(receiverIdentity).isPresent();
@@ -100,7 +102,8 @@ class TelegramChatImporterTest {
                 .filter(m -> m.getBody().equals("Hello, this is a plain text message."))
                 .findFirst()
                 .orElseThrow();
-        assertThat(plainMessage.getSender().getIdentifier()).isEqualTo("Alice Test|user111");
+        assertThat(plainMessage.getSender().getIdentifier()).isEqualTo("user111");
+        assertThat(plainMessage.getSender().getUsernameHint()).isEqualTo("Alice Test");
         assertThat(plainMessage.getTimestamp()).isEqualTo(LocalDateTime.of(2024, 1, 15, 10, 0, 0));
 
         // Verify flattened link + plain text message
@@ -109,7 +112,8 @@ class TelegramChatImporterTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(linkMessage.getBody()).isEqualTo("https://example.com/page - check this out");
-        assertThat(linkMessage.getSender().getIdentifier()).isEqualTo("Bob Test|user222");
+        assertThat(linkMessage.getSender().getIdentifier()).isEqualTo("user222");
+        assertThat(linkMessage.getSender().getUsernameHint()).isEqualTo("Bob Test");
 
         // Verify media placeholders
         assertThat(messages.stream().filter(m -> m.getBody().equals("[photo]")).count()).isEqualTo(1);
@@ -122,14 +126,16 @@ class TelegramChatImporterTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(serviceMessage.getBody()).isEqualTo("[phone_call 120s]");
-        assertThat(serviceMessage.getSender().getIdentifier()).isEqualTo("Alice Test|user111");
+        assertThat(serviceMessage.getSender().getIdentifier()).isEqualTo("user111");
+        assertThat(serviceMessage.getSender().getUsernameHint()).isEqualTo("Alice Test");
 
         // Verify last text message
         MessageEntity byeMessage = messages.stream()
                 .filter(m -> m.getBody().equals("Bye!"))
                 .findFirst()
                 .orElseThrow();
-        assertThat(byeMessage.getSender().getIdentifier()).isEqualTo("Bob Test|user222");
+        assertThat(byeMessage.getSender().getIdentifier()).isEqualTo("user222");
+        assertThat(byeMessage.getSender().getUsernameHint()).isEqualTo("Bob Test");
     }
 
     @Test
@@ -163,12 +169,12 @@ class TelegramChatImporterTest {
             assertThat(msg.getReceiver().getIdentity()).isNotNull();
         });
 
-        // Verify senders are the individual participants (composite id)
+        // Verify senders are the individual participants (id only, hint for display)
         var senderIdentifiers = messages.stream()
                 .map(m -> m.getSender().getIdentifier())
                 .distinct()
                 .toList();
-        assertThat(senderIdentifiers).containsExactlyInAnyOrder("Alice Test|user111", "Bob Test|user222");
+        assertThat(senderIdentifiers).containsExactlyInAnyOrder("user111", "user222");
     }
 
     @Test
@@ -181,10 +187,10 @@ class TelegramChatImporterTest {
         List<MessageEntity> messages = messageRepository.findAll();
         assertThat(messages).hasSize(7);
 
-        var aliceIdentity = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.TELEGRAM, "Alice Test|user111");
+        var aliceIdentity = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.TELEGRAM, "user111");
         assertThat(aliceIdentity).isPresent();
 
-        var bobIdentity = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.TELEGRAM, "Bob Test|user222");
+        var bobIdentity = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.TELEGRAM, "user222");
         assertThat(bobIdentity).isPresent();
     }
 

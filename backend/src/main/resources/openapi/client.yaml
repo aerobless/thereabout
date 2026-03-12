@@ -134,6 +134,17 @@ paths:
           description: Resync triggered.
         500:
           $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  ConfigTelegramResyncCancel:
+    post:
+      summary: Cancel the current Telegram resync (backfill) if one is running.
+      tags:
+        - frontend
+      operationId: cancelTelegramResync
+      responses:
+        204:
+          description: Cancel requested; resync will stop after the current batch.
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
   ConfigTelegramDisconnect:
     delete:
       summary: Disconnect Telegram and stop sync.
@@ -233,6 +244,20 @@ components:
         configured:
           type: boolean
           description: Whether api_id and api_hash are set.
+        resyncStatus:
+          type: string
+          enum:
+            - IDLE
+            - IN_PROGRESS
+            - COMPLETE
+            - CANCELLED
+            - ERROR
+          description: Status of the manual resync/backfill (optional).
+        resyncProgress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Resync progress 0-100 when resyncStatus is IN_PROGRESS (optional).
     TelegramConnectRequest:
       type: object
       required:

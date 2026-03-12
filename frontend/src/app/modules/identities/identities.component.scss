@@ -29,3 +29,15 @@ a {
     margin-top: 0;
   }
 }
+
+:host ::ng-deep .header-search {
+  display: inline-block;
+  width: 220px;
+
+  input {
+    width: 100%;
+    font-size: 0.8rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+}

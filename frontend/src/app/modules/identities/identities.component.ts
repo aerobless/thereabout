@@ -13,6 +13,8 @@ import {ToastModule} from 'primeng/toast';
 import {TooltipModule} from 'primeng/tooltip';
 import {SelectModule} from 'primeng/select';
 import {CheckboxModule} from 'primeng/checkbox';
+import {IconFieldModule} from 'primeng/iconfield';
+import {InputIconModule} from 'primeng/inputicon';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import {ToolbarComponent} from '../../shared/toolbar/toolbar.component';
 import {
@@ -39,6 +41,8 @@ import {
         TooltipModule,
         SelectModule,
         CheckboxModule,
+        IconFieldModule,
+        InputIconModule,
         ToolbarComponent,
     ],
     providers: [ConfirmationService, MessageService],
@@ -49,6 +53,9 @@ export class IdentitiesComponent implements OnInit {
 
     identities: Identity[] = [];
     unlinkedAppIdentities: IdentityInApplication[] = [];
+    unlinkedGroupIdentities: IdentityInApplication[] = [];
+    unlinkedFilter = '';
+    unlinkedGroupFilter = '';
 
     // Identity dialog
     identityDialogVisible = false;
@@ -80,7 +87,8 @@ export class IdentitiesComponent implements OnInit {
 
     loadUnlinkedAppIdentities(): void {
         this.identityInApplicationService.getUnlinkedIdentityInApplications().subscribe(appIdentities => {
-            this.unlinkedAppIdentities = appIdentities;
+            this.unlinkedAppIdentities = appIdentities.filter(a => !a.isGroup);
+            this.unlinkedGroupIdentities = appIdentities.filter(a => a.isGroup);
         });
     }
 

@@ -223,7 +223,6 @@ public class TelegramChatImporter implements FileImporter {
         }
         String from = msg.path("from").asText();
         String fromId = msg.path("from_id").asText();
-        String senderIdentifier = from + "|" + fromId;
 
         LocalDateTime timestamp = parseDate(msg.path("date").asText());
         String body = extractText(msg);
@@ -254,7 +253,7 @@ public class TelegramChatImporter implements FileImporter {
         String messageId = msg.has("id") ? String.valueOf(msg.path("id").asLong()) : "";
         String sourceIdentifier = "telegram-" + chatId + "-" + messageId;
 
-        IdentityInApplicationEntity sender = getOrCreateIdentity(senderIdentifier, identityCache);
+        IdentityInApplicationEntity sender = getOrCreateIdentity(fromId, from, identityCache);
 
         return MessageEntity.builder()
                 .type("text")
@@ -274,7 +273,6 @@ public class TelegramChatImporter implements FileImporter {
         }
         String actor = msg.path("actor").asText();
         String actorId = msg.path("actor_id").asText();
-        String senderIdentifier = actor + "|" + actorId;
 
         LocalDateTime timestamp = parseDate(msg.path("date").asText());
         String action = msg.has("action") ? msg.path("action").asText() : "service";
@@ -287,7 +285,7 @@ public class TelegramChatImporter implements FileImporter {
         String messageId = msg.has("id") ? String.valueOf(msg.path("id").asLong()) : "";
         String sourceIdentifier = "telegram-" + chatId + "-" + messageId;
 
-        IdentityInApplicationEntity sender = getOrCreateIdentity(senderIdentifier, identityCache);
+        IdentityInApplicationEntity sender = getOrCreateIdentity(actorId, actor, identityCache);
 
         return MessageEntity.builder()
                 .type("text")
@@ -349,14 +347,16 @@ public class TelegramChatImporter implements FileImporter {
                         }));
     }
 
-    private IdentityInApplicationEntity getOrCreateIdentity(String identifier, Map<String, IdentityInApplicationEntity> cache) {
-        return cache.computeIfAbsent(identifier, id -> identityInApplicationRepository
-                .findByApplicationAndIdentifier(CommunicationApplication.TELEGRAM, id)
+    private IdentityInApplicationEntity getOrCreateIdentity(String id, String usernameHint,
+                                                            Map<String, IdentityInApplicationEntity> cache) {
+        return cache.computeIfAbsent(id, key -> identityInApplicationRepository
+                .findByApplicationAndIdentifier(CommunicationApplication.TELEGRAM, key)
                 .orElseGet(() -> {
-                    log.info("Creating new application identity for Telegram user: {}", id);
+                    log.info("Creating new application identity for Telegram user: {}", key);
                     IdentityInApplicationEntity entity = IdentityInApplicationEntity.builder()
                             .application(CommunicationApplication.TELEGRAM)
-                            .identifier(id)
+                            .identifier(key)
+                            .usernameHint(usernameHint)
                             .build();
                     return identityInApplicationRepository.save(entity);
                 }));

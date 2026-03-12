@@ -1,7 +1,9 @@
 package com.sixtymeters.thereabout.communication.data;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,4 +16,8 @@ public interface TelegramSyncCheckpointRepository extends JpaRepository<Telegram
     List<TelegramSyncCheckpointEntity> findByConnection(TelegramConnectionEntity connection);
 
     List<TelegramSyncCheckpointEntity> findByConnectionAndBackfillComplete(TelegramConnectionEntity connection, boolean backfillComplete);
+
+    @Modifying
+    @Transactional
+    long deleteByConnection(TelegramConnectionEntity connection);
 }

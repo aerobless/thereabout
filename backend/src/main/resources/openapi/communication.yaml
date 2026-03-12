@@ -338,6 +338,16 @@ components:
           type: string
           description: The identifier within the application (e.g. phone number, username)
           example: "+41791234567"
+        usernameHint:
+          type: string
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+          description: Display name from app export (e.g. Telegram username); used for display when no identity is linked
+        isGroup:
+          type: boolean
+          description: True if this application identity represents a group (e.g. Telegram group/supergroup chat). Omitted or null is treated as false.
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
     Message:
       description: A message between two identities.
       type: object

@@ -29,6 +29,7 @@ public interface IdentityMapper {
     IdentityEntity mapToIdentityEntity(GenIdentity genIdentity);
 
     @Mapping(source = "application", target = "application", qualifiedByName = "enumToDisplayName")
+    @Mapping(source = "group", target = "isGroup")
     GenIdentityInApplication mapToGenIdentityInApplication(IdentityInApplicationEntity entity);
 
     @Mapping(target = "id", source = "id", qualifiedByName = "bigDecimalToLong")
@@ -36,6 +37,7 @@ public interface IdentityMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(source = "application", target = "application", qualifiedByName = "displayNameToEnum")
+    @Mapping(source = "isGroup", target = "isGroup")
     IdentityInApplicationEntity mapToIdentityInApplicationEntity(GenIdentityInApplication genIdentityInApplication);
 
     @Named("bigDecimalToLong")

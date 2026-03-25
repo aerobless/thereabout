@@ -1,10 +1,10 @@
 package com.sixtymeters.thereabout.config;
 
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.sixtymeters.thereabout.generated.model.GenHealthMetricDataInner;
+import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
+import tools.jackson.databind.module.SimpleModule;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -13,13 +13,15 @@ import java.time.OffsetDateTime;
 public class JacksonConfiguration {
 
     @Bean
-    public Jackson2ObjectMapperBuilderCustomizer healthObjectMapperCustomizer() {
-        return builder -> {
-            SimpleModule module = new SimpleModule();
-            module.addDeserializer(GenHealthMetricDataInner.class, new HealthMetricDataDeserializer());
-            module.addDeserializer(OffsetDateTime.class, new FlexibleOffsetDateTimeDeserializer());
-            module.addDeserializer(LocalDate.class, new FlexibleLocalDateDeserializer());
-            builder.modulesToInstall(module);
-        };
+    public JsonMapperBuilderCustomizer healthObjectMapperCustomizer() {
+        return builder -> builder.addModule(createHealthDeserializationModule());
+    }
+
+    private static SimpleModule createHealthDeserializationModule() {
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(GenHealthMetricDataInner.class, new HealthMetricDataDeserializer());
+        module.addDeserializer(OffsetDateTime.class, new FlexibleOffsetDateTimeDeserializer());
+        module.addDeserializer(LocalDate.class, new FlexibleLocalDateDeserializer());
+        return module;
     }
 }

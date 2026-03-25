@@ -1,7 +1,7 @@
 package com.sixtymeters.thereabout.communication.service.importer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 import com.sixtymeters.thereabout.config.FlexibleLocalDateDeserializer;
 import com.sixtymeters.thereabout.config.FlexibleOffsetDateTimeDeserializer;
 import com.sixtymeters.thereabout.config.HealthMetricDataDeserializer;
@@ -33,19 +33,18 @@ class HealthAutoExportImporterTest {
     @Mock
     private ImportProgressService importProgressService;
 
-    private ObjectMapper objectMapper;
+    private JsonMapper jsonMapper;
     private HealthAutoExportImporter importer;
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
         module.addDeserializer(GenHealthMetricDataInner.class, new HealthMetricDataDeserializer());
         module.addDeserializer(java.time.OffsetDateTime.class, new FlexibleOffsetDateTimeDeserializer());
         module.addDeserializer(LocalDate.class, new FlexibleLocalDateDeserializer());
-        objectMapper.registerModule(module);
+        jsonMapper = JsonMapper.builder().addModule(module).build();
 
-        importer = new HealthAutoExportImporter(healthDataService, objectMapper, importProgressService);
+        importer = new HealthAutoExportImporter(healthDataService, jsonMapper, importProgressService);
     }
 
     @Test

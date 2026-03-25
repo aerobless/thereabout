@@ -89,7 +89,6 @@ components:
           type: array
           items:
             type: string
-          x-field-extra-annotation: "@lombok.Builder.Default"
         extraInformation:
           type: string
         stacktrace:

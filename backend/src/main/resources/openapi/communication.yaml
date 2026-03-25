@@ -315,7 +315,6 @@ components:
           example: "friend"
         identityInApplications:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: '#/components/schemas/IdentityInApplication'
     IdentityInApplication:
@@ -415,7 +414,6 @@ components:
       properties:
         content:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: '#/components/schemas/Message'
         totalElements:

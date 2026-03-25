@@ -41,6 +41,10 @@ paths:
             multipart/form-data:
               schema:
                 type: object
+                required:
+                  - file
+                  - importType
+                  - receiver
                 properties:
                   file:
                     type: string

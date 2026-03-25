@@ -1,6 +1,6 @@
 package com.sixtymeters.thereabout.client.transport;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.sixtymeters.thereabout.client.data.ConfigurationEntity;
 import com.sixtymeters.thereabout.client.data.ConfigurationKey;
 import com.sixtymeters.thereabout.client.data.ConfigurationRepository;
@@ -10,7 +10,7 @@ import com.sixtymeters.thereabout.generated.model.GenTelegramStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -40,7 +40,7 @@ class FrontendConfigurationControllerTest {
     private ConfigurationRepository configurationRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     private String testApiKey;
 
@@ -104,7 +104,8 @@ class FrontendConfigurationControllerTest {
 
         mockMvc.perform(multipart("/backend/api/v1/config/import-file")
                         .file(file)
-                        .param("importType", "GOOGLE_MAPS_RECORDS"))
+                        .param("importType", "GOOGLE_MAPS_RECORDS")
+                        .param("receiver", "test-receiver"))
                 .andExpect(status().isNoContent());
     }
 

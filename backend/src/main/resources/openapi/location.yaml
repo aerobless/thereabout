@@ -130,7 +130,6 @@ paths:
               properties:
                 locations:
                   type: array
-                  x-field-extra-annotation: "@lombok.Builder.Default"
                   items:
                     $ref: '#/components/schemas/GeoJsonLocation'
       responses:
@@ -206,7 +205,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Trip'
-                x-field-extra-annotation: "@lombok.Builder.Default"
         500:
           $ref: '../thereabout.openapi.yaml#/components/responses/500'
     post:
@@ -445,7 +443,6 @@ components:
           description: The end of the trip
         visitedCountries:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             type: object
             description: The countries visited during the trip
@@ -476,7 +473,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CountryStatistic"
-          x-field-extra-annotation: "@lombok.Builder.Default"
     CountryStatistic:
       type: object
       required:
@@ -516,12 +512,10 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/SparseLocationHistoryEntry"
-      x-field-extra-annotation: "@lombok.Builder.Default"
     LocationHistoryResponse:
       type: array
       items:
         $ref: "#/components/schemas/LocationHistoryEntry"
-      x-field-extra-annotation: "@lombok.Builder.Default"
     SparseLocationHistoryEntry:
       type: object
       required:
@@ -605,7 +599,6 @@ components:
               enum: [Point]
             coordinates:
               type: array
-              x-field-extra-annotation: "@lombok.Builder.Default"
               items:
                 type: number
               example: [-122.030581, 37.331800]
@@ -639,7 +632,6 @@ components:
               example: -1
             motion:
               type: array
-              x-field-extra-annotation: "@lombok.Builder.Default"
               items:
                 type: string
                 enum: [driving, walking, running, cycling, stationary]
@@ -701,4 +693,3 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LocationHistoryEntry'
-          x-field-extra-annotation: "@lombok.Builder.Default"

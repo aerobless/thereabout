@@ -1,7 +1,8 @@
 package com.sixtymeters.thereabout.communication.service.importer;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import com.sixtymeters.thereabout.client.service.ImportProgressService;
 import com.sixtymeters.thereabout.config.ThereaboutException;
 import com.sixtymeters.thereabout.generated.model.GenHealthData;
@@ -33,7 +34,7 @@ public class HealthAutoExportImporter implements FileImporter {
     private static final String AVG_SPEED = "avgSpeed";
 
     private final HealthDataService healthDataService;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
     private final ImportProgressService importProgressService;
 
     @Override
@@ -48,7 +49,7 @@ public class HealthAutoExportImporter implements FileImporter {
 
         try {
             String content = Files.readString(file.toPath());
-            JsonNode root = objectMapper.readTree(content);
+            JsonNode root = jsonMapper.readTree(content);
 
             JsonNode dataNode = root.path(DATA);
             if (dataNode.isMissingNode()) {
@@ -58,7 +59,7 @@ public class HealthAutoExportImporter implements FileImporter {
 
             normalizeWorkoutSpeedToAvgSpeed(dataNode);
 
-            GenSubmitHealthDataRequest request = objectMapper.treeToValue(root, GenSubmitHealthDataRequest.class);
+            GenSubmitHealthDataRequest request = jsonMapper.treeToValue(root, GenSubmitHealthDataRequest.class);
             if (request == null || request.getData() == null) {
                 throw new ThereaboutException(HttpStatusCode.valueOf(400),
                         "Health Auto Export JSON could not be parsed as health data");
@@ -76,7 +77,7 @@ public class HealthAutoExportImporter implements FileImporter {
                 log.info("Saved {} workouts from file", healthData.getWorkouts().size());
                 importProgressService.setProgress(100);
             }
-        } catch (IOException e) {
+        } catch (IOException | JacksonException e) {
             throw new ThereaboutException(HttpStatusCode.valueOf(400),
                     "Failed to read Health Auto Export file '%s': %s".formatted(file.getName(), e.getMessage()));
         } finally {
@@ -98,7 +99,7 @@ public class HealthAutoExportImporter implements FileImporter {
             return;
         }
         for (JsonNode workout : workouts) {
-            com.fasterxml.jackson.databind.node.ObjectNode obj = (com.fasterxml.jackson.databind.node.ObjectNode) workout;
+            tools.jackson.databind.node.ObjectNode obj = (tools.jackson.databind.node.ObjectNode) workout;
             if (workout.has(SPEED) && !workout.has(AVG_SPEED)) {
                 obj.set(AVG_SPEED, workout.get(SPEED));
             }

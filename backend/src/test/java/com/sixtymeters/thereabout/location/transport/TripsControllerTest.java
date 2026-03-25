@@ -1,6 +1,6 @@
 package com.sixtymeters.thereabout.location.transport;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.sixtymeters.thereabout.generated.model.GenTrip;
 import com.sixtymeters.thereabout.location.data.LocationHistoryEntity;
 import com.sixtymeters.thereabout.location.data.LocationHistoryRepository;
@@ -10,7 +10,7 @@ import com.sixtymeters.thereabout.location.data.TripsRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -41,7 +41,7 @@ class TripsControllerTest {
     private LocationHistoryRepository locationHistoryRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     private TripEntity testTrip;
 

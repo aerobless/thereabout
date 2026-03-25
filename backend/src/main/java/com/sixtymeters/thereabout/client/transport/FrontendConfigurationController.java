@@ -92,16 +92,20 @@ public class FrontendConfigurationController implements FrontendApi {
 
     @Override
     public ResponseEntity<Void> importFromFile(MultipartFile file, GenImportType importType, String receiver) {
-        log.info("Received file %s with import type %s via HTTP Endpoint /backend/api/v1/config/import-file".formatted(file.getOriginalFilename(), importType));
+        log.info("Received file %s with import type %s via HTTP Endpoint /backend/api/v1/config/import-file"
+                .formatted(file.getOriginalFilename(), importType));
+
+        if (file.isEmpty()) {
+            throw new ThereaboutException(HttpStatusCode.valueOf(400), "file is required");
+        }
 
         final var importDataToBeProcessed = persistTempFileForProcessing(file);
-        final var resolvedImportType = importType != null ? importType : GenImportType.GOOGLE_MAPS_RECORDS;
 
-        if (resolvedImportType == GenImportType.GOOGLE_MAPS_RECORDS) {
+        if (importType == GenImportType.GOOGLE_MAPS_RECORDS) {
             locationHistoryService.importGoogleLocationHistory(importDataToBeProcessed);
         } else {
             FileImporter importer = fileImporters.stream()
-                    .filter(fi -> fi.getSupportedImportType() == resolvedImportType)
+                    .filter(fi -> fi.getSupportedImportType() == importType)
                     .findFirst()
                     .orElseThrow(() -> new ThereaboutException(HttpStatusCode.valueOf(400),
                             "No importer found for import type: %s".formatted(importType)));

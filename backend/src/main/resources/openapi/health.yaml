@@ -71,12 +71,10 @@ components:
       properties:
         metrics:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/HealthMetric"
         workouts:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/Workout"
     HealthMetric:
@@ -88,7 +86,6 @@ components:
           type: string
         data:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             oneOf:
               - $ref: "#/components/schemas/MetricDataQuantity"
@@ -243,7 +240,6 @@ components:
           type: number
         heartRate:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             type: object
             properties:
@@ -337,62 +333,50 @@ components:
             - "Salt Water"
         activeEnergy:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/QuantityData"
         basalEnergy:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/QuantityData"
         cyclingCadence:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/QuantityData"
         cyclingDistance:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/QuantityData"
         cyclingPower:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/QuantityData"
         cyclingSpeed:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/QuantityData"
         swimDistance:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/QuantityData"
         swimStroke:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/QuantityData"
         stepCount:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/QuantityData"
         walkingAndRunningDistance:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/QuantityData"
         heartRateData:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/WorkoutHeartRateData"
         heartRateRecovery:
           type: array
-          x-field-extra-annotation: "@lombok.Builder.Default"
           items:
             $ref: "#/components/schemas/WorkoutHeartRateData"
     QuantityData:
@@ -550,12 +534,10 @@ components:
             type: array
             items:
               $ref: "#/components/schemas/DailyMetricValue"
-          x-field-extra-annotation: "@lombok.Builder.Default"
         workouts:
           type: array
           items:
             $ref: "#/components/schemas/WorkoutSummary"
-          x-field-extra-annotation: "@lombok.Builder.Default"
     DailyMetricValue:
       type: object
       properties:

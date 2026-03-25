@@ -14,7 +14,7 @@
     <name>backend</name>
     <description>backend</description>
     <properties>
-        <java.version>21</java.version>
+        <java.version>25</java.version>
         <spring-boot.version>4.0.4</spring-boot.version>
         <swagger-annotations.version>2.2.45</swagger-annotations.version>
         <springdoc-openapi-starter-webmvc-ui.version>3.0.2</springdoc-openapi-starter-webmvc-ui.version>

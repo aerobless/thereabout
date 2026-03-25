@@ -28,6 +28,7 @@ public class TelegramProperties {
 
     /**
      * Directory for TDLib database and session (writable by the app). Session/token stored here only; no password stored.
+     * Default is for non-Docker / manual construction; Spring binds {@code thereabout.telegram.tdlib.database-directory} from YAML.
      */
     private Path databaseDirectory = Path.of("data/telegram-tdlib");
 

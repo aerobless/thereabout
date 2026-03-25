@@ -5,3 +5,6 @@ spring:
 thereabout:
   import:
     import-folder: /Users/thwi/git/thereabout/private-test-data
+  telegram:
+    tdlib:
+      database-directory: data/telegram-tdlib

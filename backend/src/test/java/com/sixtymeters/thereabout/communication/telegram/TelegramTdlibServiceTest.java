@@ -31,6 +31,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyIterable;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.lenient;
@@ -87,7 +88,7 @@ class TelegramTdlibServiceTest {
                 (AtomicReference<SimpleTelegramClient>) ReflectionTestUtils.getField(service, "clientRef");
         clientRef.set(client);
 
-        when(connectionRepository.findFirstByOrderByIdAsc()).thenReturn(Optional.of(connection));
+        lenient().when(connectionRepository.findFirstByOrderByIdAsc()).thenReturn(Optional.of(connection));
         lenient().when(checkpointRepository.save(any(TelegramSyncCheckpointEntity.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(messageRepository.saveAll(anyIterable()))
@@ -346,6 +347,15 @@ class TelegramTdlibServiceTest {
         service.runFullBackfill(TelegramTdlibService.BackfillMode.RESUME);
 
         assertThat(basicGroupFromIds).containsExactly(0L, 650L, 600L);
+    }
+
+    @Test
+    void destroyClosesClientWithoutUpdatingConnectionInDatabase() {
+        doNothing().when(client).sendClose();
+        clearInvocations(connectionRepository);
+        service.destroy();
+        verify(client).sendClose();
+        verifyNoMoreInteractions(connectionRepository);
     }
 
     @Test

@@ -657,6 +657,15 @@ public class TelegramTdlibService {
     }
 
     public void disconnect() {
+        closeClientQuietly();
+        updateConnectionStatus("DISCONNECTED", null);
+    }
+
+    /**
+     * Close the TDLib client without changing DB state. Used on JVM/container shutdown so startup can still
+     * resume from {@link TelegramConnectionStartupRunner} when auth was READY.
+     */
+    private void closeClientQuietly() {
         SimpleTelegramClient client = clientRef.getAndSet(null);
         if (client != null) {
             try {
@@ -665,12 +674,11 @@ public class TelegramTdlibService {
                 log.warn("Error closing Telegram client", e);
             }
         }
-        updateConnectionStatus("DISCONNECTED", null);
     }
 
     @PreDestroy
     public void destroy() {
-        disconnect();
+        closeClientQuietly();
         executor.shutdown();
     }
 }

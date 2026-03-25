@@ -18,7 +18,7 @@ import {
 } from "../../../../generated/backend-api/thereabout";
 import {MessageService} from "primeng/api";
 
-import {catchError, combineLatest, interval, Observable, of, switchMap, takeWhile} from "rxjs";
+import {catchError, interval, Observable, of, switchMap, takeWhile} from "rxjs";
 import {ChipModule} from "primeng/chip";
 import {TooltipModule} from "primeng/tooltip";
 import {SelectModule} from "primeng/select";
@@ -73,10 +73,9 @@ export class ConfigurationComponent implements OnInit {
     telegramPolling = false;
     telegramResyncPolling = false;
 
-    // Receiver field for WhatsApp and Telegram imports
+    // Receiver field for WhatsApp import
     receiverName: string = '';
     whatsAppReceivers: string[] = [];
-    telegramReceivers: string[] = [];
     filteredReceivers: string[] = [];
 
     importTypeOptions: ImportTypeOption[] = [
@@ -91,12 +90,6 @@ export class ConfigurationComponent implements OnInit {
             value: 'WHATSAPP_CHAT',
             accept: '.txt',
             description: 'Upload your WhatsApp chat export (.txt) here. It will be imported into Thereabout.'
-        },
-        {
-            label: 'Telegram Chat History',
-            value: 'TELEGRAM_CHAT',
-            accept: '.json',
-            description: 'Upload your Telegram chat export (JSON from Telegram Desktop) here. It will be imported into Thereabout.'
         },
         {
             label: 'Health Auto Export JSON',
@@ -311,18 +304,13 @@ export class ConfigurationComponent implements OnInit {
     protected readonly TelegramStatus = TelegramStatus;
 
     loadChatReceivers() {
-        combineLatest([
-            this.identityInApplicationService.getIdentityInApplicationsByApplication('WhatsApp'),
-            this.identityInApplicationService.getIdentityInApplicationsByApplication('Telegram')
-        ]).subscribe(([whatsApp, telegram]) => {
+        this.identityInApplicationService.getIdentityInApplicationsByApplication('WhatsApp').subscribe((whatsApp) => {
             this.whatsAppReceivers = whatsApp.map(i => i.identifier);
-            this.telegramReceivers = telegram.map(i => i.identifier);
         });
     }
 
     get receiversForCurrentApp(): string[] {
         if (this.selectedImportType.value === 'WHATSAPP_CHAT') return this.whatsAppReceivers;
-        if (this.selectedImportType.value === 'TELEGRAM_CHAT') return this.telegramReceivers;
         return [];
     }
 
@@ -336,7 +324,7 @@ export class ConfigurationComponent implements OnInit {
     }
 
     get isReceiverRequired(): boolean {
-        return this.selectedImportType.value === 'WHATSAPP_CHAT' || this.selectedImportType.value === 'TELEGRAM_CHAT';
+        return this.selectedImportType.value === 'WHATSAPP_CHAT';
     }
 
     get isBrowseDisabled(): boolean {

@@ -4,10 +4,12 @@ This document provides instructions for AI agents and developers working on the 
 
 ## Running Tests
 
-To run all tests in the project, use Maven:
+Only [`backend/pom.xml`](backend/pom.xml) is a Maven project (no root reactor). Run Maven from `backend/`—not `mvn -pl backend` from the repo root.
+
+To run all tests:
 
 ```bash
-mvn clean install
+cd backend && mvn clean install
 ```
 
 This command will:

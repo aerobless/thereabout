@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Maps TDLib messages to our MessageEntity. Uses same sourceIdentifier and identity pattern as TelegramChatImporter:
+ * Maps TDLib messages to our MessageEntity. Uses consistent sourceIdentifier and identity patterns for Telegram:
  * identifier = user ID only, usernameHint = display name; cache key = ID only.
  * Does not call any TDLib method that would mark messages as read.
  */

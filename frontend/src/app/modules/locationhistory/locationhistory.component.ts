@@ -2,7 +2,6 @@ import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {
     GoogleMap,
     MapGeocoder,
-    MapHeatmapLayer,
     MapMarker,
     MapPolyline
 } from "@angular/google-maps";
@@ -34,13 +33,14 @@ import {TabsModule} from "primeng/tabs";
 import {AvatarModule} from "primeng/avatar";
 import {ToggleSwitchModule} from "primeng/toggleswitch";
 import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
+import {ThereaboutHeatmapLayerDirective} from "./thereabout-heatmap-layer.directive";
 
 
 @Component({
     selector: 'app-locationhistory',
     imports: [
     GoogleMap,
-    MapHeatmapLayer,
+    ThereaboutHeatmapLayerDirective,
     ToolbarComponent,
     InputTextModule,
     CardModule,
@@ -83,11 +83,10 @@ export class LocationhistoryComponent implements OnInit {
     searchValue: string = '';
 
     // Heatmap
-    heatmapOptions = {radius: 8, maxIntensity: 2};
     heatmapData: { lng: number; lat: number }[] = [];
     fromDate: Date = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
     toDate: Date = new Date();
-    alwaysShowHeatmap = true;
+    alwaysShowHeatmap = false;
 
     // Day view
     dayViewDataFull: Array<LocationHistoryEntry> = [];

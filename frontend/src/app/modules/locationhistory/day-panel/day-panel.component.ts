@@ -46,7 +46,7 @@ export class DayPanelComponent {
     @Input() locationLists!: LocationHistoryList[];
 
     @Output() loadDayViewData = new EventEmitter<number>();
-    @Output() loadTripViewData = new EventEmitter<void>();
+    @Output() loadDateRangeViewData = new EventEmitter<void>();
     @Output() applyZoom = new EventEmitter<number>();
     @Output() centerChange = new EventEmitter<{ lat: number, lng: number }>()
     @Output() exactDateChange = new EventEmitter<Date>();
@@ -149,7 +149,7 @@ export class DayPanelComponent {
                     detail: `The location was successfully created.`
                 });
                 this.loadDayViewData.emit(resp.id);
-                this.loadTripViewData.emit();
+                this.loadDateRangeViewData.emit();
             });
         }
 
@@ -168,6 +168,7 @@ export class DayPanelComponent {
                     detail: `The location was successfully created.`
                 });
                 this.loadDayViewData.emit(resp.id);
+                this.loadDateRangeViewData.emit();
             });
         }
     }
@@ -191,7 +192,7 @@ export class DayPanelComponent {
 
     cancelEdit() {
         this.loadDayViewData.emit();
-        this.loadTripViewData.emit();
+        this.loadDateRangeViewData.emit();
     }
 
     saveEdit() {
@@ -216,7 +217,7 @@ export class DayPanelComponent {
 
             this.editLocationList = undefined;
             this.loadDayViewData.emit();
-            this.loadTripViewData.emit();
+            this.loadDateRangeViewData.emit();
         });
 
         this.editModalVisible = false;
@@ -232,7 +233,7 @@ export class DayPanelComponent {
                 detail: 'The location entry was successfully deleted.'
             });
             this.loadDayViewData.emit();
-            this.loadTripViewData.emit();
+            this.loadDateRangeViewData.emit();
         });
     }
 

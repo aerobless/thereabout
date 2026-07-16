@@ -172,7 +172,12 @@ export class TripsComponent implements OnInit {
     }
 
     viewTrip(trip: Trip){
-        this.router.navigate(['locationhistory'], {queryParams: {tripId: trip.id}});
+        this.router.navigate(['locationhistory'], {
+            queryParams: {
+                fromDate: trip.start.substring(0, 10),
+                toDate: trip.end.substring(0, 10)
+            }
+        });
     }
 
 }

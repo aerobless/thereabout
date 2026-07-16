@@ -9,9 +9,7 @@ import {
 import {
     LocationHistoryEntry, LocationHistoryList,
     LocationListService,
-    LocationService,
-    Trip,
-    TripService
+    LocationService
 } from "../../../../generated/backend-api/thereabout";
 import {InputTextModule} from "primeng/inputtext";
 import {CardModule} from "primeng/card";
@@ -20,20 +18,18 @@ import {InputIconModule} from "primeng/inputicon";
 import {FormsModule} from "@angular/forms";
 import {ButtonModule} from "primeng/button";
 import {DatePickerModule} from "primeng/datepicker";
-import {PanelModule} from "primeng/panel";
 
 import {FloatLabelModule} from "primeng/floatlabel";
 import QuickFilterDateCombo from "./quick-filter-date-combo";
 import {TableModule} from "primeng/table";
 import {MessageService} from "primeng/api";
 import {ToastModule} from "primeng/toast";
-import {ActivatedRoute, Router} from "@angular/router";
+import {ActivatedRoute} from "@angular/router";
 import {DialogModule} from "primeng/dialog";
 import {InputNumberModule} from "primeng/inputnumber";
 import {StyleClassModule} from "primeng/styleclass";
 import {TooltipModule} from "primeng/tooltip";
 import {TextareaModule} from "primeng/textarea";
-import {TripPanelComponent} from "./trip-panel/trip-panel.component";
 import {DayPanelComponent} from "./day-panel/day-panel.component";
 import {ListPanelComponent} from "./list-panel/list-panel.component";
 import {TabsModule} from "primeng/tabs";
@@ -55,7 +51,6 @@ import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
     FormsModule,
     ButtonModule,
     DatePickerModule,
-    PanelModule,
     MapPolyline,
     MapMarker,
     FloatLabelModule,
@@ -66,7 +61,6 @@ import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
     StyleClassModule,
     TooltipModule,
     TextareaModule,
-    TripPanelComponent,
     DayPanelComponent,
     ListPanelComponent,
     TabsModule,
@@ -115,9 +109,10 @@ export class LocationhistoryComponent implements OnInit {
         scale: 4
     };
 
-    // Trip view
-    currentTrip: Trip | null = null;
-    tripViewDataFull: Array<LocationHistoryEntry> = [];
+    // Date range view
+    dateRangeFrom: string | undefined;
+    dateRangeTo: string | undefined;
+    dateRangeViewDataFull: Array<LocationHistoryEntry> = [];
 
     // Lists
     locationLists: LocationHistoryList[] = [];
@@ -126,35 +121,50 @@ export class LocationhistoryComponent implements OnInit {
                 private readonly locationListService: LocationListService,
                 private readonly geocodeService: MapGeocoder,
                 private messageService: MessageService,
-                private tripService: TripService,
-                private route: ActivatedRoute,
-                private router: Router) {
+                private route: ActivatedRoute) {
     }
 
     ngOnInit() {
         this.loadHeatmapData();
-        this.loadDayViewData();
         this.loadLocationListData();
 
         this.route.queryParams.subscribe(params => {
-            let tripId = params['tripId'] || null;
-            let date = params['date'] || null;
-            if (date) {
-                this.exactDate = new Date(date);
-                this.loadDayViewData();
+            const selectedDate = this.parseIsoDate(params['date']);
+            const fromDate = this.parseIsoDate(params['fromDate']);
+            const toDate = this.parseIsoDate(params['toDate']);
+            const hasValidDateRange = fromDate !== null && toDate !== null && fromDate.getTime() <= toDate.getTime();
+
+            if (hasValidDateRange) {
+                this.dateRangeFrom = this.dateToString(fromDate);
+                this.dateRangeTo = this.dateToString(toDate);
+                this.exactDate = selectedDate ?? fromDate;
+                this.loadDateRangeViewData();
+            } else {
+                this.dateRangeFrom = undefined;
+                this.dateRangeTo = undefined;
+                this.dateRangeViewDataFull = [];
+                if (selectedDate) {
+                    this.exactDate = selectedDate;
+                }
             }
 
-            if (tripId) {
-                this.tripService.getTrips().subscribe(trips => {
-                    this.currentTrip = trips.find(trip => trip.id == tripId) || null;
-                    if (this.currentTrip) {
-                        this.exactDate = new Date(this.currentTrip.start);
-                        this.loadDayViewData();
-                        this.loadTripViewData();
-                    }
-                });
-            }
+            this.loadDayViewData();
         });
+    }
+
+    private parseIsoDate(value: unknown): Date | null {
+        if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            return null;
+        }
+
+        const [year, month, day] = value.split('-').map(Number);
+        const date = new Date(year, month - 1, day);
+
+        if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+            return null;
+        }
+
+        return date;
     }
 
     private loadLocationListData() {
@@ -184,10 +194,10 @@ export class LocationhistoryComponent implements OnInit {
         });
     }
 
-    loadTripViewData() {
-        if (!this.currentTrip) return;
-        this.locationService.getLocations(this.currentTrip?.start, this.currentTrip?.end).subscribe(locations => {
-            this.tripViewDataFull = locations;
+    loadDateRangeViewData() {
+        if (!this.dateRangeFrom || !this.dateRangeTo) return;
+        this.locationService.getLocations(this.dateRangeFrom, this.dateRangeTo).subscribe(locations => {
+            this.dateRangeViewDataFull = locations;
         });
     }
 
@@ -263,14 +273,8 @@ export class LocationhistoryComponent implements OnInit {
                 summary: 'Location updated',
                 detail: `The location was successfully updated.`
             });
-            this.loadTripViewData();
+            this.loadDateRangeViewData();
         });
-    }
-
-    closeTripView() {
-        this.tripViewDataFull = [];
-        this.currentTrip = null;
-        this.router.navigate(['locationhistory']);
     }
 
     dayLineClick($event: google.maps.PolyMouseEvent) {

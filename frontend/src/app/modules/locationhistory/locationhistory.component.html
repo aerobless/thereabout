@@ -20,7 +20,7 @@
           <map-heatmap-layer [data]="heatmapData" [options]="heatmapOptions"></map-heatmap-layer>
         }
         @if (tabIndex===0) {
-          <map-polyline [path]="minifyDayViewData(tripViewDataFull)"
+          <map-polyline [path]="minifyDayViewData(dateRangeViewDataFull)"
           [options]="{strokeColor: 'grey', strokeOpacity: 0, icons: [{icon: lineSymbol, offset: '0', repeat: '15px'}]}"></map-polyline>
         }
         @if (tabIndex===0) {
@@ -42,16 +42,6 @@
 
     <!-- Right Side Panels -->
     <div style="display: flex; flex-direction: column; height: calc(100vh - 100px); overflow: hidden">
-
-      <!-- Trip Panel -->
-      @if (currentTrip) {
-        <div style="padding: 0 0 10px 10px; width: 400px;">
-          <thereabout-trip-panel [trip]="currentTrip"
-            [tripViewDataFull]="tripViewDataFull"
-            (closeTripView)="closeTripView()">
-          </thereabout-trip-panel>
-        </div>
-      }
 
       <!-- List View Panel -->
       <div style="padding: 0 0 10px 10px; width: 400px; height: 100%">
@@ -81,7 +71,7 @@
               <thereabout-day-panel
                 (applyZoom)="applyZoom($event)"
                 (loadDayViewData)="loadDayViewData($event)"
-                (loadTripViewData)="loadTripViewData()"
+                (loadDateRangeViewData)="loadDateRangeViewData()"
                 [(center)]="center"
                 [(locationLists)]="locationLists"
                 [dayViewDataFull]="dayViewDataFull"

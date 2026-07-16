@@ -73,6 +73,13 @@ import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 })
 export class LocationhistoryComponent implements OnInit {
 
+    // Embed view
+    embedMode = false;
+    embedRangeValid = false;
+    embedFromDate: Date | undefined;
+    embedToDate: Date | undefined;
+    private embedMap: google.maps.Map | undefined;
+
     // Map configuration
     center = {lat: 47.3919661, lng: 8.3};
     zoom = 4;
@@ -125,10 +132,16 @@ export class LocationhistoryComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.loadHeatmapData();
-        this.loadLocationListData();
+        let standardViewDataLoaded = false;
 
         this.route.queryParams.subscribe(params => {
+            this.embedMode = params['embed'] === 'true';
+            if (!this.embedMode && !standardViewDataLoaded) {
+                this.loadHeatmapData();
+                this.loadLocationListData();
+                standardViewDataLoaded = true;
+            }
+
             const selectedDate = this.parseIsoDate(params['date']);
             const fromDate = this.parseIsoDate(params['fromDate']);
             const toDate = this.parseIsoDate(params['toDate']);
@@ -137,18 +150,31 @@ export class LocationhistoryComponent implements OnInit {
             if (hasValidDateRange) {
                 this.dateRangeFrom = this.dateToString(fromDate);
                 this.dateRangeTo = this.dateToString(toDate);
-                this.exactDate = selectedDate ?? fromDate;
+                this.embedRangeValid = true;
+                this.embedFromDate = fromDate;
+                this.embedToDate = toDate;
+                this.exactDate = selectedDate && (!this.embedMode || this.isWithinEmbedRange(selectedDate))
+                    ? selectedDate
+                    : fromDate;
                 this.loadDateRangeViewData();
             } else {
                 this.dateRangeFrom = undefined;
                 this.dateRangeTo = undefined;
                 this.dateRangeViewDataFull = [];
+                this.embedRangeValid = false;
+                this.embedFromDate = undefined;
+                this.embedToDate = undefined;
                 if (selectedDate) {
                     this.exactDate = selectedDate;
                 }
             }
 
-            this.loadDayViewData();
+            if (!this.embedMode || hasValidDateRange) {
+                this.loadDayViewData();
+            } else {
+                this.dayViewDataFull = [];
+                this.selectedLocationEntries = [];
+            }
         });
     }
 
@@ -182,7 +208,7 @@ export class LocationhistoryComponent implements OnInit {
         });
     }
 
-    loadDayViewData(preselectedLocationId?: number) {
+    loadDayViewData(preselectedLocationId?: number, focusEmbedDay = false) {
         if (!this.exactDate) return;
         this.locationService.getLocations(this.dateToString(this.exactDate), this.dateToString(this.exactDate)).subscribe(locations => {
             this.dayViewDataFull = locations;
@@ -191,6 +217,9 @@ export class LocationhistoryComponent implements OnInit {
             } else {
                 this.selectedLocationEntries = [];
             }
+            if (focusEmbedDay) {
+                this.fitEmbedDayBounds();
+            }
         });
     }
 
@@ -198,7 +227,98 @@ export class LocationhistoryComponent implements OnInit {
         if (!this.dateRangeFrom || !this.dateRangeTo) return;
         this.locationService.getLocations(this.dateRangeFrom, this.dateRangeTo).subscribe(locations => {
             this.dateRangeViewDataFull = locations;
+            this.fitEmbedTripBounds();
         });
+    }
+
+    onEmbedMapInitialized(map: google.maps.Map) {
+        this.embedMap = map;
+        this.fitEmbedTripBounds();
+    }
+
+    private fitEmbedTripBounds() {
+        if (!this.embedMode || !this.embedMap || this.dateRangeViewDataFull.length === 0) {
+            return;
+        }
+
+        if (this.dateRangeViewDataFull.length === 1) {
+            const onlyLocation = this.dateRangeViewDataFull[0];
+            this.embedMap.setCenter({lat: onlyLocation.latitude, lng: onlyLocation.longitude});
+            this.embedMap.setZoom(15);
+            return;
+        }
+
+        const bounds = new google.maps.LatLngBounds();
+        for (const location of this.dateRangeViewDataFull) {
+            bounds.extend({lat: location.latitude, lng: location.longitude});
+        }
+        this.embedMap.fitBounds(bounds, 24);
+    }
+
+    private fitEmbedDayBounds() {
+        if (!this.embedMode || !this.embedMap || this.dayViewDataFull.length === 0) {
+            return;
+        }
+
+        if (this.dayViewDataFull.length === 1) {
+            const onlyLocation = this.dayViewDataFull[0];
+            this.embedMap.setCenter({lat: onlyLocation.latitude, lng: onlyLocation.longitude});
+            this.embedMap.setZoom(15);
+            return;
+        }
+
+        const bounds = new google.maps.LatLngBounds();
+        for (const location of this.dayViewDataFull) {
+            bounds.extend({lat: location.latitude, lng: location.longitude});
+        }
+        this.embedMap.fitBounds(bounds, 48);
+    }
+
+    decrementEmbedDate() {
+        this.shiftEmbedDate(-1);
+    }
+
+    incrementEmbedDate() {
+        this.shiftEmbedDate(1);
+    }
+
+    private shiftEmbedDate(days: number) {
+        if (!this.embedRangeValid) return;
+
+        const nextDate = new Date(this.exactDate);
+        nextDate.setDate(nextDate.getDate() + days);
+        if (!this.isWithinEmbedRange(nextDate)) return;
+
+        this.exactDate = nextDate;
+        this.loadDayViewData(undefined, true);
+    }
+
+    onEmbedDateChanged() {
+        if (!this.isWithinEmbedRange(this.exactDate)) return;
+        this.loadDayViewData(undefined, true);
+    }
+
+    canDecrementEmbedDate() {
+        return !!this.embedFromDate && this.exactDate.getTime() > this.embedFromDate.getTime();
+    }
+
+    canIncrementEmbedDate() {
+        return !!this.embedToDate && this.exactDate.getTime() < this.embedToDate.getTime();
+    }
+
+    openInThereabout() {
+        if (!this.dateRangeFrom || !this.dateRangeTo) return;
+
+        const url = new URL('/locationhistory', window.location.origin);
+        url.searchParams.set('fromDate', this.dateRangeFrom);
+        url.searchParams.set('toDate', this.dateRangeTo);
+        window.open(url.toString(), '_blank', 'noopener');
+    }
+
+    private isWithinEmbedRange(date: Date) {
+        return !!this.embedFromDate && !!this.embedToDate
+            && date.getTime() >= this.embedFromDate.getTime()
+            && date.getTime() <= this.embedToDate.getTime();
     }
 
     minifyDayViewData(data: Array<LocationHistoryEntry>) {

@@ -1,3 +1,46 @@
+@if (embedMode) {
+  <div class="embed-layout">
+    <div class="embed-map-container">
+      <google-map width="100%" height="100%" [center]="center" [zoom]="zoom"
+                  (mapInitialized)="onEmbedMapInitialized($event)">
+        @if (embedRangeValid) {
+          <map-polyline [path]="minifyDayViewData(dateRangeViewDataFull)"
+                        [options]="{strokeColor: 'grey', strokeOpacity: 0, icons: [{icon: lineSymbol, offset: '0', repeat: '15px'}]}"></map-polyline>
+          <map-polyline [path]="minifyDayViewData(dayViewDataFull)"
+                        [options]="{strokeColor: 'blue'}"></map-polyline>
+        }
+      </google-map>
+    </div>
+
+    <div class="embed-control-bar">
+      @if (embedRangeValid) {
+        <div class="embed-date-controls">
+          <p-button icon="pi pi-chevron-left" severity="secondary"
+                    ariaLabel="Previous day"
+                    [disabled]="!canDecrementEmbedDate()"
+                    (onClick)="decrementEmbedDate()"></p-button>
+          <p-datepicker [(ngModel)]="exactDate"
+                        (ngModelChange)="onEmbedDateChanged()"
+                        [minDate]="embedFromDate"
+                        [maxDate]="embedToDate"
+                        [iconDisplay]="'input'"
+                        [showIcon]="true"
+                        dateFormat="dd.mm.yy"></p-datepicker>
+          <p-button icon="pi pi-chevron-right" severity="secondary"
+                    ariaLabel="Next day"
+                    [disabled]="!canIncrementEmbedDate()"
+                    (onClick)="incrementEmbedDate()"></p-button>
+        </div>
+        <p-button label="Open in Thereabout" icon="pi pi-external-link" iconPos="right"
+                  (onClick)="openInThereabout()"></p-button>
+      } @else {
+        <span class="embed-validation-message">
+          Provide a valid date range using fromDate and toDate in YYYY-MM-DD format.
+        </span>
+      }
+    </div>
+  </div>
+} @else {
 <thereabout-toolbar>
   <p-iconfield iconPosition="left" class="toolbar-item">
     <p-inputicon styleClass="pi pi-search"/>
@@ -134,3 +177,4 @@
       </div>
     </div>
   </div>
+}

@@ -88,7 +88,7 @@
 
       <!-- List View Panel -->
       <div style="padding: 0 0 10px 10px; width: 400px; height: 100%">
-        <p-tabs [(value)]="tabIndex" (valueChange)="reloadDataOnTabChange()">
+        <p-tabs [(value)]="tabIndex">
           <p-tablist>
             <p-tab [value]="0">
               <div class="flex align-items-center gap-2">
@@ -102,12 +102,6 @@
                 <span class="white-space-nowrap m-0">Heatmap</span>
               </div>
             </p-tab>
-            <p-tab [value]="2">
-              <div class="flex align-items-center gap-2">
-                <i class="fa-solid fa-list"></i>
-                <span class="white-space-nowrap m-0">My Lists</span>
-              </div>
-            </p-tab>
           </p-tablist>
           <p-tabpanels>
             <p-tabpanel [value]="0">
@@ -116,7 +110,6 @@
                 (loadDayViewData)="loadDayViewData($event)"
                 (loadDateRangeViewData)="loadDateRangeViewData()"
                 [(center)]="center"
-                [(locationLists)]="locationLists"
                 [dayViewDataFull]="dayViewDataFull"
                 [(exactDate)]="exactDate"
                 [(highlightedLocationEntry)]="highlightedLocationEntry"
@@ -161,16 +154,6 @@
                 <label for="always-show-heatmap-switch" style="padding-right: 10px">Always show heatmap</label>
                 <p-toggleswitch id="always-show-heatmap-switch" [(ngModel)]="alwaysShowHeatmap" />
               </div>
-            </p-tabpanel>
-            <p-tabpanel [value]="2">
-              <thereabout-list-panel
-                (applyZoom)="applyZoom($event)"
-                (goToDayView)="goToDayView($event)"
-                [(center)]="center"
-                [(locationLists)]="locationLists"
-                [(highlightedLocationEntry)]="highlightedLocationEntry"
-                [(selectedLocationEntries)]="selectedLocationEntries"
-              ></thereabout-list-panel>
             </p-tabpanel>
           </p-tabpanels>
         </p-tabs>

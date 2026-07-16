@@ -15,13 +15,6 @@ paths:
     $ref: 'openapi/location.yaml#/paths/LocationById'
   /backend/api/v1/statistics:
     $ref: 'openapi/location.yaml#/paths/Statistics'
-  /backend/api/v1/location-history-list:
-    $ref: 'openapi/location.yaml#/paths/LocationHistoryList'
-  /backend/api/v1/location-history-list/{id}:
-    $ref: 'openapi/location.yaml#/paths/LocationHistoryListById'
-  /backend/api/v1/location-history-list/{id}/location:
-    $ref: 'openapi/location.yaml#/paths/LocationHistoryListLocation'
-
   # Client
   /backend/api/v1/config:
     $ref: 'openapi/client.yaml#/paths/Config'
@@ -123,9 +116,6 @@ components:
       $ref: 'openapi/location.yaml#/components/schemas/LocationHistoryEntry'
     GeoJsonLocation:
       $ref: 'openapi/location.yaml#/components/schemas/GeoJsonLocation'
-    LocationHistoryList:
-      $ref: 'openapi/location.yaml#/components/schemas/LocationHistoryList'
-
     # Health
     HealthData:
       $ref: 'openapi/health.yaml#/components/schemas/HealthData'

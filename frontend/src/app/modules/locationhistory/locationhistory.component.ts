@@ -7,8 +7,7 @@ import {
     MapPolyline
 } from "@angular/google-maps";
 import {
-    LocationHistoryEntry, LocationHistoryList,
-    LocationListService,
+    LocationHistoryEntry,
     LocationService
 } from "../../../../generated/backend-api/thereabout";
 import {InputTextModule} from "primeng/inputtext";
@@ -31,7 +30,6 @@ import {StyleClassModule} from "primeng/styleclass";
 import {TooltipModule} from "primeng/tooltip";
 import {TextareaModule} from "primeng/textarea";
 import {DayPanelComponent} from "./day-panel/day-panel.component";
-import {ListPanelComponent} from "./list-panel/list-panel.component";
 import {TabsModule} from "primeng/tabs";
 import {AvatarModule} from "primeng/avatar";
 import {ToggleSwitchModule} from "primeng/toggleswitch";
@@ -62,7 +60,6 @@ import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
     TooltipModule,
     TextareaModule,
     DayPanelComponent,
-    ListPanelComponent,
     TabsModule,
     AvatarModule,
     ToggleSwitchModule
@@ -121,11 +118,7 @@ export class LocationhistoryComponent implements OnInit {
     dateRangeTo: string | undefined;
     dateRangeViewDataFull: Array<LocationHistoryEntry> = [];
 
-    // Lists
-    locationLists: LocationHistoryList[] = [];
-
     constructor(private readonly locationService: LocationService,
-                private readonly locationListService: LocationListService,
                 private readonly geocodeService: MapGeocoder,
                 private messageService: MessageService,
                 private route: ActivatedRoute) {
@@ -138,7 +131,6 @@ export class LocationhistoryComponent implements OnInit {
             this.embedMode = params['embed'] === 'true';
             if (!this.embedMode && !standardViewDataLoaded) {
                 this.loadHeatmapData();
-                this.loadLocationListData();
                 standardViewDataLoaded = true;
             }
 
@@ -191,12 +183,6 @@ export class LocationhistoryComponent implements OnInit {
         }
 
         return date;
-    }
-
-    private loadLocationListData() {
-        this.locationListService.getLocationHistoryLists().subscribe(lists => {
-            this.locationLists = lists;
-        });
     }
 
     loadHeatmapData() {
@@ -429,13 +415,4 @@ export class LocationhistoryComponent implements OnInit {
         }
     }
 
-    reloadDataOnTabChange() {
-        this.loadLocationListData();
-    }
-
-    goToDayView($event: Date) {
-        this.exactDate = $event;
-        this.tabIndex = 0;
-        this.loadDayViewData(this.selectedLocationEntries[0].id);
-    }
 }

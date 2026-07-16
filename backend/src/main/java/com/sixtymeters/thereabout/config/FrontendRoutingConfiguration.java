@@ -45,6 +45,10 @@ public class FrontendRoutingConfiguration implements WebMvcConfigurer {
     public void addResourceHandlers(final ResourceHandlerRegistry registry) {
         log.info("Enabling frontend routing configuration");
 
+        // API requests must never fall back to the single-page application.
+        registry.addResourceHandler("/backend/**")
+            .addResourceLocations("file:" + frontendLocation);
+
         registry.addResourceHandler("/**")
             .addResourceLocations("file:" + frontendLocation) // Ensure proper "file:" prefix for file paths
             .resourceChain(true)

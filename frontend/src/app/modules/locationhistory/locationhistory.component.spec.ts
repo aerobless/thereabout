@@ -47,7 +47,6 @@ describe('LocationhistoryComponent', () => {
 
   it('loads an inclusive date range and selects its first day', () => {
     vi.spyOn(component, 'loadHeatmapData').mockImplementation(() => undefined);
-    vi.spyOn(component as any, 'loadLocationListData').mockImplementation(() => undefined);
     const loadDayViewData = vi.spyOn(component, 'loadDayViewData').mockImplementation(() => undefined);
     const loadDateRangeViewData = vi.spyOn(component, 'loadDateRangeViewData').mockImplementation(() => undefined);
 
@@ -63,7 +62,6 @@ describe('LocationhistoryComponent', () => {
 
   it('uses a valid date parameter as the selected blue day', () => {
     vi.spyOn(component, 'loadHeatmapData').mockImplementation(() => undefined);
-    vi.spyOn(component as any, 'loadLocationListData').mockImplementation(() => undefined);
     vi.spyOn(component, 'loadDayViewData').mockImplementation(() => undefined);
     vi.spyOn(component, 'loadDateRangeViewData').mockImplementation(() => undefined);
 
@@ -85,7 +83,6 @@ describe('LocationhistoryComponent', () => {
 
   it('ignores incomplete, malformed, and reversed date ranges', () => {
     vi.spyOn(component, 'loadHeatmapData').mockImplementation(() => undefined);
-    vi.spyOn(component as any, 'loadLocationListData').mockImplementation(() => undefined);
     vi.spyOn(component, 'loadDayViewData').mockImplementation(() => undefined);
     const loadDateRangeViewData = vi.spyOn(component, 'loadDateRangeViewData').mockImplementation(() => undefined);
 
@@ -107,7 +104,6 @@ describe('LocationhistoryComponent', () => {
 
   it('enables embed mode, selects the first day, and skips standard view data', () => {
     const loadHeatmapData = vi.spyOn(component, 'loadHeatmapData').mockImplementation(() => undefined);
-    const loadLocationListData = vi.spyOn(component as any, 'loadLocationListData').mockImplementation(() => undefined);
     const getLocations = vi.spyOn(locationService, 'getLocations').mockReturnValue(of([]) as any);
 
     component.ngOnInit();
@@ -117,7 +113,6 @@ describe('LocationhistoryComponent', () => {
     expect(component.embedRangeValid).toBe(true);
     expect(component.dateToString(component.exactDate)).toBe('2026-06-13');
     expect(loadHeatmapData).not.toHaveBeenCalled();
-    expect(loadLocationListData).not.toHaveBeenCalled();
     expect(getLocations).toHaveBeenCalledTimes(2);
     expect(getLocations).toHaveBeenCalledWith('2026-06-13', '2026-06-20');
     expect(getLocations).toHaveBeenCalledWith('2026-06-13', '2026-06-13');

@@ -109,16 +109,6 @@
         [(ngModel)]="selectedLocationEntries[0].altitude"/>
     </div>
     <div class="flex align-items-center gap-3 mb-3">
-      <label for="editLocationList" class="font-semibold w-6rem">List</label>
-      <p-select
-        id="editLocationList"
-        [options]="locationLists"
-        [(ngModel)]="editLocationList"
-        [showClear]="true"
-        optionLabel="name"
-        placeholder="Select a list"/>
-    </div>
-    <div class="flex align-items-center gap-3 mb-3">
       <label for="tripSubtitle" class="font-semibold w-6rem" style="align-self: start">Description</label>
       <textarea class="description-textarea" id="tripSubtitle" rows="5" cols="30" [maxLength]="250" pInputTextarea
         [(ngModel)]="selectedLocationEntries[0].note">

@@ -2,7 +2,7 @@ import {ApplicationConfig, importProvidersFrom} from '@angular/core';
 import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
-import { provideHttpClient } from "@angular/common/http";
+import { provideHttpClient, withXhr } from "@angular/common/http";
 import {Configuration, ThereaboutApiApiModule} from "../../generated/backend-api/thereabout";
 import {provideAnimationsAsync} from "@angular/platform-browser/animations/async";
 import {MessageService} from "primeng/api";
@@ -28,11 +28,14 @@ const ThereaboutPreset = definePreset(Aura, {
   }
 });
 
+const primeUiLicense = (globalThis as typeof globalThis & { primeUiLicense?: string }).primeUiLicense;
+
 export const appConfig: ApplicationConfig = {
-  providers: [provideRouter(routes), provideHttpClient(), importProvidersFrom(
+  providers: [provideRouter(routes), provideHttpClient(withXhr()), importProvidersFrom(
       ThereaboutApiApiModule.forRoot(() => new Configuration({ basePath: '' })),
   ), provideAnimationsAsync(), MessageService,
   providePrimeNG({
+    license: primeUiLicense,
     theme: {
       preset: ThereaboutPreset
     }

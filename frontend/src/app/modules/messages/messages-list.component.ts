@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ToolbarComponent } from '../../shared/toolbar/toolbar.component';
@@ -29,6 +29,7 @@ interface FilterMeta {
     SelectModule,
   ],
   templateUrl: './messages-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './messages-list.component.scss',
 })
 export class MessagesListComponent {

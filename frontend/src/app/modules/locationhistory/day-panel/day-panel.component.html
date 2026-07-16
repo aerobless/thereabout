@@ -32,7 +32,7 @@
   (mouseleave)="onMouseOverLocationEntry($event, null)"
   (selectionChange)="onSelectionChange($event)"
   [metaKeySelection]="false" dataKey="id">
-  <ng-template pTemplate="caption">
+  <ng-template #caption>
     <div class="flex flex-wrap justify-content-end gap-2">
       <p-button label="New" icon="pi pi-plus" text
         pTooltip="New entry at the current time or after the selected entry."
@@ -50,10 +50,10 @@
         [disabled]="notAtLeastOneLocationSelected()"/>
     </div>
   </ng-template>
-  <ng-template pTemplate="header">
+  <ng-template #header>
     <tr>
       <th style="width: 2rem; text-align: center">
-        <p-tableHeaderCheckbox/>
+        <p-tableheadercheckbox/>
       </th>
       <th style="text-align: center"><i class="fa-solid fa-clock" pTooltip="Time"
       tooltipPosition="top"></i></th>
@@ -68,11 +68,11 @@
     </th>
   </tr>
 </ng-template>
-<ng-template pTemplate="body" let-locationEntry>
+<ng-template #body let-locationEntry>
   <tr [pSelectableRow]="locationEntry"
     (mouseenter)="onMouseOverLocationEntry($event, locationEntry)">
     <td style="text-align: center">
-      <p-tableCheckbox [value]="locationEntry" [pSelectableRow]="locationEntry"/>
+      <p-tablecheckbox [value]="locationEntry" [pSelectableRow]="locationEntry"/>
     </td>
     <td style="text-align: center">{{ convertToLocalTime(locationEntry.timestamp) }}</td>
     <td style="text-align: center">
@@ -102,7 +102,7 @@
     </div>
     <div class="flex align-items-center gap-3 mb-3">
       <label for="altitudeInput" class="font-semibold w-6rem">Altitude</label>
-      <p-inputNumber id="altitudeInput"
+      <p-inputnumber id="altitudeInput"
         inputId="integeronly"
         [min]="0"
         suffix="m"

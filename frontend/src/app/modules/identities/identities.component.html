@@ -1,12 +1,12 @@
 <thereabout-toolbar></thereabout-toolbar>
 <p-toast></p-toast>
-<p-confirmDialog></p-confirmDialog>
+<p-confirmdialog></p-confirmdialog>
 
 <div class="identities-container">
 
   <!-- Section 1: Identity Table -->
   <p-card>
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <div class="card-header">
         <i class="pi pi-users card-header-icon"></i>
         <span class="card-header-title">Identities</span>
@@ -25,16 +25,16 @@
       styleClass="p-datatable-striped"
       [globalFilterFields]="['shortName', 'relationship']"
       [tableStyle]="{'min-width': '60rem'}">
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <tr>
-          <th pSortableColumn="shortName">Short Name <p-sortIcon field="shortName"/></th>
-          <th pSortableColumn="relationship">Relationship <p-sortIcon field="relationship"/></th>
+          <th pSortableColumn="shortName">Short Name <p-sorticon field="shortName"/></th>
+          <th pSortableColumn="relationship">Relationship <p-sorticon field="relationship"/></th>
           <th style="text-align: center">Group</th>
           <th style="text-align: center">App Identities</th>
           <th style="text-align: center">Actions</th>
         </tr>
       </ng-template>
-      <ng-template pTemplate="body" let-identity>
+      <ng-template #body let-identity>
         <tr>
           <td><a [routerLink]="['/identities', identity.id]">{{ identity.shortName }}</a></td>
           <td>{{ identity.relationship }}</td>
@@ -61,7 +61,7 @@
           </td>
         </tr>
       </ng-template>
-      <ng-template pTemplate="emptymessage">
+      <ng-template #emptymessage>
         <tr>
           <td colspan="5" style="text-align: center">No identities found.</td>
         </tr>
@@ -71,16 +71,16 @@
 
   <!-- Section 2: Unlinked Application Identities (persons only) -->
   <p-card>
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <div class="card-header">
         <i class="pi pi-link card-header-icon"></i>
         <span class="card-header-title">Unlinked Application Identities</span>
         <div class="card-header-actions">
-          <p-iconField iconPosition="left" class="header-search">
-            <p-inputIcon styleClass="pi pi-search"/>
+          <p-iconfield iconPosition="left" class="header-search">
+            <p-inputicon styleClass="pi pi-search"/>
             <input type="text" pInputText [(ngModel)]="unlinkedFilter" (ngModelChange)="unlinkedTable.filterGlobal(unlinkedFilter, 'contains')"
                    placeholder="Search by name..."/>
-          </p-iconField>
+          </p-iconfield>
         </div>
       </div>
     </ng-template>
@@ -94,15 +94,15 @@
       styleClass="p-datatable-striped"
       [globalFilterFields]="['usernameHint', 'identifier', 'application']"
       [tableStyle]="{'min-width': '30rem'}">
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <tr>
-          <th pSortableColumn="usernameHint">Name <p-sortIcon field="usernameHint"/></th>
-          <th pSortableColumn="identifier">Identifier <p-sortIcon field="identifier"/></th>
-          <th pSortableColumn="application">Application <p-sortIcon field="application"/></th>
+          <th pSortableColumn="usernameHint">Name <p-sorticon field="usernameHint"/></th>
+          <th pSortableColumn="identifier">Identifier <p-sorticon field="identifier"/></th>
+          <th pSortableColumn="application">Application <p-sorticon field="application"/></th>
           <th style="text-align: center">Action</th>
         </tr>
       </ng-template>
-      <ng-template pTemplate="body" let-appIdentity>
+      <ng-template #body let-appIdentity>
         <tr>
           <td>{{ appIdentity.usernameHint ?? '—' }}</td>
           <td>{{ appIdentity.identifier }}</td>
@@ -114,7 +114,7 @@
           </td>
         </tr>
       </ng-template>
-      <ng-template pTemplate="emptymessage">
+      <ng-template #emptymessage>
         <tr>
           <td colspan="4" style="text-align: center">No unlinked application identities.</td>
         </tr>
@@ -124,16 +124,16 @@
 
   <!-- Section 3: Unlinked Group Application Identities -->
   <p-card>
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <div class="card-header">
         <i class="pi pi-users card-header-icon"></i>
         <span class="card-header-title">Unlinked Group Application Identities</span>
         <div class="card-header-actions">
-          <p-iconField iconPosition="left" class="header-search">
-            <p-inputIcon styleClass="pi pi-search"/>
+          <p-iconfield iconPosition="left" class="header-search">
+            <p-inputicon styleClass="pi pi-search"/>
             <input type="text" pInputText [(ngModel)]="unlinkedGroupFilter" (ngModelChange)="unlinkedGroupTable.filterGlobal(unlinkedGroupFilter, 'contains')"
                    placeholder="Search by name..."/>
-          </p-iconField>
+          </p-iconfield>
         </div>
       </div>
     </ng-template>
@@ -147,15 +147,15 @@
       styleClass="p-datatable-striped"
       [globalFilterFields]="['usernameHint', 'identifier', 'application']"
       [tableStyle]="{'min-width': '30rem'}">
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <tr>
-          <th pSortableColumn="usernameHint">Name <p-sortIcon field="usernameHint"/></th>
-          <th pSortableColumn="identifier">Identifier <p-sortIcon field="identifier"/></th>
-          <th pSortableColumn="application">Application <p-sortIcon field="application"/></th>
+          <th pSortableColumn="usernameHint">Name <p-sorticon field="usernameHint"/></th>
+          <th pSortableColumn="identifier">Identifier <p-sorticon field="identifier"/></th>
+          <th pSortableColumn="application">Application <p-sorticon field="application"/></th>
           <th style="text-align: center">Action</th>
         </tr>
       </ng-template>
-      <ng-template pTemplate="body" let-appIdentity>
+      <ng-template #body let-appIdentity>
         <tr>
           <td>{{ appIdentity.usernameHint ?? '—' }}</td>
           <td>{{ appIdentity.identifier }}</td>
@@ -167,7 +167,7 @@
           </td>
         </tr>
       </ng-template>
-      <ng-template pTemplate="emptymessage">
+      <ng-template #emptymessage>
         <tr>
           <td colspan="4" style="text-align: center">No unlinked group application identities.</td>
         </tr>
@@ -204,14 +204,14 @@
       <div class="linked-app-identities">
         <h4>Linked Application Identities</h4>
         <p-table [value]="editingIdentity.identityInApplications" styleClass="p-datatable-sm">
-          <ng-template pTemplate="header">
+          <ng-template #header>
             <tr>
               <th>Application</th>
               <th>Identifier</th>
               <th style="text-align: center">Action</th>
             </tr>
           </ng-template>
-          <ng-template pTemplate="body" let-appIdentity>
+          <ng-template #body let-appIdentity>
             <tr>
               <td>{{ appIdentity.application }}</td>
               <td>{{ appIdentity.identifier }}</td>
@@ -227,7 +227,7 @@
     }
   </div>
 
-  <ng-template pTemplate="footer">
+  <ng-template #footer>
     <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="identityDialogVisible = false"></p-button>
     <p-button label="Save" icon="pi pi-check" (onClick)="saveIdentity()"
               [disabled]="!editingIdentity.shortName"></p-button>
@@ -253,16 +253,16 @@
       filterBy="shortName"
       appendTo="body"
       [style]="{'width': '100%'}">
-      <ng-template let-identity pTemplate="item">
+      <ng-template let-identity #item>
         <span>{{ identityLabel(identity) }}</span>
       </ng-template>
-      <ng-template let-identity pTemplate="selectedItem">
+      <ng-template let-identity #selectedItem>
         <span>{{ identityLabel(identity) }}</span>
       </ng-template>
     </p-select>
   </div>
 
-  <ng-template pTemplate="footer">
+  <ng-template #footer>
     <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="linkDialogVisible = false"></p-button>
     <p-button label="Link" icon="pi pi-link" (onClick)="linkAppIdentity()"
               [disabled]="!selectedIdentityForLink"></p-button>

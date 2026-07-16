@@ -24,7 +24,7 @@
 
     <!-- Location History Map Card -->
     <p-card class="dayview-card card-map">
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <div class="card-header">
           <i class="pi pi-map-marker card-header-icon"></i>
           <span class="card-header-title">Location History</span>
@@ -55,7 +55,7 @@
 
     <!-- Weight Card -->
     <p-card class="dayview-card card-weight">
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <div class="card-header">
           <i class="fa-solid fa-weight-scale card-header-icon"></i>
           <span class="card-header-title">Weight</span>
@@ -100,7 +100,7 @@
 
     <!-- Energy Card -->
     <p-card class="dayview-card card-energy">
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <div class="card-header">
           <i class="fa-solid fa-bolt card-header-icon"></i>
           <span class="card-header-title">Energy</span>
@@ -151,7 +151,7 @@
     <!-- Daily stats: 4 small cards -->
     <div class="daily-stats-grid">
       <p-card class="dayview-card daily-stat-card">
-        <ng-template pTemplate="header">
+        <ng-template #header>
           <div class="card-header">
             <i class="fa-solid fa-shoe-prints card-header-icon"></i>
             <span class="card-header-title">Steps &amp; Distance</span>
@@ -177,7 +177,7 @@
         </div>
       </p-card>
       <p-card class="dayview-card daily-stat-card">
-        <ng-template pTemplate="header">
+        <ng-template #header>
           <div class="card-header">
             <i class="fa-solid fa-heart-pulse card-header-icon"></i>
             <span class="card-header-title">Heart rate</span>
@@ -203,7 +203,7 @@
         </div>
       </p-card>
       <p-card class="dayview-card daily-stat-card">
-        <ng-template pTemplate="header">
+        <ng-template #header>
           <div class="card-header">
             <i class="fa-solid fa-person-walking card-header-icon"></i>
             <span class="card-header-title">Stand</span>
@@ -219,7 +219,7 @@
         </div>
       </p-card>
       <p-card class="dayview-card daily-stat-card">
-        <ng-template pTemplate="header">
+        <ng-template #header>
           <div class="card-header">
             <i class="fa-solid fa-moon card-header-icon"></i>
             <span class="card-header-title">Sleep</span>
@@ -234,7 +234,7 @@
     <!-- Workouts Card (hidden when no workouts for the day) -->
     @if (workouts.length > 0) {
       <p-card class="dayview-card card-workouts">
-        <ng-template pTemplate="header">
+        <ng-template #header>
           <div class="card-header">
             <i class="fa-solid fa-dumbbell card-header-icon"></i>
             <span class="card-header-title">Workouts</span>
@@ -244,7 +244,7 @@
           <p-table
             [value]="workouts"
             styleClass="p-datatable-sm">
-            <ng-template pTemplate="header">
+            <ng-template #header>
               <tr>
                 <th>
                   <i class="fa-solid fa-clock" pTooltip="Time" tooltipPosition="top"></i>
@@ -263,7 +263,7 @@
                 </th>
               </tr>
             </ng-template>
-            <ng-template pTemplate="body" let-workout>
+            <ng-template #body let-workout>
               <tr>
                 <td>{{ formatWorkoutTime(workout.start) }}</td>
                 <td>{{ workout.name || '--' }}</td>
@@ -278,7 +278,7 @@
 
     <!-- Messages Card -->
     <p-card class="dayview-card card-messages">
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <div class="card-header">
           <a routerLink="/messages" class="card-header-link">
             <i class="fa-solid fa-envelope card-header-icon"></i>
@@ -290,7 +290,7 @@
         <p-table
           [value]="messages"
           styleClass="p-datatable-sm">
-          <ng-template pTemplate="header">
+          <ng-template #header>
             <tr>
               <th>
                 <i class="fa-solid fa-clock" pTooltip="Time" tooltipPosition="top"></i>
@@ -309,7 +309,7 @@
               </th>
             </tr>
           </ng-template>
-          <ng-template pTemplate="body" let-message>
+          <ng-template #body let-message>
             <tr>
               <td>{{ formatMessageTime(message.timestamp) }}</td>
               <td>{{ message.source || '--' }}</td>
@@ -323,7 +323,7 @@
               <td>{{ message.body || message.subject || '--' }}</td>
             </tr>
           </ng-template>
-          <ng-template pTemplate="emptymessage">
+          <ng-template #emptymessage>
             <tr>
               <td colspan="4" class="empty-table-message">
                 No messages for {{ selectedDate | date:'dd.MM.yyyy' }}

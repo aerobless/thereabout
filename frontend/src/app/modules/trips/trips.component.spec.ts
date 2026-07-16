@@ -1,6 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { TripsComponent } from './trips.component';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
+import { MessageService } from 'primeng/api';
 
 describe('TripsComponent', () => {
   let component: TripsComponent;
@@ -8,7 +12,8 @@ describe('TripsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TripsComponent]
+      imports: [TripsComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), MessageService]
     })
     .compileComponents();
     

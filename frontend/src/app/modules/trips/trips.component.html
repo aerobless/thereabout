@@ -3,7 +3,7 @@
 <div class="main-content">
   @if (isLoading) {
     <div class="loading-spinner">
-      <p-progressSpinner ariaLabel="loading" styleClass="w-20rem h-20rem"/>
+      <p-progressspinner ariaLabel="loading" styleClass="w-20rem h-20rem"/>
     </div>
   }
   @for (year of getYears(); track year) {
@@ -13,13 +13,13 @@
         @for (trip of getTripsForYear(year); track trip) {
           <div class="trip-container">
             <p-panel>
-              <ng-template pTemplate="header">
+              <ng-template #header>
                 <div class="trip-title font-bold"
                   pTooltip="{{ trip.title }}" tooltipPosition="bottom" showDelay="1000">
                   {{ trip.title }}
                 </div>
               </ng-template>
-              <ng-template pTemplate="footer">
+              <ng-template #footer>
                 <div class="flex flex-wrap align-items-center justify-content-between gap-3">
                   <div class="flex align-items-center gap-2 country-tags">
                     @for (country of trip.visitedCountries; track country) {
@@ -29,7 +29,7 @@
                     }
                   </div>
                   <span class="p-text-secondary" style="align-self: flex-end;">
-                    <p-splitButton
+                    <p-splitbutton
                       label="View"
                       severity="secondary"
                       [model]="tripPanelMenuItems"
@@ -39,7 +39,7 @@
                   </span>
                 </div>
               </ng-template>
-              <ng-template pTemplate="icons">
+              <ng-template #icons>
                 <p-chip label="{{calculateDaysSpent(trip)}} days"
                   pTooltip="{{trip.start | reformatDate}} until {{trip.end | reformatDate}}" tooltipPosition="top" showDelay="500"
                   icon="pi pi-calendar"/>

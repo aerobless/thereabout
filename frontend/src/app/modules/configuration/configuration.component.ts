@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {ButtonModule} from "primeng/button";
 import {IconFieldModule} from "primeng/iconfield";
 import {InputIconModule} from "primeng/inputicon";
@@ -57,6 +57,7 @@ interface ImportTypeOption {
     DatePipe
 ],
     templateUrl: './configuration.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './configuration.component.scss'
 })
 export class ConfigurationComponent implements OnInit {

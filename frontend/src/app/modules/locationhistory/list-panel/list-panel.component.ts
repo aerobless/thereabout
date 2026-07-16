@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 import {ButtonModule} from "primeng/button";
 import {DatePickerModule} from "primeng/datepicker";
 
@@ -34,6 +34,7 @@ import {InputTextModule} from "primeng/inputtext";
     InputTextModule
 ],
     templateUrl: './list-panel.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './list-panel.component.scss'
 })
 export class ListPanelComponent {

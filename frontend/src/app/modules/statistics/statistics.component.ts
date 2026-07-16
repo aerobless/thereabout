@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {ButtonModule} from "primeng/button";
 import {FileUploadModule} from "primeng/fileupload";
 import {InputTextModule} from "primeng/inputtext";
@@ -29,6 +29,7 @@ import {TooltipModule} from "primeng/tooltip";
     TooltipModule
 ],
     templateUrl: './statistics.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './statistics.component.scss'
 })
 export class StatisticsComponent implements OnInit {

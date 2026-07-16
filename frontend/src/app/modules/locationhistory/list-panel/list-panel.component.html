@@ -7,14 +7,14 @@
       selectionMode="single"
       [(selection)]="selectedLocationList"
       [metaKeySelection]="false" dataKey="id">
-      <ng-template pTemplate="caption">
+      <ng-template #caption>
         <div class="flex flex-wrap justify-content-end gap-2">
           <p-button label="Add new list" icon="pi pi-plus" text
             pTooltip="Add a new list" tooltipPosition="left" showDelay="500"
             (onClick)="createNewList()"/>
         </div>
       </ng-template>
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <tr>
           <th>Name</th>
           <th style="text-align: center"><i class="fa-solid fa-map-location-dot"
@@ -22,7 +22,7 @@
           <th style="text-align: center">Tools</th>
         </tr>
       </ng-template>
-      <ng-template pTemplate="body" let-listEntry>
+      <ng-template #body let-listEntry>
         <tr [pSelectableRow]="listEntry">
           <td style="font-size: large">{{ listEntry.name }}</td>
           <td style="text-align: center">
@@ -59,7 +59,7 @@
       (mouseleave)="onMouseOverLocationEntry($event, null)"
       (selectionChange)="onSelectionChange($event)"
       [metaKeySelection]="false" dataKey="id">
-      <ng-template pTemplate="caption">
+      <ng-template #caption>
         <div class="flex flex-wrap justify-content-end gap-2">
           <p-button label="Day" icon="pi pi-calendar" text
             pTooltip="Open Day View for this date." tooltipPosition="left" showDelay="500"
@@ -75,10 +75,10 @@
             [disabled]="notAtLeastOneLocationSelected()"/>
         </div>
       </ng-template>
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <tr>
           <th style="width: 2rem; text-align: center">
-            <p-tableHeaderCheckbox/>
+            <p-tableheadercheckbox/>
           </th>
           <th style="text-align: center"><i class="fa-solid fa-calendar-day" pTooltip="Date & Time"
           tooltipPosition="top"></i></th>
@@ -88,11 +88,11 @@
           pTooltip="Coordinates" tooltipPosition="top"></i></th>
         </tr>
       </ng-template>
-      <ng-template pTemplate="body" let-locationEntry>
+      <ng-template #body let-locationEntry>
         <tr [pSelectableRow]="locationEntry"
           (mouseenter)="onMouseOverLocationEntry($event, locationEntry)">
           <td style="text-align: center">
-            <p-tableCheckbox [value]="locationEntry" [pSelectableRow]="locationEntry"/>
+            <p-tablecheckbox [value]="locationEntry" [pSelectableRow]="locationEntry"/>
           </td>
           <td style="text-align: center">{{ convertToLocalDateTime(locationEntry.timestamp) }}</td>
           <td style="text-align: center">

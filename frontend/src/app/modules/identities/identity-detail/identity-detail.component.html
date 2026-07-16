@@ -9,7 +9,7 @@
 
   @if (identity) {
     <p-card>
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <div class="card-header">
           <i class="pi pi-id-card card-header-icon"></i>
           <span class="card-header-title">Identity Details</span>
@@ -32,7 +32,7 @@
     </p-card>
 
     <p-card>
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <div class="card-header">
           <i class="pi pi-link card-header-icon"></i>
           <span class="card-header-title">Linked Application Identities</span>
@@ -42,19 +42,19 @@
         [value]="identity.identityInApplications || []"
         styleClass="p-datatable-striped"
         [tableStyle]="{'min-width': '20rem'}">
-        <ng-template pTemplate="header">
+        <ng-template #header>
           <tr>
             <th>Application</th>
             <th>Identifier</th>
           </tr>
         </ng-template>
-        <ng-template pTemplate="body" let-appIdentity>
+        <ng-template #body let-appIdentity>
           <tr>
             <td>{{ appIdentity.application }}</td>
             <td>{{ appIdentity.identifier }}</td>
           </tr>
         </ng-template>
-        <ng-template pTemplate="emptymessage">
+        <ng-template #emptymessage>
           <tr>
             <td colspan="2" style="text-align: center">No linked application identities.</td>
           </tr>
@@ -65,7 +65,7 @@
 
   @if (!identity) {
     <p-card>
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <div class="card-header">
           <i class="pi pi-exclamation-triangle card-header-icon"></i>
           <span class="card-header-title">Identity Not Found</span>

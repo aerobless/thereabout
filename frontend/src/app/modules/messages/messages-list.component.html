@@ -2,7 +2,7 @@
 
 <div class="main-content">
   <p-card class="messages-card">
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <div class="card-header">
         <i class="fa-solid fa-envelope card-header-icon"></i>
         <span class="card-header-title">Messages</span>
@@ -26,12 +26,12 @@
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} messages"
       [filterDelay]="400"
     >
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <tr>
           <th pSortableColumn="timestamp" style="min-width: 10rem">
             <i class="fa-solid fa-clock" pTooltip="Date / Time" tooltipPosition="top"></i>
             <span class="th-label">Date / Time </span>
-            <p-sortIcon field="timestamp"></p-sortIcon>
+            <p-sorticon field="timestamp"></p-sorticon>
           </th>
           <th style="min-width: 6rem">
             <i class="fa-solid fa-mobile-screen" pTooltip="Source" tooltipPosition="top"></i>
@@ -52,16 +52,16 @@
         </tr>
         <tr>
           <th>
-            <p-columnFilter
+            <p-columnfilter
               field="timestamp"
               type="date"
               display="row"
               [showMenu]="false"
               placeholder="Date"
-            ></p-columnFilter>
+            ></p-columnfilter>
           </th>
           <th>
-            <p-columnFilter
+            <p-columnfilter
               field="source"
               type="text"
               display="row"
@@ -79,37 +79,37 @@
                   (onChange)="filter($event.value)"
                 ></p-select>
               </ng-template>
-            </p-columnFilter>
+            </p-columnfilter>
           </th>
           <th>
-            <p-columnFilter
+            <p-columnfilter
               field="sender"
               type="text"
               display="row"
               [showMenu]="false"
               placeholder="Sender"
-            ></p-columnFilter>
+            ></p-columnfilter>
           </th>
           <th>
-            <p-columnFilter
+            <p-columnfilter
               field="receiver"
               type="text"
               display="row"
               [showMenu]="false"
               placeholder="Receiver"
-            ></p-columnFilter>
+            ></p-columnfilter>
           </th>
           <th>
-            <p-columnFilter
+            <p-columnfilter
               field="message"
               type="text"
               display="row"
               [showMenu]="false"
-            ></p-columnFilter>
+            ></p-columnfilter>
           </th>
         </tr>
       </ng-template>
-      <ng-template pTemplate="body" let-message>
+      <ng-template #body let-message>
         <tr>
           <td>
             <span class="message-date">{{ formatMessageDate(message.timestamp) }}</span>
@@ -133,7 +133,7 @@
           <td>{{ message.body ?? message.subject ?? '--' }}</td>
         </tr>
       </ng-template>
-      <ng-template pTemplate="emptymessage">
+      <ng-template #emptymessage>
         <tr>
           <td colspan="5" class="empty-table-message">No messages found.</td>
         </tr>

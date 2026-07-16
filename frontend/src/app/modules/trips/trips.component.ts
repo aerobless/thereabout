@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {ButtonModule} from "primeng/button";
 import {Router} from "@angular/router";
 import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
@@ -44,6 +44,7 @@ import {ReformatDatePipe} from "../../util/reformat-date.pipe";
     ReformatDatePipe
 ],
     templateUrl: './trips.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './trips.component.scss'
 })
 export class TripsComponent implements OnInit {

@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ListPanelComponent } from './list-panel.component';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MessageService } from 'primeng/api';
 
 describe('DayPanelComponent', () => {
   let component: ListPanelComponent;
@@ -8,7 +11,8 @@ describe('DayPanelComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ListPanelComponent]
+      imports: [ListPanelComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting(), MessageService]
     })
     .compileComponents();
     

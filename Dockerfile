@@ -4,21 +4,22 @@ WORKDIR /app
 
 COPY backend/target/thereabout-backend*.jar ./thereabout.jar
 
-RUN java -Djarmode=layertools -jar ./thereabout.jar extract
+RUN java -Djarmode=tools -jar ./thereabout.jar extract --layers --launcher --destination extracted
 
 FROM eclipse-temurin:25-jdk
 
 # Download and extract dockerize directly using the ADD command
-ENV DOCKERIZE_VERSION v0.7.0
-ADD https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz /usr/local/bin/
-RUN tar -C /usr/local/bin -xzf /usr/local/bin/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm /usr/local/bin/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+ARG TARGETARCH
+ENV DOCKERIZE_VERSION=v0.14.0
+ADD https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-$TARGETARCH-$DOCKERIZE_VERSION.tar.gz /usr/local/bin/dockerize.tar.gz
+RUN tar -C /usr/local/bin -xzf /usr/local/bin/dockerize.tar.gz && rm /usr/local/bin/dockerize.tar.gz
 
 WORKDIR /app
 
-COPY --from=builder app/dependencies ./
-COPY --from=builder app/spring-boot-loader ./
-COPY --from=builder app/snapshot-dependencies ./
-COPY --from=builder app/application ./
+COPY --from=builder app/extracted/dependencies ./
+COPY --from=builder app/extracted/spring-boot-loader ./
+COPY --from=builder app/extracted/snapshot-dependencies ./
+COPY --from=builder app/extracted/application ./
 
 COPY frontend/dist/thereabout/browser /frontend
 

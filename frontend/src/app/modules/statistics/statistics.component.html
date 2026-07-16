@@ -25,26 +25,26 @@
                     [globalFilterFields]="['countryName', 'continent']"
                     styleClass="p-datatable-striped"
                     [tableStyle]="{'min-width': '50rem'}">
-                <ng-template pTemplate="header">
+                <ng-template #header>
                     <tr>
                         <th pSortableColumn="countryName">
-                            Country <p-sortIcon field="countryName"/>
+                            Country <p-sorticon field="countryName"/>
                         </th>
                         <th pSortableColumn="continent">
-                            Continent <p-sortIcon field="continent"/>
+                            Continent <p-sorticon field="continent"/>
                         </th>
                         <th  pSortableColumn="firstVisit">
-                            First visit <p-sortIcon field="firstVisit"/>
+                            First visit <p-sorticon field="firstVisit"/>
                         </th>
                         <th  pSortableColumn="lastVisit">
-                            Last visit <p-sortIcon field="lastVisit"/>
+                            Last visit <p-sorticon field="lastVisit"/>
                         </th>
                         <th  pSortableColumn="numberOfDaysSpent">
-                            Number of days spent <p-sortIcon field="numberOfDaysSpent"/>
+                            Number of days spent <p-sorticon field="numberOfDaysSpent"/>
                         </th>
                     </tr>
                 </ng-template>
-                <ng-template pTemplate="body" let-visitedCountry>
+                <ng-template #body let-visitedCountry>
                     <tr>
                         <td>{{countryNameFormat(visitedCountry)}}</td>
                         <td>{{mapContinent(visitedCountry.continent)}}</td>

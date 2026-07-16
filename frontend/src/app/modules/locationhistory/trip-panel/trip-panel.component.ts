@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {Component, EventEmitter, Input, Output, ChangeDetectionStrategy} from '@angular/core';
 import {PanelModule} from "primeng/panel";
 import {ButtonModule} from "primeng/button";
 import {TooltipModule} from "primeng/tooltip";
@@ -12,6 +12,7 @@ import {LocationHistoryEntry, Trip} from "../../../../../generated/backend-api/t
         TooltipModule
     ],
     templateUrl: './trip-panel.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './trip-panel.component.scss'
 })
 export class TripPanelComponent {

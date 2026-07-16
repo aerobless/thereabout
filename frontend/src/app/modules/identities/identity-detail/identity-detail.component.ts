@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {ActivatedRoute, RouterModule} from '@angular/router';
 import {ButtonModule} from 'primeng/button';
 import {CardModule} from 'primeng/card';
@@ -16,6 +16,7 @@ import {Identity, IdentityService} from '../../../../../generated/backend-api/th
         ToolbarComponent,
     ],
     templateUrl: './identity-detail.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './identity-detail.component.scss'
 })
 export class IdentityDetailComponent implements OnInit {

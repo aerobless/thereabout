@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, Output, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 import {ButtonModule} from "primeng/button";
 import {DatePickerModule} from "primeng/datepicker";
 
@@ -33,6 +33,7 @@ import {SelectModule} from "primeng/select";
     SelectModule
 ],
     templateUrl: './day-panel.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './day-panel.component.scss'
 })
 export class DayPanelComponent {

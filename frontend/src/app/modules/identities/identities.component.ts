@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {RouterModule} from '@angular/router';
 import {ButtonModule} from 'primeng/button';
@@ -47,6 +47,7 @@ import {
     ],
     providers: [ConfirmationService, MessageService],
     templateUrl: './identities.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './identities.component.scss'
 })
 export class IdentitiesComponent implements OnInit {

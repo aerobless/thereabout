@@ -14,6 +14,15 @@ describe('TripPanelComponent', () => {
     
     fixture = TestBed.createComponent(TripPanelComponent);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('trip', {
+      id: 1,
+      title: 'Test trip',
+      description: '',
+      start: '2026-01-01',
+      end: '2026-01-02',
+      visitedCountries: []
+    });
+    fixture.componentRef.setInput('tripViewDataFull', []);
     fixture.detectChanges();
   });
 

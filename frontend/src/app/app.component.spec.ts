@@ -1,10 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
+import { MessageService } from 'primeng/api';
+import { provideRouter } from '@angular/router';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
+      providers: [MessageService, provideRouter([])],
     }).compileComponents();
   });
 
@@ -20,10 +23,10 @@ describe('AppComponent', () => {
     expect(app.title).toEqual('thereabout');
   });
 
-  it('should render title', () => {
+  it('should render the loading state', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, thereabout');
+    expect(compiled.textContent).toContain('Loading Thereabout application...');
   });
 });

@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import {ToastModule} from "primeng/toast";
 
@@ -6,6 +6,7 @@ import {ToastModule} from "primeng/toast";
     selector: 'app-root',
     imports: [RouterOutlet, ToastModule],
     templateUrl: './app.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit{

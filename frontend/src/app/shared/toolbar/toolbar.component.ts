@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, ChangeDetectionStrategy} from '@angular/core';
 import {Router} from '@angular/router';
 import {ToolbarModule} from 'primeng/toolbar';
 import {ButtonModule} from 'primeng/button';
@@ -15,6 +15,7 @@ import {MenuItem} from 'primeng/api';
         MenuModule,
     ],
     templateUrl: './toolbar.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './toolbar.component.scss'
 })
 export class ToolbarComponent {

@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {
     GoogleMap,
     MapGeocoder,
@@ -74,6 +74,7 @@ import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
     ToggleSwitchModule
 ],
     templateUrl: './locationhistory.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './locationhistory.component.scss'
 })
 export class LocationhistoryComponent implements OnInit {

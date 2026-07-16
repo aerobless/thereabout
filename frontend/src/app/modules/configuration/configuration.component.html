@@ -2,7 +2,7 @@
 
 <div class="configuration-container">
   <p-card>
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <div class="card-header">
         <i class="pi pi-upload card-header-icon"></i>
         <span class="card-header-title">Data Import</span>
@@ -22,7 +22,7 @@
         <label for="receiver" class="config-label"
                pTooltip="Link with an existing application identity, if none exist create a new one."
                tooltipPosition="top">Receiver</label>
-        <p-autoComplete
+        <p-autocomplete
           id="receiver"
           [(ngModel)]="receiverName"
           [suggestions]="filteredReceivers"
@@ -30,11 +30,11 @@
           placeholder="Enter or select a receiver"
           [style]="{'width': '100%'}"
           [inputStyle]="{'width': '100%'}">
-        </p-autoComplete>
+        </p-autocomplete>
       </div>
     }
     @if (importStatus == FileImportStatus.StatusEnum.Idle) {
-      <p-fileUpload
+      <p-fileupload
         name="file"
         mode="basic"
         chooseIcon="pi pi-upload"
@@ -49,13 +49,13 @@
         chooseLabel="Browse"/>
     }
     @if (importStatus == FileImportStatus.StatusEnum.InProgress) {
-      <p-progressBar [value]="importStatusProgress"
+      <p-progressbar [value]="importStatusProgress"
         />
     }
   </p-card>
 
   <p-card>
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <div class="card-header">
         <i class="pi pi-map-marker card-header-icon"></i>
         <span class="card-header-title">Overland configuration</span>
@@ -70,7 +70,7 @@
   </p-card>
 
   <p-card>
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <div class="card-header">
         <i class="pi pi-send card-header-icon"></i>
         <span class="card-header-title">Telegram sync</span>
@@ -82,7 +82,7 @@
       <p>Connect your Telegram account to continuously import messages into Thereabout. Your password is used only for login and is never stored.</p>
       <p class="flex align-items-center gap-2">
         <span>Status:</span>
-        @switch (telegramStatus?.status) {
+        @switch ($safeNavigationMigration(telegramStatus?.status)) {
           @case (TelegramStatus.StatusEnum.Disconnected) { <span>Not connected</span> }
           @case (TelegramStatus.StatusEnum.Connecting) { <span>Connecting…</span> }
           @case (TelegramStatus.StatusEnum.WaitPhone) { <span>Enter your phone number</span> }
@@ -94,7 +94,7 @@
           @default { <span>{{ telegramStatus?.status }}</span> }
         }
         @if (telegramStatus?.lastSyncAt) {
-          <span class="text-color-secondary">(last sync: {{ telegramStatus?.lastSyncAt | date:'short' }})</span>
+          <span class="text-color-secondary">(last sync: {{ $safeNavigationMigration(telegramStatus?.lastSyncAt) | date:'short' }})</span>
         }
       </p>
       @if (telegramStatus?.status === TelegramStatus.StatusEnum.Disconnected || telegramStatus?.status === TelegramStatus.StatusEnum.Error || telegramStatus?.status === TelegramStatus.StatusEnum.WaitPhone) {
@@ -127,7 +127,7 @@
       @if (telegramStatus?.status === TelegramStatus.StatusEnum.Ready) {
         @if (isTelegramResyncInProgress) {
           <div class="flex flex-column gap-2">
-            <p-progressBar [value]="telegramResyncProgress"></p-progressBar>
+            <p-progressbar [value]="telegramResyncProgress"></p-progressbar>
             <p class="text-color-secondary">Syncing message history…</p>
             <p-button label="Cancel resync" severity="secondary" (onClick)="cancelTelegramResync()"></p-button>
           </div>
@@ -145,7 +145,7 @@
   </p-card>
 
   <p-card>
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <div class="card-header">
         <i class="pi pi-key card-header-icon"></i>
         <span class="card-header-title">API Authentication Key</span>
@@ -157,7 +157,7 @@
         type="text"
         pInputText
         class="config-input-full"
-        [value]="thereaboutConfig?.thereaboutApiKey"
+        [value]="$safeNavigationMigration(thereaboutConfig?.thereaboutApiKey)"
         [disabled]="true"/>
     </div>
     <p>Can be used to authenticate public API requests. See the POST GeoJson endpoint in the
@@ -165,7 +165,7 @@
   </p-card>
 
   <p-card>
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <div class="card-header">
         <i class="pi pi-info-circle card-header-icon"></i>
         <span class="card-header-title">Version</span>

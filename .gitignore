@@ -27,6 +27,7 @@ replay_pid*
 /frontend/generated/
 /frontend/environment.ts
 /frontend/src/assets/config.json
+/frontend/src/assets/primeui-license.js
 /private-test-data/
 /target/
 /frontend/dist/

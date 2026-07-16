@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {ButtonModule} from "primeng/button";
 import {Router, ActivatedRoute, RouterModule} from "@angular/router";
 import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
@@ -41,6 +41,7 @@ import {
     MapPolyline
 ],
     templateUrl: './dayview.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './dayview.component.scss'
 })
 export class DayviewComponent implements OnInit {

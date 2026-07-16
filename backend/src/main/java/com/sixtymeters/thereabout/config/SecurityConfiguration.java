@@ -32,6 +32,11 @@ public class SecurityConfiguration {
         //TODO: Re-enable when working on real authentication/login mechanism
         http.csrf(AbstractHttpConfigurer::disable);
 
+        http.headers(headers -> headers
+                .frameOptions(frameOptions -> frameOptions.disable())
+                .contentSecurityPolicy(contentSecurityPolicy -> contentSecurityPolicy
+                        .policyDirectives("frame-ancestors 'self' http://localhost:* https://localhost:* https://family.w1nter.com")));
+
         return http.build();
     }
 

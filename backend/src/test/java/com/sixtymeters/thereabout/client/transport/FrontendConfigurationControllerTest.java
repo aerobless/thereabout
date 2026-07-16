@@ -75,11 +75,11 @@ class FrontendConfigurationControllerTest {
 
     @Test
     void testGetFrontendConfiguration() throws Exception {
-        String responseContent = mockMvc.perform(get("/backend/api/v1/config"))
+        var servletResponse = mockMvc.perform(get("/backend/api/v1/config"))
                 .andExpect(status().isOk())
                 .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .getResponse();
+        String responseContent = servletResponse.getContentAsString();
 
         GenFrontendConfigurationResponse response = objectMapper.readValue(responseContent, GenFrontendConfigurationResponse.class);
 
@@ -91,6 +91,10 @@ class FrontendConfigurationControllerTest {
                 .extracting("version", "branch", "commitRef")
                 .doesNotContainNull();
         assertThat(response.getVersionDetails().getCommitTime()).isNotNull();
+
+        assertThat(servletResponse.getHeader("X-Frame-Options")).isNull();
+        assertThat(servletResponse.getHeader("Content-Security-Policy"))
+                .isEqualTo("frame-ancestors 'self' http://localhost:* https://localhost:* https://family.w1nter.com");
     }
 
     @Test

@@ -22,10 +22,6 @@
                       [severity]="isActive('locationhistory') ? 'primary' : 'secondary'"
                       [text]="!isActive('locationhistory')"
                       pTooltip="Location History" tooltipPosition="bottom" showDelay="500"></p-button>
-            <p-button icon="pi pi-star-fill" (onClick)="navigate('trips')"
-                      [severity]="isActive('trips') ? 'primary' : 'secondary'"
-                      [text]="!isActive('trips')"
-                      pTooltip="Trips" tooltipPosition="bottom" showDelay="500"></p-button>
             <p-button icon="pi pi-chart-line" (onClick)="navigate('statistics')"
                       [severity]="isActive('statistics') ? 'primary' : 'secondary'"
                       [text]="!isActive('statistics')"

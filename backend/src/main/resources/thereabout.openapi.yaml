@@ -15,10 +15,6 @@ paths:
     $ref: 'openapi/location.yaml#/paths/LocationById'
   /backend/api/v1/statistics:
     $ref: 'openapi/location.yaml#/paths/Statistics'
-  /backend/api/v1/trip:
-    $ref: 'openapi/location.yaml#/paths/Trip'
-  /backend/api/v1/trip/{id}:
-    $ref: 'openapi/location.yaml#/paths/TripById'
   /backend/api/v1/location-history-list:
     $ref: 'openapi/location.yaml#/paths/LocationHistoryList'
   /backend/api/v1/location-history-list/{id}:
@@ -113,8 +109,6 @@ components:
       $ref: 'openapi/client.yaml#/components/schemas/TelegramPasswordRequest'
 
     # Location
-    Trip:
-      $ref: 'openapi/location.yaml#/components/schemas/Trip'
     UserStatistics:
       $ref: 'openapi/location.yaml#/components/schemas/UserStatistics'
     CountryStatistic:

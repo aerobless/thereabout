@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import {ConfigurationComponent} from "./modules/configuration/configuration.component";
 import {LocationhistoryComponent} from "./modules/locationhistory/locationhistory.component";
 import {StatisticsComponent} from "./modules/statistics/statistics.component";
-import {TripsComponent} from "./modules/trips/trips.component";
 import {DayviewComponent} from "./modules/dayview/dayview.component";
 import {IdentitiesComponent} from "./modules/identities/identities.component";
 import {IdentityDetailComponent} from "./modules/identities/identity-detail/identity-detail.component";
@@ -24,10 +23,6 @@ export const routes: Routes = [
     {
         path: 'statistics',
         component: StatisticsComponent
-    },
-    {
-        path: 'trips',
-        component: TripsComponent
     },
     {
         path: 'identities',

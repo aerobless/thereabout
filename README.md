@@ -32,12 +32,6 @@ You can drag existing data points on the map to update their location or change 
 If needed you can also delete one or multiple data points to clean up your history. If your missing some data you can also
 add new location entries straight from the UI.
 
-### Remember your favorite trips
-Thereabout can remember your favorite trips. On the trip page you can create a new trip simply by providing a name, description, start and end date.
-Thereabout will then calculate the distance travelled, countries visited and show you a line on the map for the trip.
-
-![Thereabout Trips](/documentation/img/v7_trips.png)
-
 ### Statistics
 See how many countries you've visited, how many days you've spent abroad and a detailed list of countries visited with first/last visit and days spent.
 
@@ -90,9 +84,6 @@ These features may or may not get realised depending on my time and motivation.
   + InMemory TestDB for integration tests
 + Export location history as .json file
 + Simple single user login system
-+ Trips
-  + search/filter trips
-  + additional calculated information
 + Location history improvements
   + mode of travel: car, walking, running, bike etc.
     + jump to google calendar directly from day view

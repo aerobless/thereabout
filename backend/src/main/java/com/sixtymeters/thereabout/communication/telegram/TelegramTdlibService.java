@@ -19,6 +19,7 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -124,6 +125,7 @@ public class TelegramTdlibService {
 
             builder.addUpdateHandler(TdApi.UpdateAuthorizationState.class, this::onAuthorizationState);
             builder.addUpdateHandler(TdApi.UpdateNewMessage.class, this::onNewMessage);
+            builder.addUpdateHandler(TdApi.UpdateMessageContent.class, this::onMessageContent);
             builder.addUpdateHandler(TdApi.UpdateChatPosition.class, this::onChatPosition);
             builder.addUpdateHandler(TdApi.UpdateChatFolders.class, this::onChatFolders);
 
@@ -197,13 +199,42 @@ public class TelegramTdlibService {
     private void onNewMessage(TdApi.UpdateNewMessage update) {
         TdApi.Message msg = update.message;
         if (msg == null) return;
-        executor.execute(() -> processNewMessage(update));
+        executor.execute(() -> processMessage(msg));
     }
 
-    private void processNewMessage(TdApi.UpdateNewMessage update) {
+    private void onMessageContent(TdApi.UpdateMessageContent update) {
+        executor.execute(() -> processMessageContentUpdate(update));
+    }
+
+    private void processMessageContentUpdate(TdApi.UpdateMessageContent update) {
         try {
-            TdApi.Message msg = update.message;
-            if (msg == null) return;
+            String sourceIdentifier = "telegram-" + update.chatId + "-" + update.messageId;
+            var existingMessage = messageRepository.findFirstBySourceIdentifierOrderByIdAsc(sourceIdentifier);
+            if (existingMessage.isPresent()) {
+                MessageEntity entity = existingMessage.get();
+                String updatedBody = messageMapper.extractBody(update.newContent);
+                if (!Objects.equals(entity.getBody(), updatedBody)) {
+                    entity.setBody(updatedBody);
+                    messageRepository.save(entity);
+                    updateLastSyncTime();
+                }
+                return;
+            }
+
+            SimpleTelegramClient client = clientRef.get();
+            if (client == null) return;
+            TdApi.Message msg = client.send(new TdApi.GetMessage(update.chatId, update.messageId))
+                    .get(30, TimeUnit.SECONDS);
+            if (msg != null) {
+                processMessage(msg);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to persist Telegram message content update", e);
+        }
+    }
+
+    private void processMessage(TdApi.Message msg) {
+        try {
             SimpleTelegramClient client = clientRef.get();
             if (client == null) return;
             String chatIdStr = String.valueOf(msg.chatId);
@@ -225,7 +256,7 @@ public class TelegramTdlibService {
                 updateLastSyncTime();
             }
         } catch (Exception e) {
-            log.warn("Failed to persist new Telegram message", e);
+            log.warn("Failed to persist Telegram message", e);
         }
     }
 

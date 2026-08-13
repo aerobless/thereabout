@@ -35,6 +35,7 @@ import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -104,6 +105,11 @@ class TelegramTdlibServiceTest {
                     TdApi.Message message = invocation.getArgument(0);
                     String prefix = invocation.getArgument(1);
                     return messageEntity(prefix + message.id);
+                });
+        lenient().when(messageMapper.extractBody(any(TdApi.MessageContent.class)))
+                .thenAnswer(invocation -> {
+                    TdApi.MessageContent content = invocation.getArgument(0);
+                    return content instanceof TdApi.MessageText text ? text.text.text : "[media]";
                 });
         lenient().doNothing().when(messageMapper).clearCache();
     }
@@ -371,6 +377,52 @@ class TelegramTdlibServiceTest {
         verifyNoInteractions(checkpointRepository, client, messageRepository);
     }
 
+    @Test
+    void persistsSuccessiveMessageEditsAndLeavesTheLatestBody() {
+        String sourceIdentifier = "telegram-100-500";
+        MessageEntity storedMessage = messageEntity(sourceIdentifier);
+        storedMessage.setBody("🐾 Nullpaw is working…");
+        when(messageRepository.findFirstBySourceIdentifierOrderByIdAsc(sourceIdentifier))
+                .thenReturn(Optional.of(storedMessage));
+
+        ReflectionTestUtils.invokeMethod(service, "processMessageContentUpdate", contentUpdate(100L, 500L, "Command xy used"));
+        ReflectionTestUtils.invokeMethod(service, "processMessageContentUpdate", contentUpdate(100L, 500L, "Final response"));
+        ReflectionTestUtils.invokeMethod(service, "processMessageContentUpdate", contentUpdate(100L, 500L, "Final response"));
+
+        assertThat(storedMessage.getBody()).isEqualTo("Final response");
+        verify(messageRepository, times(2)).save(storedMessage);
+        verify(client, never()).send(any(TdApi.Function.class));
+    }
+
+    @Test
+    void fetchesAndPersistsCompleteMessageWhenEditedMessageIsMissingLocally() {
+        String sourceIdentifier = "telegram-100-500";
+        when(messageRepository.findFirstBySourceIdentifierOrderByIdAsc(sourceIdentifier)).thenReturn(Optional.empty());
+        TdApi.Message editedMessage = message(100L, 500L, 42L);
+        editedMessage.content = messageText("Final response");
+
+        stubClientSend(function -> {
+            if (function instanceof TdApi.GetMessage getMessage) {
+                assertThat(getMessage.chatId).isEqualTo(100L);
+                assertThat(getMessage.messageId).isEqualTo(500L);
+                return editedMessage;
+            }
+            if (function instanceof TdApi.GetChat getChat) {
+                return privateChat(getChat.chatId, "Nullpaw");
+            }
+            if (function instanceof TdApi.GetUser getUser) {
+                return user(getUser.userId, "Nullpaw", "");
+            }
+            throw new AssertionError("Unexpected TDLib call: " + function.getClass().getSimpleName());
+        });
+
+        ReflectionTestUtils.invokeMethod(service, "processMessageContentUpdate", contentUpdate(100L, 500L, "Final response"));
+
+        verify(messageMapper).toMessageEntity(
+                eq(editedMessage), eq("100"), eq("100"), eq("Nullpaw"), eq(false), eq("42"), eq("Nullpaw"));
+        verify(messageRepository).save(any(MessageEntity.class));
+    }
+
     private void stubClientSend(Function<TdApi.Function<?>, TdApi.Object> resolver) {
         doAnswer(invocation -> CompletableFuture.completedFuture(resolver.apply(invocation.getArgument(0))))
                 .when(client)
@@ -458,6 +510,14 @@ class TelegramTdlibServiceTest {
         message.date = 1;
         message.senderId = new TdApi.MessageSenderUser(userId);
         return message;
+    }
+
+    private TdApi.UpdateMessageContent contentUpdate(long chatId, long messageId, String body) {
+        return new TdApi.UpdateMessageContent(chatId, messageId, messageText(body));
+    }
+
+    private TdApi.MessageText messageText(String body) {
+        return new TdApi.MessageText(new TdApi.FormattedText(body, new TdApi.TextEntity[0]), null, null);
     }
 
     private TdApi.Function<?> argThatHistory(long chatId, long fromMessageId) {

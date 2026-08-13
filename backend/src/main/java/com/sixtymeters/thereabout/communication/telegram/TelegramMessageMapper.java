@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -48,25 +49,8 @@ public class TelegramMessageMapper {
             String senderUsernameHint
     ) {
         String sourceIdentifier = "telegram-" + chatIdStr + "-" + msg.id;
-        if (messageRepository.existsBySourceIdentifier(sourceIdentifier)) {
-            return null;
-        }
-        IdentityInApplicationEntity sender = getOrCreateIdentity(senderUserId, senderUsernameHint);
-        IdentityInApplicationEntity receiver = getOrCreateReceiver(receiverId, receiverUsernameHint, receiverIsGroup);
-        LocalDateTime timestamp = LocalDateTime.ofInstant(Instant.ofEpochSecond(msg.date), ZoneOffset.UTC);
-        String body = extractBody(msg.content);
-        if (body == null) {
-            return null;
-        }
-        return MessageEntity.builder()
-                .type("text")
-                .source(CommunicationApplication.TELEGRAM)
-                .sourceIdentifier(sourceIdentifier)
-                .sender(sender)
-                .receiver(receiver)
-                .body(body)
-                .timestamp(timestamp)
-                .build();
+        return mapMessageEntity(msg, sourceIdentifier, receiverId, receiverUsernameHint, receiverIsGroup,
+                senderUserId, senderUsernameHint);
     }
 
     /**
@@ -83,16 +67,32 @@ public class TelegramMessageMapper {
             String senderUsernameHint
     ) {
         String sourceIdentifier = sourceIdPrefix + msg.id;
-        if (messageRepository.existsBySourceIdentifier(sourceIdentifier)) {
-            return null;
+        return mapMessageEntity(msg, sourceIdentifier, receiverId, receiverUsernameHint, receiverIsGroup,
+                senderUserId, senderUsernameHint);
+    }
+
+    private MessageEntity mapMessageEntity(
+            TdApi.Message msg,
+            String sourceIdentifier,
+            String receiverId,
+            String receiverUsernameHint,
+            boolean receiverIsGroup,
+            String senderUserId,
+            String senderUsernameHint
+    ) {
+        String body = extractBody(msg.content);
+        var existingMessage = messageRepository.findFirstBySourceIdentifierOrderByIdAsc(sourceIdentifier);
+        if (existingMessage.isPresent()) {
+            MessageEntity entity = existingMessage.get();
+            if (Objects.equals(entity.getBody(), body)) {
+                return null;
+            }
+            entity.setBody(body);
+            return entity;
         }
         IdentityInApplicationEntity sender = getOrCreateIdentity(senderUserId, senderUsernameHint);
         IdentityInApplicationEntity receiver = getOrCreateReceiver(receiverId, receiverUsernameHint, receiverIsGroup);
         LocalDateTime timestamp = LocalDateTime.ofInstant(Instant.ofEpochSecond(msg.date), ZoneOffset.UTC);
-        String body = extractBody(msg.content);
-        if (body == null) {
-            return null;
-        }
         return MessageEntity.builder()
                 .type("text")
                 .source(CommunicationApplication.TELEGRAM)
@@ -104,7 +104,7 @@ public class TelegramMessageMapper {
                 .build();
     }
 
-    private String extractBody(TdApi.MessageContent content) {
+    String extractBody(TdApi.MessageContent content) {
         if (content instanceof TdApi.MessageText text) {
             return text.text != null && text.text.text != null ? text.text.text : "";
         }

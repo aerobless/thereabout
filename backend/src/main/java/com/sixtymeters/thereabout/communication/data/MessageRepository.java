@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MessageRepository extends JpaRepository<MessageEntity, Long>, JpaSpecificationExecutor<MessageEntity> {
@@ -17,4 +18,6 @@ public interface MessageRepository extends JpaRepository<MessageEntity, Long>, J
     List<MessageEntity> findAllByTimestampBetween(LocalDateTime from, LocalDateTime to);
 
     boolean existsBySourceIdentifier(String sourceIdentifier);
+
+    Optional<MessageEntity> findFirstBySourceIdentifierOrderByIdAsc(String sourceIdentifier);
 }

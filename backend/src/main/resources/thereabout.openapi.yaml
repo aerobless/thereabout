@@ -35,6 +35,11 @@ paths:
   /backend/api/v1/config/telegram/disconnect:
     $ref: 'openapi/client.yaml#/paths/ConfigTelegramDisconnect'
 
+  /backend/api/v1/preferences:
+    $ref: 'openapi/weight.yaml#/paths/Preferences'
+  /backend/api/v1/health/weight-progress:
+    $ref: 'openapi/weight.yaml#/paths/WeightProgress'
+
   # Health
   /backend/api/v1/health:
     $ref: 'openapi/health.yaml#/paths/Health'
@@ -116,6 +121,14 @@ components:
       $ref: 'openapi/location.yaml#/components/schemas/LocationHistoryEntry'
     GeoJsonLocation:
       $ref: 'openapi/location.yaml#/components/schemas/GeoJsonLocation'
+    Preferences:
+      $ref: 'openapi/weight.yaml#/components/schemas/Preferences'
+    UpdatePreferences:
+      $ref: 'openapi/weight.yaml#/components/schemas/UpdatePreferences'
+    WeightDay:
+      $ref: 'openapi/weight.yaml#/components/schemas/WeightDay'
+    WeightProgress:
+      $ref: 'openapi/weight.yaml#/components/schemas/WeightProgress'
     # Health
     HealthData:
       $ref: 'openapi/health.yaml#/components/schemas/HealthData'

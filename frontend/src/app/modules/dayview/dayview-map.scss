@@ -1,0 +1,52 @@
+.map-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.map-wrapper {
+  height: 450px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.map-footer {
+  padding: 0.6rem 1rem;
+  text-align: center;
+  border-top: 1px solid var(--p-surface-100);
+}
+
+.map-footer-text {
+  font-size: 0.8rem;
+  color: var(--p-surface-600);
+
+  &.muted {
+    color: var(--p-surface-400);
+    font-style: italic;
+  }
+}
+
+
+.map-expand-button {
+  width: 100%;
+  background: transparent;
+  color: var(--p-surface-600);
+  border: 0;
+  border-bottom: 1px solid var(--p-surface-100);
+  border-radius: var(--p-card-border-radius) var(--p-card-border-radius) 0 0;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+
+  &:hover { background: var(--p-primary-50); }
+  &:focus-visible { outline: 2px solid var(--p-primary-500); outline-offset: -2px; }
+}
+
+.expanded-map {
+  height: min(70dvh, 800px);
+  min-height: 240px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .map-wrapper { height: 300px; }
+}

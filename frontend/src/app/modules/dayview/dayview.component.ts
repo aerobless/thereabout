@@ -1,4 +1,6 @@
-import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import {Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {DialogModule} from 'primeng/dialog';
 import {ButtonModule} from "primeng/button";
 import {Router, ActivatedRoute, RouterModule} from "@angular/router";
 import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
@@ -12,7 +14,8 @@ import {TableModule} from "primeng/table";
 import { DatePipe } from "@angular/common";
 import {
     GoogleMap,
-    MapPolyline
+    MapPolyline,
+    MapMarker
 } from "@angular/google-maps";
 import {
     HealthService,
@@ -23,9 +26,17 @@ import {
     WorkoutSummary
 } from "../../../../generated/backend-api/thereabout";
 
+import {ChartData, ChartOptions} from 'chart.js';
+import {dailyStepTotals, shiftDay, stepHistory, StepProgress} from './steps-progress';
+
+import {WeightCardComponent} from './weight/weight-card.component';
+
+const THEO_IDENTITY_ID = 1;
+
 @Component({
     selector: 'app-dayview',
     imports: [
+    WeightCardComponent,
     ButtonModule,
     RouterModule,
     ToolbarComponent,
@@ -36,13 +47,15 @@ import {
     CardModule,
     ChartModule,
     TableModule,
+    DialogModule,
     DatePipe,
     GoogleMap,
-    MapPolyline
+    MapPolyline,
+    MapMarker
 ],
     templateUrl: './dayview.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
-    styleUrl: './dayview.component.scss'
+    styleUrls: ['./dayview.component.scss', './dayview-map.scss']
 })
 export class DayviewComponent implements OnInit {
 
@@ -52,21 +65,139 @@ export class DayviewComponent implements OnInit {
   // Map configuration
   center = {lat: 47.3919661, lng: 8.3};
   zoom = 4;
+  locationDialogVisible = false;
+  locationsLoading = false;
+  locationsError = false;
+  private locationRequestId = 0;
+  private expandedMap: google.maps.Map | null = null;
+  private locationTrigger: HTMLButtonElement | null = null;
+
+  openLocationDialog(event: Event) {
+    this.locationTrigger = event.currentTarget as HTMLButtonElement;
+    this.locationDialogVisible = true;
+  }
+
+  onExpandedMapInitialized(map: google.maps.Map) {
+    this.expandedMap = map;
+    this.fitExpandedMap();
+  }
+
+  fitExpandedMap() {
+    const map = this.expandedMap;
+    if (!map) return;
+    const points = this.minifyDayViewData(this.dayViewDataFull);
+    if (points.length === 0) {
+      map.setCenter(this.center);
+      map.setZoom(this.zoom);
+    } else if (points.every(point => point.lat === points[0].lat && point.lng === points[0].lng)) {
+      map.setCenter(points[0]);
+      map.setZoom(15);
+    } else {
+      const bounds = new google.maps.LatLngBounds();
+      points.forEach(point => bounds.extend(point));
+      map.fitBounds(bounds, 48);
+    }
+  }
+
+  onLocationDialogHidden() {
+    this.expandedMap = null;
+    this.locationTrigger?.focus();
+  }
   
   // Day view data
   dayViewDataFull: Array<LocationHistoryEntry> = [];
   selectedLocationEntries: LocationHistoryEntry[] = [];
 
   // Health data
-  weightData: { date: string, value: number }[] = [];
-  selectedDayWeight: number | null = null;
-  trendRange: '7d' | '30d' = '7d';
-  chartData: any;
-  chartOptions: any;
   workouts: WorkoutSummary[] = [];
+  stepsDialogVisible = false;
+  stepsLoading = false;
+  stepsError = false;
+  stepsHistory: StepProgress[] = [];
+  selectedStepProgress: StepProgress | null = null;
+  stepsChartData: ChartData<'bar' | 'line'> | null = null;
+  stepsChartOptions: ChartOptions<'bar' | 'line'> = {};
+  private healthRequestId = 0;
+  private healthDate: string | null = null;
+
+  get isSelectedDayToday(): boolean {
+    return this.dateToString(this.selectedDate) === this.dateToString(new Date());
+  }
+
+  get hasStepHistory(): boolean {
+    return this.stepsHistory.some(day => day.steps !== null);
+  }
+
+  formatStepPercentage(value: number | null): string {
+    return value === null ? '--' : `${(Math.floor(value * 10) / 10).toLocaleString()}%`;
+  }
+
+  stepDifference(progress: StepProgress): string {
+    if (progress.percentage === null || progress.steps === null || progress.baseline === null) return 'Baseline unavailable';
+    const difference = progress.steps - progress.baseline;
+    if (difference === 0) return 'At your baseline';
+    return `${this.formatSteps(Math.ceil(Math.abs(difference)))} steps ${difference > 0 ? 'above' : 'below'} baseline`;
+  }
+
+  private updateStepsChart() {
+    const colors = {below: '#efb9b5', almost: '#ecd08c', reached: '#b7dcc0', bonus: '#9ed3b1', exceptional: '#85c9bd'};
+    const history = this.stepsHistory;
+    this.stepsChartData = {
+      labels: history.map(day => day.date),
+      datasets: [
+        {type: 'line', label: 'Previous 30-day average', data: history.map(day => day.baseline),
+          borderColor: '#6486b0', backgroundColor: '#6486b0', borderWidth: 2, pointRadius: 0,
+          pointHitRadius: 12, tension: 0.2, spanGaps: false, order: 0},
+        {type: 'bar', label: 'Daily steps', data: history.map(day => day.steps),
+          backgroundColor: history.map(day => day.level ? colors[day.level] : '#94a3b8'),
+          borderColor: history.map((_, i) => i === 29 ? '#0f172a' : 'transparent'),
+          borderWidth: history.map((_, i) => i === 29 ? 2 : 0), borderRadius: 3, order: 1}
+      ]
+    };
+    this.stepsChartOptions = {
+      responsive: true, maintainAspectRatio: false,
+      interaction: {mode: 'index', intersect: false},
+      plugins: {
+        legend: {position: 'bottom'},
+        tooltip: {callbacks: {
+          title: items => history[items[0].dataIndex].date,
+          label: item => {
+            const day = history[item.dataIndex];
+            return item.datasetIndex === 0
+              ? `Baseline: ${day.baseline === null ? 'Unavailable' : this.formatSteps(day.baseline) + ' steps'}`
+              : `Steps: ${day.steps === null ? 'No data' : this.formatSteps(day.steps)}`;
+          },
+          afterBody: items => {
+            const day = history[items[0].dataIndex];
+            return [`${this.formatStepPercentage(day.percentage)} · ${day.label}`, `${day.coverage}/30 days recorded`];
+          }
+        }}
+      },
+      scales: {
+        x: {grid: {display: false}, ticks: {maxTicksLimit: 7, callback: (_, index) => {
+          const date = history[index].date;
+          return `${date.slice(8)}.${date.slice(5, 7)}`;
+        }}},
+        y: {beginAtZero: true, title: {display: true, text: 'Steps'}}
+      }
+    };
+  }
 
   // Messages data
   messages: Message[] = [];
+  messagesDialogVisible = false;
+  messagesLoading = false;
+  messagesError = false;
+  private messageRequestId = 0;
+  private readonly destroyRef = inject(DestroyRef);
+
+  get sentMessageCount(): number {
+    return this.messages.filter(message => message.sender?.identityId === THEO_IDENTITY_ID).length;
+  }
+
+  get receivedMessageCount(): number {
+    return this.messages.length - this.sentMessageCount;
+  }
   
   // Energy data
   selectedDayActiveEnergy: number | null = null;
@@ -131,7 +262,6 @@ export class DayviewComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.setupChart();
     // Read date from URL query params, default to today if not provided
     this.route.queryParams.subscribe(params => {
       const dateParam = params['date'];
@@ -165,14 +295,30 @@ export class DayviewComponent implements OnInit {
 
   loadDayViewData() {
     if (!this.selectedDate) return;
-    this.locationService.getLocations(this.dateToString(this.selectedDate), this.dateToString(this.selectedDate)).subscribe(locations => {
-      this.dayViewDataFull = locations;
-      this.selectedLocationEntries = [];
-      
-      // Center map on the first location if available
-      if (locations.length > 0) {
-        this.center = {lat: locations[0].latitude, lng: locations[0].longitude};
-        this.zoom = 12;
+    const date = this.dateToString(this.selectedDate);
+    const requestId = ++this.locationRequestId;
+    this.locationDialogVisible = false;
+    this.dayViewDataFull = [];
+    this.selectedLocationEntries = [];
+    this.locationsLoading = true;
+    this.locationsError = false;
+    this.center = {lat: 47.3919661, lng: 8.3};
+    this.zoom = 4;
+    this.locationService.getLocations(date, date).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: locations => {
+        if (requestId !== this.locationRequestId) return;
+        this.dayViewDataFull = locations;
+        this.locationsLoading = false;
+        if (locations.length > 0) {
+          this.center = {lat: locations[0].latitude, lng: locations[0].longitude};
+          this.zoom = 12;
+        }
+        this.fitExpandedMap();
+      },
+      error: () => {
+        if (requestId !== this.locationRequestId) return;
+        this.locationsLoading = false;
+        this.locationsError = true;
       }
     });
   }
@@ -194,37 +340,27 @@ export class DayviewComponent implements OnInit {
   loadHealthData() {
     if (!this.selectedDate) return;
 
-    // Calculate date range based on trendRange
     const selectedDateStr = this.dateToString(this.selectedDate);
-    const selectedDateObj = new Date(this.selectedDate);
-    const daysBack = this.trendRange === '7d' ? 7 : 30;
-    const fromDate = new Date(selectedDateObj);
-    fromDate.setDate(fromDate.getDate() - daysBack);
-    const fromDateStr = this.dateToString(fromDate);
+    const requestId = ++this.healthRequestId;
+    if (this.healthDate !== selectedDateStr) this.stepsDialogVisible = false;
+    this.healthDate = selectedDateStr;
+    this.stepsLoading = true;
+    this.stepsError = false;
+    this.stepsHistory = [];
+    this.selectedStepProgress = null;
+    this.selectedDaySteps = null;
+    this.selectedDayDistanceKm = null;
+    this.stepsChartData = null;
 
-    this.healthService.getHealthDataByDateRange(fromDateStr, selectedDateStr).subscribe({
+    this.healthService.getHealthDataByDateRange(shiftDay(selectedDateStr, -59), selectedDateStr)
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
-        // Extract weight metric data (backend uses weight_body_mass)
-        const weightMetrics =
-          response.metrics?.['weight_body_mass'] ||
-          response.metrics?.['weight'] ||
-          response.metrics?.['body_mass'] ||
-          [];
-        
-        // Prepare chart data
-        this.weightData = weightMetrics
-          .filter(m => m.qty != null)
-          .map(m => ({
-            date: m.date || '',
-            value: m.qty || 0
-          }))
-          .sort((a, b) => a.date.localeCompare(b.date));
-
-        // Find weight for selected day
-        const selectedDateStr = this.dateToString(this.selectedDate);
-        const selectedDayMetric = weightMetrics.find(m => m.date === selectedDateStr);
-        this.selectedDayWeight = selectedDayMetric?.qty || null;
-
+        if (requestId !== this.healthRequestId) return;
+        this.stepsLoading = false;
+        this.stepsHistory = stepHistory(selectedDateStr, dailyStepTotals(response.metrics?.['step_count'] ?? []));
+        this.selectedStepProgress = this.stepsHistory[29];
+        this.selectedDaySteps = this.selectedStepProgress.steps;
+        this.updateStepsChart();
         // Extract energy metrics
         const activeEnergyMetrics = response.metrics?.['active_energy'] || [];
         const basalEnergyMetrics = response.metrics?.['basal_energy_burned'] || [];
@@ -262,32 +398,28 @@ export class DayviewComponent implements OnInit {
           });
 
         // Daily stats for selected day
-        const stepMetrics = response.metrics?.['step_count'] || [];
         const restingHrMetrics = response.metrics?.['resting_heart_rate'] || [];
         const hrvMetrics = response.metrics?.['heart_rate_variability'] || [];
         const standMetrics = response.metrics?.['apple_stand_time'] || [];
         const distanceMetrics = response.metrics?.['walking_running_distance'] || [];
         const sleepMetrics = response.metrics?.['sleep_analysis'] || [];
-        const stepForDay = stepMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
         const restingHrForDay = restingHrMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
         const hrvForDay = hrvMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
         const standForDay = standMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
         const distanceForDay = distanceMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
         const sleepForDay = sleepMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
-        this.selectedDaySteps = stepForDay?.qty != null ? Number(stepForDay.qty) : null;
         this.selectedDayRestingHeartRate = restingHrForDay?.qty != null ? Number(restingHrForDay.qty) : null;
         this.selectedDayHrvMs = hrvForDay?.qty != null ? Number(hrvForDay.qty) : null;
         this.selectedDayStandMinutes = standForDay?.qty != null ? Number(standForDay.qty) : null;
         this.selectedDayDistanceKm = distanceForDay?.qty != null ? Number(distanceForDay.qty) : null;
         this.selectedDaySleepHours = sleepForDay?.qty != null ? Number(sleepForDay.qty) : null;
 
-        // Update chart
-        this.updateChart();
       },
       error: (error) => {
+        if (requestId !== this.healthRequestId) return;
+        this.stepsLoading = false;
+        this.stepsError = true;
         console.error('Error loading health data:', error);
-        this.weightData = [];
-        this.selectedDayWeight = null;
         this.selectedDayActiveEnergy = null;
         this.selectedDayBasalEnergy = null;
         this.workouts = [];
@@ -297,124 +429,30 @@ export class DayviewComponent implements OnInit {
         this.selectedDayStandMinutes = null;
         this.selectedDayDistanceKm = null;
         this.selectedDaySleepHours = null;
-        this.updateChart();
       }
     });
-  }
-
-  onTrendRangeChange(range: '7d' | '30d') {
-    this.trendRange = range;
-    this.loadHealthData();
-  }
-
-  setupChart() {
-    const documentStyle = getComputedStyle(document.documentElement);
-    const textColor = documentStyle.getPropertyValue('--text-color');
-    const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
-    const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
-
-    this.chartOptions = {
-      plugins: {
-        legend: {
-          labels: {
-            color: textColor
-          }
-        }
-      },
-      scales: {
-        x: {
-          ticks: {
-            color: textColorSecondary
-          },
-          grid: {
-            color: surfaceBorder
-          }
-        },
-        y: {
-          ticks: {
-            color: textColorSecondary
-          },
-          grid: {
-            color: surfaceBorder
-          }
-        }
-      }
-    };
-  }
-
-  updateChart() {
-    const labels = this.weightData.map(d => {
-      const date = new Date(d.date);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    });
-    const data = this.weightData.map(d => d.value);
-
-    // Calculate trend line (linear regression)
-    const trendData = this.calculateTrendLine(data);
-
-    this.chartData = {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Weight (kg)',
-          data: data,
-          fill: false,
-          borderColor: '#42A5F5',
-          tension: 0.4,
-          pointRadius: 4,
-          pointHoverRadius: 6
-        },
-        {
-          label: 'Trend',
-          data: trendData,
-          fill: false,
-          borderColor: '#FFA726',
-          borderDash: [5, 5],
-          pointRadius: 0,
-          pointHoverRadius: 0,
-          tension: 0
-        }
-      ]
-    };
-  }
-
-  calculateTrendLine(data: number[]): number[] {
-    if (data.length === 0) return [];
-    if (data.length === 1) return [data[0]];
-
-    const n = data.length;
-    let sumX = 0;
-    let sumY = 0;
-    let sumXY = 0;
-    let sumXX = 0;
-
-    // Calculate linear regression coefficients
-    for (let i = 0; i < n; i++) {
-      const x = i;
-      const y = data[i];
-      sumX += x;
-      sumY += y;
-      sumXY += x * y;
-      sumXX += x * x;
-    }
-
-    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
-
-    // Generate trend line points
-    return data.map((_, i) => slope * i + intercept);
   }
 
   loadMessages() {
     if (!this.selectedDate) return;
     const dateStr = this.dateToString(this.selectedDate);
-    this.messageApiService.getMessages(dateStr).subscribe({
+    const requestId = ++this.messageRequestId;
+    this.messagesDialogVisible = false;
+    this.messages = [];
+    this.messagesLoading = true;
+    this.messagesError = false;
+    this.messageApiService.getMessages(dateStr).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (messages) => {
-        this.messages = messages;
+        if (requestId !== this.messageRequestId) return;
+        this.messages = [...messages].sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
+        this.messagesLoading = false;
       },
       error: (error) => {
+        if (requestId !== this.messageRequestId) return;
         console.error('Error loading messages:', error);
         this.messages = [];
+        this.messagesLoading = false;
+        this.messagesError = true;
       }
     });
   }
@@ -485,4 +523,4 @@ export class DayviewComponent implements OnInit {
     const m = Math.round((hours - h) * 60);
     return m === 0 ? `${h} hr` : `${h}h ${m}m`;
   }
-} 
+}

@@ -1,0 +1,101 @@
+paths:
+  Preferences:
+    get:
+      tags: [preferences]
+      operationId: getPreferences
+      responses:
+        '200':
+          description: Current weight goal preferences.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Preferences'
+    put:
+      tags: [preferences]
+      operationId: updatePreferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePreferences'
+      responses:
+        '200':
+          description: Saved preferences. A changed goal starts a new challenge today.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Preferences'
+        '400':
+          description: Goal must be positive with at most one decimal place.
+  WeightProgress:
+    get:
+      tags: [weight]
+      operationId: getWeightProgress
+      parameters:
+        - in: query
+          name: date
+          required: true
+          schema: {type: string, format: date}
+        - in: query
+          name: days
+          required: true
+          schema: {type: integer, enum: [7, 30]}
+      responses:
+        '200':
+          description: Weight trends and progress toward the current goal.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeightProgress'
+        '400':
+          description: Invalid date or chart range.
+components:
+  schemas:
+    Preferences:
+      type: object
+      required: [weightGoalKg, weightGoalStartedOn]
+      properties:
+        weightGoalKg: {type: number}
+        weightGoalStartedOn: {type: string, format: date}
+    UpdatePreferences:
+      type: object
+      required: [weightGoalKg]
+      properties:
+        weightGoalKg: {type: number, minimum: 0, exclusiveMinimum: true, multipleOf: 0.1}
+    WeightDay:
+      type: object
+      required: [date, coverage]
+      properties:
+        date: {type: string, format: date}
+        readingKg: {type: number, format: double}
+        trendKg: {type: number, format: double}
+        coverage: {type: integer}
+    WeightProgress:
+      type: object
+      required: [date, preferences, zoneMinKg, zoneMaxKg, coverage, previousCoverage, state, series]
+      properties:
+        date: {type: string, format: date}
+        preferences:
+          $ref: '#/components/schemas/Preferences'
+        zoneMinKg: {type: number, format: double}
+        zoneMaxKg: {type: number, format: double}
+        latestWeightKg: {type: number, format: double}
+        latestWeightDate: {type: string, format: date}
+        trendKg: {type: number, format: double}
+        previousTrendKg: {type: number, format: double}
+        coverage: {type: integer}
+        previousCoverage: {type: integer}
+        gapKg: {type: number, format: double}
+        weeklyGapChangeKg:
+          type: number
+          format: double
+          description: Current gap minus previous gap; negative means progress toward the goal.
+        bestGapKg: {type: number, format: double}
+        bestDate: {type: string, format: date}
+        arrow: {type: string, enum: [UP, DOWN, STEADY]}
+        state: {type: string, enum: [IN_ZONE, NEW_BEST, TOWARD, STEADY, AWAY, NO_DATA, BEFORE_CHALLENGE]}
+        series:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeightDay'

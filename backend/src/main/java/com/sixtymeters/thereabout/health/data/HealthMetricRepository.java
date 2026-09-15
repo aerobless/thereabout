@@ -20,5 +20,7 @@ public interface HealthMetricRepository extends JpaRepository<HealthMetricEntity
 
     List<HealthMetricEntity> findByMetricNameAndMetricDateBetween(String metricName, LocalDate fromDate, LocalDate toDate);
 
+    List<HealthMetricEntity> findByMetricNameInAndMetricDateLessThanEqual(List<String> metricNames, LocalDate date);
+
     List<HealthMetricEntity> findByMetricDateBetween(LocalDate fromDate, LocalDate toDate);
 }

@@ -1,0 +1,92 @@
+<button #weightCard type="button" class="weight-card" [attr.data-weight-state]="progress?.state"
+  aria-haspopup="dialog" [attr.aria-expanded]="visible" (click)="visible = true">
+  <span class="card-header">
+    <i class="fa-solid fa-weight-scale card-header-icon" aria-hidden="true"></i>
+    <span class="card-header-title">Weight</span>
+  </span>
+  <span class="weight-card-content">
+    @if (loading) {
+      <span class="weight-value muted">--</span><span class="weight-small" role="status">Loading weight…</span>
+    } @else if (error) {
+      <span class="weight-small">Unable to load weight</span>
+    } @else {
+      <span class="weight-line"><span class="weight-value">{{ kg(progress?.latestWeightKg) }}</span><span class="weight-small">kg</span>
+        @if (arrow) { <span class="weight-arrow" [attr.aria-label]="arrowLabel" [title]="arrowLabel">{{ arrow }}</span> }
+      </span>
+      @if (progress?.latestWeightDate && progress?.latestWeightDate !== date) {
+        <span class="weight-small">Last: {{ progress?.latestWeightDate | date:'dd.MM.yyyy' }}</span>
+      }
+      <span class="weight-status">
+        @if (progress?.state === 'IN_ZONE') { <i class="fa-solid fa-trophy" aria-hidden="true"></i> }
+        @if (progress?.state === 'NEW_BEST') { <i class="fa-solid fa-award" aria-hidden="true"></i> }
+        {{ status }}
+      </span>
+    }
+    <span class="weight-small">Goal {{ kg(preferences?.weightGoalKg) }} kg</span>
+  </span>
+</button>
+
+<p-dialog [header]="'Weight — ' + (date | date:'dd.MM.yyyy')" styleClass="weight-dialog"
+  [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false" [dismissableMask]="true"
+  [closeOnEscape]="true" [focusTrap]="true" [blockScroll]="true" closeAriaLabel="Close weight"
+  (onHide)="weightCard.focus()" [style]="{width: '960px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '90dvh'}">
+  @if (visible) {
+    @if (preferences) {
+      <div class="weight-goal">
+        @if (editing) {
+          <form (ngSubmit)="saveGoal()">
+            <label for="weight-goal-input">Goal (kg)</label>
+            <div class="goal-controls">
+              <input id="weight-goal-input" name="goal" type="number" min="0.1" step="0.1" required
+                [(ngModel)]="goalDraft" [disabled]="saving" aria-describedby="goal-help">
+              <button class="action primary" type="submit" [disabled]="!validGoal || saving">{{ saving ? 'Saving…' : 'Save' }}</button>
+              <button class="action" type="button" [disabled]="saving" (click)="cancelEdit()">Cancel</button>
+            </div>
+            <p id="goal-help">Changing the goal starts a new personal-best challenge today. The target zone stays ±0.5 kg.</p>
+            @if (saveError) { <p role="alert">{{ saveError }}</p> }
+          </form>
+        } @else {
+          <span>Goal <strong>{{ kg(preferences.weightGoalKg) }} kg</strong> · Zone {{ kg(preferences.weightGoalKg - 0.5) }}–{{ kg(preferences.weightGoalKg + 0.5) }} kg</span>
+          <button type="button" class="action" (click)="editGoal()">Edit goal</button>
+        }
+      </div>
+    }
+    @if (loading) {
+      <p role="status">Loading weight history…</p>
+    } @else if (error) {
+      <p role="alert">Unable to load weight history. Please try again.</p>
+      <button type="button" class="action" (click)="load()">Retry</button>
+    } @else if (progress; as p) {
+      <div class="weight-details">
+        <section [attr.data-weight-state]="p.state"><h3>Latest reading</h3><strong>{{ kg(p.latestWeightKg) }} kg</strong>
+          <span>{{ p.latestWeightDate ? (p.latestWeightDate | date:'dd.MM.yyyy') : 'No weigh-ins recorded' }}</span><span>{{ status }}</span></section>
+        <section><h3>7-day trend</h3><strong>{{ kg(p.trendKg) }} kg <span [title]="arrowLabel">{{ arrow }}</span></strong>
+          <span>{{ p.coverage }}/7 weigh-in days</span><span>Previous week: {{ kg(p.previousTrendKg) }} kg ({{ p.previousCoverage }}/7 days)</span></section>
+        <section><h3>Distance to goal</h3><strong>{{ kg(p.gapKg) }} kg</strong><span>{{ weeklyProgress }}</span></section>
+        <section><h3>Personal best gap</h3><strong>{{ kg(p.bestGapKg) }} kg</strong>
+          <span>{{ p.bestDate ? (p.bestDate | date:'dd.MM.yyyy') : 'No record in this challenge yet' }}</span>
+          <span>Challenge started {{ p.preferences.weightGoalStartedOn | date:'dd.MM.yyyy' }}</span></section>
+      </div>
+      <div class="weight-chart-header"><h3>Weight history</h3><div class="range-controls" aria-label="Weight chart range">
+        <button class="action" type="button" [attr.aria-pressed]="days === 7" (click)="selectRange(7)">7d</button>
+        <button class="action" type="button" [attr.aria-pressed]="days === 30" (click)="selectRange(30)">30d</button>
+      </div></div>
+      @if (!hasChartHistory) {
+        <p role="status">No weight history available in this {{ days }}-day range ending {{ date | date:'dd.MM.yyyy' }}.</p>
+      }
+      @if (chartData && hasChartHistory) {
+        <p-chart type="line" [data]="chartData" [options]="chartOptions" [style]="{width:'100%',height:'320px'}"
+          ariaLabel="Daily weight readings, seven-day trend, goal and target zone. Exact readings are available in Daily values below."></p-chart>
+      }
+      <p class="weight-explanation">The arrow shows weight gain or loss compared with the previous week's trend. Colour shows progress toward the goal.
+        Trends use recorded days only; changes under 0.1 kg are steady. Inside the zone, the goal is to stay there.</p>
+      <details><summary>Daily values</summary><div class="weight-table-scroll"><table>
+        <caption>Readings and seven-day trends in kilograms</caption>
+        <thead><tr><th scope="col">Date</th><th scope="col">Reading</th><th scope="col">7d trend</th><th scope="col">Coverage</th></tr></thead>
+        <tbody>@for (point of p.series; track point.date) {
+          <tr><th scope="row">{{ point.date }}</th><td>{{ kg(point.readingKg) }}</td><td>{{ kg(point.trendKg) }}</td><td>{{ point.coverage }}/7</td></tr>
+        }</tbody>
+      </table></div></details>
+    }
+  }
+</p-dialog>

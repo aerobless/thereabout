@@ -6,12 +6,13 @@
 [data-weight-state='IN_ZONE'] { background: #ccebe2; }
 .weight-card {
   appearance: none; width: 100%; height: 100%; padding: 0; border: 0;
+  display: flex; flex-direction: column; align-items: stretch;
   border-radius: var(--p-card-border-radius, 12px); box-shadow: var(--p-card-shadow);
   color: var(--p-surface-800); font: inherit; text-align: left; cursor: pointer;
   &:not([data-weight-state]), &[data-weight-state='NO_DATA'], &[data-weight-state='BEFORE_CHALLENGE'] { background: var(--p-card-background); }
   &:hover { outline: 1px solid var(--p-primary-300); }
   &:focus-visible { outline: 2px solid var(--p-primary-500); outline-offset: 3px; }
-  .card-header { border-color: rgba(51, 65, 85, 0.1); }
+  .card-header { flex-shrink: 0; border-color: rgba(51, 65, 85, 0.1); }
   .card-header-icon { color: var(--p-surface-600); }
 }
 .weight-card-content { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.75rem 1rem; }

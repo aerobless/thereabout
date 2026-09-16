@@ -152,8 +152,13 @@ a {
 // ============================================================================
 .daily-stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  // Match every row to the tallest card, including wrapped labels.
+  grid-auto-rows: 1fr;
+  align-items: stretch;
   gap: 1rem;
+
+  > * { min-width: 0; }
 }
 
 .daily-stat-card {
@@ -246,7 +251,9 @@ a {
 .messages-summary-card,
 .steps-summary-card {
   appearance: none;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   width: 100%;
   padding: 0;
   border: 0;
@@ -257,7 +264,8 @@ a {
   font: inherit;
   text-align: left;
   cursor: pointer;
-  align-self: start;
+
+  .card-header { flex-shrink: 0; }
 
   &:hover {
     outline: 1px solid var(--p-primary-300);
@@ -351,7 +359,7 @@ a {
   }
 
   .daily-stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .daily-stat-value {

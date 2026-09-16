@@ -41,6 +41,10 @@ paths:
     $ref: 'openapi/weight.yaml#/paths/WeightProgress'
 
   # Health
+  /backend/api/v1/health/heart-rate:
+    $ref: 'openapi/heart.yaml#/paths/HeartRateHistory'
+  /backend/api/v1/health/hrv:
+    $ref: 'openapi/heart.yaml#/paths/HrvHistory'
   /backend/api/v1/health:
     $ref: 'openapi/health.yaml#/paths/Health'
   /backend/api/v1/health/data:
@@ -130,6 +134,14 @@ components:
     WeightProgress:
       $ref: 'openapi/weight.yaml#/components/schemas/WeightProgress'
     # Health
+    HeartRateDay:
+      $ref: 'openapi/heart.yaml#/components/schemas/HeartRateDay'
+    HeartRateHistory:
+      $ref: 'openapi/heart.yaml#/components/schemas/HeartRateHistory'
+    HrvDay:
+      $ref: 'openapi/heart.yaml#/components/schemas/HrvDay'
+    HrvHistory:
+      $ref: 'openapi/heart.yaml#/components/schemas/HrvHistory'
     HealthData:
       $ref: 'openapi/health.yaml#/components/schemas/HealthData'
     HealthMetric:

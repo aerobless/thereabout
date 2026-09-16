@@ -1,0 +1,82 @@
+paths:
+  HeartRateHistory:
+    get:
+      tags: [heart]
+      operationId: getHeartRateHistory
+      parameters:
+        - {in: query, name: date, required: true, schema: {type: string, format: date}}
+        - {in: query, name: days, required: true, schema: {type: integer, enum: [7, 30]}}
+      responses:
+        '200':
+          description: Daily heart rate summaries ending on the selected date.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/HeartRateHistory'}
+        '400':
+          description: Invalid date or chart range.
+  HrvHistory:
+    get:
+      tags: [heart]
+      operationId: getHrvHistory
+      parameters:
+        - {in: query, name: date, required: true, schema: {type: string, format: date}}
+        - {in: query, name: days, required: true, schema: {type: integer, enum: [7, 30]}}
+      responses:
+        '200':
+          description: Daily HRV and personal trends ending on the selected date.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/HrvHistory'}
+        '400':
+          description: Invalid date or chart range.
+components:
+  schemas:
+    HeartRateDay:
+      type: object
+      required: [date, recordCount, restingRecordCount]
+      properties:
+        date: {type: string, format: date}
+        averageBpm: {type: number, format: double}
+        minimumBpm: {type: number, format: double}
+        maximumBpm: {type: number, format: double}
+        restingBpm: {type: number, format: double}
+        recordCount: {type: integer, description: Valid imported heart rate summaries; not individual samples.}
+        restingRecordCount: {type: integer}
+        lastImportedAt: {type: string, format: date-time}
+    HeartRateHistory:
+      type: object
+      required: [date, selectedDay, series]
+      properties:
+        date: {type: string, format: date}
+        selectedDay: {$ref: '#/components/schemas/HeartRateDay'}
+        series:
+          type: array
+          items: {$ref: '#/components/schemas/HeartRateDay'}
+    HrvDay:
+      type: object
+      required: [date, recordCount, coverage, baselineCoverage]
+      properties:
+        date: {type: string, format: date}
+        averageMs: {type: number, format: double}
+        recordCount: {type: integer, description: Valid imported records; not individual heartbeats or raw samples.}
+        trendMs: {type: number, format: double, description: Seven-day mean, requiring four recorded days.}
+        coverage: {type: integer}
+        baselineLowMs: {type: number, format: double}
+        baselineHighMs: {type: number, format: double}
+        baselineCoverage: {type: integer}
+        lastImportedAt: {type: string, format: date-time}
+    HrvHistory:
+      type: object
+      required: [date, selectedDay, coverage, previousCoverage, state, series]
+      properties:
+        date: {type: string, format: date}
+        selectedDay: {$ref: '#/components/schemas/HrvDay'}
+        weeklyAverageMs: {type: number, format: double}
+        previousWeeklyAverageMs: {type: number, format: double}
+        coverage: {type: integer}
+        previousCoverage: {type: integer}
+        changePercent: {type: number, format: double}
+        state: {type: string, enum: [UP, DOWN, STEADY, INSUFFICIENT_DATA, NO_DATA]}
+        series:
+          type: array
+          items: {$ref: '#/components/schemas/HrvDay'}

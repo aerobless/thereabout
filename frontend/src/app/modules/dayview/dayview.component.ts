@@ -30,6 +30,8 @@ import {ChartData, ChartOptions} from 'chart.js';
 import {dailyStepTotals, shiftDay, stepHistory, StepProgress} from './steps-progress';
 
 import {WeightCardComponent} from './weight/weight-card.component';
+import {HeartRateCardComponent} from './heart/heart-rate-card.component';
+import {HrvCardComponent} from './heart/hrv-card.component';
 
 const THEO_IDENTITY_ID = 1;
 
@@ -37,6 +39,8 @@ const THEO_IDENTITY_ID = 1;
     selector: 'app-dayview',
     imports: [
     WeightCardComponent,
+    HeartRateCardComponent,
+    HrvCardComponent,
     ButtonModule,
     RouterModule,
     ToolbarComponent,
@@ -206,10 +210,8 @@ export class DayviewComponent implements OnInit {
 
   // Daily stats (above Workouts)
   selectedDaySteps: number | null = null;
-  selectedDayRestingHeartRate: number | null = null;
   selectedDayStandMinutes: number | null = null;
   selectedDayDistanceKm: number | null = null;
-  selectedDayHrvMs: number | null = null;
   selectedDaySleepHours: number | null = null;
 
   constructor(
@@ -398,18 +400,12 @@ export class DayviewComponent implements OnInit {
           });
 
         // Daily stats for selected day
-        const restingHrMetrics = response.metrics?.['resting_heart_rate'] || [];
-        const hrvMetrics = response.metrics?.['heart_rate_variability'] || [];
         const standMetrics = response.metrics?.['apple_stand_time'] || [];
         const distanceMetrics = response.metrics?.['walking_running_distance'] || [];
         const sleepMetrics = response.metrics?.['sleep_analysis'] || [];
-        const restingHrForDay = restingHrMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
-        const hrvForDay = hrvMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
         const standForDay = standMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
         const distanceForDay = distanceMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
         const sleepForDay = sleepMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
-        this.selectedDayRestingHeartRate = restingHrForDay?.qty != null ? Number(restingHrForDay.qty) : null;
-        this.selectedDayHrvMs = hrvForDay?.qty != null ? Number(hrvForDay.qty) : null;
         this.selectedDayStandMinutes = standForDay?.qty != null ? Number(standForDay.qty) : null;
         this.selectedDayDistanceKm = distanceForDay?.qty != null ? Number(distanceForDay.qty) : null;
         this.selectedDaySleepHours = sleepForDay?.qty != null ? Number(sleepForDay.qty) : null;
@@ -424,8 +420,6 @@ export class DayviewComponent implements OnInit {
         this.selectedDayBasalEnergy = null;
         this.workouts = [];
         this.selectedDaySteps = null;
-        this.selectedDayRestingHeartRate = null;
-        this.selectedDayHrvMs = null;
         this.selectedDayStandMinutes = null;
         this.selectedDayDistanceKm = null;
         this.selectedDaySleepHours = null;

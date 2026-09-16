@@ -139,32 +139,8 @@
         </span>
       </button>
       <app-weight-card [date]="dateToString(selectedDate)"></app-weight-card>
-      <p-card class="dayview-card daily-stat-card">
-        <ng-template #header>
-          <div class="card-header">
-            <i class="fa-solid fa-heart-pulse card-header-icon"></i>
-            <span class="card-header-title">Heart rate</span>
-          </div>
-        </ng-template>
-        <div class="daily-stat-content daily-stat-content-two">
-          <div class="daily-stat-line">
-            @if (selectedDayRestingHeartRate !== null) {
-              <span class="daily-stat-value">{{ selectedDayRestingHeartRate }}</span>
-              <span class="daily-stat-unit">bpm</span>
-            } @else {
-              <span class="daily-stat-value muted">--</span>
-            }
-          </div>
-          <div class="daily-stat-line">
-            @if (selectedDayHrvMs !== null) {
-              <span class="daily-stat-value">{{ selectedDayHrvMs }}</span>
-              <span class="daily-stat-unit">ms HRV</span>
-            } @else {
-              <span class="daily-stat-value muted">--</span>
-            }
-          </div>
-        </div>
-      </p-card>
+      <app-heart-rate-card [date]="dateToString(selectedDate)"></app-heart-rate-card>
+      <app-hrv-card [date]="dateToString(selectedDate)"></app-hrv-card>
       <p-card class="dayview-card daily-stat-card">
         <ng-template #header>
           <div class="card-header">

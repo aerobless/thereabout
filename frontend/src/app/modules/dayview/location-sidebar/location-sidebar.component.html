@@ -1,0 +1,101 @@
+<div class="date-controls">
+  <p-button icon="pi pi-chevron-left" ariaLabel="Previous day" severity="secondary" [disabled]="saving" (onClick)="shiftDate(-1)" />
+  <p-datepicker [ngModel]="date" (ngModelChange)="changeDate($event)" [showIcon]="true" [showOnFocus]="false" [disabled]="saving"
+    inputId="location-day" ariaLabel="Location day" dateFormat="dd.mm.yy" appendTo="body" />
+  <p-button icon="pi pi-chevron-right" ariaLabel="Next day" severity="secondary" [disabled]="saving" (onClick)="shiftDate(1)" />
+</div>
+<div class="actions">
+  <p-button label="Locate" ariaLabel="Locate" icon="pi pi-map-marker" severity="secondary" [disabled]="loading || entries.length === 0" (onClick)="locate.emit()" />
+  <p-button label="Photos" ariaLabel="Photos" icon="pi pi-image" severity="secondary" (onClick)="photos.emit()" />
+  <p-button label="Today" ariaLabel="Today" icon="pi pi-calendar" severity="secondary" [disabled]="saving" (onClick)="today()" />
+</div>
+<p-table
+  [value]="entries"
+  selectionMode="multiple"
+  [selection]="selection"
+  styleClass="p-datatable-sm"
+  [scrollable]="true"
+  scrollHeight="flex"
+  (mouseleave)="highlight.emit(undefined)"
+  (selectionChange)="!busy && selectionChange.emit($event)"
+  [metaKeySelection]="false" dataKey="id">
+  <ng-template #caption>
+    <div class="flex flex-wrap justify-content-end gap-2">
+      <p-button label="New" ariaLabel="New" icon="pi pi-plus" text
+        pTooltip="Create at the selected point and time, or at the map centre at noon."
+        tooltipPosition="top" showDelay="500"
+        (onClick)="create.emit()"
+        [disabled]="busy || selection.length > 1"/>
+      <p-button label="Edit" ariaLabel="Edit" icon="pi pi-pen-to-square" text
+        pTooltip="Edit the selected entry. To change the location drag the marker on the map."
+        tooltipPosition="top" showDelay="500"
+        (onClick)="edit.emit()"
+        [disabled]="busy || selection.length !== 1"/>
+      <p-button label="Delete" ariaLabel="Delete" icon="pi pi-trash" severity="danger" text
+        pTooltip="Delete the selected entry." tooltipPosition="left" showDelay="500"
+        (onClick)="remove.emit()"
+        [disabled]="busy || selection.length === 0"/>
+    </div>
+  </ng-template>
+  <ng-template #header>
+    <tr>
+      <th style="width: 2rem; text-align: center">
+        <p-tableheadercheckbox [disabled]="busy"/>
+      </th>
+      <th scope="col" aria-label="Time" style="text-align: center"><i class="fa-solid fa-clock" pTooltip="Time"
+      tooltipPosition="top"></i></th>
+      <th scope="col" aria-label="Note" style="text-align: center"><i class="fa-solid fa-message"
+      pTooltip="Note" tooltipPosition="top"></i></th>
+      <th scope="col" aria-label="Coordinates" style="text-align: center"><i class="fa-solid fa-map-location-dot"
+      pTooltip="Coordinates" tooltipPosition="top"></i></th>
+      <th scope="col" aria-label="Altitude" style="text-align: center"><i class="fa-solid fa-ruler-vertical" pTooltip="Altitude"
+      tooltipPosition="top"></i></th>
+      <th scope="col" aria-label="Horizontal accuracy" style="text-align: center"><i class="fa-solid fa-bullseye"
+      pTooltip="Horizontal accuracy" tooltipPosition="left"></i>
+    </th>
+  </tr>
+</ng-template>
+<ng-template #body let-locationEntry>
+  <tr [pSelectableRow]="locationEntry" [pSelectableRowDisabled]="busy"
+    (mouseenter)="highlight.emit(locationEntry)">
+    <td style="text-align: center">
+      <p-tablecheckbox [value]="locationEntry" [disabled]="busy"/>
+    </td>
+    <td style="text-align: center">{{ convertToLocalTime(locationEntry.timestamp) }}</td>
+    <td style="text-align: center">
+      @if (locationEntry.note) {
+        <i class="fa-solid fa-message"
+        pTooltip="{{ locationEntry.note }}" tooltipPosition="top"></i>
+      }
+    </td>
+    <td style="text-align: center"><p
+    style="font-size: small; white-space:pre-wrap; margin-top: 0; margin-bottom: 0">{{ shortCoordinates(locationEntry.latitude, locationEntry.longitude) }}</p>
+  </td>
+  <td style="text-align: center">{{ locationEntry.altitude == null ? '—' : locationEntry.altitude + 'm' }}</td>
+  <td style="text-align: center">{{ locationEntry.horizontalAccuracy == null ? '—' : locationEntry.horizontalAccuracy + 'm' }}</td>
+</tr>
+</ng-template>
+  <ng-template #emptymessage><tr><td colspan="6">{{ loading ? 'Loading locations…' : error ? 'Unable to load locations.' : 'No locations for this day.' }}</td></tr></ng-template>
+</p-table>
+<ng-content select="[location-status]" />
+
+
+<p-dialog header="Edit Location" [modal]="true" [visible]="draft !== null" (visibleChange)="!$event && cancel.emit()"
+  appendTo="body" [draggable]="false" [resizable]="false" [closable]="!saving" [closeOnEscape]="!saving"
+  [style]="{width: '28rem', maxWidth: 'calc(100vw - 2rem)'}">
+  @if (draft; as current) {
+    <div class="edit-fields">
+      <label for="location-time">Date &amp; Time</label>
+      <p-datepicker inputId="location-time" [(ngModel)]="current.date" [showTime]="true" [showIcon]="true" [showOnFocus]="false"
+        [disabled]="saving" appendTo="body" dateFormat="dd.mm.yy" />
+      <label for="location-altitude">Altitude</label>
+      <p-inputnumber inputId="location-altitude" [(ngModel)]="current.entry.altitude" suffix="m" [disabled]="saving" />
+      <label for="location-description">Description</label>
+      <textarea id="location-description" [(ngModel)]="current.entry.note" rows="5" [maxLength]="250" pTextarea [disabled]="saving"></textarea>
+    </div>
+    <div class="edit-actions">
+      <p-button label="Cancel" severity="secondary" [disabled]="saving" (onClick)="cancel.emit()" />
+      <p-button label="Save" [loading]="saving" [disabled]="saving || !validDraft" (onClick)="save.emit()" />
+    </div>
+  }
+</p-dialog>

@@ -1,4 +1,7 @@
 import {Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject} from '@angular/core';
+import {Observable, finalize} from 'rxjs';
+import {MessageService as ToastService} from 'primeng/api';
+import {LocationEditDraft, LocationSidebarComponent} from './location-sidebar/location-sidebar.component';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {DialogModule} from 'primeng/dialog';
 import {ButtonModule} from "primeng/button";
@@ -11,7 +14,7 @@ import {PanelModule} from "primeng/panel";
 import {CardModule} from "primeng/card";
 import {ChartModule} from "primeng/chart";
 import {TableModule} from "primeng/table";
-import { DatePipe } from "@angular/common";
+import { DatePipe, NgTemplateOutlet } from "@angular/common";
 import {
     GoogleMap,
     MapPolyline,
@@ -41,6 +44,7 @@ const THEO_IDENTITY_ID = 1;
     WeightCardComponent,
     HeartRateCardComponent,
     HrvCardComponent,
+    LocationSidebarComponent,
     ButtonModule,
     RouterModule,
     ToolbarComponent,
@@ -53,6 +57,7 @@ const THEO_IDENTITY_ID = 1;
     TableModule,
     DialogModule,
     DatePipe,
+    NgTemplateOutlet,
     GoogleMap,
     MapPolyline,
     MapMarker
@@ -73,6 +78,25 @@ export class DayviewComponent implements OnInit {
   locationsLoading = false;
   locationsError = false;
   private locationRequestId = 0;
+  private readonly toast = inject(ToastService);
+  private readonly mobileQuery = window.matchMedia?.('(max-width: 768px)');
+  mobileLocationView = this.mobileQuery?.matches ?? false;
+  locationSaving = false;
+  locationEditDraft: LocationEditDraft | null = null;
+  highlightedLocationEntry: LocationHistoryEntry | undefined;
+  readonly blueHighlightMarker: google.maps.Symbol = {
+    path: 'M0,0 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0',
+    fillColor: '#3B82F6', fillOpacity: 0.6, strokeWeight: 0, scale: 2
+  };
+
+  get locationEditorBusy() {
+    return this.locationSaving || this.locationsLoading || this.locationsError;
+  }
+
+  get canDragLocations() {
+    return !this.mobileLocationView && !this.locationEditorBusy && !this.locationEditDraft;
+  }
+
   private expandedMap: google.maps.Map | null = null;
   private locationTrigger: HTMLButtonElement | null = null;
 
@@ -105,6 +129,8 @@ export class DayviewComponent implements OnInit {
 
   onLocationDialogHidden() {
     this.expandedMap = null;
+    this.locationEditDraft = null;
+    this.highlightedLocationEntry = undefined;
     this.locationTrigger?.focus();
   }
   
@@ -221,6 +247,13 @@ export class DayviewComponent implements OnInit {
     private healthService: HealthService,
     private messageApiService: MessageApiService
   ) {
+    const onViewportChange = (event: MediaQueryListEvent) => {
+      this.mobileLocationView = event.matches;
+      this.highlightedLocationEntry = undefined;
+      if (event.matches) this.locationEditDraft = null;
+    };
+    this.mobileQuery?.addEventListener('change', onViewportChange);
+    this.destroyRef.onDestroy(() => this.mobileQuery?.removeEventListener('change', onViewportChange));
   }
 
   goToPreviousDay() {
@@ -241,14 +274,13 @@ export class DayviewComponent implements OnInit {
   }
 
   onDateChange() {
-    // Handle date change - can be extended with additional logic
-    console.log('Date changed to:', this.selectedDate);
     this.updateUrl();
     this.loadAllData();
   }
 
-  private setDateAndUpdateUrl(date: Date) {
-    this.selectedDate = date;
+  setDateAndUpdateUrl(date: Date) {
+    if (!date || !Number.isFinite(date.getTime())) return;
+    this.selectedDate = new Date(date);
     this.updateUrl();
     this.loadAllData();
   }
@@ -265,10 +297,10 @@ export class DayviewComponent implements OnInit {
 
   ngOnInit() {
     // Read date from URL query params, default to today if not provided
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       const dateParam = params['date'];
       if (dateParam) {
-        const parsedDate = new Date(dateParam);
+        const parsedDate = /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? new Date(`${dateParam}T00:00:00`) : new Date(NaN);
         if (!isNaN(parsedDate.getTime())) {
           // Only update if the date actually changed (to avoid reloading when we update URL ourselves)
           const newDateStr = this.dateToString(parsedDate);
@@ -295,27 +327,38 @@ export class DayviewComponent implements OnInit {
     this.loadMessages();
   }
 
-  loadDayViewData() {
+  loadDayViewData(preserveViewport = false, selectionIds = this.selectedLocationEntries.map(entry => entry.id)) {
     if (!this.selectedDate) return;
     const date = this.dateToString(this.selectedDate);
     const requestId = ++this.locationRequestId;
-    this.locationDialogVisible = false;
-    this.dayViewDataFull = [];
-    this.selectedLocationEntries = [];
+    if (!preserveViewport) {
+      this.dayViewDataFull = [];
+      this.selectedLocationEntries = [];
+      selectionIds = [];
+      this.locationEditDraft = null;
+      this.center = {lat: 47.3919661, lng: 8.3};
+      this.zoom = 4;
+    }
+    this.highlightedLocationEntry = undefined;
     this.locationsLoading = true;
     this.locationsError = false;
-    this.center = {lat: 47.3919661, lng: 8.3};
-    this.zoom = 4;
     this.locationService.getLocations(date, date).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: locations => {
         if (requestId !== this.locationRequestId) return;
-        this.dayViewDataFull = locations;
+        this.dayViewDataFull = [...locations].sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp) || a.id - b.id);
+        const entriesById = new Map(this.dayViewDataFull.map(entry => [entry.id, entry]));
+        this.selectedLocationEntries = selectionIds.flatMap(id => {
+          const entry = entriesById.get(id);
+          return entry ? [entry] : [];
+        });
         this.locationsLoading = false;
-        if (locations.length > 0) {
-          this.center = {lat: locations[0].latitude, lng: locations[0].longitude};
-          this.zoom = 12;
+        if (!preserveViewport) {
+          if (locations.length > 0) {
+            this.center = {lat: locations[0].latitude, lng: locations[0].longitude};
+            this.zoom = 12;
+          }
+          this.fitExpandedMap();
         }
-        this.fitExpandedMap();
       },
       error: () => {
         if (requestId !== this.locationRequestId) return;
@@ -323,6 +366,109 @@ export class DayviewComponent implements OnInit {
         this.locationsError = true;
       }
     });
+  }
+
+  locateLocation() {
+    const entry = this.selectedLocationEntries[0] ?? this.dayViewDataFull[0];
+    if (!entry || !this.expandedMap) return;
+    this.expandedMap.setCenter({lat: entry.latitude, lng: entry.longitude});
+    this.expandedMap.setZoom(this.selectedLocationEntries.length ? 16 : 11);
+  }
+
+  openLocationPhotos() {
+    window.open(`https://photos.google.com/search/${this.dateToString(this.selectedDate)}`, '_blank', 'noopener');
+  }
+
+  createLocation() {
+    if (this.mobileLocationView || this.locationEditorBusy || this.selectedLocationEntries.length > 1) return;
+    const selected = this.selectedLocationEntries[0];
+    const noon = new Date(this.selectedDate);
+    noon.setHours(12, 0, 0, 0);
+    const centre = this.expandedMap?.getCenter()?.toJSON() ?? this.center;
+    const entry: LocationHistoryEntry = {
+      id: 0, latitude: selected?.latitude ?? centre.lat, longitude: selected?.longitude ?? centre.lng,
+      timestamp: selected ? new Date(selected.timestamp).toISOString() : noon.toISOString(), altitude: 0
+    };
+    this.mutateLocation(this.locationService.addLocation(entry), 'created', created => {
+      this.dayViewDataFull = [...this.dayViewDataFull, created];
+      return [created.id];
+    });
+  }
+
+  editLocation() {
+    if (this.mobileLocationView || this.locationEditorBusy || this.selectedLocationEntries.length !== 1) return;
+    const entry = this.selectedLocationEntries[0];
+    this.locationEditDraft = {entry: {...entry}, date: new Date(entry.timestamp)};
+  }
+
+  saveLocation() {
+    const draft = this.locationEditDraft;
+    if (this.mobileLocationView || this.locationEditorBusy || !draft?.date || !Number.isFinite(draft.date.getTime())) return;
+    const entry = {...draft.entry, timestamp: draft.date.toISOString()};
+    this.mutateLocation(this.locationService.updateLocation(entry.id, entry), 'updated', saved => {
+      this.applySavedLocation(saved);
+      this.locationEditDraft = null;
+      return [saved.id];
+    });
+  }
+
+  deleteLocations() {
+    if (this.mobileLocationView || this.locationEditorBusy || !this.selectedLocationEntries.length) return;
+    const ids = this.selectedLocationEntries.map(entry => entry.id);
+    this.mutateLocation(this.locationService.deleteLocations(ids), 'deleted', () => {
+      this.dayViewDataFull = this.dayViewDataFull.filter(entry => !ids.includes(entry.id));
+      this.selectedLocationEntries = [];
+      return [];
+    });
+  }
+
+  markerDragged(entry: LocationHistoryEntry, event: google.maps.MapMouseEvent, marker: MapMarker) {
+    const restore = () => marker.marker?.setPosition({lat: entry.latitude, lng: entry.longitude});
+    if (!this.canDragLocations || !event.latLng) { restore(); return; }
+    const moved = {...entry, latitude: event.latLng.lat(), longitude: event.latLng.lng()};
+    this.mutateLocation(this.locationService.updateLocation(entry.id, moved), 'updated', saved => {
+      this.applySavedLocation(saved);
+      return this.selectedLocationEntries.map(selected => selected.id);
+    }, restore);
+  }
+
+  private applySavedLocation(saved: LocationHistoryEntry) {
+    this.dayViewDataFull = this.dayViewDataFull.map(entry => entry.id === saved.id ? saved : entry);
+    this.selectedLocationEntries = this.selectedLocationEntries.map(entry => entry.id === saved.id ? saved : entry);
+  }
+
+  private mutateLocation<T>(request: Observable<T>, action: string, apply: (result: T) => number[], rollback?: () => void) {
+    if (this.locationEditorBusy) return;
+    const requestId = this.locationRequestId;
+    this.locationSaving = true;
+    request.pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.locationSaving = false)).subscribe({
+      next: result => {
+        this.toast.add({severity: 'success', summary: `Location ${action}`});
+        // A write may finish after browser navigation. Never apply its result to a different day.
+        if (requestId !== this.locationRequestId) return;
+        const ids = apply(result);
+        this.loadDayViewData(true, ids);
+      },
+      error: () => {
+        rollback?.();
+        this.toast.add({severity: 'error', summary: `Location could not be ${action}`, detail: 'Please try again.'});
+      }
+    });
+  }
+
+  dayLineClick(event: google.maps.PolyMouseEvent) {
+    if (!event.latLng || this.mobileLocationView || this.locationEditorBusy) return;
+    const lat = event.latLng.lat() * Math.PI / 180;
+    const lng = event.latLng.lng() * Math.PI / 180;
+    // Compare spherical distances without depending on the optional Maps geometry library.
+    const distance = (entry: LocationHistoryEntry) => {
+      const pointLat = entry.latitude * Math.PI / 180;
+      const pointLng = entry.longitude * Math.PI / 180;
+      return Math.sin((pointLat - lat) / 2) ** 2 + Math.cos(lat) * Math.cos(pointLat) * Math.sin((pointLng - lng) / 2) ** 2;
+    };
+    const closest = this.dayViewDataFull.reduce<LocationHistoryEntry | undefined>((best, entry) =>
+      !best || distance(entry) < distance(best) ? entry : best, undefined);
+    if (closest) this.selectedLocationEntries = this.selectedLocationEntries.length === 1 && this.selectedLocationEntries[0].id === closest.id ? [] : [closest];
   }
 
   dateToString(date: Date) {

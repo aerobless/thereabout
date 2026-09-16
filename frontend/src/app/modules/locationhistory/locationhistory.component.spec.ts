@@ -45,30 +45,31 @@ describe('LocationhistoryComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('loads an inclusive date range and selects its first day', () => {
-    vi.spyOn(component, 'loadHeatmapData').mockImplementation(() => undefined);
-    const loadDayViewData = vi.spyOn(component, 'loadDayViewData').mockImplementation(() => undefined);
-    const loadDateRangeViewData = vi.spyOn(component, 'loadDateRangeViewData').mockImplementation(() => undefined);
-
-    component.ngOnInit();
-    queryParams.next({fromDate: '2026-07-14', toDate: '2026-07-16'});
-
-    expect(component.dateRangeFrom).toBe('2026-07-14');
-    expect(component.dateRangeTo).toBe('2026-07-16');
-    expect(component.dateToString(component.exactDate)).toBe('2026-07-14');
-    expect(loadDateRangeViewData).toHaveBeenCalledOnce();
-    expect(loadDayViewData).toHaveBeenCalledOnce();
-  });
-
-  it('uses a valid date parameter as the selected blue day', () => {
-    vi.spyOn(component, 'loadHeatmapData').mockImplementation(() => undefined);
-    vi.spyOn(component, 'loadDayViewData').mockImplementation(() => undefined);
-    vi.spyOn(component, 'loadDateRangeViewData').mockImplementation(() => undefined);
-
+  it('uses linked ranges for the heatmap without loading detailed locations', () => {
+    const sparse = vi.spyOn(locationService, 'getSparseLocations').mockReturnValue(of([]) as any);
+    const detail = vi.spyOn(locationService, 'getLocations').mockReturnValue(of([]) as any);
     component.ngOnInit();
     queryParams.next({fromDate: '2026-07-14', toDate: '2026-07-16', date: '2026-07-15'});
+    expect(component.dateToString(component.fromDate)).toBe('2026-07-14');
+    expect(component.dateToString(component.toDate)).toBe('2026-07-16');
+    expect(sparse).toHaveBeenCalledWith('2026-07-14', '2026-07-16');
+    expect(detail).not.toHaveBeenCalled();
+    queryParams.next({fromDate: '2026-08-01', toDate: '2026-08-02'});
+    expect(sparse).toHaveBeenLastCalledWith('2026-08-01', '2026-08-02');
+  });
 
-    expect(component.dateToString(component.exactDate)).toBe('2026-07-15');
+  it('ignores stale heatmap responses and exposes failures for retry', () => {
+    const old = new Subject<any[]>();
+    const current = new Subject<any[]>();
+    vi.spyOn(locationService, 'getSparseLocations').mockReturnValueOnce(old as any).mockReturnValueOnce(current as any);
+    component.loadHeatmapData();
+    component.loadHeatmapData();
+    old.next([{latitude: 1, longitude: 2}]);
+    expect(component.heatmapData).toEqual([]);
+    expect(component.heatmapLoading).toBe(true);
+    current.error(new Error('Offline'));
+    expect(component.heatmapError).toBe(true);
+    expect(component.heatmapLoading).toBe(false);
   });
 
   it('passes the inclusive range to the location API', () => {
@@ -195,7 +196,7 @@ describe('LocationhistoryComponent', () => {
     component.exactDate = new Date(2026, 5, 14);
     component.onEmbedMapInitialized(map as any);
 
-    component.loadDayViewData(undefined, true);
+    component.loadDayViewData(true);
 
     expect(extend).toHaveBeenCalledTimes(2);
     expect(map.fitBounds).toHaveBeenCalledWith(expect.anything(), 48);

@@ -4,7 +4,9 @@ import { DayviewComponent } from './dayview.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
+import {MessageService as ToastService} from 'primeng/api';
+import {MapMarker} from '@angular/google-maps';
 import { afterEach, Mock, vi } from 'vitest';
 import { Message, MessageService, HealthService, HealthDataResponse, LocationService, LocationHistoryEntry } from '../../../../generated/backend-api/thereabout';
 
@@ -13,6 +15,10 @@ describe('DayviewComponent', () => {
   let fixture: ComponentFixture<DayviewComponent>;
   let getLocations: Mock<(from: string, to: string) => Observable<LocationHistoryEntry[]>>;
   let getHealthData: Mock<(from: string, to: string) => Observable<HealthDataResponse>>;
+  const addLocation = vi.fn();
+  const updateLocation = vi.fn();
+  const deleteLocations = vi.fn();
+  const toast = {add: vi.fn()};
   let getMessages: Mock<(date: string) => Observable<Message[]>>;
 
   function message(id: number, senderIdentityId?: number): Message {
@@ -27,14 +33,18 @@ describe('DayviewComponent', () => {
   afterEach(() => vi.restoreAllMocks());
 
   beforeEach(async () => {
+    addLocation.mockReset();
+    updateLocation.mockReset();
+    deleteLocations.mockReset();
+    toast.add.mockReset();
     getMessages = vi.fn();
     getHealthData = vi.fn();
     getLocations = vi.fn();
     await TestBed.configureTestingModule({
       imports: [DayviewComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), {provide: MessageService, useValue: {getMessages}},
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), {provide: ToastService, useValue: toast}, {provide: MessageService, useValue: {getMessages}},
         {provide: HealthService, useValue: {getHealthDataByDateRange: getHealthData}},
-        {provide: LocationService, useValue: {getLocations}}]
+        {provide: LocationService, useValue: {getLocations, addLocation, updateLocation, deleteLocations}}]
     })
     .overrideComponent(DayviewComponent, {set: {template: ''}})
     .compileComponents();
@@ -178,7 +188,7 @@ describe('DayviewComponent', () => {
     expect(component.selectedStepProgress).toBeNull();
   });
 
-  it('clears location data and closes the map when dates change, ignoring stale responses', () => {
+  it('clears location data while keeping the modal open on date changes, ignoring stale responses', () => {
     const oldDay = new Subject<LocationHistoryEntry[]>();
     const newDay = new Subject<LocationHistoryEntry[]>();
     getLocations.mockReturnValueOnce(oldDay).mockReturnValueOnce(newDay);
@@ -189,7 +199,7 @@ describe('DayviewComponent', () => {
     component.selectedDate = new Date(2026, 8, 16);
     component.loadDayViewData();
     expect(getLocations).toHaveBeenLastCalledWith('2026-09-16', '2026-09-16');
-    expect(component.locationDialogVisible).toBe(false);
+    expect(component.locationDialogVisible).toBe(true);
     expect(component.dayViewDataFull).toEqual([]);
     expect(component.locationsLoading).toBe(true);
     newDay.next([]);
@@ -216,6 +226,197 @@ describe('DayviewComponent', () => {
     expect(map.setCenter).toHaveBeenCalledWith({lat: 47.4, lng: 8.5});
     expect(map.setZoom).toHaveBeenCalledWith(15);
     expect(map.fitBounds).not.toHaveBeenCalled();
+  });
+
+  function point(id = 1): LocationHistoryEntry {
+    return {id, latitude: 47.4, longitude: 8.5, timestamp: '2026-09-15T08:00:00Z', altitude: 400, note: 'Original'};
+  }
+
+  function selectPoint() {
+    const entry = point();
+    component.dayViewDataFull = [entry];
+    component.selectedLocationEntries = [entry];
+    return entry;
+  }
+
+  it('creates at the actual map centre and local noon without mutating the selected date', () => {
+    const originalDate = component.selectedDate.getTime();
+    const map = {setCenter: vi.fn(), setZoom: vi.fn(), fitBounds: vi.fn(), getCenter: () => ({toJSON: () => ({lat: 10, lng: 20})})};
+    component.onExpandedMapInitialized(map as any);
+    const created = {...point(2), latitude: 10, longitude: 20};
+    addLocation.mockReturnValue(of(created));
+    getLocations.mockReturnValue(of([created]));
+    component.locationDialogVisible = true;
+    component.createLocation();
+    const noon = new Date(2026, 8, 15, 12).toISOString();
+    expect(addLocation).toHaveBeenCalledWith({id: 0, latitude: 10, longitude: 20, timestamp: noon, altitude: 0});
+    expect(component.selectedDate.getTime()).toBe(originalDate);
+    expect(component.selectedLocationEntries).toEqual([created]);
+    expect(component.locationDialogVisible).toBe(true);
+  });
+
+  it('copies the selected position and timestamp, but blocks New with multiple selections', () => {
+    const selected = selectPoint();
+    addLocation.mockReturnValue(of(point(2)));
+    getLocations.mockReturnValue(of([selected, point(2)]));
+    component.createLocation();
+    expect(addLocation).toHaveBeenCalledWith(expect.objectContaining({latitude: selected.latitude, longitude: selected.longitude, timestamp: new Date(selected.timestamp).toISOString(), altitude: 0}));
+    component.selectedLocationEntries = [selected, point(2)];
+    component.createLocation();
+    expect(addLocation).toHaveBeenCalledOnce();
+  });
+
+  it('edits a detached draft, retaining it on failure and discarding it on cancel', () => {
+    const selected = selectPoint();
+    component.editLocation();
+    const draft = component.locationEditDraft!;
+    draft.entry.note = 'Changed';
+    draft.date = new Date(2026, 8, 15, 15);
+    expect(selected.note).toBe('Original');
+    expect(selected.timestamp).toBe('2026-09-15T08:00:00Z');
+    updateLocation.mockReturnValue(throwError(() => new Error('Offline')));
+    component.saveLocation();
+    expect(component.locationEditDraft).toBe(draft);
+    expect(component.dayViewDataFull).toEqual([selected]);
+    expect(component.locationSaving).toBe(false);
+    expect(toast.add).toHaveBeenLastCalledWith(expect.objectContaining({severity: 'error'}));
+    component.locationEditDraft = null;
+    expect(selected.note).toBe('Original');
+  });
+
+  it('rejects missing edit dates and removes entries moved to another day after saving', () => {
+    selectPoint();
+    component.editLocation();
+    component.locationEditDraft!.date = null;
+    component.saveLocation();
+    expect(updateLocation).not.toHaveBeenCalled();
+    component.locationEditDraft!.date = new Date(2026, 8, 16, 12);
+    updateLocation.mockReturnValue(of({...point(), timestamp: new Date(2026, 8, 16, 12).toISOString()}));
+    getLocations.mockReturnValue(of([]));
+    component.saveLocation();
+    expect(component.locationEditDraft).toBeNull();
+    expect(component.dayViewDataFull).toEqual([]);
+    expect(component.selectedLocationEntries).toEqual([]);
+  });
+
+  it('deletes selected IDs only after success and blocks overlapping writes', () => {
+    const entries = [point(), point(2)];
+    component.dayViewDataFull = entries;
+    component.selectedLocationEntries = entries;
+    const response = new Subject<void>();
+    deleteLocations.mockReturnValue(response);
+    getLocations.mockReturnValue(of([]));
+    component.deleteLocations();
+    component.deleteLocations();
+    expect(deleteLocations).toHaveBeenCalledExactlyOnceWith([1, 2]);
+    expect(component.selectedLocationEntries).toEqual(entries);
+    expect(component.locationSaving).toBe(true);
+    response.next();
+    response.complete();
+    expect(component.selectedLocationEntries).toEqual([]);
+    expect(component.dayViewDataFull).toEqual([]);
+    expect(component.locationSaving).toBe(false);
+  });
+
+  it('retains selections after a failed delete and supports retry', () => {
+    const entry = selectPoint();
+    deleteLocations.mockReturnValue(throwError(() => new Error('Offline')));
+    component.deleteLocations();
+    expect(component.selectedLocationEntries).toEqual([entry]);
+    expect(component.locationSaving).toBe(false);
+  });
+
+  it('restores failed marker moves and rejects mobile or missing-coordinate drag events', () => {
+    const entry = selectPoint();
+    const restore = vi.fn();
+    const marker = {marker: {setPosition: restore}} as unknown as MapMarker;
+    const event = {latLng: {lat: () => 12, lng: () => 34}} as google.maps.MapMouseEvent;
+    updateLocation.mockReturnValue(throwError(() => new Error('Offline')));
+    component.markerDragged(entry, event, marker);
+    expect(updateLocation).toHaveBeenCalledWith(entry.id, {...entry, latitude: 12, longitude: 34});
+    expect(restore).toHaveBeenCalledWith({lat: 47.4, lng: 8.5});
+    expect(entry.latitude).toBe(47.4);
+    component.mobileLocationView = true;
+    expect(component.canDragLocations).toBe(false);
+    component.markerDragged(entry, event, marker);
+    component.mobileLocationView = false;
+    component.markerDragged(entry, {latLng: null} as google.maps.MapMouseEvent, marker);
+    expect(updateLocation).toHaveBeenCalledOnce();
+  });
+
+  it('updates the route and selection after a move without changing the viewport', () => {
+    const entry = selectPoint();
+    const map = {setCenter: vi.fn(), setZoom: vi.fn(), fitBounds: vi.fn()};
+    component.onExpandedMapInitialized(map as any);
+    map.setCenter.mockClear(); map.setZoom.mockClear();
+    const moved = {...entry, latitude: 12, longitude: 34, horizontalAccuracy: 0};
+    updateLocation.mockReturnValue(of(moved));
+    getLocations.mockReturnValue(of([moved]));
+    component.markerDragged(entry, {latLng: {lat: () => 12, lng: () => 34}} as google.maps.MapMouseEvent, {marker: {setPosition: vi.fn()}} as any);
+    expect(component.dayViewDataFull).toEqual([moved]);
+    expect(component.selectedLocationEntries).toEqual([moved]);
+    expect(map.setCenter).not.toHaveBeenCalled();
+    expect(map.setZoom).not.toHaveBeenCalled();
+  });
+
+  it('ignores a mutation result after navigation to another day', () => {
+    selectPoint();
+    const response = new Subject<LocationHistoryEntry>();
+    updateLocation.mockReturnValue(response);
+    component.editLocation(); component.saveLocation();
+    component.selectedDate = new Date(2026, 8, 16);
+    getLocations.mockReturnValue(of([]));
+    component.loadDayViewData();
+    response.next({...point(), note: 'Old result'}); response.complete();
+    expect(component.dayViewDataFull).toEqual([]);
+    expect(component.selectedLocationEntries).toEqual([]);
+    expect(getLocations).toHaveBeenCalledOnce();
+  });
+
+  it('locates repeatedly at the selected point and falls back to the first entry', () => {
+    selectPoint();
+    const map = {setCenter: vi.fn(), setZoom: vi.fn(), fitBounds: vi.fn()};
+    component.onExpandedMapInitialized(map as any);
+    map.setCenter.mockClear(); map.setZoom.mockClear();
+    component.locateLocation(); component.locateLocation();
+    expect(map.setCenter).toHaveBeenCalledTimes(2);
+    expect(map.setZoom).toHaveBeenLastCalledWith(16);
+    component.selectedLocationEntries = [];
+    component.locateLocation();
+    expect(map.setZoom).toHaveBeenLastCalledWith(11);
+    component.dayViewDataFull = [];
+    component.locateLocation();
+    expect(map.setCenter).toHaveBeenCalledTimes(3);
+  });
+
+  it('selects the nearest route point by ID and toggles it off', () => {
+    const first = point();
+    const second = {...point(2), latitude: 48, longitude: 9};
+    component.dayViewDataFull = [first, second];
+    const event = {latLng: {lat: () => 48.001, lng: () => 9}} as google.maps.PolyMouseEvent;
+    component.dayLineClick(event);
+    expect(component.selectedLocationEntries).toEqual([second]);
+    component.selectedLocationEntries = [{...second}];
+    component.dayLineClick(event);
+    expect(component.selectedLocationEntries).toEqual([]);
+  });
+
+  it('updates drag availability on viewport changes and removes the listener on destruction', () => {
+    const listeners: ((event: MediaQueryListEvent) => void)[] = [];
+    const removeEventListener = vi.fn();
+    vi.stubGlobal('matchMedia', () => ({matches: false, addEventListener: (_: string, callback: any) => listeners.push(callback), removeEventListener}));
+    const responsiveFixture = TestBed.createComponent(DayviewComponent);
+    const responsive = responsiveFixture.componentInstance;
+    expect(responsive.canDragLocations).toBe(true);
+    responsive.locationEditDraft = {entry: point(), date: new Date()};
+    listeners[0]({matches: true} as MediaQueryListEvent);
+    expect(responsive.canDragLocations).toBe(false);
+    expect(responsive.locationEditDraft).toBeNull();
+    listeners[0]({matches: false} as MediaQueryListEvent);
+    expect(responsive.canDragLocations).toBe(true);
+    responsiveFixture.destroy();
+    expect(removeEventListener).toHaveBeenCalledWith('change', listeners[0]);
+    vi.unstubAllGlobals();
   });
 
 });

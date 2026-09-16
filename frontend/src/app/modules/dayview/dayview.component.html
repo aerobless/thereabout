@@ -389,29 +389,55 @@
 
 <p-dialog [header]="'Location History — ' + (selectedDate | date:'dd.MM.yyyy')" styleClass="messages-dialog location-dialog"
   [(visible)]="locationDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
-  [closeOnEscape]="true" [dismissableMask]="true" [focusTrap]="true" [blockScroll]="true"
+  [closeOnEscape]="!locationEditDraft && !locationSaving" [dismissableMask]="!locationEditDraft && !locationSaving" [closable]="!locationSaving" [focusTrap]="true" [blockScroll]="true"
   closeAriaLabel="Close location history" (onShow)="fitExpandedMap()" (onHide)="onLocationDialogHidden()"
   [style]="{ width: '1200px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '92dvh' }">
   @if (locationDialogVisible) {
-    <div class="expanded-map">
-      <google-map width="100%" height="100%" [center]="center" [zoom]="zoom"
-        [options]="{fullscreenControl: false}" (mapInitialized)="onExpandedMapInitialized($event)">
-        <map-polyline [path]="minifyDayViewData(dayViewDataFull)" [options]="{strokeColor: '#3B82F6', strokeWeight: 3}"></map-polyline>
-        @if (dayViewDataFull.length === 1) {
-          <map-marker [position]="{lat: dayViewDataFull[0].latitude, lng: dayViewDataFull[0].longitude}"></map-marker>
-        }
-      </google-map>
+    <div class="location-editor">
+      <div class="expanded-map">
+        <google-map width="100%" height="100%" [center]="center" [zoom]="zoom"
+          [options]="{fullscreenControl: false}" (mapInitialized)="onExpandedMapInitialized($event)">
+          <map-polyline [path]="minifyDayViewData(dayViewDataFull)" [options]="{strokeColor: '#3B82F6', strokeWeight: 3}" (polylineClick)="dayLineClick($event)"></map-polyline>
+          @if (dayViewDataFull.length === 1 && selectedLocationEntries.length === 0) {
+            <map-marker [position]="{lat: dayViewDataFull[0].latitude, lng: dayViewDataFull[0].longitude}"></map-marker>
+          }
+          @for (entry of selectedLocationEntries; track entry.id) {
+            <map-marker #selectedMarker="mapMarker" [position]="{lat: entry.latitude, lng: entry.longitude}"
+              [options]="{draggable: canDragLocations}" (mapDragend)="markerDragged(entry, $event, selectedMarker)" />
+          }
+          @if (highlightedLocationEntry && !mobileLocationView) {
+            <map-marker [position]="{lat: highlightedLocationEntry.latitude, lng: highlightedLocationEntry.longitude}"
+              [options]="{clickable: false}" [icon]="blueHighlightMarker" />
+          }
+        </google-map>
+      </div>
+      @if (!mobileLocationView) {
+        <thereabout-location-sidebar class="location-sidebar" [date]="selectedDate" (dateChange)="setDateAndUpdateUrl($event)"
+          [entries]="dayViewDataFull" [(selection)]="selectedLocationEntries" (highlight)="highlightedLocationEntry = $event"
+          [draft]="locationEditDraft" [busy]="locationEditorBusy" [saving]="locationSaving" [loading]="locationsLoading" [error]="locationsError"
+          (locate)="locateLocation()" (photos)="openLocationPhotos()" (create)="createLocation()" (edit)="editLocation()"
+          (remove)="deleteLocations()" (save)="saveLocation()" (cancel)="locationEditDraft = null">
+          <div location-status class="map-footer">
+            <ng-container [ngTemplateOutlet]="locationStatus" />
+          </div>
+        </thereabout-location-sidebar>
+      }
     </div>
-    <div class="map-footer">
+    @if (mobileLocationView) {
+      <div class="map-footer">
+        <ng-container [ngTemplateOutlet]="locationStatus" />
+      </div>
+    }
+    <ng-template #locationStatus>
       @if (locationsLoading) {
         <span class="map-footer-text" role="status">Loading locations…</span>
       } @else if (locationsError) {
-        <span class="map-footer-text" role="alert">Unable to load locations. Please try again.</span>
+        <span class="map-footer-text" role="alert">Unable to load locations. <button type="button" (click)="loadDayViewData(true)">Retry</button></span>
       } @else if (dayViewDataFull.length > 0) {
         <span class="map-footer-text">{{ dayViewDataFull.length }} location{{ dayViewDataFull.length !== 1 ? 's' : '' }} recorded</span>
       } @else {
         <span class="map-footer-text muted">No location data for {{ selectedDate | date:'dd.MM.yyyy' }}</span>
       }
-    </div>
+    </ng-template>
   }
 </p-dialog>

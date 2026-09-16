@@ -78,3 +78,11 @@
     width: 100%;
   }
 }
+
+.heatmap-layout { display: flex; gap: 1rem; height: calc(100dvh - 100px); }
+.heatmap-controls { flex: 0 0 400px; }
+@media (max-width: 768px) {
+  .heatmap-layout { flex-direction: column-reverse; height: auto; }
+  .heatmap-controls { flex: auto; }
+  .heatmap-layout .google-maps-container { height: 65dvh; flex: none; }
+}

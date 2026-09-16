@@ -1,8 +1,8 @@
-import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import {Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {
     GoogleMap,
     MapGeocoder,
-    MapMarker,
     MapPolyline
 } from "@angular/google-maps";
 import {
@@ -10,7 +10,6 @@ import {
     LocationService
 } from "../../../../generated/backend-api/thereabout";
 import {InputTextModule} from "primeng/inputtext";
-import {CardModule} from "primeng/card";
 import {IconFieldModule} from "primeng/iconfield";
 import {InputIconModule} from "primeng/inputicon";
 import {FormsModule} from "@angular/forms";
@@ -19,19 +18,8 @@ import {DatePickerModule} from "primeng/datepicker";
 
 import {FloatLabelModule} from "primeng/floatlabel";
 import QuickFilterDateCombo from "./quick-filter-date-combo";
-import {TableModule} from "primeng/table";
-import {MessageService} from "primeng/api";
-import {ToastModule} from "primeng/toast";
 import {ActivatedRoute} from "@angular/router";
-import {DialogModule} from "primeng/dialog";
-import {InputNumberModule} from "primeng/inputnumber";
-import {StyleClassModule} from "primeng/styleclass";
 import {TooltipModule} from "primeng/tooltip";
-import {TextareaModule} from "primeng/textarea";
-import {DayPanelComponent} from "./day-panel/day-panel.component";
-import {TabsModule} from "primeng/tabs";
-import {AvatarModule} from "primeng/avatar";
-import {ToggleSwitchModule} from "primeng/toggleswitch";
 import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 import {ThereaboutHeatmapLayerDirective} from "./thereabout-heatmap-layer.directive";
 
@@ -43,26 +31,14 @@ import {ThereaboutHeatmapLayerDirective} from "./thereabout-heatmap-layer.direct
     ThereaboutHeatmapLayerDirective,
     ToolbarComponent,
     InputTextModule,
-    CardModule,
     IconFieldModule,
     InputIconModule,
     FormsModule,
     ButtonModule,
     DatePickerModule,
     MapPolyline,
-    MapMarker,
     FloatLabelModule,
-    TableModule,
-    ToastModule,
-    DialogModule,
-    InputNumberModule,
-    StyleClassModule,
     TooltipModule,
-    TextareaModule,
-    DayPanelComponent,
-    TabsModule,
-    AvatarModule,
-    ToggleSwitchModule
 ],
     templateUrl: './locationhistory.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -86,25 +62,10 @@ export class LocationhistoryComponent implements OnInit {
     heatmapData: { lng: number; lat: number }[] = [];
     fromDate: Date = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
     toDate: Date = new Date();
-    alwaysShowHeatmap = false;
 
     // Day view
     dayViewDataFull: Array<LocationHistoryEntry> = [];
     exactDate: Date = new Date();
-    tabIndex: number = 0;
-
-    // Edit Modal
-    selectedLocationEntries: LocationHistoryEntry[] = [];
-    highlightedLocationEntry: LocationHistoryEntry | undefined;
-
-    blueHighlightMarker = {
-        path: "M0,0 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0",
-        fillColor: "blue",
-        fillOpacity: 0.6,
-        strokeWeight: 0,
-        rotation: 0,
-        scale: 2,
-    };
 
     lineSymbol = {
         path: 'M 0,-1 0,1',
@@ -119,52 +80,41 @@ export class LocationhistoryComponent implements OnInit {
 
     constructor(private readonly locationService: LocationService,
                 private readonly geocodeService: MapGeocoder,
-                private messageService: MessageService,
                 private route: ActivatedRoute) {
     }
 
+    private readonly destroyRef = inject(DestroyRef);
+    private heatmapRequestId = 0;
+    private dayRequestId = 0;
+    private rangeRequestId = 0;
+    heatmapLoading = false;
+    heatmapError = false;
+
     ngOnInit() {
-        let standardViewDataLoaded = false;
-
-        this.route.queryParams.subscribe(params => {
+        this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
             this.embedMode = params['embed'] === 'true';
-            if (!this.embedMode && !standardViewDataLoaded) {
-                this.loadHeatmapData();
-                standardViewDataLoaded = true;
-            }
-
+            ++this.dayRequestId;
+            ++this.rangeRequestId;
+            ++this.heatmapRequestId;
+            this.dayViewDataFull = [];
+            this.dateRangeViewDataFull = [];
             const selectedDate = this.parseIsoDate(params['date']);
             const fromDate = this.parseIsoDate(params['fromDate']);
             const toDate = this.parseIsoDate(params['toDate']);
-            const hasValidDateRange = fromDate !== null && toDate !== null && fromDate.getTime() <= toDate.getTime();
-
-            if (hasValidDateRange) {
-                this.dateRangeFrom = this.dateToString(fromDate);
-                this.dateRangeTo = this.dateToString(toDate);
-                this.embedRangeValid = true;
-                this.embedFromDate = fromDate;
-                this.embedToDate = toDate;
-                this.exactDate = selectedDate && (!this.embedMode || this.isWithinEmbedRange(selectedDate))
-                    ? selectedDate
-                    : fromDate;
+            const valid = fromDate !== null && toDate !== null && fromDate <= toDate;
+            this.dateRangeFrom = valid ? this.dateToString(fromDate) : undefined;
+            this.dateRangeTo = valid ? this.dateToString(toDate) : undefined;
+            this.embedRangeValid = valid;
+            this.embedFromDate = valid ? fromDate : undefined;
+            this.embedToDate = valid ? toDate : undefined;
+            if (!this.embedMode) {
+                this.fromDate = valid ? fromDate : new Date(new Date().setFullYear(new Date().getFullYear() - 1));
+                this.toDate = valid ? toDate : new Date();
+                this.loadHeatmapData();
+            } else if (valid) {
+                this.exactDate = selectedDate && this.isWithinEmbedRange(selectedDate) ? selectedDate : fromDate;
                 this.loadDateRangeViewData();
-            } else {
-                this.dateRangeFrom = undefined;
-                this.dateRangeTo = undefined;
-                this.dateRangeViewDataFull = [];
-                this.embedRangeValid = false;
-                this.embedFromDate = undefined;
-                this.embedToDate = undefined;
-                if (selectedDate) {
-                    this.exactDate = selectedDate;
-                }
-            }
-
-            if (!this.embedMode || hasValidDateRange) {
                 this.loadDayViewData();
-            } else {
-                this.dayViewDataFull = [];
-                this.selectedLocationEntries = [];
             }
         });
     }
@@ -185,35 +135,54 @@ export class LocationhistoryComponent implements OnInit {
     }
 
     loadHeatmapData() {
-        if (!this.fromDate || !this.toDate) return;
-        this.locationService.getSparseLocations(this.dateToString(this.fromDate), this.dateToString(this.toDate)).subscribe(locations => {
-            this.heatmapData = locations.map(location => {
-                return {lat: location.latitude, lng: location.longitude}
+        const requestId = ++this.heatmapRequestId;
+        this.heatmapData = [];
+        this.heatmapError = false;
+        this.heatmapLoading = false;
+        if (!this.fromDate || !this.toDate || this.fromDate > this.toDate) return;
+        this.heatmapLoading = true;
+        this.locationService.getSparseLocations(this.dateToString(this.fromDate), this.dateToString(this.toDate))
+            .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+                next: locations => {
+                    if (requestId !== this.heatmapRequestId) return;
+                    this.heatmapData = locations.map(location => ({lat: location.latitude, lng: location.longitude}));
+                    this.heatmapLoading = false;
+                },
+                error: () => {
+                    if (requestId !== this.heatmapRequestId) return;
+                    this.heatmapLoading = false;
+                    this.heatmapError = true;
+                }
             });
-        });
     }
 
-    loadDayViewData(preselectedLocationId?: number, focusEmbedDay = false) {
+    loadDayViewData(focusEmbedDay = false) {
         if (!this.exactDate) return;
-        this.locationService.getLocations(this.dateToString(this.exactDate), this.dateToString(this.exactDate)).subscribe(locations => {
-            this.dayViewDataFull = locations;
-            if(preselectedLocationId){
-                this.selectedLocationEntries = locations.filter(value => value.id === preselectedLocationId);
-            } else {
-                this.selectedLocationEntries = [];
-            }
-            if (focusEmbedDay) {
-                this.fitEmbedDayBounds();
-            }
-        });
+        const requestId = ++this.dayRequestId;
+        this.dayViewDataFull = [];
+        this.locationService.getLocations(this.dateToString(this.exactDate), this.dateToString(this.exactDate))
+            .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+                next: locations => {
+                    if (requestId !== this.dayRequestId) return;
+                    this.dayViewDataFull = locations;
+                    if (focusEmbedDay) this.fitEmbedDayBounds();
+                },
+                error: () => { /* Keep the trip visible when a day cannot be loaded. */ }
+            });
     }
 
     loadDateRangeViewData() {
         if (!this.dateRangeFrom || !this.dateRangeTo) return;
-        this.locationService.getLocations(this.dateRangeFrom, this.dateRangeTo).subscribe(locations => {
-            this.dateRangeViewDataFull = locations;
-            this.fitEmbedTripBounds();
-        });
+        const requestId = ++this.rangeRequestId;
+        this.locationService.getLocations(this.dateRangeFrom, this.dateRangeTo)
+            .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+                next: locations => {
+                    if (requestId !== this.rangeRequestId) return;
+                    this.dateRangeViewDataFull = locations;
+                    this.fitEmbedTripBounds();
+                },
+                error: () => { /* Keep the map usable when the trip cannot be loaded. */ }
+            });
     }
 
     onEmbedMapInitialized(map: google.maps.Map) {
@@ -275,12 +244,12 @@ export class LocationhistoryComponent implements OnInit {
         if (!this.isWithinEmbedRange(nextDate)) return;
 
         this.exactDate = nextDate;
-        this.loadDayViewData(undefined, true);
+        this.loadDayViewData(true);
     }
 
     onEmbedDateChanged() {
         if (!this.isWithinEmbedRange(this.exactDate)) return;
-        this.loadDayViewData(undefined, true);
+        this.loadDayViewData(true);
     }
 
     canDecrementEmbedDate() {
@@ -314,7 +283,7 @@ export class LocationhistoryComponent implements OnInit {
 
     geocodeAddress($event: KeyboardEvent) {
         if ($event.key == 'Enter') {
-            this.geocodeService.geocode({address: this.searchValue}).subscribe(result => {
+            this.geocodeService.geocode({address: this.searchValue}).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(result => {
                 if (result.status == 'OK') {
                     let location = result.results[0].geometry.location;
                     this.center = {lat: location.lat(), lng: location.lng()};
@@ -366,51 +335,6 @@ export class LocationhistoryComponent implements OnInit {
             this.zoom = zoom + 0.1;
         } else {
             this.zoom = zoom;
-        }
-    }
-
-    markerDragged(entry: LocationHistoryEntry, $event: google.maps.MapMouseEvent) {
-        entry.latitude = $event.latLng!.lat();
-        entry.longitude = $event.latLng!.lng();
-        this.locationService.updateLocation(entry.id, entry).subscribe(() => {
-            this.messageService.add({
-                severity: 'success',
-                summary: 'Location updated',
-                detail: `The location was successfully updated.`
-            });
-            this.loadDateRangeViewData();
-        });
-    }
-
-    dayLineClick($event: google.maps.PolyMouseEvent) {
-        if (!$event.latLng) {
-            return;
-        }
-
-        let closestPoint: LocationHistoryEntry | null = null;
-        let minDistance = Number.MAX_VALUE;
-
-        this.dayViewDataFull.forEach((entry) => {
-            const entryPoint = new google.maps.LatLng(entry.latitude, entry.longitude);
-            const distance = google.maps.geometry.spherical.computeDistanceBetween(
-                $event.latLng!,
-                entryPoint
-            );
-
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestPoint = entry;
-            }
-        });
-
-        if (closestPoint) {
-            // Deselect if already selected
-            if(this.selectedLocationEntries.length === 1 && this.selectedLocationEntries[0] === closestPoint){
-                this.selectedLocationEntries = [];
-                return;
-            }
-            // otherwise select
-            this.selectedLocationEntries = [closestPoint];
         }
     }
 

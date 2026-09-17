@@ -3,8 +3,10 @@
     <p-button icon="pi pi-chevron-left" (onClick)="goToPreviousDay()"
       pTooltip="Previous Day" tooltipPosition="bottom" showDelay="500"
       severity="secondary" [text]="true" [rounded]="true"></p-button>
-    <p-datepicker [(ngModel)]="selectedDate"
+    <p-datepicker #dayDatePicker [(ngModel)]="selectedDate"
       dateFormat="dd.mm.yy"
+      ariaLabel="Selected day" appendTo="body" panelStyleClass="dayview-date-panel"
+      [touchUI]="mobileLocationView" [readonlyInput]="mobileLocationView"
       (onSelect)="onDateChange()"
       class="date-selector"></p-datepicker>
     <p-button icon="pi pi-chevron-right" (onClick)="goToNextDay()"
@@ -241,7 +243,7 @@
 
 </div>
 
-<p-dialog [header]="'Messages — ' + (selectedDate | date:'dd.MM.yyyy')" styleClass="messages-dialog"
+<p-dialog [header]="'Messages — ' + (selectedDate | date:'dd.MM.yyyy')" styleClass="messages-dialog dayview-detail-dialog"
   [(visible)]="messagesDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
   [closeOnEscape]="true" [dismissableMask]="true" [focusTrap]="true" [blockScroll]="true" closeAriaLabel="Close messages"
   [style]="{ width: '960px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '85dvh' }"
@@ -305,7 +307,7 @@
   </ng-template>
 </p-dialog>
 
-<p-dialog [header]="'Steps — ' + (selectedDate | date:'dd.MM.yyyy')" styleClass="messages-dialog steps-dialog"
+<p-dialog [header]="'Steps — ' + (selectedDate | date:'dd.MM.yyyy')" styleClass="messages-dialog steps-dialog dayview-detail-dialog"
   [(visible)]="stepsDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
   [closeOnEscape]="true" [dismissableMask]="true" [focusTrap]="true" [blockScroll]="true"
   closeAriaLabel="Close steps" (onHide)="stepsCard.focus()"
@@ -387,7 +389,7 @@
   }
 </p-dialog>
 
-<p-dialog [header]="'Location History — ' + (selectedDate | date:'dd.MM.yyyy')" styleClass="messages-dialog location-dialog"
+<p-dialog [header]="'Location History — ' + (selectedDate | date:'dd.MM.yyyy')" styleClass="messages-dialog location-dialog dayview-detail-dialog"
   [(visible)]="locationDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
   [closeOnEscape]="!locationEditDraft && !locationSaving" [dismissableMask]="!locationEditDraft && !locationSaving" [closable]="!locationSaving" [focusTrap]="true" [blockScroll]="true"
   closeAriaLabel="Close location history" (onShow)="fitExpandedMap()" (onHide)="onLocationDialogHidden()"

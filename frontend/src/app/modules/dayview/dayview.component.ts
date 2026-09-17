@@ -1,4 +1,4 @@
-import {Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject} from '@angular/core';
+import {Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, viewChild} from '@angular/core';
 import {Observable, finalize} from 'rxjs';
 import {MessageService as ToastService} from 'primeng/api';
 import {LocationEditDraft, LocationSidebarComponent} from './location-sidebar/location-sidebar.component';
@@ -8,7 +8,7 @@ import {ButtonModule} from "primeng/button";
 import {Router, ActivatedRoute, RouterModule} from "@angular/router";
 import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 import {TooltipModule} from "primeng/tooltip";
-import {DatePickerModule} from "primeng/datepicker";
+import {DatePicker, DatePickerModule} from "primeng/datepicker";
 import {FormsModule} from "@angular/forms";
 import {PanelModule} from "primeng/panel";
 import {CardModule} from "primeng/card";
@@ -69,6 +69,7 @@ const THEO_IDENTITY_ID = 1;
 export class DayviewComponent implements OnInit {
 
   selectedDate: Date = new Date();
+  readonly datePicker = viewChild<DatePicker>('dayDatePicker');
   private hasLoadedInitialData = false;
   
   // Map configuration
@@ -248,6 +249,8 @@ export class DayviewComponent implements OnInit {
     private messageApiService: MessageApiService
   ) {
     const onViewportChange = (event: MediaQueryListEvent) => {
+      const picker = this.datePicker();
+      if (picker?.overlayVisible()) picker.hideOverlay();
       this.mobileLocationView = event.matches;
       this.highlightedLocationEntry = undefined;
       if (event.matches) this.locationEditDraft = null;

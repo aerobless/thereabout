@@ -94,10 +94,17 @@
 .skip-link:focus { top: 1rem; }
 @media (max-width: 768px) {
   .app-sidebar { display: none; }
-  .mobile-brand-row { display: flex; padding: 1rem 1rem 0.5rem; }
+  .mobile-brand-row {
+    display: flex;
+    padding: calc(1rem + env(safe-area-inset-top))
+      calc(1rem + env(safe-area-inset-right)) 0.5rem
+      calc(1rem + env(safe-area-inset-left));
+  }
   .app-content {
     margin-left: 0;
-    padding: 0.75rem 1rem calc(5.5rem + env(safe-area-inset-bottom));
+    padding: 0.75rem calc(1rem + env(safe-area-inset-right))
+      calc(var(--app-mobile-nav-height) + 1.25rem + env(safe-area-inset-bottom))
+      calc(1rem + env(safe-area-inset-left));
   }
   .mobile-nav {
     position: fixed;
@@ -108,7 +115,7 @@
     height: calc(var(--app-mobile-nav-height) + env(safe-area-inset-bottom));
     grid-template-columns: repeat(4, minmax(0, 1fr));
     border-top: 1px solid var(--app-border);
-    padding: 0.4rem max(0.5rem, env(safe-area-inset-right)) calc(0.4rem + env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+    padding: 0.4rem max(0.75rem, env(safe-area-inset-right)) calc(1.15rem + env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
     background: var(--app-surface);
     box-shadow: 0 -2px 12px rgb(16 27 74 / 4%);
     .nav-link { flex-direction: column; justify-content: center; gap: 0.35rem; padding: 0.45rem 0.15rem; font-size: 0.7rem; min-height: 52px; }

@@ -8,6 +8,21 @@
 // ============================================================================
 // Base
 // ============================================================================
+:root {
+  color-scheme: light;
+  --app-background: var(--p-surface-50, #F8F7F3);
+  --app-surface: var(--p-surface-0, #FFFFFF);
+  --app-ink: var(--p-surface-900, #101B4A);
+  --app-muted: var(--p-surface-500, #566786);
+  --app-border: var(--p-surface-200, #DCE3EE);
+  --app-selection: var(--p-primary-100, #E8F2FF);
+  --app-hover: var(--p-primary-50, #F3F8FF);
+  --app-accent: var(--p-primary-500, #477ECA);
+  --app-link: var(--p-primary-600, #3266AC);
+  --app-font-display: Georgia, 'Times New Roman', serif;
+  --app-mobile-nav-height: 4.25rem;
+}
+
 body {
   font-family: var(--p-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol");
   margin: 0;
@@ -17,14 +32,53 @@ body {
 }
 
 // ============================================================================
-// Toolbar overrides
+// Shared page presentation
 // ============================================================================
-.p-toolbar {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 0;
-  border-bottom: 1px solid var(--p-surface-200);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+h1, h2, h3, .p-panel-title, .p-dialog-title {
+  font-family: var(--app-font-display);
+  color: var(--app-ink);
+}
+
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0 auto 1.5rem;
+  max-width: 1600px;
+
+  h1 { margin: 0; font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 400; letter-spacing: -0.04em; }
+}
+
+.p-card {
+  border: 1px solid var(--app-border);
+  min-width: 0;
+}
+
+.p-card-body, .p-card-content, .p-panel-content, .p-panel-content-wrapper { min-width: 0; }
+.p-datatable-table-container { max-width: 100%; overflow-x: auto; }
+
+// The popup is attached to body so it can sit above the fixed mobile navigation.
+.p-menu.mobile-more-menu {
+  min-width: 12rem;
+  border-color: var(--app-border);
+  .p-menu-item-link { min-height: 44px; }
+}
+
+@media (max-width: 768px) {
+  .p-menu.mobile-more-menu {
+    position: fixed !important;
+    top: auto !important;
+    left: auto !important;
+    right: max(0.5rem, env(safe-area-inset-right));
+    bottom: calc(var(--app-mobile-nav-height) + env(safe-area-inset-bottom) + 0.5rem);
+    max-width: calc(100vw - 1rem);
+    max-height: calc(100dvh - var(--app-mobile-nav-height) - env(safe-area-inset-bottom) - 1rem);
+    overflow-y: auto;
+  }
+  .page-heading { margin-bottom: 1rem; gap: 0.75rem; }
+  .dayview-heading { flex-direction: column-reverse; align-items: stretch; }
 }
 
 // ============================================================================
@@ -34,8 +88,8 @@ body {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  height: 2.75rem;
-  padding: 0 1rem;
+  min-height: 3rem;
+  padding: 0.65rem 1rem;
   border-bottom: 1px solid var(--p-surface-100);
   box-sizing: border-box;
 }
@@ -48,15 +102,18 @@ body {
 }
 
 .card-header-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--p-surface-700);
-  letter-spacing: 0.3px;
+  font-family: var(--app-font-display);
+  font-size: 1.125rem;
+  font-weight: 400;
+  color: var(--app-ink);
+  letter-spacing: -0.02em;
+  min-width: 0;
   flex: 1;
 }
 
 .card-header-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.25rem;
   align-items: center;
 
@@ -81,11 +138,4 @@ body {
   width: 100%;
   height: 100%;
   z-index: 1000;
-}
-
-// Day view toolbar: Today button icon-only on mobile (content is projected, so global style)
-@media (max-width: 768px) {
-  .p-toolbar-group-center .today-btn .p-button-label {
-    display: none !important;
-  }
 }

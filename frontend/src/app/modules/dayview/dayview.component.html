@@ -1,27 +1,30 @@
-<thereabout-toolbar>
+<div class="page-heading dayview-heading">
+  <h1>{{ selectedDate | date:'EEEE d' }}{{ selectedDaySuffix }}</h1>
   <div class="date-navigation">
-    <p-button icon="pi pi-chevron-left" (onClick)="goToPreviousDay()"
+    <p-button icon="pi pi-chevron-left" ariaLabel="Previous day" (onClick)="goToPreviousDay()"
       pTooltip="Previous Day" tooltipPosition="bottom" showDelay="500"
-      severity="secondary" [text]="true" [rounded]="true"></p-button>
+      severity="secondary" [outlined]="true" styleClass="date-nav-button"></p-button>
     <p-datepicker #dayDatePicker [(ngModel)]="selectedDate"
-      dateFormat="dd.mm.yy"
+      [dateFormat]="mobileLocationView ? 'D, d M yy' : 'D, d MM yy'"
       ariaLabel="Selected day" appendTo="body" panelStyleClass="dayview-date-panel"
       [touchUI]="mobileLocationView" [readonlyInput]="mobileLocationView"
       (onSelect)="onDateChange()"
       class="date-selector"></p-datepicker>
-    <p-button icon="pi pi-chevron-right" (onClick)="goToNextDay()"
+    <p-button icon="pi pi-chevron-right" ariaLabel="Next day" (onClick)="goToNextDay()"
       pTooltip="Next Day" tooltipPosition="bottom" showDelay="500"
-      severity="secondary" [text]="true" [rounded]="true"></p-button>
-    <p-button icon="pi pi-calendar" label="Today" styleClass="today-btn" (onClick)="goToToday()"
+      severity="secondary" [outlined]="true" styleClass="date-nav-button"></p-button>
+    <p-button [icon]="mobileLocationView ? undefined : 'pi pi-calendar'" [size]="mobileLocationView ? 'small' : undefined"
+      ariaLabel="Today" label="Today" styleClass="today-btn" (onClick)="goToToday()"
       pTooltip="Jump to Today" tooltipPosition="bottom" showDelay="500"
-      severity="secondary" [outlined]="true" size="small"></p-button>
+      severity="secondary" [outlined]="true" class="today-control"></p-button>
   </div>
-</thereabout-toolbar>
+</div>
 
 <!-- Two-Column Card Container -->
+<div class="dayview-cards-region">
 <div class="card-container">
 
-  <!-- Left Column: compact cards -->
+  <!-- Left Column: map and energy -->
   <div class="column-left">
 
     <!-- Location History Map Card -->
@@ -108,7 +111,7 @@
 
   </div>
 
-  <!-- Right Column: wider cards -->
+  <!-- Right Column: daily stats and workouts -->
   <div class="column-right">
 
     <!-- Daily stats -->
@@ -243,7 +246,9 @@
 
 </div>
 
-<p-dialog [header]="'Messages — ' + (selectedDate | date:'dd.MM.yyyy')" styleClass="messages-dialog dayview-detail-dialog"
+</div>
+
+<p-dialog [header]="'Messages — ' + (selectedDate | date:'dd.MM.yyyy')" styleClass="messages-dialog dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
   [(visible)]="messagesDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
   [closeOnEscape]="true" [dismissableMask]="true" [focusTrap]="true" [blockScroll]="true" closeAriaLabel="Close messages"
   [style]="{ width: '960px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '85dvh' }"
@@ -307,7 +312,7 @@
   </ng-template>
 </p-dialog>
 
-<p-dialog [header]="'Steps — ' + (selectedDate | date:'dd.MM.yyyy')" styleClass="messages-dialog steps-dialog dayview-detail-dialog"
+<p-dialog [header]="'Steps — ' + (selectedDate | date:'dd.MM.yyyy')" styleClass="messages-dialog steps-dialog dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
   [(visible)]="stepsDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
   [closeOnEscape]="true" [dismissableMask]="true" [focusTrap]="true" [blockScroll]="true"
   closeAriaLabel="Close steps" (onHide)="stepsCard.focus()"
@@ -389,7 +394,7 @@
   }
 </p-dialog>
 
-<p-dialog [header]="'Location History — ' + (selectedDate | date:'dd.MM.yyyy')" styleClass="messages-dialog location-dialog dayview-detail-dialog"
+<p-dialog header="Location History" styleClass="messages-dialog location-dialog dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
   [(visible)]="locationDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
   [closeOnEscape]="!locationEditDraft && !locationSaving" [dismissableMask]="!locationEditDraft && !locationSaving" [closable]="!locationSaving" [focusTrap]="true" [blockScroll]="true"
   closeAriaLabel="Close location history" (onShow)="fitExpandedMap()" (onHide)="onLocationDialogHidden()"

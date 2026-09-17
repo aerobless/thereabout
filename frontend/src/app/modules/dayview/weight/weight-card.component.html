@@ -26,7 +26,7 @@
   </span>
 </button>
 
-<p-dialog [header]="'Weight — ' + (date | date:'dd.MM.yyyy')" styleClass="weight-dialog dayview-detail-dialog"
+<p-dialog [header]="'Weight — ' + (date | date:'dd.MM.yyyy')" styleClass="weight-dialog dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
   [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false" [dismissableMask]="true"
   [closeOnEscape]="true" [focusTrap]="true" [blockScroll]="true" closeAriaLabel="Close weight"
   (onHide)="weightCard.focus()" [style]="{width: '960px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '90dvh'}">

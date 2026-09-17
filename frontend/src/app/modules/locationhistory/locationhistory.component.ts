@@ -20,7 +20,6 @@ import {FloatLabelModule} from "primeng/floatlabel";
 import QuickFilterDateCombo from "./quick-filter-date-combo";
 import {ActivatedRoute} from "@angular/router";
 import {TooltipModule} from "primeng/tooltip";
-import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 import {ThereaboutHeatmapLayerDirective} from "./thereabout-heatmap-layer.directive";
 
 
@@ -29,7 +28,6 @@ import {ThereaboutHeatmapLayerDirective} from "./thereabout-heatmap-layer.direct
     imports: [
     GoogleMap,
     ThereaboutHeatmapLayerDirective,
-    ToolbarComponent,
     InputTextModule,
     IconFieldModule,
     InputIconModule,

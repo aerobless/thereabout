@@ -7,6 +7,7 @@
   height: 450px;
   width: 100%;
   overflow: hidden;
+  border-radius: 10px;
 }
 
 .map-footer {
@@ -20,7 +21,7 @@
   color: var(--p-surface-600);
 
   &.muted {
-    color: var(--p-surface-400);
+    color: var(--p-surface-500);
     font-style: italic;
   }
 }

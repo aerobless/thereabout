@@ -1,7 +1,6 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ToolbarComponent } from '../../shared/toolbar/toolbar.component';
 import { TableModule, TableLazyLoadEvent } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
@@ -21,7 +20,6 @@ interface FilterMeta {
   imports: [
     RouterModule,
     FormsModule,
-    ToolbarComponent,
     TableModule,
     InputTextModule,
     TooltipModule,

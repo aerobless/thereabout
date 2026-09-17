@@ -1,6 +1,6 @@
 a {
   text-decoration: none;
-  color: var(--p-primary-500);
+  color: var(--app-link);
 }
 
 // ============================================================================
@@ -8,42 +8,67 @@ a {
 // ============================================================================
 :host {
   display: block;
-  min-height: 100vh;
-  background: var(--p-surface-50);
 }
 
 // ============================================================================
-// Date Navigation (toolbar center content)
+// Date navigation in the page action row
 // ============================================================================
 .date-navigation {
-  display: flex;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 17rem) 44px auto;
   align-items: center;
   gap: 0.5rem;
+  justify-content: flex-end;
 }
 
 .date-selector {
-  width: 7.5rem;
+  min-width: 0;
+  width: 100%;
 
+  ::ng-deep .p-datepicker { width: 100%; }
   ::ng-deep .p-inputtext {
-    width: 7.5rem;
-    padding: 0.4rem 0.5rem;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.65rem 0.6rem;
+    text-align: center;
+    font-size: 0.875rem;
+    border-color: var(--app-border);
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgb(16 27 74 / 3%);
   }
+}
+
+:host ::ng-deep .date-navigation .p-button {
+  min-height: 44px;
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  background: var(--app-surface);
+  color: var(--app-ink);
+  box-shadow: 0 1px 3px rgb(16 27 74 / 3%);
+  &:hover { background: var(--app-selection); border-color: var(--p-primary-300); }
+  &:focus-visible { outline: 2px solid var(--app-link); outline-offset: 2px; }
+  &.date-nav-button { width: 44px; }
 }
 
 // ============================================================================
 // Two-Column Card Container
 // ============================================================================
-.card-container {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 1.25rem;
-  padding: 1.25rem;
+.dayview-cards-region {
+  container: dayview / inline-size;
   max-width: 1600px;
   margin: 0 auto;
 }
 
+.card-container {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  padding: 0;
+}
+
 .column-left,
 .column-right {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -55,7 +80,7 @@ a {
 .empty-state {
   text-align: center;
   padding: 1.5rem;
-  color: var(--p-surface-400);
+  color: var(--p-surface-500);
   font-size: 0.85rem;
   font-style: italic;
 }
@@ -124,12 +149,13 @@ a {
 }
 
 .energy-value {
+  font-family: var(--app-font-display);
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--p-surface-800);
 
   &.muted {
-    color: var(--p-surface-300);
+    color: var(--p-surface-500);
   }
 }
 
@@ -152,7 +178,7 @@ a {
 // ============================================================================
 .daily-stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   // Match every row to the tallest card, including wrapped labels.
   grid-auto-rows: 1fr;
   align-items: stretch;
@@ -194,13 +220,14 @@ a {
 }
 
 .daily-stat-value {
+  font-family: var(--app-font-display);
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--p-surface-800);
   line-height: 1;
 
   &.muted {
-    color: var(--p-surface-300);
+    color: var(--p-surface-500);
   }
 }
 
@@ -240,7 +267,7 @@ a {
 
 .empty-table-message {
   text-align: center;
-  color: var(--p-surface-400);
+  color: var(--p-surface-500);
   font-style: italic;
   padding: 1.5rem !important;
 }
@@ -256,7 +283,7 @@ a {
   align-items: stretch;
   width: 100%;
   padding: 0;
-  border: 0;
+  border: 1px solid var(--app-border);
   border-radius: var(--p-card-border-radius, 12px);
   background: var(--p-card-background, var(--p-surface-0));
   box-shadow: var(--p-card-shadow);
@@ -285,27 +312,6 @@ a {
 .messages-status {
   color: var(--p-surface-600);
   font-size: 0.85rem;
-}
-
-:host ::ng-deep .messages-dialog {
-  .p-dialog-header {
-    background: var(--p-primary-50);
-    border-bottom: 1px solid var(--p-primary-100);
-    border-top-left-radius: inherit;
-    border-top-right-radius: inherit;
-    padding: 1rem 1.25rem;
-    gap: 0.75rem;
-  }
-
-  .p-dialog-title {
-    color: var(--p-surface-800);
-    font-size: 1.125rem;
-    font-weight: 600;
-  }
-
-  .p-dialog-content {
-    padding-top: 1.25rem;
-  }
 }
 
 .messages-content {
@@ -352,16 +358,13 @@ a {
 // ============================================================================
 // Mobile Responsive
 // ============================================================================
-@media (max-width: 768px) {
+@container dayview (width < 900px) {
   .card-container {
     grid-template-columns: 1fr;
-    padding: 0.9375rem;
   }
+}
 
-  .daily-stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
+@container dayview (width < 680px) {
   .daily-stat-value {
     font-size: 1.25rem;
   }
@@ -379,7 +382,11 @@ a {
     width: 100%;
     height: 1px;
   }
+}
 
+@media (max-width: 768px) {
+  .date-navigation { grid-template-columns: 44px minmax(0, 1fr) 44px auto; gap: 0.25rem; }
+  .date-selector ::ng-deep .p-inputtext { font-size: 0.8125rem; padding-inline: 0.25rem; }
   .th-label {
     display: none;
   }
@@ -429,8 +436,6 @@ a {
   gap: 0.4rem;
   padding: 1rem;
   background: var(--p-surface-50);
-  border: 1px solid var(--p-surface-100);
-  border-radius: 10px;
   font-size: 0.8rem;
   color: var(--p-surface-600);
 }
@@ -442,6 +447,7 @@ a {
 }
 
 .steps-detail-value {
+  font-family: var(--app-font-display);
   font-size: 1.75rem;
   font-weight: 700;
   line-height: 1.2;

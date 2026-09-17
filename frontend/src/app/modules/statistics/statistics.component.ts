@@ -6,7 +6,6 @@ import {InputTextModule} from "primeng/inputtext";
 import {PanelModule} from "primeng/panel";
 import {ProgressBarModule} from "primeng/progressbar";
 import {MessageService} from "primeng/api";
-import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 import {CountryStatistic, FrontendService, StatisticsService} from "../../../../generated/backend-api/thereabout";
 import {CardModule} from "primeng/card";
 import {TableModule} from "primeng/table";
@@ -22,7 +21,6 @@ import {TooltipModule} from "primeng/tooltip";
     InputTextModule,
     PanelModule,
     ProgressBarModule,
-    ToolbarComponent,
     CardModule,
     TableModule,
     ReformatDatePipe,

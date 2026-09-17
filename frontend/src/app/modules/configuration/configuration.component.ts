@@ -4,7 +4,6 @@ import {IconFieldModule} from "primeng/iconfield";
 import {InputIconModule} from "primeng/inputicon";
 import {InputTextModule} from "primeng/inputtext";
 import {ReactiveFormsModule} from "@angular/forms";
-import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 import {FieldsetModule} from "primeng/fieldset";
 import {CardModule} from "primeng/card";
 import {PanelModule} from "primeng/panel";
@@ -43,7 +42,6 @@ interface ImportTypeOption {
     InputIconModule,
     InputTextModule,
     ReactiveFormsModule,
-    ToolbarComponent,
     FieldsetModule,
     CardModule,
     PanelModule,

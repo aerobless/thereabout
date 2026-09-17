@@ -13,18 +13,35 @@ import Aura from '@primeuix/themes/aura';
 const ThereaboutPreset = definePreset(Aura, {
   semantic: {
     primary: {
-      50: '{blue.50}',
-      100: '{blue.100}',
-      200: '{blue.200}',
-      300: '{blue.300}',
-      400: '{blue.400}',
-      500: '{blue.500}',
-      600: '{blue.600}',
-      700: '{blue.700}',
-      800: '{blue.800}',
-      900: '{blue.900}',
-      950: '{blue.950}'
+      50: '#F3F8FF',
+      100: '#E8F2FF',
+      200: '#CDDEF5',
+      300: '#ABC7ED',
+      400: '#7DA5DC',
+      500: '#477ECA',
+      600: '#3266AC',
+      700: '#28538E',
+      800: '#233F6B',
+      900: '#101B4A',
+      950: '#0B1336'
+    },
+    colorScheme: {
+      light: {
+        surface: {
+          0: '#FFFFFF', 50: '#F8F7F3', 100: '#EEF1F5', 200: '#DCE3EE',
+          300: '#A5B1C7', 400: '#73839F', 500: '#566786', 600: '#465675',
+          700: '#324264', 800: '#1C294F', 900: '#101B4A', 950: '#0B1336'
+        },
+        primary: {color: '{primary.600}', contrastColor: '#FFFFFF', hoverColor: '{primary.700}', activeColor: '{primary.800}'},
+        highlight: {background: '{primary.100}', focusBackground: '{primary.200}', color: '{surface.900}', focusColor: '{surface.900}'},
+        text: {color: '{surface.900}', hoverColor: '{surface.950}', mutedColor: '{surface.500}', hoverMutedColor: '{surface.600}'},
+        content: {background: '{surface.0}', hoverBackground: '{primary.50}', borderColor: '{surface.200}', color: '{surface.900}', hoverColor: '{surface.950}'}
+      }
     }
+  },
+  components: {
+    card: {root: {borderRadius: '10px', shadow: '0 2px 12px rgba(16, 27, 74, 0.04)'}},
+    panel: {root: {borderRadius: '10px'}}
   }
 });
 
@@ -37,7 +54,8 @@ export const appConfig: ApplicationConfig = {
   providePrimeNG({
     license: primeUiLicense,
     theme: {
-      preset: ThereaboutPreset
+      preset: ThereaboutPreset,
+      options: {darkModeSelector: false}
     }
   })]
 };

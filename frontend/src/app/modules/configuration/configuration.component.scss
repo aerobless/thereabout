@@ -1,13 +1,9 @@
-.toolbar-item {
-  margin-right: 10px;
-}
-
 .configuration-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px;
-  gap: 10px;
+  padding: 0;
+  gap: 1.25rem;
 
   > p-card {
     width: 100%;

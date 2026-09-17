@@ -1,14 +1,13 @@
-<thereabout-toolbar></thereabout-toolbar>
 
-<div style="display: flex; justify-content: center; align-items: center; padding-top: 10px">
-    <div style="width: 100%">
-        <div style="display: flex; padding-bottom: 10px; gap: 10px;">
-            <div style="flex: 1;">
+<div class="statistics-container">
+    <div class="statistics-content">
+        <div class="statistics-summary">
+            <div>
                 <p-panel header="Number of countries visited">
                     <h1>️{{visitedCountries.length}}</h1>
                 </p-panel>
             </div>
-            <div style="flex: 1;">
+            <div>
                 <p-panel header="Days spent abroad">
                     <h1>{{calculateDaysSpentAbroad()}}</h1>
                 </p-panel>

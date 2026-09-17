@@ -3,7 +3,6 @@ import {ActivatedRoute, RouterModule} from '@angular/router';
 import {ButtonModule} from 'primeng/button';
 import {CardModule} from 'primeng/card';
 import {TableModule} from 'primeng/table';
-import {ToolbarComponent} from '../../../shared/toolbar/toolbar.component';
 import {Identity, IdentityService} from '../../../../../generated/backend-api/thereabout';
 
 @Component({
@@ -13,7 +12,6 @@ import {Identity, IdentityService} from '../../../../../generated/backend-api/th
         ButtonModule,
         CardModule,
         TableModule,
-        ToolbarComponent,
     ],
     templateUrl: './identity-detail.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,

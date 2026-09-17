@@ -6,7 +6,6 @@ import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {DialogModule} from 'primeng/dialog';
 import {ButtonModule} from "primeng/button";
 import {Router, ActivatedRoute, RouterModule} from "@angular/router";
-import {ToolbarComponent} from "../../shared/toolbar/toolbar.component";
 import {TooltipModule} from "primeng/tooltip";
 import {DatePicker, DatePickerModule} from "primeng/datepicker";
 import {FormsModule} from "@angular/forms";
@@ -47,7 +46,6 @@ const THEO_IDENTITY_ID = 1;
     LocationSidebarComponent,
     ButtonModule,
     RouterModule,
-    ToolbarComponent,
     TooltipModule,
     DatePickerModule,
     FormsModule,
@@ -69,6 +67,18 @@ const THEO_IDENTITY_ID = 1;
 export class DayviewComponent implements OnInit {
 
   selectedDate: Date = new Date();
+  get selectedDaySuffix(): string {
+    const day = this.selectedDate?.getDate();
+    if (!day) return '';
+    if (day >= 11 && day <= 13) return 'th';
+    switch (day % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  }
+
   readonly datePicker = viewChild<DatePicker>('dayDatePicker');
   private hasLoadedInitialData = false;
   

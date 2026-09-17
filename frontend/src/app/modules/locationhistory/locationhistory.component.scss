@@ -1,16 +1,33 @@
-.toolbar-item {
-  margin-right: 10px;
+.location-search {
+  display: block;
+  width: 100%;
+  margin-bottom: 1rem;
+  input { width: 100%; box-sizing: border-box; padding-right: 3rem; }
+}
+
+.reset-button {
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.heatmap-quick-filters {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 20px;
 }
 
 .google-maps-container {
   flex-grow: 1;
+  min-width: 0;
+  border: 1px solid var(--app-border);
   border-radius: 6px;
   overflow: hidden;
   outline: none;
-}
-
-.reset-button {
-  margin-left: -40px;
 }
 
 .embed-layout {
@@ -79,10 +96,25 @@
   }
 }
 
-.heatmap-layout { display: flex; gap: 1rem; height: calc(100dvh - 100px); }
-.heatmap-controls { flex: 0 0 400px; }
-@media (max-width: 768px) {
+.heatmap-region { container: heatmap / inline-size; }
+.heatmap-layout { display: flex; gap: 1.25rem; height: clamp(28rem, 75dvh, 60rem); }
+.heatmap-controls {
+  flex: 0 0 360px;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 1.25rem;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  h2 { margin-top: 0; }
+}
+@container heatmap (width < 900px) {
   .heatmap-layout { flex-direction: column-reverse; height: auto; }
   .heatmap-controls { flex: auto; }
   .heatmap-layout .google-maps-container { height: 65dvh; flex: none; }
+}
+
+:host ::ng-deep .heatmap-controls {
+  p-floatlabel { min-width: 0; flex: 1; }
+  .p-datepicker, .p-datepicker-input { width: 100%; min-width: 0; }
 }

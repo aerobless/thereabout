@@ -13,7 +13,7 @@
   </span>
 </button>
 
-<p-dialog [header]="'Heart rate — ' + (date | date:'dd.MM.yyyy')" styleClass="heart-history-dialog dayview-detail-dialog"
+<p-dialog [header]="'Heart rate — ' + (date | date:'dd.MM.yyyy')" styleClass="heart-history-dialog dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
   [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false" [dismissableMask]="true"
   [closeOnEscape]="true" [focusTrap]="true" [blockScroll]="true" closeAriaLabel="Close heart rate"
   (onHide)="card.focus()" [style]="dialogStyle">

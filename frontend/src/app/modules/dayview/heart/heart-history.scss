@@ -1,6 +1,6 @@
 :host { display: block; min-width: 0; }
 .heart-card {
-  appearance: none; display: flex; flex-direction: column; align-items: stretch; width: 100%; height: 100%; padding: 0; border: 0;
+  appearance: none; display: flex; flex-direction: column; align-items: stretch; width: 100%; height: 100%; padding: 0; border: 1px solid var(--app-border);
   border-radius: var(--p-card-border-radius, 12px); box-shadow: var(--p-card-shadow);
   background: var(--p-card-background); color: var(--p-surface-800); font: inherit; text-align: left; cursor: pointer;
   &:hover { outline: 1px solid var(--p-primary-300); }
@@ -10,15 +10,11 @@
 [data-trend='UP'] { background: #e7f3e8; }
 [data-trend='DOWN'] { background: #fbe7e5; }
 .heart-card-content { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.75rem 1rem; }
-.heart-value { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+.heart-value { font-family: var(--app-font-display); font-size: 1.5rem; font-weight: 700; line-height: 1; }
 .small, .trend-status { font-size: 0.75rem; color: var(--p-surface-600); }
 .trend-status { font-weight: 600; line-height: 1.35; }
-.muted { color: var(--p-surface-400); }
-:host ::ng-deep .heart-history-dialog {
-  .p-dialog-header { background: var(--p-primary-50); border-bottom: 1px solid var(--p-primary-100); border-radius: inherit; border-bottom-left-radius: 0; border-bottom-right-radius: 0; padding: 1rem 1.25rem; }
-  .p-dialog-title { color: var(--p-surface-800); font-size: 1.125rem; font-weight: 600; }
-  .p-dialog-content { padding-top: 1.25rem; }
-}
+.muted { color: var(--p-surface-500); }
+
 .chart-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
 .range-controls { display: flex; gap: 0.5rem; }
 .action { border: 1px solid var(--p-surface-300); border-radius: 6px; padding: 0.4rem 0.7rem; background: var(--p-surface-0); color: var(--p-surface-700); font: inherit; cursor: pointer; }

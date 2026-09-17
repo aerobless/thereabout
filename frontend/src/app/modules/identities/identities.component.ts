@@ -16,7 +16,6 @@ import {CheckboxModule} from 'primeng/checkbox';
 import {IconFieldModule} from 'primeng/iconfield';
 import {InputIconModule} from 'primeng/inputicon';
 import {ConfirmationService, MessageService} from 'primeng/api';
-import {ToolbarComponent} from '../../shared/toolbar/toolbar.component';
 import {
     Identity,
     IdentityInApplication,
@@ -43,7 +42,6 @@ import {
         CheckboxModule,
         IconFieldModule,
         InputIconModule,
-        ToolbarComponent,
     ],
     providers: [ConfirmationService, MessageService],
     templateUrl: './identities.component.html',

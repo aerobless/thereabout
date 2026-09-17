@@ -41,20 +41,11 @@
     </div>
   </div>
 } @else {
-<thereabout-toolbar>
-  <p-iconfield iconPosition="left" class="toolbar-item">
-    <p-inputicon styleClass="pi pi-search"/>
-    <input type="text" pInputText placeholder="Jump to location" (keydown)="geocodeAddress($event)"
-      style="width: 400px;"
-      [(ngModel)]="searchValue"/>
-    @if (searchValue) {
-      <p-button icon="pi pi-times" (onClick)="resetSearch()" class="reset-button" [text]="true"
-      severity="secondary"></p-button>
-    }
-  </p-iconfield>
-</thereabout-toolbar>
-<br>
+<div class="page-heading location-heading">
+  <h1>Location History</h1>
+</div>
 
+  <div class="heatmap-region">
   <div class="heatmap-layout">
     <div class="google-maps-container p-panel" tabindex="-1">
       <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
@@ -63,6 +54,16 @@
     </div>
     <aside class="heatmap-controls" aria-label="Heatmap filters">
       <h2>Heatmap</h2>
+      <p-iconfield iconPosition="left" class="location-search">
+        <p-inputicon class="pi pi-search" aria-hidden="true"/>
+        <input type="text" pInputText placeholder="Jump to location" (keydown)="geocodeAddress($event)"
+          aria-label="Jump to location"
+          [(ngModel)]="searchValue"/>
+        @if (searchValue) {
+          <p-button icon="pi pi-times" (onClick)="resetSearch()" class="reset-button" ariaLabel="Clear location search" [text]="true"
+          severity="secondary"></p-button>
+        }
+      </p-iconfield>
               <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">
                 <p-floatlabel style="padding-right: 10px">
                   <p-datepicker [(ngModel)]="fromDate" (ngModelChange)="loadHeatmapData()"
@@ -78,7 +79,7 @@
                   <label for="to-date">To</label>
                 </p-floatlabel>
               </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px">
+              <div class="heatmap-quick-filters">
                 <p-button label="YTD" [rounded]="true" severity="secondary"
                   pTooltip="Load heatmap data for the current year." tooltipPosition="top"
                   showDelay="500"
@@ -101,5 +102,6 @@
       @if (heatmapError) { <p role="alert">Unable to load heatmap. <button type="button" (click)="loadHeatmapData()">Retry</button></p> }
       @if (fromDate && toDate && fromDate > toDate) { <p role="alert">Choose an end date on or after the start date.</p> }
     </aside>
+  </div>
   </div>
 }

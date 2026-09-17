@@ -1,0 +1,12 @@
+:host { display: block; min-width: 0; }
+.statistics-container, .statistics-content { width: 100%; min-width: 0; }
+.statistics-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+  > div { min-width: 0; }
+}
+@media (max-width: 480px) {
+  .statistics-summary { grid-template-columns: 1fr; }
+}

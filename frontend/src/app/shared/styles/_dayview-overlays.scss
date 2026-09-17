@@ -1,5 +1,67 @@
-// Scoped globally because the date picker is appended to body and dialogs live
-// in several Day View components. Desktop dimensions remain component-owned.
+// Shared presentation for all six Day View dialogs, including body overlays.
+.dayview-dialog-mask {
+  --px-mask-background: rgb(0 0 0 / 32%);
+  backdrop-filter: blur(3px);
+}
+
+.p-dialog.dayview-detail-dialog {
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+  background: var(--app-surface);
+  box-shadow: 0 24px 72px rgb(0 0 0 / 18%);
+  overflow: hidden;
+
+  .p-dialog-header {
+    gap: 1rem;
+    padding: 0.5rem 1.25rem;
+    background: #F5F5F5;
+    border-bottom: 1px solid #E5E7EB;
+  }
+  .p-dialog-title {
+    font-family: var(--app-font-display);
+    font-size: 1.25rem;
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    color: var(--app-ink);
+  }
+  .p-dialog-close-button {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: #6B7280;
+    .p-icon { width: 1rem; height: 1rem; }
+    &:hover { background: #E5E7EB; color: #374151; }
+    &:focus-visible { outline: 2px solid var(--app-link); outline-offset: 2px; }
+  }
+  .p-dialog-content { padding: 1.5rem; background: var(--app-surface); }
+  .p-dialog-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--app-border);
+    background: var(--app-surface);
+  }
+  .weight-details section, .summary-grid section, .steps-detail, .weight-goal {
+    border: 1px solid var(--app-border);
+    border-radius: 10px;
+  }
+  .weight-details section:not([data-weight-state]), .summary-grid section,
+  .steps-detail:not([data-step-level]), .weight-goal {
+    background: var(--app-surface);
+  }
+  .weight-details strong, .summary-grid strong, .steps-detail-value { font-family: var(--app-font-display); font-weight: 400; }
+  .action {
+    min-height: 40px;
+    border: 1px solid var(--app-border);
+    border-radius: 6px;
+    background: var(--app-surface);
+    color: var(--app-ink);
+    &.primary, &[aria-pressed='true'] { background: var(--app-selection); border-color: var(--p-primary-300); color: var(--app-ink); }
+    &:hover:not(:disabled) { border-color: var(--p-primary-300); background: var(--app-hover); }
+  }
+}
+
 @media (max-width: 768px) {
   .p-dialog.dayview-detail-dialog {
     position: fixed;
@@ -13,19 +75,19 @@
     margin: 0;
     border: 0;
     border-radius: 0;
-    background: var(--p-surface-0);
+    background: var(--app-surface);
     box-shadow: none;
     transform: none !important;
 
     .p-dialog-header {
       flex-shrink: 0;
       gap: 0.75rem;
-      padding: calc(1rem + env(safe-area-inset-top))
-        calc(1rem + env(safe-area-inset-right)) 1rem
+      padding: calc(0.5rem + env(safe-area-inset-top))
+        calc(1rem + env(safe-area-inset-right)) 0.5rem
         calc(1rem + env(safe-area-inset-left)) !important;
     }
 
-    .p-dialog-title { min-width: 0; overflow-wrap: anywhere; }
+    .p-dialog-title { min-width: 0; overflow-wrap: anywhere; font-size: 1.25rem; }
     .p-dialog-header-actions { flex-shrink: 0; }
     .p-dialog-close-button { min-width: 44px; min-height: 44px; }
 

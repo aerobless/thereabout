@@ -96,8 +96,27 @@
   }
 }
 
-.heatmap-region { container: heatmap / inline-size; }
-.heatmap-layout { display: flex; gap: 1.25rem; height: clamp(28rem, 75dvh, 60rem); }
+:host { display: block; }
+
+.location-page {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 4rem);
+}
+
+.location-heading {
+  max-width: none;
+  margin-inline: 0;
+  flex: none;
+}
+
+.heatmap-region {
+  container: heatmap / inline-size;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.heatmap-layout { display: flex; flex: 1; gap: 1.25rem; min-height: 28rem; }
 .heatmap-controls {
   flex: 0 0 360px;
   min-width: 0;
@@ -109,9 +128,13 @@
   h2 { margin-top: 0; }
 }
 @container heatmap (width < 900px) {
-  .heatmap-layout { flex-direction: column-reverse; height: auto; }
+  .heatmap-layout { flex-direction: column-reverse; flex: none; min-height: 0; }
   .heatmap-controls { flex: auto; }
   .heatmap-layout .google-maps-container { height: 65dvh; flex: none; }
+}
+
+@media (max-width: 768px) {
+  .location-page { min-height: 0; }
 }
 
 :host ::ng-deep .heatmap-controls {

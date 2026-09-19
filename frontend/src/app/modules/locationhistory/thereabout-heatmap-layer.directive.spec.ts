@@ -6,12 +6,19 @@ import {ThereaboutHeatmapLayerDirective} from './thereabout-heatmap-layer.direct
 
 const deckState = {
     heatmapProperties: [] as any[],
+    visitedProperties: [] as any[],
     overlays: [] as any[]
 };
 
 class FakeHeatmapLayer {
     constructor(readonly props: any) {
         deckState.heatmapProperties.push(props);
+    }
+}
+
+class FakeScatterplotLayer {
+    constructor(readonly props: any) {
+        deckState.visitedProperties.push(props);
     }
 }
 
@@ -29,6 +36,7 @@ class TestThereaboutHeatmapLayerDirective extends ThereaboutHeatmapLayerDirectiv
     protected override async loadDeckGl(): Promise<any> {
         return {
             HeatmapLayer: FakeHeatmapLayer,
+            ScatterplotLayer: FakeScatterplotLayer,
             GoogleMapsOverlay: FakeGoogleMapsOverlay
         };
     }
@@ -39,6 +47,7 @@ describe('ThereaboutHeatmapLayerDirective', () => {
 
     beforeEach(() => {
         deckState.heatmapProperties.length = 0;
+        deckState.visitedProperties.length = 0;
         deckState.overlays.length = 0;
         mapInitialized = new EventEmitter<google.maps.Map>();
     });
@@ -62,8 +71,8 @@ describe('ThereaboutHeatmapLayerDirective', () => {
         const overlay = deckState.overlays[0];
         const heatmapProperties = deckState.heatmapProperties[0];
         expect(overlay.setMap).toHaveBeenCalledWith(map);
-        expect(overlay.setProps).toHaveBeenCalledWith({layers: [expect.anything()]});
-        expect(heatmapProperties.radiusPixels).toBe(8);
+        expect(overlay.setProps).toHaveBeenCalledWith({layers: [expect.anything(), expect.anything()]});
+        expect(heatmapProperties.radiusPixels).toBe(18);
         expect(heatmapProperties.getPosition(directive.data[0])).toEqual([8.54, 47.37]);
         expect(heatmapProperties.getWeight(directive.data[0])).toBe(1);
     });
@@ -97,11 +106,38 @@ describe('ThereaboutHeatmapLayerDirective', () => {
         expect(updatedProperties.data).toEqual(directive.data);
         expect(updatedProperties.radiusPixels).toBe(12);
         expect(updatedProperties.getPosition(directive.data[0])).toEqual([-74.01, 40.71]);
+        expect(deckState.visitedProperties.at(-1).data).toEqual(directive.data);
 
         directive.visible = false;
         directive.ngOnChanges();
 
         expect(overlay.setProps).toHaveBeenLastCalledWith({layers: []});
+    });
+
+    it('keeps an isolated visit visible alongside a dense hotspot without changing density weights', async () => {
+        const directive = createDirective({} as google.maps.Map);
+        const isolatedVisit = {lat: 38.72, lng: -9.14};
+        directive.data = [
+            ...Array.from({length: 100_000}, () => ({lat: 47.37, lng: 8.54})),
+            isolatedVisit
+        ];
+        directive.ngOnInit();
+        await vi.waitFor(() => expect(deckState.overlays).toHaveLength(1));
+
+        const visited = deckState.visitedProperties.at(-1);
+        const heatmap = deckState.heatmapProperties.at(-1);
+        expect(visited.data).toContain(isolatedVisit);
+        expect(visited.getPosition(isolatedVisit)).toEqual([-9.14, 38.72]);
+        expect(visited.radiusUnits).toBe('pixels');
+        expect(visited.getRadius).toBeGreaterThanOrEqual(3);
+        expect(visited.getFillColor[3]).toBeGreaterThanOrEqual(200);
+        expect(heatmap.data).toBe(directive.data);
+        expect(heatmap.getWeight(isolatedVisit)).toBe(1);
+        expect(heatmap.getWeight(directive.data[0])).toBe(1);
+
+        directive.data = [];
+        directive.ngOnChanges();
+        expect(deckState.overlays[0].setProps).toHaveBeenLastCalledWith({layers: []});
     });
 
     it('detaches and finalizes the overlay when destroyed', async () => {

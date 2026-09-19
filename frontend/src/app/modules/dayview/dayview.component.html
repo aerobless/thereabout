@@ -147,33 +147,8 @@
       <app-weight-card [date]="dateToString(selectedDate)"></app-weight-card>
       <app-heart-rate-card [date]="dateToString(selectedDate)"></app-heart-rate-card>
       <app-hrv-card [date]="dateToString(selectedDate)"></app-hrv-card>
-      <p-card class="dayview-card daily-stat-card">
-        <ng-template #header>
-          <div class="card-header">
-            <i class="fa-solid fa-person-walking card-header-icon"></i>
-            <span class="card-header-title">Stand</span>
-          </div>
-        </ng-template>
-        <div class="daily-stat-content">
-          @if (selectedDayStandMinutes !== null) {
-            <span class="daily-stat-value">{{ formatStandMinutes(selectedDayStandMinutes) }}</span>
-            <span class="daily-stat-unit">min</span>
-          } @else {
-            <span class="daily-stat-value muted">--</span>
-          }
-        </div>
-      </p-card>
-      <p-card class="dayview-card daily-stat-card">
-        <ng-template #header>
-          <div class="card-header">
-            <i class="fa-solid fa-moon card-header-icon"></i>
-            <span class="card-header-title">Sleep</span>
-          </div>
-        </ng-template>
-        <div class="daily-stat-content">
-          <span class="daily-stat-value" [class.muted]="selectedDaySleepHours === null">{{ formatSleepHours(selectedDaySleepHours) }}</span>
-        </div>
-      </p-card>
+      <app-duration-card kind="stand" [date]="dateToString(selectedDate)" [records]="standRecords" [loading]="stepsLoading" [error]="stepsError" (retry)="loadHealthData()"></app-duration-card>
+      <app-duration-card kind="sleep" [date]="dateToString(selectedDate)" [records]="sleepRecords" [loading]="stepsLoading" [error]="stepsError" (retry)="loadHealthData()"></app-duration-card>
       <button #messagesCard type="button" class="daily-stat-card messages-summary-card"
         aria-haspopup="dialog" [attr.aria-expanded]="messagesDialogVisible"
         (click)="messagesDialogVisible = true">

@@ -16,6 +16,9 @@ import java.time.LocalDateTime;
 public class DailyMetricValue {
     private LocalDate date;
     private BigDecimal qty;
+    private BigDecimal core;
+    private BigDecimal deep;
+    private BigDecimal rem;
     private String units;
     private LocalDateTime timestamp;
     private String source;

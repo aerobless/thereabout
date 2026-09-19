@@ -385,6 +385,7 @@ a {
 }
 
 @media (max-width: 768px) {
+  .dayview-heading h1 { display: none; }
   .date-navigation { grid-template-columns: 44px minmax(0, 1fr) 44px auto; gap: 0.25rem; }
   .date-selector ::ng-deep .p-inputtext { font-size: 0.8125rem; padding-inline: 0.25rem; }
   .th-label {

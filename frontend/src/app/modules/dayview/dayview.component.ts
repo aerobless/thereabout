@@ -21,6 +21,7 @@ import {
 } from "@angular/google-maps";
 import {
     HealthService,
+    DailyMetricValue,
     LocationHistoryEntry,
     LocationService,
     Message,
@@ -31,6 +32,7 @@ import {
 import {ChartData, ChartOptions} from 'chart.js';
 import {dailyStepTotals, shiftDay, stepHistory, StepProgress} from './steps-progress';
 
+import {DurationCardComponent} from './duration/duration-card.component';
 import {ChoicesCardComponent} from './choices/choices-card.component';
 import {WeightCardComponent} from './weight/weight-card.component';
 import {HeartRateCardComponent} from './heart/heart-rate-card.component';
@@ -41,6 +43,7 @@ const THEO_IDENTITY_ID = 1;
 @Component({
     selector: 'app-dayview',
     imports: [
+    DurationCardComponent,
     ChoicesCardComponent,
     WeightCardComponent,
     HeartRateCardComponent,
@@ -249,9 +252,9 @@ export class DayviewComponent implements OnInit {
 
   // Daily stats (above Workouts)
   selectedDaySteps: number | null = null;
-  selectedDayStandMinutes: number | null = null;
+  standRecords: DailyMetricValue[] = [];
+  sleepRecords: DailyMetricValue[] = [];
   selectedDayDistanceKm: number | null = null;
-  selectedDaySleepHours: number | null = null;
 
   constructor(
     private router: Router,
@@ -304,7 +307,7 @@ export class DayviewComponent implements OnInit {
     const dateStr = this.dateToString(this.selectedDate);
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { date: dateStr },
+      queryParams: { date: this.isSelectedDayToday ? null : dateStr },
       queryParamsHandling: 'merge',
       replaceUrl: skipHistory
     });
@@ -325,12 +328,15 @@ export class DayviewComponent implements OnInit {
             this.loadAllData();
           }
           this.hasLoadedInitialData = true;
+          if (this.isSelectedDayToday) this.updateUrl(true);
         }
       } else {
-        // If no date in URL, update URL with current date (use replaceUrl to avoid history entry)
-        this.updateUrl(true);
-        // Load data for default date (today) since updateUrl doesn't trigger reload
-        this.loadAllData();
+        // A bare URL always means today, including browser Back/Forward navigation.
+        const today = new Date();
+        if (!this.hasLoadedInitialData || this.dateToString(this.selectedDate) !== this.dateToString(today)) {
+          this.selectedDate = today;
+          this.loadAllData();
+        }
         this.hasLoadedInitialData = true;
       }
     });
@@ -510,6 +516,8 @@ export class DayviewComponent implements OnInit {
     this.stepsLoading = true;
     this.stepsError = false;
     this.stepsHistory = [];
+    this.standRecords = [];
+    this.sleepRecords = [];
     this.selectedStepProgress = null;
     this.selectedDaySteps = null;
     this.selectedDayDistanceKm = null;
@@ -561,15 +569,11 @@ export class DayviewComponent implements OnInit {
           });
 
         // Daily stats for selected day
-        const standMetrics = response.metrics?.['apple_stand_time'] || [];
+        this.standRecords = response.metrics?.['apple_stand_time'] ?? [];
+        this.sleepRecords = response.metrics?.['sleep_analysis'] ?? [];
         const distanceMetrics = response.metrics?.['walking_running_distance'] || [];
-        const sleepMetrics = response.metrics?.['sleep_analysis'] || [];
-        const standForDay = standMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
         const distanceForDay = distanceMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
-        const sleepForDay = sleepMetrics.find((m: { date?: string }) => m.date === selectedDateStr);
-        this.selectedDayStandMinutes = standForDay?.qty != null ? Number(standForDay.qty) : null;
         this.selectedDayDistanceKm = distanceForDay?.qty != null ? Number(distanceForDay.qty) : null;
-        this.selectedDaySleepHours = sleepForDay?.qty != null ? Number(sleepForDay.qty) : null;
 
       },
       error: (error) => {
@@ -581,9 +585,7 @@ export class DayviewComponent implements OnInit {
         this.selectedDayBasalEnergy = null;
         this.workouts = [];
         this.selectedDaySteps = null;
-        this.selectedDayStandMinutes = null;
         this.selectedDayDistanceKm = null;
-        this.selectedDaySleepHours = null;
       }
     });
   }
@@ -667,15 +669,4 @@ export class DayviewComponent implements OnInit {
     return km.toFixed(2);
   }
 
-  formatStandMinutes(min: number | null): string {
-    if (min === null || min === undefined) return '--';
-    return Math.round(min).toString();
-  }
-
-  formatSleepHours(hours: number | null): string {
-    if (hours === null || hours === undefined) return '--';
-    const h = Math.floor(hours);
-    const m = Math.round((hours - h) * 60);
-    return m === 0 ? `${h} hr` : `${h}h ${m}m`;
-  }
 }

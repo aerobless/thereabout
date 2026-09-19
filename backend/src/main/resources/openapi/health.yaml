@@ -546,6 +546,15 @@ components:
           format: date
         qty:
           type: number
+        core:
+          type: number
+          description: Core sleep duration in hours, when recorded.
+        deep:
+          type: number
+          description: Deep sleep duration in hours, when recorded.
+        rem:
+          type: number
+          description: REM sleep duration in hours, when recorded.
         units:
           type: string
         timestamp:

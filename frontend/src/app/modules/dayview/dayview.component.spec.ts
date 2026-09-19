@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DayviewComponent } from './dayview.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, Params, Router, provideRouter } from '@angular/router';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import {MessageService as ToastService} from 'primeng/api';
 import {MapMarker} from '@angular/google-maps';
@@ -20,6 +20,7 @@ describe('DayviewComponent', () => {
   const deleteLocations = vi.fn();
   const toast = {add: vi.fn()};
   let getMessages: Mock<(date: string) => Observable<Message[]>>;
+  let queryParams: Subject<Params>;
 
   function message(id: number, senderIdentityId?: number): Message {
     return {
@@ -40,9 +41,11 @@ describe('DayviewComponent', () => {
     getMessages = vi.fn();
     getHealthData = vi.fn();
     getLocations = vi.fn();
+    queryParams = new Subject<Params>();
     await TestBed.configureTestingModule({
       imports: [DayviewComponent],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), {provide: ToastService, useValue: toast}, {provide: MessageService, useValue: {getMessages}},
+        {provide: ActivatedRoute, useValue: {queryParams}},
         {provide: HealthService, useValue: {getHealthDataByDateRange: getHealthData}},
         {provide: LocationService, useValue: {getLocations, addLocation, updateLocation, deleteLocations}}]
     })
@@ -56,6 +59,40 @@ describe('DayviewComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('omits today from the URL and retains other dates without removing unrelated query parameters', () => {
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    vi.spyOn(component, 'loadDayViewData').mockImplementation(() => undefined);
+    vi.spyOn(component, 'loadHealthData').mockImplementation(() => undefined);
+    vi.spyOn(component, 'loadMessages').mockImplementation(() => undefined);
+    component.goToToday();
+    expect(navigate).toHaveBeenLastCalledWith([], expect.objectContaining({queryParams: {date: null}, queryParamsHandling: 'merge', replaceUrl: false}));
+    component.goToPreviousDay();
+    expect(navigate).toHaveBeenLastCalledWith([], expect.objectContaining({queryParams: {date: component.dateToString(component.selectedDate)}}));
+    component.goToNextDay();
+    expect(navigate).toHaveBeenLastCalledWith([], expect.objectContaining({queryParams: {date: null}}));
+  });
+
+  it('loads today at a bare URL, normalizes explicit today links and handles browser history without duplicate loads', () => {
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const load = vi.spyOn(component, 'loadDayViewData').mockImplementation(() => undefined);
+    vi.spyOn(component, 'loadHealthData').mockImplementation(() => undefined);
+    vi.spyOn(component, 'loadMessages').mockImplementation(() => undefined);
+    const today = component.dateToString(new Date());
+    component.ngOnInit();
+    queryParams.next({});
+    expect(component.dateToString(component.selectedDate)).toBe(today);
+    expect(navigate).not.toHaveBeenCalled();
+    queryParams.next({date: today});
+    expect(navigate).toHaveBeenLastCalledWith([], expect.objectContaining({queryParams: {date: null}, replaceUrl: true}));
+    queryParams.next({});
+    expect(load).toHaveBeenCalledTimes(1);
+    queryParams.next({date: '2020-01-02'});
+    expect(component.dateToString(component.selectedDate)).toBe('2020-01-02');
+    queryParams.next({});
+    expect(component.dateToString(component.selectedDate)).toBe(today);
+    expect(load).toHaveBeenCalledTimes(3);
   });
 
   it('counts Theo as sent and other or unlinked senders as received, including group messages', () => {
@@ -165,10 +202,12 @@ describe('DayviewComponent', () => {
     expect(component.selectedDaySteps).toBeNull();
     expect(component.stepsChartData).toBeNull();
     expect(component.stepsLoading).toBe(true);
-    currentDay.next({metrics: {step_count: [{date: '2026-09-16', qty: 8000}]}});
+    currentDay.next({metrics: {step_count: [{date: '2026-09-16', qty: 8000}], apple_stand_time: [{date: '2026-09-16', qty: 42}], sleep_analysis: [{date: '2026-09-16', qty: 8, core: 5, deep: 1, rem: 2}]}});
     oldDay.next({metrics: {step_count: [{date: '2026-09-15', qty: 9999}]}});
     oldDay.error(new Error('Stale failure'));
     expect(component.selectedDaySteps).toBe(8000);
+    expect(component.standRecords[0].qty).toBe(42);
+    expect(component.sleepRecords[0].core).toBe(5);
     expect(component.stepsError).toBe(false);
   });
 

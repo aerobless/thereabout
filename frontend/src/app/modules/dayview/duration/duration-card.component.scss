@@ -1,0 +1,25 @@
+:host { display: block; min-width: 0; }
+.duration-card { display: flex; flex-direction: column; width: 100%; height: 100%; padding: 0; text-align: left; font: inherit; color: var(--app-ink); background: var(--app-surface); border: 1px solid var(--app-border); border-radius: 10px; overflow: hidden; cursor: pointer; }
+.card-header { width: 100%; box-sizing: border-box; }
+.expand-icon { margin-left: auto; font-size: .75rem; }
+.content { display: flex; flex-direction: column; gap: .35rem; padding: .8rem 1rem; width: 100%; box-sizing: border-box; }
+.value { font-size: 1.65rem; font-weight: 600; line-height: 1.2; }
+.caption { font-size: .8rem; color: var(--app-muted); }
+.stage-bar { display: flex; height: 7px; background: #edf0f5; border-radius: 4px; overflow: hidden; margin: .25rem 0; }
+.stage-values { display: flex; justify-content: space-between; gap: .3rem; font-size: .7rem; flex-wrap: wrap; }
+.stage-values > span { display: flex; flex-direction: column; gap: .2rem; }
+.stage-label { display: flex; align-items: center; gap: .25rem; }
+.stage-label i { width: 6px; height: 6px; border-radius: 50%; }
+.modal-stages { justify-content: flex-start; gap: 2rem; font-size: .9rem; margin: 1rem 0; }
+.chart-heading, .ranges { display: flex; align-items: center; gap: .5rem; }
+.chart-heading { justify-content: space-between; flex-wrap: wrap; }
+.action { padding: .5rem .8rem; cursor: pointer; }
+.action[aria-pressed='true'] { background: #e7ecf3; }
+.summary-grid { display: flex; gap: 2rem; margin: 1rem 0; flex-wrap: wrap; }
+.summary-grid section { display: flex; flex-direction: column; gap: .3rem; }
+.summary-grid strong { font-size: 1.4rem; }
+.summary-grid span { font-size: .85rem; color: var(--app-muted); }
+button:focus-visible { outline: 2px solid var(--app-link); outline-offset: -3px; }
+.duration-card:hover { background: var(--app-hover); }
+.table-scroll { overflow-x: auto; } table { width: 100%; border-collapse: collapse; } th, td { padding: .5rem; text-align: left; border-bottom: 1px solid var(--app-border); white-space: nowrap; } summary { cursor: pointer; padding: .5rem 0; }
+.summary-grid section { padding: .75rem 1rem; border: 1px solid var(--app-border); border-radius: 8px; background: var(--app-surface); }

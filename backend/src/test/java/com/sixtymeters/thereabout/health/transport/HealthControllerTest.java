@@ -53,6 +53,48 @@ class HealthControllerTest {
     @Autowired
     private ConfigurationRepository configurationRepository;
 
+    @Autowired
+    private com.sixtymeters.thereabout.health.data.HealthMetricSleepRepository sleepRepository;
+
+    @Test
+    void exposesStoredSleepStagesIncludingPartialAndTotalOnlyRecords() throws Exception {
+        LocalDate date = LocalDate.of(1903, 1, 1);
+        for (int i = 0; i < 3; i++) {
+            var base = healthMetricRepository.save(HealthMetricEntity.builder()
+                    .metricName("sleep_analysis").metricDate(date.plusDays(i)).units("hr").build());
+            sleepRepository.save(com.sixtymeters.thereabout.health.data.HealthMetricSleepEntity.builder()
+                    .healthMetric(base).totalSleep(i == 1 ? null : new BigDecimal("8"))
+                    .core(i == 2 ? null : new BigDecimal("5"))
+                    .deep(i == 0 ? new BigDecimal("1") : null)
+                    .rem(i == 0 ? new BigDecimal("2") : null).build());
+        }
+        var result = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/backend/api/v1/health/data")
+                        .param("fromDate", date.toString()).param("toDate", date.plusDays(2).toString()))
+                .andExpect(status().isOk()).andReturn();
+        var values = objectMapper.readTree(result.getResponse().getContentAsString()).path("metrics").path("sleep_analysis");
+        assertThat(values.size()).isEqualTo(3);
+        for (var value : values) {
+            switch (value.path("date").asString()) {
+                case "1903-01-01" -> {
+                    assertThat(value.path("qty").asDouble()).isEqualTo(8);
+                    assertThat(value.path("core").asDouble()).isEqualTo(5);
+                    assertThat(value.path("deep").asDouble()).isEqualTo(1);
+                    assertThat(value.path("rem").asDouble()).isEqualTo(2);
+                }
+                case "1903-01-02" -> {
+                    assertThat(value.path("qty").isNull() || value.path("qty").isMissingNode()).isTrue();
+                    assertThat(value.path("core").asDouble()).isEqualTo(5);
+                    assertThat(value.path("deep").isNull() || value.path("deep").isMissingNode()).isTrue();
+                }
+                case "1903-01-03" -> {
+                    assertThat(value.path("qty").asDouble()).isEqualTo(8);
+                    assertThat(value.path("core").isNull() || value.path("core").isMissingNode()).isTrue();
+                }
+                default -> throw new AssertionError("Unexpected date");
+            }
+        }
+    }
+
     private String testApiKey;
 
     @BeforeEach

@@ -1,97 +1,136 @@
-# thereabout 📍
-Thereabout is a self-hosted replacement for Google Location History. Use it to visualise your location history as
-heatmap or day-by-day view. You can import your existing Google Location history and add new data via the [Overland](https://overland.p3k.app/) app or by
-over the REST API.
+# Thereabout 📍
 
-![Thereabout Location History](/documentation/img/v7_main.png)
+**Your places, activity and everyday choices, together in one self-hosted timeline.**
 
-# Features
+Thereabout brings location history, health data and messages into a day-by-day dashboard. Revisit a trip, explore where you spend time, follow your activity and sleep, or keep a simple daily score for the choices you make. Your imported records live in your own MariaDB database.
 
-### Import your existing data
-Thereabout supports importing your existing location history data from Google Maps. Export your data via
-[Google Takeout](https://takeout.google.com) and upload the `Records.json` file in the configuration page.
+It started as a web-based alternative to Google Location History and has grown into a personal history dashboard for desktop and mobile.
 
-![Thereabout Configuration](/documentation/img/v7_config.png)
+![Day View with a route through Paris, activity cards and sleep stages](documentation/img/day-view.jpg)
 
-### Keep adding new location data
-Thereabout supports the free [Overland](https://overland.p3k.app/) android/iOS app. The configuration page features a
-one-click configuration button to set up Overland on your mobile device. 
+*Screenshots use synthetic local demo data. Maps are provided by Google Maps.*
 
-For other data sources / client you can also talk to the GeoJSON REST API directly.
+## Features
 
-### Visualise your data
-Thereabout can visualise your data in two ways: as a heatmap or as a day-by-day view. The heatmap shows can show a range
-of dates, e.g. the last year, the last 5 years or your full history. Beware that the full history heatmap can take a while to load
-and may need be a bit laggy if you have a lot of data.
+### A dashboard for each day
 
-The day-by-day view shows a polygon line for each day you have data for. 
+Pick a date to see your route, activity, health and message totals together. Each detail view stays anchored to that day. Today has a clean `/` URL; other days can be bookmarked with `?date=YYYY-MM-DD`.
 
-### Edit your location history
-In the day-by-day view you can also edit your data points.
-You can drag existing data points on the map to update their location or change their timestamp & other details from the table.
-If needed you can also delete one or multiple data points to clean up your history. If your missing some data you can also
-add new location entries straight from the UI.
+| Card | What you can explore |
+| --- | --- |
+| **Location History** | Daily route, recorded points and an expanded map with a location list. |
+| **Energy** | Active and basal energy totals. |
+| **Steps & Distance** | Daily steps and walking/running distance, progress against your recent activity baseline, and history charts. |
+| **Choices** | A daily score starting at zero: add or subtract a point, go positive or negative, and review 7- or 30-day history. Positive days are green; negative days are red. |
+| **Weight** | Recorded weight, trend direction, a configurable weight goal and progress history. |
+| **Heart rate** | Daily average and recorded range, with 7- and 30-day history. |
+| **HRV** | Daily heart-rate variability, weekly comparisons, personal baseline and history charts. |
+| **Stand** | Standing minutes, a 7-day average and 7-/30-day graphs. |
+| **Sleep** | Total sleep and Core, Deep and REM stages, with stacked history charts and daily values. Total-only records work too. |
+| **Messages** | Sent/received totals and an expandable list of the day's messages. |
+| **Workouts** | Imported activities with start time, duration and energy expenditure. |
 
-### Statistics
-See how many countries you've visited, how many days you've spent abroad and a detailed list of countries visited with first/last visit and days spent.
+Health cards use the data you import. Missing sleep stages and missing days remain visibly unavailable rather than becoming invented measurements or zeros. Standing time is measured in minutes, not Apple Watch stand-ring hours.
 
-![Thereabout Statistics](/documentation/img/v7_statistics.png)
+![Sleep history with Core, Deep and REM stages and total sleep](documentation/img/sleep-history.jpg)
 
-# Installation
+### Location history and maps
 
-> [!IMPORTANT]  
-> Thereabout has no login system. You should run it fully locally, via a VPN (e.g. [Tailscale](https://tailscale.com/)) 
-> or with a login system like [Authelia](https://www.authelia.com/).
-> 
-> If you want to continuously add data you'll need to be able to securely expose the GeoJSON endpoint to the internet.
-> This endpoint only is secured with an API key.
+- **Heatmap:** explore a custom date range, year to date, the last year, five years or your full history. Strong heatmap colours and visited-point markers keep less-frequent stops visible.
+- **Map controls:** jump to a location, switch between map and satellite imagery, and expand the map.
+- **Location editing on desktop:** add points, drag markers, edit timestamps and details, and delete one or several entries.
+- **Daily photo shortcut:** open Google Photos search for the selected day.
+- **Embeddable map:** display a date-range route with day navigation using `/locationhistory?embed=true&fromDate=YYYY-MM-DD&toDate=YYYY-MM-DD`.
+- **Travel statistics:** country count, days abroad, and a country list with first visit, last visit and days spent.
 
-1. Download the [docker-compose.yml](https://github.com/aerobless/thereabout/blob/main/docker-compose.yaml) file and the 
-[.env.example](https://github.com/aerobless/thereabout/blob/main/.env.example). *(There is also an [example](https://github.com/aerobless/thereabout/blob/main/docker-compose-authelia.yaml) for usage with Authelia.)*
-2. Rename the `.env.example` to `.env`.
-3. Get a Google Maps API Key from the [Google Cloud Console](https://console.cloud.google.com/apis/library/maps-backend.googleapis.com)
-and enter it in the `.env` file  where it says `REPLACE_WITH_YOUR_GOOGLE_API_KEY`.
-4. Run `docker-compose up -d` in the same directory as the `docker-compose.yml` file.
-5. You can now access Thereabout on port 9050: http://localhost:9050
+![Location History heatmap showing fictional European trips](documentation/img/location-history.jpg)
 
-# FAQ
+### Messages and identities
 
-## Why did you build this?
-Google sadly has decided to discontinue Google Location History / Timeline for the web as you can read [here](https://support.google.com/maps/answer/14169818?visit_id=638499772171143198-2056154066&p=maps_odlh&rd=1). 
-It's still available on device, but in my opinion it's fairly clunky to interact with it on a small screen, 
-and secondly it is also no longer possible to easily export the local location history. Especially being unable to 
-export my location data is a no-go for me, as Google has been known to kill various projects/features, see the [Google graveyard](https://killedbygoogle.com/). 
-Since there is no good alternative that does what I want I've decided to develop my own self-hosted location history.
+- Import WhatsApp chat exports and connect Telegram for message synchronisation.
+- Browse messages with pagination, sorting and filters for date, source, sender, receiver and content.
+- Manage people and groups, and link their application-specific identities across sources.
+- Start, cancel or repeat Telegram history synchronisation from Configuration, and disconnect when needed.
 
-## Where can I find the REST API?
-Thereabout has an integrated Swagger UI. You can find it under `http://localhost:9050/swagger-ui/index.html`.
-Alternatively you can look at the Open API spec located [here](https://github.com/aerobless/thereabout/blob/main/backend/src/main/resources/thereabout.openapi.yaml).
+### Desktop and mobile
 
-## My historic data has a different format - how can I import it?
-There are several options available for you:
-- Convert your data into a json object that resembles the Google Location History Records.json format.
-- Or connect to the database and insert the data directly. The database schema is fairly simple.
-- Alternatively you can also use the REST API to insert data.
-- And as a final option you could always code your own importer and contribute it back to the project.
+A collapsible desktop sidebar, mobile bottom navigation, compact cards and full-screen mobile detail views make the same history usable on both screens. A home-screen icon is included. Location creation and marker dragging are desktop interactions.
 
-## What's next?
-These features may or may not get realised depending on my time and motivation.
-+ Reverse Geolocation
-  + Ability to reverse geolocate points with place & POI information
-  + Persist geolocated POIs so that they can be re-used
-  + Tag days based on locations visited, e.g. home, work etc.
-+ Integration tests
-  + InMemory TestDB for integration tests
-+ Export location history as .json file
-+ Simple single user login system
-+ Location history improvements
-  + mode of travel: car, walking, running, bike etc.
-    + jump to google calendar directly from day view
-+ Day overview page
-  + Weather
-  + Major locations visited
-  + calculate distance travelled in a day
-+ Statistics:
-  + km travelled
-  + yearly: total km travelled, countries visited, ...
-+ Endpoint/Integration with OpenAI, e.g. ask "Where was I in November 2023?",
+<img src="documentation/img/sleep-mobile.jpg" alt="Sleep history in the full-screen mobile detail view" width="330">
+
+## Bring your data
+
+| Source | How to add it |
+| --- | --- |
+| **Google Location History** | Upload an existing `Records.json` export in **Configuration → Data Import**. The importer expects that format; it is not a universal importer for every newer Timeline export. |
+| **Overland** | Use **Configure Overland** in Configuration to set up location reporting. |
+| **Other location clients** | Submit GeoJSON to `/backend/api/v1/location/geojson`. |
+| **Health Auto Export** | Upload its JSON export in Configuration, or submit metrics and workouts to `/backend/api/v1/health`. |
+| **WhatsApp** | Upload a chat export as a `.txt` file and select its receiver. |
+| **Telegram** | Configure your Telegram API credentials on the server, then connect your account from Configuration. |
+
+Import progress is shown in Configuration. The same page exposes the ingestion API key and application version. See the API schema for request bodies and authentication requirements.
+
+## Self-hosting
+
+> [!IMPORTANT]
+> Thereabout has no built-in user login. Protect the entire application with a VPN or an authenticating reverse proxy before making it reachable outside your machine. The ingestion API key does **not** protect the dashboard or every API endpoint. Google Maps remains an external service and requires a Maps API key.
+
+You need Docker Compose and a Google Maps API key suitable for your deployment's hostname.
+
+1. Download [docker-compose.yaml](docker-compose.yaml) into an empty directory.
+2. Create a `.env` file alongside it:
+
+   ```dotenv
+   GOOGLE_MAPS_API_KEY=replace-with-your-google-maps-key
+   THEREABOUT_DATABASE=thereabout
+   THEREABOUT_DB_USER=thereabout
+   THEREABOUT_DB_PASSWORD=replace-with-a-strong-password
+   THEREABOUT_DB_ROOT_PASSWORD=replace-with-a-different-strong-password
+   ```
+
+3. Choose an image tag in the Compose file. `latest` is the manually published release channel. `development` receives successful builds from `main` and includes the newest features described here.
+4. Start the services:
+
+   ```sh
+   docker compose pull
+   docker compose up -d
+   ```
+
+5. Open [localhost:9050](http://localhost:9050), then visit Configuration to connect your data sources.
+
+The supplied Compose file publishes ports **9050** (web app) and **3306** (MariaDB). For a local-only installation, bind them to `127.0.0.1`; remove the database port mapping if you do not need host access. Apply your chosen access protection before exposing the web port.
+
+Back up the persistent volume and database before upgrading. To update your chosen image channel, run `docker compose pull` followed by `docker compose up -d` again. Database migrations run when the application starts.
+
+### Optional Telegram setup
+
+Add `TELEGRAM_API_ID` and `TELEGRAM_API_HASH` to the `thereabout` service's `environment` mapping, using your own Telegram application credentials. Merely adding them to `.env` does not pass them through the supplied Compose file. Keep `/data` persistent: Telegram's session is stored under `/data/telegram-tdlib`. Then use **Configuration → Telegram sync** to sign in.
+
+## API and development
+
+- **Swagger UI:** [localhost:9050/swagger-ui/index.html](http://localhost:9050/swagger-ui/index.html)
+- **OpenAPI definition:** [thereabout.openapi.yaml](backend/src/main/resources/thereabout.openapi.yaml)
+- **Stack:** Angular 22, PrimeNG, Chart.js, Google Maps and deck.gl; Spring Boot 4, Java 25 and MariaDB.
+- **Frontend tooling:** Node.js 24. From `frontend/`, run `npm ci`, `npm run openapi:generate`, then `npm start`. The development server runs on port 4200 and proxies backend requests to port 9050.
+- **Backend tooling:** Maven with Java 25. Run Maven from `backend/`; there is no root Maven reactor. The `development` profile uses local MariaDB. Override its machine-specific import-folder setting with a writable local directory before using imports.
+
+Run checks with a MariaDB instance available and database credentials configured in your environment:
+
+```sh
+# From the repository root, with the Compose variables configured:
+docker compose -f docker-compose-development.yaml up -d
+
+# Backend unit and integration tests, then packaging:
+cd backend
+mvn clean install
+
+# Frontend tests and production build:
+cd ../frontend
+npm ci
+npm run openapi:generate
+npm test -- --watch=false
+npm run build
+```
+
+The backend imports more health metric types than the dashboard currently visualises. The API schema is the source of truth for supported payloads; the feature list above describes the implemented UI.

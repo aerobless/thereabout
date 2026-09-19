@@ -31,6 +31,7 @@ import {
 import {ChartData, ChartOptions} from 'chart.js';
 import {dailyStepTotals, shiftDay, stepHistory, StepProgress} from './steps-progress';
 
+import {ChoicesCardComponent} from './choices/choices-card.component';
 import {WeightCardComponent} from './weight/weight-card.component';
 import {HeartRateCardComponent} from './heart/heart-rate-card.component';
 import {HrvCardComponent} from './heart/hrv-card.component';
@@ -40,6 +41,7 @@ const THEO_IDENTITY_ID = 1;
 @Component({
     selector: 'app-dayview',
     imports: [
+    ChoicesCardComponent,
     WeightCardComponent,
     HeartRateCardComponent,
     HrvCardComponent,

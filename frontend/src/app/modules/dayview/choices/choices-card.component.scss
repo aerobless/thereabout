@@ -1,0 +1,22 @@
+:host { display: block; min-width: 0; }
+.choices-card { height: 100%; box-sizing: border-box; border: 1px solid var(--app-border); border-radius: 10px; background: var(--app-surface); color: var(--app-ink); overflow: hidden; }
+.choices-card[data-state='positive'] { background: #e6f3e9; }
+.choices-card[data-state='negative'] { background: #fbe9e8; }
+.expand { display: flex; flex-direction: column; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.card-header { width: 100%; box-sizing: border-box; }
+.score { font-size: 2rem; line-height: 1.2; padding: .6rem 1rem 0; }
+.caption { padding: .2rem 1rem .5rem; font-size: .8rem; color: var(--app-muted); }
+.adjustments { display: flex; gap: .65rem; padding: 0 1rem .75rem; }
+.adjustments button { flex: 1; min-height: 44px; border: 1px solid var(--app-border); border-radius: 7px; background: rgb(255 255 255 / 75%); color: var(--app-ink); font-size: 1.4rem; cursor: pointer; }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible { outline: 2px solid var(--app-link); outline-offset: -3px; }
+button:hover:not(:disabled) { background: var(--app-hover); }
+.choices-card p { margin: 0; padding: 0 1rem .75rem; font-size: .8rem; }
+.chart-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem; }
+.ranges { display: flex; gap: .5rem; }
+.action { padding: .5rem .8rem; cursor: pointer; }
+.explanation { color: var(--app-muted); font-size: .875rem; }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: .6rem; text-align: left; border-bottom: 1px solid var(--app-border); }
+summary { cursor: pointer; padding: .5rem 0; }

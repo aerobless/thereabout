@@ -1,0 +1,43 @@
+<section class="choices-card" [attr.data-state]="state" aria-label="Choices">
+  <button #expand type="button" class="expand" aria-label="Expand Choices history" aria-haspopup="dialog"
+    [attr.aria-expanded]="visible" (click)="visible = true">
+    <span class="card-header"><i class="pi pi-check-circle card-header-icon" aria-hidden="true"></i><span class="card-header-title">Choices</span><i class="pi pi-expand" aria-hidden="true"></i></span>
+    <span class="score" aria-live="polite">{{ history ? signed(history.score) : '—' }}</span>
+    <span class="caption">{{ history && !history.editable ? 'Future day · read-only' : 'Daily balance' }}</span>
+  </button>
+  <div class="adjustments">
+    <button type="button" aria-label="Subtract one Choices point" [disabled]="!canAdjust" (click)="adjust(-1)">−</button>
+    <button type="button" aria-label="Add one Choices point" [disabled]="!canAdjust" (click)="adjust(1)">+</button>
+  </div>
+  @if (saving) { <p role="status">Saving…</p> }
+  @else if (loading) { <p role="status">Loading…</p> }
+  @if (saveError) { <p role="alert">Could not confirm the save. Check the refreshed score before trying again.</p> }
+  @if (error) { <p role="alert">Unable to load Choices. <button type="button" (click)="load()">Retry</button></p> }
+</section>
+
+<p-dialog [header]="'Choices — ' + (date | date:'dd.MM.yyyy')" styleClass="dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
+  [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false" [dismissableMask]="true"
+  [closeOnEscape]="true" [focusTrap]="true" [blockScroll]="true" closeAriaLabel="Close Choices"
+  (onHide)="expand.focus()" [style]="{width: '960px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '90dvh'}">
+  @if (visible) {
+    <div class="chart-heading"><h3>Daily scores</h3><div class="ranges" aria-label="Choices chart range">
+      <button class="action" type="button" [attr.aria-pressed]="days === 7" (click)="selectRange(7)">7 days</button>
+      <button class="action" type="button" [attr.aria-pressed]="days === 30" (click)="selectRange(30)">30 days</button>
+    </div></div>
+    @if (loading) { <p role="status">Loading Choices history…</p> }
+    @else if (error) { <p role="alert">Unable to load Choices history.</p><button class="action" (click)="load()">Retry</button> }
+    @else if (history && chartData) {
+      <p>Daily balance: <strong>{{ signed(history.score) }}</strong> · {{ date | date:'dd.MM.yyyy' }}</p>
+      <p-chart type="bar" [data]="chartData" [options]="chartOptions" [style]="{width: '100%', height: '320px'}"
+        ariaLabel="Daily Choices scores. Positive scores are green and negative scores red. Exact scores are in the Daily values table."></p-chart>
+      <p class="explanation">Each day starts at zero. The outlined bar marks the selected day. Days without points count as zero.</p>
+      <details><summary>Daily values</summary><div class="table-scroll"><table>
+        <caption>Choices · daily points</caption>
+        <thead><tr><th scope="col">Date</th><th scope="col">Score</th></tr></thead>
+        <tbody>@for (day of history.series; track day.date) {
+          <tr><th scope="row">{{ day.date | date:'dd.MM.yyyy' }}</th><td>{{ signed(day.score) }}</td></tr>
+        }</tbody>
+      </table></div></details>
+    }
+  }
+</p-dialog>

@@ -4,6 +4,10 @@ info:
   title: Frontend REST API
   version: "1.0"
 paths:
+  /backend/api/v1/choices:
+    $ref: 'openapi/choices.yaml#/paths/History'
+  /backend/api/v1/choices/{date}/adjust:
+    $ref: 'openapi/choices.yaml#/paths/Adjust'
   # Location
   /backend/api/v1/location/sparse:
     $ref: 'openapi/location.yaml#/paths/LocationSparse'

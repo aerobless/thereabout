@@ -228,15 +228,17 @@ describe('LocationhistoryComponent', () => {
     expect(map.fitBounds).toHaveBeenCalledWith(expect.anything(), 24);
   });
 
-  it('opens the non-embed date range in a new tab', () => {
-    component.dateRangeFrom = '2026-06-13';
-    component.dateRangeTo = '2026-06-20';
+  it('opens the selected embed day in Day View in a new tab after changing dates', () => {
+    vi.spyOn(locationService, 'getLocations').mockReturnValue(of([]) as any);
+    component.ngOnInit();
+    queryParams.next({embed: 'true', fromDate: '2026-06-13', toDate: '2026-06-20', date: '2026-06-15'});
     const open = vi.spyOn(window, 'open').mockImplementation(() => null);
 
+    component.incrementEmbedDate();
     component.openInThereabout();
 
     expect(open).toHaveBeenCalledWith(
-      `${window.location.origin}/locationhistory?fromDate=2026-06-13&toDate=2026-06-20`,
+      `${window.location.origin}/?date=2026-06-16`,
       '_blank',
       'noopener'
     );

@@ -261,9 +261,8 @@ export class LocationhistoryComponent implements OnInit {
     openInThereabout() {
         if (!this.dateRangeFrom || !this.dateRangeTo) return;
 
-        const url = new URL('/locationhistory', window.location.origin);
-        url.searchParams.set('fromDate', this.dateRangeFrom);
-        url.searchParams.set('toDate', this.dateRangeTo);
+        const url = new URL('/', window.location.origin);
+        url.searchParams.set('date', this.dateToString(this.exactDate));
         window.open(url.toString(), '_blank', 'noopener');
     }
 

@@ -1,3 +1,4 @@
+import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {ButtonModule} from "primeng/button";
 import {FileUploadModule} from "primeng/fileupload";
@@ -31,16 +32,19 @@ import {TooltipModule} from "primeng/tooltip";
     styleUrl: './statistics.component.scss'
 })
 export class StatisticsComponent implements OnInit {
+  private readonly refresh = registerRefresh(() => this.loadStatistics());
 
   visitedCountries: Array<CountryStatistic> = [];
 
   constructor(private messageService: MessageService, private statisticsService: StatisticsService) {
   }
 
-  ngOnInit(): void {
-    this.statisticsService.getStatistics().subscribe(statistics => {
+  ngOnInit(): void { this.loadStatistics(); }
+
+  private loadStatistics() {
+    this.statisticsService.getStatistics().pipe(this.refresh.track('statistics')).subscribe({next: statistics => {
       this.visitedCountries = statistics.visitedCountries.sort((a, b) => b.numberOfDaysSpent - a.numberOfDaysSpent);
-    });
+    }, error: () => { /* The refresh coordinator reports failed reads. */ }});
   }
 
   countryNameFormat(countryStats: CountryStatistic): string {

@@ -1,3 +1,4 @@
+import {registerRefresh} from '../../../shared/refresh/refresh-coordinator';
 import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {ActivatedRoute, RouterModule} from '@angular/router';
 import {ButtonModule} from 'primeng/button';
@@ -18,6 +19,7 @@ import {Identity, IdentityService} from '../../../../../generated/backend-api/th
     styleUrl: './identity-detail.component.scss'
 })
 export class IdentityDetailComponent implements OnInit {
+  private readonly refresh = registerRefresh(() => this.loadIdentity());
 
     identity: Identity | null = null;
 
@@ -26,10 +28,12 @@ export class IdentityDetailComponent implements OnInit {
         private readonly identityService: IdentityService,
     ) {}
 
-    ngOnInit(): void {
+    ngOnInit(): void { this.loadIdentity(); }
+
+    private loadIdentity() {
         const id = Number(this.route.snapshot.paramMap.get('id'));
-        this.identityService.getIdentities().subscribe(identities => {
+        this.identityService.getIdentities().pipe(this.refresh.track('identity')).subscribe({next: identities => {
             this.identity = identities.find(i => i.id === id) || null;
-        });
+        }, error: () => {}});
     }
 }

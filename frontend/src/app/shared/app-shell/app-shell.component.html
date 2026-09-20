@@ -1,3 +1,4 @@
+<div [appPullToRefresh]="!embedded()" #pull="pullToRefresh">
 @if (!embedded()) {
   <a class="skip-link" href="#main-content">Skip to content</a>
   <aside class="app-sidebar" aria-label="Application sidebar">
@@ -47,3 +48,11 @@
 <main id="main-content" tabindex="-1" [class.app-content]="!embedded()" [class.embed-content]="embedded()">
   <ng-content />
 </main>
+
+@if (pull.distance() > 0 || pull.refresh.refreshing()) {
+  <div class="pull-refresh-indicator" role="status" aria-live="polite" [attr.aria-busy]="pull.refresh.refreshing()">
+    <i [class]="pull.refresh.refreshing() ? 'pi pi-spinner refresh-spin' : 'pi pi-arrow-down'" aria-hidden="true"></i>
+    <span>{{ pull.refresh.refreshing() ? 'Refreshing…' : pull.distance() >= pull.threshold ? 'Release to refresh' : 'Pull to refresh' }}</span>
+  </div>
+}
+</div>

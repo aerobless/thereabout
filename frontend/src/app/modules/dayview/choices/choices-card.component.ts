@@ -1,3 +1,4 @@
+import {registerRefresh} from '../../../shared/refresh/refresh-coordinator';
 import {Component, ChangeDetectionStrategy, DestroyRef, Input, OnChanges, inject} from '@angular/core';
 import {DatePipe} from '@angular/common';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
@@ -14,6 +15,7 @@ import {ChoicesHistory, ChoicesService} from '../../../../../generated/backend-a
   changeDetection: ChangeDetectionStrategy.Eager
 })
 export class ChoicesCardComponent implements OnChanges {
+  private readonly refresh = registerRefresh(() => this.load(), () => this.saving);
   @Input({required: true}) date = '';
   private readonly api = inject(ChoicesService);
   private readonly destroyRef = inject(DestroyRef);
@@ -56,7 +58,7 @@ export class ChoicesCardComponent implements OnChanges {
     if (!this.date) { this.loading = false; return; }
     this.loading = true;
     this.error = false;
-    this.api.getChoicesHistory(this.date, this.days).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.getChoicesHistory(this.date, this.days).pipe(this.refresh.track('choices'), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: history => {
         if (id !== this.requestId) return;
         this.history = history;

@@ -1,3 +1,4 @@
+import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 import {Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, viewChild} from '@angular/core';
 import {Observable, finalize} from 'rxjs';
 import {MessageService as ToastService} from 'primeng/api';
@@ -70,6 +71,7 @@ const THEO_IDENTITY_ID = 1;
     styleUrls: ['./dayview.component.scss', './dayview-map.scss']
 })
 export class DayviewComponent implements OnInit {
+  private readonly refresh = registerRefresh(() => { this.loadDayViewData(true); this.loadHealthData(true); this.loadMessages(true); }, () => this.locationSaving || !!this.locationEditDraft);
 
   selectedDate: Date = new Date();
   get selectedDaySuffix(): string {
@@ -363,7 +365,7 @@ export class DayviewComponent implements OnInit {
     this.highlightedLocationEntry = undefined;
     this.locationsLoading = true;
     this.locationsError = false;
-    this.locationService.getLocations(date, date).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.locationService.getLocations(date, date).pipe(this.refresh.track('locations'), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: locations => {
         if (requestId !== this.locationRequestId) return;
         this.dayViewDataFull = [...locations].sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp) || a.id - b.id);
@@ -506,25 +508,27 @@ export class DayviewComponent implements OnInit {
     });
   }
 
-  loadHealthData() {
+  loadHealthData(preserve = false) {
     if (!this.selectedDate) return;
 
     const selectedDateStr = this.dateToString(this.selectedDate);
     const requestId = ++this.healthRequestId;
     if (this.healthDate !== selectedDateStr) this.stepsDialogVisible = false;
     this.healthDate = selectedDateStr;
-    this.stepsLoading = true;
+    if (!preserve) this.stepsLoading = true;
     this.stepsError = false;
-    this.stepsHistory = [];
-    this.standRecords = [];
-    this.sleepRecords = [];
-    this.selectedStepProgress = null;
-    this.selectedDaySteps = null;
-    this.selectedDayDistanceKm = null;
-    this.stepsChartData = null;
+    if (!preserve) {
+      this.stepsHistory = [];
+      this.standRecords = [];
+      this.sleepRecords = [];
+      this.selectedStepProgress = null;
+      this.selectedDaySteps = null;
+      this.selectedDayDistanceKm = null;
+      this.stepsChartData = null;
+    }
 
     this.healthService.getHealthDataByDateRange(shiftDay(selectedDateStr, -59), selectedDateStr)
-      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      .pipe(this.refresh.track('health'), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         if (requestId !== this.healthRequestId) return;
         this.stepsLoading = false;
@@ -579,8 +583,9 @@ export class DayviewComponent implements OnInit {
       error: (error) => {
         if (requestId !== this.healthRequestId) return;
         this.stepsLoading = false;
-        this.stepsError = true;
+        this.stepsError = !preserve;
         console.error('Error loading health data:', error);
+        if (preserve) return;
         this.selectedDayActiveEnergy = null;
         this.selectedDayBasalEnergy = null;
         this.workouts = [];
@@ -590,15 +595,14 @@ export class DayviewComponent implements OnInit {
     });
   }
 
-  loadMessages() {
+  loadMessages(preserve = false) {
     if (!this.selectedDate) return;
     const dateStr = this.dateToString(this.selectedDate);
     const requestId = ++this.messageRequestId;
-    this.messagesDialogVisible = false;
-    this.messages = [];
-    this.messagesLoading = true;
+    if (!preserve) { this.messagesDialogVisible = false; this.messages = []; }
+    if (!preserve) this.messagesLoading = true;
     this.messagesError = false;
-    this.messageApiService.getMessages(dateStr).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.messageApiService.getMessages(dateStr).pipe(this.refresh.track('messages'), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (messages) => {
         if (requestId !== this.messageRequestId) return;
         this.messages = [...messages].sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
@@ -607,9 +611,9 @@ export class DayviewComponent implements OnInit {
       error: (error) => {
         if (requestId !== this.messageRequestId) return;
         console.error('Error loading messages:', error);
-        this.messages = [];
+        if (!preserve) this.messages = [];
         this.messagesLoading = false;
-        this.messagesError = true;
+        this.messagesError = !preserve;
       }
     });
   }

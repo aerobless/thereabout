@@ -121,3 +121,27 @@
     .nav-link { flex-direction: column; justify-content: center; gap: 0.35rem; padding: 0.45rem 0.15rem; font-size: 0.7rem; min-height: 52px; }
   }
 }
+
+.pull-refresh-indicator {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 0.75rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 105;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--app-border);
+  border-radius: 2rem;
+  background: var(--app-surface);
+  color: var(--app-ink);
+  box-shadow: 0 3px 12px rgb(16 27 74 / 12%);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.refresh-spin { animation: refresh-spin 800ms linear infinite; }
+@keyframes refresh-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .refresh-spin { animation: none; } }
+@media (min-width: 769px) { .pull-refresh-indicator { display: none; } }

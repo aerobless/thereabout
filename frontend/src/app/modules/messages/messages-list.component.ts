@@ -1,3 +1,4 @@
+import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -31,6 +32,7 @@ interface FilterMeta {
   styleUrl: './messages-list.component.scss',
 })
 export class MessagesListComponent {
+  private readonly refresh = registerRefresh(() => this.loadMessages(this.lastQuery, true));
   messages: Message[] = [];
   totalRecords = 0;
   loading = false;
@@ -51,7 +53,12 @@ export class MessagesListComponent {
 
   constructor(private messageApiService: MessageApiService) {}
 
-  loadMessages(event: TableLazyLoadEvent): void {
+  private lastQuery: TableLazyLoadEvent = {};
+
+  loadMessages(event: TableLazyLoadEvent, preserve = false): void {
+    // PrimeNG also supplies callback functions; retain only the query data.
+    this.lastQuery = structuredClone({first: event.first, rows: event.rows,
+      sortField: event.sortField, sortOrder: event.sortOrder, filters: event.filters});
     this.first = event.first ?? 0;
     const size = event.rows ?? this.rows;
     this.sortField = (event.sortField as string) ?? this.defaultSortField;
@@ -69,7 +76,7 @@ export class MessagesListComponent {
     const sender = this.extractTextFilter(event.filters?.['sender'] as FilterMeta | FilterMeta[] | undefined);
     const receiver = this.extractTextFilter(event.filters?.['receiver'] as FilterMeta | FilterMeta[] | undefined);
 
-    this.fetchPage(Math.floor(this.first / size), size, sort, search, dateFrom, dateTo, source ?? undefined, sender, receiver);
+    this.fetchPage(Math.floor(this.first / size), size, sort, search, dateFrom, dateTo, source ?? undefined, sender, receiver, preserve);
   }
 
   private extractDateFromFilter(f: FilterMeta | FilterMeta[] | undefined): string | undefined {
@@ -115,18 +122,18 @@ export class MessagesListComponent {
     dateTo?: string,
     source?: string,
     sender?: string,
-    receiver?: string
+    receiver?: string,
+    preserve = false
   ): void {
     this.loading = true;
-    this.messageApiService.getMessageList(page, size, sort, search, dateFrom, dateTo, source, sender, receiver).subscribe({
+    this.messageApiService.getMessageList(page, size, sort, search, dateFrom, dateTo, source, sender, receiver).pipe(this.refresh.track('messages')).subscribe({
       next: (pageResponse) => {
         this.messages = pageResponse.content ?? [];
         this.totalRecords = pageResponse.totalElements ?? 0;
         this.loading = false;
       },
       error: () => {
-        this.messages = [];
-        this.totalRecords = 0;
+        if (!preserve) { this.messages = []; this.totalRecords = 0; }
         this.loading = false;
       },
     });

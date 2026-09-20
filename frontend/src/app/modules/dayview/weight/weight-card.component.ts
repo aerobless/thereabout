@@ -1,3 +1,4 @@
+import {registerRefresh} from '../../../shared/refresh/refresh-coordinator';
 import {ChangeDetectionStrategy, Component, DestroyRef, Input, OnChanges, inject} from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {DatePipe} from '@angular/common';
@@ -15,6 +16,7 @@ import {Preferences, PreferencesService, WeightProgress, WeightService} from '..
   changeDetection: ChangeDetectionStrategy.Eager
 })
 export class WeightCardComponent implements OnChanges {
+  private readonly refresh = registerRefresh(() => this.load(true), () => this.saving || this.editing);
   @Input({required: true}) date = '';
   private readonly api = inject(WeightService);
   private readonly preferencesApi = inject(PreferencesService);
@@ -39,14 +41,13 @@ export class WeightCardComponent implements OnChanges {
     this.load();
   }
 
-  load() {
+  load(preserve = false) {
     if (!this.date) return;
     const requestId = ++this.requestId;
     this.loading = true;
     this.error = false;
-    this.progress = null;
-    this.chartData = null;
-    this.api.getWeightProgress(this.date, this.days).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    if (!preserve) { this.progress = null; this.chartData = null; }
+    this.api.getWeightProgress(this.date, this.days).pipe(this.refresh.track('weight'), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: progress => {
         if (requestId !== this.requestId) return;
         this.progress = progress;

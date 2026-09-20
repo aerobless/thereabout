@@ -1,4 +1,6 @@
-import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
+import {DestroyRef, inject, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {ButtonModule} from "primeng/button";
 import {IconFieldModule} from "primeng/iconfield";
 import {InputIconModule} from "primeng/inputicon";
@@ -17,7 +19,7 @@ import {
 } from "../../../../generated/backend-api/thereabout";
 import {MessageService} from "primeng/api";
 
-import {catchError, interval, Observable, of, switchMap, takeWhile} from "rxjs";
+import {catchError, finalize, interval, Observable, of, switchMap, takeWhile} from "rxjs";
 import {ChipModule} from "primeng/chip";
 import {TooltipModule} from "primeng/tooltip";
 import {SelectModule} from "primeng/select";
@@ -59,6 +61,22 @@ interface ImportTypeOption {
     styleUrl: './configuration.component.scss'
 })
 export class ConfigurationComponent implements OnInit {
+    private readonly destroyRef = inject(DestroyRef);
+    private telegramSaving = false;
+    private uploading = false;
+    private readonly refresh = registerRefresh(() => {
+        this.loadConfiguration();
+        this.loadChatReceivers();
+        // Refresh snapshots only: existing polling continues without creating new timers.
+        this.updateImportStatus().pipe(this.refresh.track('import'), takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: status => { this.importStatus = status.status; this.importStatusProgress = status.progress; },
+            error: () => {}
+        });
+        this.frontendService.getTelegramStatus().pipe(this.refresh.track('telegram'), takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: status => this.telegramStatus = status,
+            error: () => {}
+        });
+    }, () => this.telegramSaving || this.uploading);
 
     importStatus: FileImportStatus.StatusEnum | unknown;
     importStatusProgress: number = 0;
@@ -129,7 +147,8 @@ export class ConfigurationComponent implements OnInit {
 
         this.importDisabled = true;
 
-        this.http.post('/backend/api/v1/config/import-file', formData).subscribe({
+        this.uploading = true;
+        this.http.post('/backend/api/v1/config/import-file', formData).pipe(finalize(() => this.uploading = false), takeUntilDestroyed(this.destroyRef)).subscribe({
             next: () => {
                 this.onUpload();
             },
@@ -141,7 +160,7 @@ export class ConfigurationComponent implements OnInit {
     }
 
     private updateOrPollImportStatus() {
-        this.updateImportStatus().subscribe(e => {
+        this.updateImportStatus().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(e => {
             this.importStatus = e.status;
             this.importStatusProgress = e.progress;
 
@@ -153,7 +172,7 @@ export class ConfigurationComponent implements OnInit {
                         console.error('Polling error', err);
                         return of(null);
                     })
-                ).subscribe((status) => {
+                ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((status) => {
                     if(status){
                         this.importStatus = status.status;
                         this.importStatusProgress = status.progress;
@@ -172,16 +191,20 @@ export class ConfigurationComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.frontendService.getFrontendConfiguration().subscribe(e => {
-            this.thereaboutConfig = e;
-        })
+        this.loadConfiguration();
         this.updateOrPollImportStatus();
         this.loadChatReceivers();
         this.loadTelegramStatus();
     }
 
+    private loadConfiguration() {
+        this.frontendService.getFrontendConfiguration().pipe(this.refresh.track('configuration'), takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: config => this.thereaboutConfig = config, error: () => {}
+        });
+    }
+
     loadTelegramStatus() {
-        this.frontendService.getTelegramStatus().subscribe({
+        this.frontendService.getTelegramStatus().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
             next: (s) => {
                 this.telegramStatus = s;
                 const wait = s.status === TelegramStatus.StatusEnum.WaitCode
@@ -197,7 +220,7 @@ export class ConfigurationComponent implements OnInit {
                             || next.status === TelegramStatus.StatusEnum.Connecting,
                             true
                         ),
-                    ).subscribe({
+                    ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
                         next: (next) => {
                             this.telegramStatus = next;
                             if (next.status === TelegramStatus.StatusEnum.Ready || next.status === TelegramStatus.StatusEnum.Error) {
@@ -221,7 +244,7 @@ export class ConfigurationComponent implements OnInit {
                 switchMap(() => this.frontendService.getTelegramStatus()),
                 takeWhile((next) => next.resyncStatus === TelegramStatus.ResyncStatusEnum.InProgress, true),
                 catchError(() => of(null))
-            ).subscribe({
+            ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
                 next: (next) => {
                     if (next) {
                         this.telegramStatus = next;
@@ -241,7 +264,9 @@ export class ConfigurationComponent implements OnInit {
 
     connectTelegram() {
         if (!this.telegramPhone?.trim()) return;
-        this.frontendService.connectTelegram({ phoneNumber: this.telegramPhone.trim() }).subscribe({
+        if (this.telegramSaving) return;
+        this.telegramSaving = true;
+        this.frontendService.connectTelegram({ phoneNumber: this.telegramPhone.trim() }).pipe(finalize(() => this.telegramSaving = false), takeUntilDestroyed(this.destroyRef)).subscribe({
             next: () => { this.loadTelegramStatus(); },
             error: (err) => this.messageService.add({ severity: 'error', summary: 'Telegram connect failed', detail: err?.error?.message || 'Connect failed' })
         });
@@ -249,7 +274,9 @@ export class ConfigurationComponent implements OnInit {
 
     submitTelegramCode() {
         if (!this.telegramCode?.trim()) return;
-        this.frontendService.submitTelegramCode({ code: this.telegramCode.trim() }).subscribe({
+        if (this.telegramSaving) return;
+        this.telegramSaving = true;
+        this.frontendService.submitTelegramCode({ code: this.telegramCode.trim() }).pipe(finalize(() => this.telegramSaving = false), takeUntilDestroyed(this.destroyRef)).subscribe({
             next: () => { this.telegramCode = ''; this.loadTelegramStatus(); },
             error: (err) => this.messageService.add({ severity: 'error', summary: 'Code failed', detail: err?.error?.message || 'Submit failed' })
         });
@@ -257,14 +284,18 @@ export class ConfigurationComponent implements OnInit {
 
     submitTelegramPassword() {
         if (!this.telegramPassword) return;
-        this.frontendService.submitTelegramPassword({ password: this.telegramPassword }).subscribe({
+        if (this.telegramSaving) return;
+        this.telegramSaving = true;
+        this.frontendService.submitTelegramPassword({ password: this.telegramPassword }).pipe(finalize(() => this.telegramSaving = false), takeUntilDestroyed(this.destroyRef)).subscribe({
             next: () => { this.telegramPassword = ''; this.loadTelegramStatus(); },
             error: (err) => this.messageService.add({ severity: 'error', summary: 'Password failed', detail: err?.error?.message || 'Submit failed' })
         });
     }
 
     disconnectTelegram() {
-        this.frontendService.disconnectTelegram().subscribe({
+        if (this.telegramSaving) return;
+        this.telegramSaving = true;
+        this.frontendService.disconnectTelegram().pipe(finalize(() => this.telegramSaving = false), takeUntilDestroyed(this.destroyRef)).subscribe({
             next: () => {
                 this.telegramPhone = '';
                 this.telegramCode = '';
@@ -276,7 +307,9 @@ export class ConfigurationComponent implements OnInit {
     }
 
     resyncTelegram() {
-        this.frontendService.resyncTelegram().subscribe({
+        if (this.telegramSaving) return;
+        this.telegramSaving = true;
+        this.frontendService.resyncTelegram().pipe(finalize(() => this.telegramSaving = false), takeUntilDestroyed(this.destroyRef)).subscribe({
             next: () => {
                 this.messageService.add({ severity: 'info', summary: 'Resync started', detail: 'Telegram messages are syncing. You can cancel anytime.' });
                 this.loadTelegramStatus();
@@ -286,7 +319,9 @@ export class ConfigurationComponent implements OnInit {
     }
 
     cancelTelegramResync() {
-        this.frontendService.cancelTelegramResync().subscribe({
+        if (this.telegramSaving) return;
+        this.telegramSaving = true;
+        this.frontendService.cancelTelegramResync().pipe(finalize(() => this.telegramSaving = false), takeUntilDestroyed(this.destroyRef)).subscribe({
             next: () => { this.loadTelegramStatus(); },
             error: (err) => this.messageService.add({ severity: 'error', summary: 'Cancel failed', detail: err?.error?.message })
         });
@@ -303,9 +338,9 @@ export class ConfigurationComponent implements OnInit {
     protected readonly TelegramStatus = TelegramStatus;
 
     loadChatReceivers() {
-        this.identityInApplicationService.getIdentityInApplicationsByApplication('WhatsApp').subscribe((whatsApp) => {
+        this.identityInApplicationService.getIdentityInApplicationsByApplication('WhatsApp').pipe(this.refresh.track('receivers'), takeUntilDestroyed(this.destroyRef)).subscribe({next: (whatsApp) => {
             this.whatsAppReceivers = whatsApp.map(i => i.identifier);
-        });
+        }, error: () => {}});
     }
 
     get receiversForCurrentApp(): string[] {

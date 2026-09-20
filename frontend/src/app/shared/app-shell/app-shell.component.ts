@@ -1,3 +1,4 @@
+import {PullToRefreshDirective} from '../refresh/pull-to-refresh.directive';
 import {ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal, viewChild} from '@angular/core';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {IsActiveMatchOptions, NavigationEnd, PRIMARY_OUTLET, Router, RouterLink, RouterLinkActive} from '@angular/router';
@@ -7,7 +8,7 @@ import {MenuItem} from 'primeng/api';
 
 @Component({
   selector: 'thereabout-app-shell',
-  imports: [RouterLink, RouterLinkActive, MenuModule],
+  imports: [PullToRefreshDirective, RouterLink, RouterLinkActive, MenuModule],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.scss',
   host: {'[class.sidebar-collapsed]': 'sidebarCollapsed()'},

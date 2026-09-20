@@ -5,9 +5,9 @@
     <span class="card-header-title">Weight</span>
   </span>
   <span class="weight-card-content">
-    @if (loading) {
+    @if (loading && !progress) {
       <span class="weight-value muted">--</span><span class="weight-small" role="status">Loading weight…</span>
-    } @else if (error) {
+    } @else if (error && !progress) {
       <span class="weight-small">Unable to load weight</span>
     } @else {
       <span class="weight-line"><span class="weight-value">{{ kg(progress?.latestWeightKg) }}</span><span class="weight-small">kg</span>
@@ -51,9 +51,9 @@
         }
       </div>
     }
-    @if (loading) {
+    @if (loading && !progress) {
       <p role="status">Loading weight history…</p>
-    } @else if (error) {
+    } @else if (error && !progress) {
       <p role="alert">Unable to load weight history. Please try again.</p>
       <button type="button" class="action" (click)="load()">Retry</button>
     } @else if (progress; as p) {

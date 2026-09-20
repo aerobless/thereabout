@@ -1,3 +1,4 @@
+import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {RouterModule} from '@angular/router';
@@ -49,6 +50,7 @@ import {
     styleUrl: './identities.component.scss'
 })
 export class IdentitiesComponent implements OnInit {
+  private readonly refresh = registerRefresh(() => { this.loadIdentities(); this.loadUnlinkedAppIdentities(); }, () => this.identityDialogVisible || this.linkDialogVisible);
 
     identities: Identity[] = [];
     unlinkedAppIdentities: IdentityInApplication[] = [];
@@ -79,16 +81,16 @@ export class IdentitiesComponent implements OnInit {
     }
 
     loadIdentities(): void {
-        this.identityService.getIdentities().subscribe(identities => {
+        this.identityService.getIdentities().pipe(this.refresh.track('identities')).subscribe({next: identities => {
             this.identities = identities;
-        });
+        }, error: () => {}});
     }
 
     loadUnlinkedAppIdentities(): void {
-        this.identityInApplicationService.getUnlinkedIdentityInApplications().subscribe(appIdentities => {
+        this.identityInApplicationService.getUnlinkedIdentityInApplications().pipe(this.refresh.track('unlinked')).subscribe({next: appIdentities => {
             this.unlinkedAppIdentities = appIdentities.filter(a => !a.isGroup);
             this.unlinkedGroupIdentities = appIdentities.filter(a => a.isGroup);
-        });
+        }, error: () => {}});
     }
 
     // --- Identity CRUD ---

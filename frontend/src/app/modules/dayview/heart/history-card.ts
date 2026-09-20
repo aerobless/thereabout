@@ -1,3 +1,4 @@
+import {registerRefresh} from '../../../shared/refresh/refresh-coordinator';
 import {DestroyRef, Directive, Input, OnChanges, inject} from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {Observable} from 'rxjs';
@@ -5,6 +6,7 @@ import {ChartData, ChartOptions} from 'chart.js';
 
 @Directive()
 export abstract class HistoryCard<T> implements OnChanges {
+  private readonly refresh = registerRefresh(() => this.load());
   @Input({required: true}) date = '';
   private readonly destroyRef = inject(DestroyRef);
   private requestId = 0;
@@ -34,7 +36,7 @@ export abstract class HistoryCard<T> implements OnChanges {
     const requestId = ++this.requestId;
     this.loading = true;
     this.error = false;
-    this.fetch().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.fetch().pipe(this.refresh.track('history'), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: history => {
         if (requestId !== this.requestId) return;
         this.history = history;

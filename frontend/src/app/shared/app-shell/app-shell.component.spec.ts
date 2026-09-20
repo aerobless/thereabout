@@ -1,3 +1,5 @@
+import {Subject} from 'rxjs';
+import {RefreshCoordinator, RefreshHandle} from '../refresh/refresh-coordinator';
 import {Component} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {provideRouter, Router, RouterOutlet} from '@angular/router';
@@ -40,6 +42,19 @@ describe('AppShellComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
   }
+
+  it('announces refreshing until the active reads finish', async () => {
+    const coordinator = TestBed.inject(RefreshCoordinator);
+    const pending = new Subject<void>();
+    const handle = new RefreshHandle(() => pending.pipe(handle.track('read')).subscribe(), () => false);
+    coordinator.register(handle);
+    const refreshing = coordinator.refresh();
+    fixture.detectChanges();
+    expect(root().querySelector('[role="status"]')?.textContent).toContain('Refreshing…');
+    expect(root().querySelector('[role="status"]')?.getAttribute('aria-busy')).toBe('true');
+    pending.complete(); await refreshing; fixture.detectChanges();
+    expect(root().querySelector('[role="status"]')).toBeNull();
+  });
 
   it('keeps Day View active with date query parameters and switches destinations', async () => {
     await navigate('/?date=2026-09-17');

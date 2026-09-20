@@ -1,3 +1,4 @@
+import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 import {Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject} from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {
@@ -43,6 +44,7 @@ import {ThereaboutHeatmapLayerDirective} from "./thereabout-heatmap-layer.direct
     styleUrl: './locationhistory.component.scss'
 })
 export class LocationhistoryComponent implements OnInit {
+  private readonly refresh = registerRefresh(() => this.loadHeatmapData(true), () => this.embedMode);
 
     // Embed view
     embedMode = false;
@@ -132,15 +134,15 @@ export class LocationhistoryComponent implements OnInit {
         return date;
     }
 
-    loadHeatmapData() {
+    loadHeatmapData(preserve = false) {
         const requestId = ++this.heatmapRequestId;
-        this.heatmapData = [];
+        if (!preserve) this.heatmapData = [];
         this.heatmapError = false;
         this.heatmapLoading = false;
         if (!this.fromDate || !this.toDate || this.fromDate > this.toDate) return;
         this.heatmapLoading = true;
         this.locationService.getSparseLocations(this.dateToString(this.fromDate), this.dateToString(this.toDate))
-            .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            .pipe(this.refresh.track('heatmap'), takeUntilDestroyed(this.destroyRef)).subscribe({
                 next: locations => {
                     if (requestId !== this.heatmapRequestId) return;
                     this.heatmapData = locations.map(location => ({lat: location.latitude, lng: location.longitude}));

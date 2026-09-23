@@ -306,6 +306,30 @@ a {
 // ============================================================================
 // Mobile Responsive
 // ============================================================================
+@container dayview (width >= 900px) {
+  // Share rows between the map and stats so their edges stay aligned as content grows.
+  .card-container {
+    grid-template-columns: minmax(0, 2.4fr) repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(5, minmax(0, 1fr)) auto;
+    row-gap: 1rem;
+  }
+  .column-left, .column-right, .daily-stats-grid { display: contents; }
+  .daily-stats-grid > :nth-child(odd) { grid-column: 2; }
+  .daily-stats-grid > :nth-child(even) { grid-column: 3; }
+  .card-map { grid-column: 1; grid-row: 1 / span 3; min-height: 0; }
+  .card-day-links { grid-column: 1; grid-row: 4; align-self: start; }
+  .card-workouts { grid-column: 2 / span 2; grid-row: 6; }
+
+  .card-map ::ng-deep {
+    .p-card { height: 100%; box-sizing: border-box; }
+    .p-card-body, .p-card-content { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  }
+  .card-map .map-content { flex: 1; min-height: 0; }
+  .card-map .map-wrapper { flex: 1; height: auto; min-height: 0; position: relative; }
+  .card-map google-map { position: absolute; inset: 0; }
+  .card-map .map-footer { flex-shrink: 0; }
+}
+
 @container dayview (width < 900px) {
   .card-container {
     grid-template-columns: 1fr;

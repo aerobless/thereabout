@@ -24,7 +24,7 @@
 <div class="dayview-cards-region">
 <div class="card-container">
 
-  <!-- Left Column: map and energy -->
+  <!-- Left Column: map and day links -->
   <div class="column-left">
 
     <!-- Location History Map Card -->
@@ -64,49 +64,15 @@
       </div>
     </p-card>
 
-    <!-- Energy Card -->
-    <p-card class="dayview-card card-energy">
-      <ng-template #header>
-        <div class="card-header">
-          <i class="fa-solid fa-bolt card-header-icon"></i>
-          <span class="card-header-title">Energy</span>
-        </div>
-      </ng-template>
-      <div class="energy-content">
-        <div class="energy-row">
-          <div class="energy-item energy-active">
-            <div class="energy-label-row">
-              <i class="fa-solid fa-fire energy-icon"></i>
-              <span class="energy-label">Active</span>
-            </div>
-            <div class="energy-value-row">
-              @if (selectedDayActiveEnergy !== null) {
-                <span class="energy-value">{{ formatDailyEnergy(selectedDayActiveEnergy) }}</span>
-                <span class="energy-unit">{{ energyUnits }}</span>
-              }
-              @if (selectedDayActiveEnergy === null) {
-                <span class="energy-value muted">--</span>
-              }
-            </div>
-          </div>
-          <div class="energy-divider"></div>
-          <div class="energy-item energy-basal">
-            <div class="energy-label-row">
-              <i class="fa-solid fa-bed energy-icon"></i>
-              <span class="energy-label">Basal</span>
-            </div>
-            <div class="energy-value-row">
-              @if (selectedDayBasalEnergy !== null) {
-                <span class="energy-value">{{ formatDailyEnergy(selectedDayBasalEnergy) }}</span>
-                <span class="energy-unit">{{ energyUnits }}</span>
-              }
-              @if (selectedDayBasalEnergy === null) {
-                <span class="energy-value muted">--</span>
-              }
-            </div>
-          </div>
-        </div>
-      </div>
+    <p-card class="dayview-card card-day-links">
+      <nav class="day-links" aria-label="Explore this day">
+        @for (link of dayLinks; track link.label) {
+          <a [href]="link.url" target="_blank" rel="noopener noreferrer" [attr.aria-label]="link.label + ' (opens in a new tab)'">
+            <span class="launcher-icon"><i [class]="'pi ' + link.icon" aria-hidden="true"></i></span>
+            <span class="launcher-label">{{ link.label }}</span>
+          </a>
+        }
+      </nav>
     </p-card>
 
   </div>
@@ -143,6 +109,8 @@
           }
         </span>
       </button>
+      <app-energy-card [date]="dateToString(selectedDate)" [activeRecords]="activeEnergyRecords" [basalRecords]="basalEnergyRecords"
+        [loading]="stepsLoading" [error]="stepsError" (retry)="loadHealthData()"></app-energy-card>
       <app-choices-card [date]="dateToString(selectedDate)"></app-choices-card>
       <app-weight-card [date]="dateToString(selectedDate)"></app-weight-card>
       <app-heart-rate-card [date]="dateToString(selectedDate)"></app-heart-rate-card>
@@ -398,7 +366,7 @@
         <thereabout-location-sidebar class="location-sidebar" [date]="selectedDate" (dateChange)="setDateAndUpdateUrl($event)"
           [entries]="dayViewDataFull" [(selection)]="selectedLocationEntries" (highlight)="highlightedLocationEntry = $event"
           [draft]="locationEditDraft" [busy]="locationEditorBusy" [saving]="locationSaving" [loading]="locationsLoading" [error]="locationsError"
-          (locate)="locateLocation()" (photos)="openLocationPhotos()" (create)="createLocation()" (edit)="editLocation()"
+          (locate)="locateLocation()" (create)="createLocation()" (edit)="editLocation()"
           (remove)="deleteLocations()" (save)="saveLocation()" (cancel)="locationEditDraft = null">
           <div location-status class="map-footer">
             <ng-container [ngTemplateOutlet]="locationStatus" />

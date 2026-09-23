@@ -1,0 +1,26 @@
+:host { display: block; min-width: 0; }
+.energy-card {
+  display: flex; flex-direction: column; width: 100%; height: 100%; padding: 0;
+  text-align: left; font: inherit; color: var(--app-ink); background: var(--app-surface);
+  border: 1px solid var(--app-border); border-radius: 10px; overflow: hidden; cursor: pointer;
+  &:hover { border-color: var(--p-primary-300); background: var(--app-hover); }
+}
+.card-header { width: 100%; box-sizing: border-box; }
+.expand-icon { margin-left: auto; font-size: .75rem; }
+.content { display: flex; flex-direction: column; gap: .4rem; padding: .8rem 1rem; }
+.energy-line { display: flex; align-items: baseline; flex-wrap: wrap; gap: .4rem; }
+.value { font-family: var(--app-font-display); font-size: 1.4rem; font-weight: 600; line-height: 1.2; }
+.caption { font-size: .8rem; color: var(--app-muted); }
+.chart-heading, .ranges { display: flex; align-items: center; gap: .5rem; }
+.chart-heading { justify-content: space-between; flex-wrap: wrap; }
+.action { padding: .5rem .8rem; cursor: pointer; }
+.summary-grid { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; }
+.summary-grid section { display: flex; flex-direction: column; gap: .3rem; padding: .75rem 1rem; }
+.summary-grid strong { font-size: 1.4rem; }
+.summary-grid span { font-size: .85rem; color: var(--app-muted); }
+button:focus-visible { outline: 2px solid var(--app-link); outline-offset: -3px; }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: .5rem; text-align: left; border-bottom: 1px solid var(--app-border); white-space: nowrap; }
+caption { text-align: left; padding: .5rem; }
+summary { cursor: pointer; padding: .5rem 0; }

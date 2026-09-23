@@ -6,7 +6,6 @@
 </div>
 <div class="actions">
   <p-button label="Locate" ariaLabel="Locate" icon="pi pi-map-marker" severity="secondary" [disabled]="loading || entries.length === 0" (onClick)="locate.emit()" />
-  <p-button label="Photos" ariaLabel="Photos" icon="pi pi-image" severity="secondary" (onClick)="photos.emit()" />
   <p-button label="Today" ariaLabel="Today" icon="pi pi-calendar" severity="secondary" [disabled]="saving" (onClick)="today()" />
 </div>
 <p-table

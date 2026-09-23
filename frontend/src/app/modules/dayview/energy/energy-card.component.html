@@ -1,0 +1,59 @@
+<button #card type="button" class="energy-card" aria-haspopup="dialog" [attr.aria-expanded]="visible" (click)="visible = true">
+  <span class="card-header">
+    <i class="fa-solid fa-bolt card-header-icon" aria-hidden="true"></i>
+    <span class="card-header-title">Energy</span>
+    <i class="pi pi-expand expand-icon" aria-hidden="true"></i>
+  </span>
+  <span class="content">
+    @if (loading) { <span class="value">—</span><span role="status">Loading energy…</span> }
+    @else if (error) { <span>Unable to load energy</span> }
+    @else {
+      <span class="energy-line"><strong class="value">{{ format(selected?.active) }}</strong><span class="caption">Active</span></span>
+      <span class="energy-line"><strong class="value">{{ format(selected?.basal) }}</strong><span class="caption">Basal</span></span>
+      @if (isToday(date)) { <span class="caption">So far today</span> }
+      @if (selected?.incomplete) { <span class="caption">Incomplete day</span> }
+    }
+  </span>
+</button>
+
+<p-dialog [header]="'Energy — ' + (date | date:'dd.MM.yyyy')" styleClass="dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
+  [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false" [dismissableMask]="true"
+  [closeOnEscape]="true" [focusTrap]="true" [blockScroll]="true" closeAriaLabel="Close energy" (onHide)="card.focus()" [style]="dialogStyle">
+  @if (visible) {
+    <div class="chart-heading">
+      <h3>Daily energy</h3>
+      <div class="ranges" role="group" aria-label="Energy chart range">
+        <button class="action" type="button" [attr.aria-pressed]="days === 7" (click)="selectRange(7)">7d</button>
+        <button class="action" type="button" [attr.aria-pressed]="days === 30" (click)="selectRange(30)">30d</button>
+      </div>
+    </div>
+    @if (loading) { <p role="status">Loading energy history…</p> }
+    @else if (error) {
+      <p role="alert">Unable to load energy history.</p><button class="action" type="button" (click)="retry.emit()">Retry</button>
+    } @else {
+      <p class="caption">Selected day@if (isToday(date)) { · so far today }</p>
+      <div class="summary-grid">
+        <section><span>Active</span><strong>{{ format(selected?.active) }}</strong></section>
+        <section><span>Basal</span><strong>{{ format(selected?.basal) }}</strong></section>
+        @if (selected?.total != null) { <section><span>Total</span><strong>{{ format(selected.total) }}</strong></section> }
+      </div>
+      @if (selected?.incomplete) { <p class="caption">Incomplete day — total unavailable.</p> }
+      @if (unsupportedUnits) { <p role="status">Records with unsupported units ({{ unsupportedUnits }}) are excluded. Energy is shown in kcal.</p> }
+      @if (hasData) {
+        <p-chart type="bar" [data]="chartData" [options]="chartOptions" [style]="{width: '100%', height: '300px'}"
+          ariaLabel="Daily Active and Basal energy in kcal. Exact values and incomplete days are listed in the Daily values table below."></p-chart>
+      } @else { <p role="status">No energy data in this {{ days }}-day range.</p> }
+      <p class="caption">{{ days }} days ending {{ date | date:'dd.MM.yyyy' }}. Missing measurements are not zero; bars may be incomplete.</p>
+      <details>
+        <summary>Daily values</summary>
+        <div class="table-scroll"><table>
+          <caption>Daily energy in kcal</caption>
+          <thead><tr><th scope="col">Date</th><th scope="col">Active</th><th scope="col">Basal</th><th scope="col">Total</th><th scope="col">Status</th></tr></thead>
+          <tbody>@for (day of range; track day.date) {
+            <tr><th scope="row">{{ day.date | date:'dd.MM.yyyy' }}</th><td>{{ format(day.active) }}</td><td>{{ format(day.basal) }}</td><td>{{ format(day.total) }}</td><td>{{ status(day) }}@if (isToday(day.date)) { · so far }</td></tr>
+          }</tbody>
+        </table></div>
+      </details>
+    }
+  }
+</p-dialog>

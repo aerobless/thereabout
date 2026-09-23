@@ -20,6 +20,7 @@ describe('LocationSidebarComponent', () => {
     expect(row.textContent).toContain('47.37818');
     expect(row.textContent).toContain('8.54019');
     expect(row.textContent).not.toContain('undefined');
+    expect(fixture.nativeElement.querySelector('button[aria-label="Photos"]')).toBeNull();
   });
 
   it('emits immutable day navigation and rejects empty dates or navigation during a write', async () => {

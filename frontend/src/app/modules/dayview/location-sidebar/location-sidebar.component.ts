@@ -34,7 +34,6 @@ export class LocationSidebarComponent {
   @Output() selectionChange = new EventEmitter<LocationHistoryEntry[]>();
   @Output() highlight = new EventEmitter<LocationHistoryEntry | undefined>();
   @Output() locate = new EventEmitter<void>();
-  @Output() photos = new EventEmitter<void>();
   @Output() create = new EventEmitter<void>();
   @Output() edit = new EventEmitter<void>();
   @Output() remove = new EventEmitter<void>();

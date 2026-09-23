@@ -61,6 +61,40 @@ describe('DayviewComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it.each([
+    [new Date(2026, 8, 23), '2026-09-23', '2026/9/23'],
+    [new Date(2024, 1, 29), '2024-02-29', '2024/2/29'],
+    [new Date(2026, 0, 1, 0, 5), '2026-01-01', '2026/1/1'],
+    [new Date(2026, 2, 29, 23, 55), '2026-03-29', '2026/3/29']
+  ])('builds service links from the selected local date %s', (date, iso, calendar) => {
+    component.selectedDate = date as Date;
+    expect(component.dayLinks.map(link => [link.label, link.url])).toEqual([
+      ['Photos', `https://photos.google.com/search/${iso}`],
+      ['Calendar', `https://calendar.google.com/calendar/u/0/r/week/${calendar}`],
+      ['Expenses', `https://firefly.w1nter.com/transactions/all/${iso}/${iso}`]
+    ]);
+  });
+
+  it('clears energy on date changes and ignores superseded responses and failures', () => {
+    const oldDay = new Subject<HealthDataResponse>();
+    const currentDay = new Subject<HealthDataResponse>();
+    getHealthData.mockReturnValueOnce(oldDay).mockReturnValueOnce(currentDay);
+    component.loadHealthData();
+    oldDay.next({metrics: {active_energy: [{date: '2026-09-15', qty: 500}], basal_energy_burned: [{date: '2026-09-15', qty: 1500}]}});
+    expect(component.activeEnergyRecords[0].qty).toBe(500);
+    expect(component.basalEnergyRecords[0].qty).toBe(1500);
+    component.selectedDate = new Date(2026, 8, 16);
+    component.loadHealthData();
+    expect(component.activeEnergyRecords).toEqual([]);
+    expect(component.basalEnergyRecords).toEqual([]);
+    currentDay.next({metrics: {active_energy: [{date: '2026-09-16', qty: 600}], basal_energy_burned: [{date: '2026-09-16', qty: 1600}]}});
+    oldDay.next({metrics: {active_energy: [{date: '2026-09-15', qty: 9999}]}});
+    oldDay.error(new Error('Stale failure'));
+    expect(component.activeEnergyRecords[0].qty).toBe(600);
+    expect(component.basalEnergyRecords[0].qty).toBe(1600);
+    expect(component.stepsError).toBe(false);
+  });
+
   it('omits today from the URL and retains other dates without removing unrelated query parameters', () => {
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     vi.spyOn(component, 'loadDayViewData').mockImplementation(() => undefined);

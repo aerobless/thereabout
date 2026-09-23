@@ -33,6 +33,7 @@ import {
 import {ChartData, ChartOptions} from 'chart.js';
 import {dailyStepTotals, shiftDay, stepHistory, StepProgress} from './steps-progress';
 
+import {EnergyCardComponent} from './energy/energy-card.component';
 import {DurationCardComponent} from './duration/duration-card.component';
 import {ChoicesCardComponent} from './choices/choices-card.component';
 import {WeightCardComponent} from './weight/weight-card.component';
@@ -44,6 +45,7 @@ const THEO_IDENTITY_ID = 1;
 @Component({
     selector: 'app-dayview',
     imports: [
+    EnergyCardComponent,
     DurationCardComponent,
     ChoicesCardComponent,
     WeightCardComponent,
@@ -248,9 +250,8 @@ export class DayviewComponent implements OnInit {
   }
   
   // Energy data
-  selectedDayActiveEnergy: number | null = null;
-  selectedDayBasalEnergy: number | null = null;
-  energyUnits: string = 'kcal';
+  activeEnergyRecords: DailyMetricValue[] = [];
+  basalEnergyRecords: DailyMetricValue[] = [];
 
   // Daily stats (above Workouts)
   selectedDaySteps: number | null = null;
@@ -398,8 +399,14 @@ export class DayviewComponent implements OnInit {
     this.expandedMap.setZoom(this.selectedLocationEntries.length ? 16 : 11);
   }
 
-  openLocationPhotos() {
-    window.open(`https://photos.google.com/search/${this.dateToString(this.selectedDate)}`, '_blank', 'noopener');
+  get dayLinks() {
+    const date = this.dateToString(this.selectedDate);
+    const calendarDate = `${this.selectedDate.getFullYear()}/${this.selectedDate.getMonth() + 1}/${this.selectedDate.getDate()}`;
+    return [
+      {label: 'Photos', icon: 'pi-image', url: `https://photos.google.com/search/${date}`},
+      {label: 'Calendar', icon: 'pi-calendar', url: `https://calendar.google.com/calendar/u/0/r/week/${calendarDate}`},
+      {label: 'Expenses', icon: 'pi-wallet', url: `https://firefly.w1nter.com/transactions/all/${date}/${date}`}
+    ];
   }
 
   createLocation() {
@@ -521,6 +528,8 @@ export class DayviewComponent implements OnInit {
       this.stepsHistory = [];
       this.standRecords = [];
       this.sleepRecords = [];
+      this.activeEnergyRecords = [];
+      this.basalEnergyRecords = [];
       this.selectedStepProgress = null;
       this.selectedDaySteps = null;
       this.selectedDayDistanceKm = null;
@@ -536,27 +545,8 @@ export class DayviewComponent implements OnInit {
         this.selectedStepProgress = this.stepsHistory[29];
         this.selectedDaySteps = this.selectedStepProgress.steps;
         this.updateStepsChart();
-        // Extract energy metrics
-        const activeEnergyMetrics = response.metrics?.['active_energy'] || [];
-        const basalEnergyMetrics = response.metrics?.['basal_energy_burned'] || [];
-
-        // Find energy for selected day
-        const selectedDayActiveEnergyMetric = activeEnergyMetrics.find((m: any) => m.date === selectedDateStr);
-        const selectedDayBasalEnergyMetric = basalEnergyMetrics.find((m: any) => m.date === selectedDateStr);
-        
-        this.selectedDayActiveEnergy = selectedDayActiveEnergyMetric?.qty != null 
-          ? Number(selectedDayActiveEnergyMetric.qty) 
-          : null;
-        this.selectedDayBasalEnergy = selectedDayBasalEnergyMetric?.qty != null 
-          ? Number(selectedDayBasalEnergyMetric.qty) 
-          : null;
-        
-        // Extract units (use from active energy if available, otherwise default)
-        if (selectedDayActiveEnergyMetric?.units) {
-          this.energyUnits = selectedDayActiveEnergyMetric.units;
-        } else if (selectedDayBasalEnergyMetric?.units) {
-          this.energyUnits = selectedDayBasalEnergyMetric.units;
-        }
+        this.activeEnergyRecords = response.metrics?.['active_energy'] ?? [];
+        this.basalEnergyRecords = response.metrics?.['basal_energy_burned'] ?? [];
 
         // Extract and filter workouts for selected day
         const allWorkouts = response.workouts || [];
@@ -586,8 +576,8 @@ export class DayviewComponent implements OnInit {
         this.stepsError = !preserve;
         console.error('Error loading health data:', error);
         if (preserve) return;
-        this.selectedDayActiveEnergy = null;
-        this.selectedDayBasalEnergy = null;
+        this.activeEnergyRecords = [];
+        this.basalEnergyRecords = [];
         this.workouts = [];
         this.selectedDaySteps = null;
         this.selectedDayDistanceKm = null;
@@ -656,11 +646,6 @@ export class DayviewComponent implements OnInit {
   formatDistance(distance: number | undefined, units: string | undefined): string {
     if (distance === undefined || distance === null || !units) return '--';
     return `${distance.toFixed(2)} ${units}`;
-  }
-
-  formatDailyEnergy(energy: number | null): string {
-    if (energy === null || energy === undefined) return '--';
-    return Math.round(energy).toString();
   }
 
   formatSteps(steps: number | null): string {

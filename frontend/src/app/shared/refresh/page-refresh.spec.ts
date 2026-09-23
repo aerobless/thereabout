@@ -70,10 +70,10 @@ describe('Page refresh integration', () => {
     messages.getMessages.mockReturnValue(throwError(() => new Error('offline')));
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const page = TestBed.createComponent(DayviewComponent).componentInstance;
-    page.selectedDaySteps = 1234; page.selectedDayActiveEnergy = 500;
+    page.selectedDaySteps = 1234; page.activeEnergyRecords = [{date: '2026-09-15', qty: 500}];
     page.messages = [{id: 1, type: 'text', source: 'Telegram', sender: {name: 'Sender'}, receiver: {name: 'Receiver'}, timestamp: '2026-09-15T12:00:00Z', body: 'kept'}];
     await TestBed.inject(RefreshCoordinator).refresh();
-    expect(page.selectedDaySteps).toBe(1234); expect(page.selectedDayActiveEnergy).toBe(500);
+    expect(page.selectedDaySteps).toBe(1234); expect(page.activeEnergyRecords).toEqual([{date: '2026-09-15', qty: 500}]);
     expect(page.messages[0].body).toBe('kept'); expect(page.messagesError).toBe(false);
     error.mockRestore();
   });

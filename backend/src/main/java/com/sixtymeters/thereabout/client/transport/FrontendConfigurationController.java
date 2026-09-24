@@ -91,12 +91,15 @@ public class FrontendConfigurationController implements FrontendApi {
     }
 
     @Override
-    public ResponseEntity<Void> importFromFile(MultipartFile file, GenImportType importType, String receiver) {
+    public ResponseEntity<Void> importFromFile(MultipartFile file, GenImportType importType, Optional<String> receiver) {
         log.info("Received file %s with import type %s via HTTP Endpoint /backend/api/v1/config/import-file"
                 .formatted(file.getOriginalFilename(), importType));
 
         if (file.isEmpty()) {
             throw new ThereaboutException(HttpStatusCode.valueOf(400), "file is required");
+        }
+        if (importType == GenImportType.WHATSAPP_CHAT && receiver.filter(value -> !value.isBlank()).isEmpty()) {
+            throw new ThereaboutException(HttpStatusCode.valueOf(400), "receiver is required for WhatsApp imports");
         }
 
         final var importDataToBeProcessed = persistTempFileForProcessing(file);
@@ -109,7 +112,7 @@ public class FrontendConfigurationController implements FrontendApi {
                     .findFirst()
                     .orElseThrow(() -> new ThereaboutException(HttpStatusCode.valueOf(400),
                             "No importer found for import type: %s".formatted(importType)));
-            CompletableFuture.runAsync(() -> importer.importFile(importDataToBeProcessed, receiver));
+            CompletableFuture.runAsync(() -> importer.importFile(importDataToBeProcessed, receiver.orElse(null)));
         }
 
         return ResponseEntity.noContent().build();

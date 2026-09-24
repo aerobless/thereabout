@@ -98,19 +98,30 @@ class FrontendConfigurationControllerTest {
     }
 
     @Test
-    void testImportFromFile() throws Exception {
+    void testImportFromFileWithoutReceiver() throws Exception {
         MockMultipartFile file = new MockMultipartFile(
                 "file",
-                "test-location-history.json",
+                "health-export.json",
                 MediaType.APPLICATION_JSON_VALUE,
-                "{\"locations\": []}".getBytes()
+                "{\"data\":{\"metrics\":[]}}".getBytes()
         );
 
         mockMvc.perform(multipart("/backend/api/v1/config/import-file")
                         .file(file)
-                        .param("importType", "GOOGLE_MAPS_RECORDS")
-                        .param("receiver", "test-receiver"))
+                        .param("importType", "HEALTH_AUTO_EXPORT_JSON"))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void testWhatsAppImportRequiresReceiver() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "chat.txt", MediaType.TEXT_PLAIN_VALUE, "message".getBytes()
+        );
+
+        mockMvc.perform(multipart("/backend/api/v1/config/import-file")
+                        .file(file)
+                        .param("importType", "WHATSAPP_CHAT"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

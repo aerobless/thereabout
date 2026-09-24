@@ -44,7 +44,6 @@ paths:
                 required:
                   - file
                   - importType
-                  - receiver
                 properties:
                   file:
                     type: string
@@ -53,7 +52,7 @@ paths:
                     $ref: '#/components/schemas/ImportType'
                   receiver:
                     type: string
-                    description: The receiver identifier (e.g. contact name or group name)
+                    description: The receiver identifier for WhatsApp imports (e.g. contact name or group name)
       responses:
         204:
           description: The file is successfully being imported.

@@ -1,0 +1,427 @@
+---
+paths:
+  Status:
+    get:
+      tags:
+      - Calendar
+      operationId: getGoogleCalendarStatus
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/GoogleCalendarStatus"
+  Secrets:
+    put:
+      tags:
+      - Calendar
+      operationId: saveGoogleCalendarCredentials
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/GoogleCalendarStatus"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/GoogleCredentials"
+  Reveal:
+    get:
+      tags:
+      - Calendar
+      operationId: revealGoogleCalendarSecret
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CalendarSecretValue"
+      parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - clientId
+          - clientSecret
+          - refreshToken
+  Webhook:
+    put:
+      tags:
+      - Calendar
+      operationId: saveCalendarWebhook
+      responses:
+        '204':
+          description: Success
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CalendarWebhookSettings"
+  Calendars:
+    get:
+      tags:
+      - Calendar
+      operationId: getAvailableGoogleCalendars
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/CalendarInfo"
+  Import:
+    post:
+      tags:
+      - Calendar
+      operationId: importGoogleCalendars
+      responses:
+        '202':
+          description: Success
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CalendarSelection"
+  Sync:
+    post:
+      tags:
+      - Calendar
+      operationId: syncGoogleCalendars
+      responses:
+        '202':
+          description: Success
+  Notifications:
+    post:
+      tags:
+      - Calendar
+      operationId: receiveGoogleCalendarNotification
+      responses:
+        '204':
+          description: Success
+      parameters:
+      - name: X-Goog-Channel-ID
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: X-Goog-Channel-Token
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: X-Goog-Resource-ID
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: X-Goog-Resource-State
+        in: header
+        required: true
+        schema:
+          type: string
+  Day:
+    get:
+      tags:
+      - Calendar
+      operationId: getCalendarDay
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/CalendarOccurrence"
+      parameters:
+      - name: date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      - name: timeZone
+        in: query
+        required: true
+        schema:
+          type: string
+  Delete:
+    delete:
+      tags:
+      - Calendar
+      operationId: deleteCalendarEvent
+      description: Permanently hide a local event or occurrence in Thereabout without modifying Google Calendar. Does not require a Google connection or write access; repeated deletion succeeds.
+      responses:
+        '204':
+          description: Success
+      parameters:
+      - name: calendarId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: originalStart
+        in: query
+        required: false
+        schema:
+          type: string
+components:
+  schemas:
+    GoogleSecretStatus:
+      type: object
+      properties:
+        clientId:
+          type: boolean
+        clientSecret:
+          type: boolean
+        refreshToken:
+          type: boolean
+      required:
+      - clientId
+      - clientSecret
+      - refreshToken
+    GoogleCredentials:
+      type: object
+      properties:
+        clientId:
+          type: string
+        clientSecret:
+          type: string
+        refreshToken:
+          type: string
+      required: []
+    CalendarSecretValue:
+      type: object
+      properties:
+        value:
+          type: string
+      required:
+      - value
+    CalendarWebhookSettings:
+      type: object
+      properties:
+        url:
+          type: string
+      required:
+      - url
+    CalendarSelection:
+      type: object
+      properties:
+        calendarIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+      required:
+      - calendarIds
+    CalendarInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        color:
+          type: string
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        timeZone:
+          type: string
+        accessRole:
+          type: string
+        selected:
+          type: boolean
+        state:
+          type: string
+        error:
+          type: string
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        importedCount:
+          type: integer
+        lastSyncAt:
+          type: string
+          format: date-time
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        webhookHealth:
+          type: string
+        channelExpiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+      required:
+      - id
+      - name
+      - color
+      - timeZone
+      - accessRole
+      - selected
+      - state
+      - error
+      - importedCount
+      - lastSyncAt
+      - webhookHealth
+      - channelExpiresAt
+    GoogleCalendarStatus:
+      type: object
+      properties:
+        account:
+          type: string
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        state:
+          type: string
+        error:
+          type: string
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        webhookUrl:
+          type: string
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        webhookHealth:
+          type: string
+        secrets:
+          "$ref": "#/components/schemas/GoogleSecretStatus"
+        calendars:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CalendarInfo"
+      required:
+      - account
+      - state
+      - error
+      - webhookUrl
+      - webhookHealth
+      - secrets
+      - calendars
+    CalendarGuest:
+      type: object
+      properties:
+        applicationIdentityId:
+          type: integer
+          format: int64
+        identityId:
+          type: integer
+          format: int64
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        email:
+          type: string
+        name:
+          type: string
+        responseStatus:
+          type: string
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        organizer:
+          type: boolean
+        self:
+          type: boolean
+      required:
+      - applicationIdentityId
+      - identityId
+      - email
+      - name
+      - responseStatus
+      - organizer
+      - self
+    CalendarOccurrence:
+      type: object
+      properties:
+        key:
+          type: string
+        calendarId:
+          type: integer
+          format: int64
+        calendarName:
+          type: string
+        color:
+          type: string
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        syncing:
+          type: boolean
+        eventId:
+          type: string
+        originalStart:
+          type: string
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        recurring:
+          type: boolean
+        title:
+          type: string
+        location:
+          type: string
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        description:
+          type: string
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        allDay:
+          type: boolean
+        startDate:
+          type: string
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        endDate:
+          type: string
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        timeZone:
+          type: string
+        canDelete:
+          type: boolean
+        guests:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CalendarGuest"
+      required:
+      - key
+      - calendarId
+      - calendarName
+      - color
+      - syncing
+      - eventId
+      - originalStart
+      - recurring
+      - title
+      - location
+      - description
+      - start
+      - end
+      - allDay
+      - startDate
+      - endDate
+      - timeZone
+      - canDelete
+      - guests

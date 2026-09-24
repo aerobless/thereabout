@@ -1,3 +1,4 @@
+import {GoogleCalendarSettingsComponent} from '../calendar/google-calendar-settings.component';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 import {DestroyRef, inject, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
@@ -39,6 +40,7 @@ interface ImportTypeOption {
 @Component({
     selector: 'app-configuration',
     imports: [
+    GoogleCalendarSettingsComponent,
     ButtonModule,
     IconFieldModule,
     InputIconModule,

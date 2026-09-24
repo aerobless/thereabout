@@ -4,6 +4,26 @@ info:
   title: Frontend REST API
   version: "1.0"
 paths:
+  /backend/api/v1/calendar/google/status:
+    $ref: 'openapi/calendar.yaml#/paths/Status'
+  /backend/api/v1/calendar/google/secrets:
+    $ref: 'openapi/calendar.yaml#/paths/Secrets'
+  /backend/api/v1/calendar/google/secrets/{key}:
+    $ref: 'openapi/calendar.yaml#/paths/Reveal'
+  /backend/api/v1/calendar/google/webhook:
+    $ref: 'openapi/calendar.yaml#/paths/Webhook'
+  /backend/api/v1/calendar/google/calendars:
+    $ref: 'openapi/calendar.yaml#/paths/Calendars'
+  /backend/api/v1/calendar/google/import:
+    $ref: 'openapi/calendar.yaml#/paths/Import'
+  /backend/api/v1/calendar/google/sync:
+    $ref: 'openapi/calendar.yaml#/paths/Sync'
+  /backend/api/v1/calendar/google/notifications:
+    $ref: 'openapi/calendar.yaml#/paths/Notifications'
+  /backend/api/v1/calendar/day:
+    $ref: 'openapi/calendar.yaml#/paths/Day'
+  /backend/api/v1/calendar/{calendarId}/events/{eventId}:
+    $ref: 'openapi/calendar.yaml#/paths/Delete'
   /backend/api/v1/choices:
     $ref: 'openapi/choices.yaml#/paths/History'
   /backend/api/v1/choices/{date}/adjust:
@@ -74,6 +94,24 @@ paths:
 
 components:
   schemas:
+    GoogleSecretStatus:
+      $ref: 'openapi/calendar.yaml#/components/schemas/GoogleSecretStatus'
+    GoogleCredentials:
+      $ref: 'openapi/calendar.yaml#/components/schemas/GoogleCredentials'
+    CalendarSecretValue:
+      $ref: 'openapi/calendar.yaml#/components/schemas/CalendarSecretValue'
+    CalendarWebhookSettings:
+      $ref: 'openapi/calendar.yaml#/components/schemas/CalendarWebhookSettings'
+    CalendarSelection:
+      $ref: 'openapi/calendar.yaml#/components/schemas/CalendarSelection'
+    CalendarInfo:
+      $ref: 'openapi/calendar.yaml#/components/schemas/CalendarInfo'
+    GoogleCalendarStatus:
+      $ref: 'openapi/calendar.yaml#/components/schemas/GoogleCalendarStatus'
+    CalendarGuest:
+      $ref: 'openapi/calendar.yaml#/components/schemas/CalendarGuest'
+    CalendarOccurrence:
+      $ref: 'openapi/calendar.yaml#/components/schemas/CalendarOccurrence'
     # Shared
     ThereaboutBaseErrorModel:
       type: object

@@ -1,3 +1,4 @@
+import {CalendarCardComponent} from '../calendar/calendar-card.component';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 import {Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject, viewChild} from '@angular/core';
 import {Observable, finalize} from 'rxjs';
@@ -45,6 +46,7 @@ const THEO_IDENTITY_ID = 1;
 @Component({
     selector: 'app-dayview',
     imports: [
+    CalendarCardComponent,
     EnergyCardComponent,
     DurationCardComponent,
     ChoicesCardComponent,
@@ -401,10 +403,8 @@ export class DayviewComponent implements OnInit {
 
   get dayLinks() {
     const date = this.dateToString(this.selectedDate);
-    const calendarDate = `${this.selectedDate.getFullYear()}/${this.selectedDate.getMonth() + 1}/${this.selectedDate.getDate()}`;
     return [
       {label: 'Photos', icon: 'pi-image', url: `https://photos.google.com/search/${date}`},
-      {label: 'Calendar', icon: 'pi-calendar', url: `https://calendar.google.com/calendar/u/0/r/week/${calendarDate}`},
       {label: 'Expenses', icon: 'pi-wallet', url: `https://firefly.w1nter.com/transactions/all/${date}/${date}`}
     ];
   }

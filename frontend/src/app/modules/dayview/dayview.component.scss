@@ -86,19 +86,18 @@ a {
 }
 
 // ============================================================================
-// Explore this day
+// Apps
 // ============================================================================
 .day-links {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 5rem));
-  gap: 1rem;
-  padding: .25rem;
+  grid-template-columns: repeat(2, minmax(0, 3rem));
+  gap: .75rem;
 
   a {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: .6rem;
+    gap: .4rem;
     min-width: 0;
     border-radius: 12px;
     color: var(--app-ink);
@@ -116,9 +115,9 @@ a {
     border-radius: 12px;
     background: var(--app-surface);
     color: var(--p-primary-500);
-    i { font-size: 2rem; }
+    i { font-size: 1.35rem; }
   }
-  .launcher-label { font-size: .85rem; text-align: center; }
+  .launcher-label { font-size: .75rem; text-align: center; }
 }
 
 // ============================================================================
@@ -310,14 +309,15 @@ a {
   // Share rows between the map and stats so their edges stay aligned as content grows.
   .card-container {
     grid-template-columns: minmax(0, 2.4fr) repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(5, minmax(0, 1fr)) auto;
+    // The calendar can grow with overlaps without stretching every statistics row.
+    grid-template-rows: repeat(4, minmax(0, 1fr)) auto auto;
     row-gap: 1rem;
   }
   .column-left, .column-right, .daily-stats-grid { display: contents; }
   .daily-stats-grid > :nth-child(odd) { grid-column: 2; }
   .daily-stats-grid > :nth-child(even) { grid-column: 3; }
   .card-map { grid-column: 1; grid-row: 1 / span 3; min-height: 0; }
-  .card-day-links { grid-column: 1; grid-row: 4; align-self: start; }
+  .card-calendar { grid-column: 1; grid-row: 4 / span 3; align-self: start; }
   .card-workouts { grid-column: 2 / span 2; grid-row: 6; }
 
   .card-map ::ng-deep {

@@ -24,7 +24,7 @@
 <div class="dayview-cards-region">
 <div class="card-container">
 
-  <!-- Left Column: map and day links -->
+  <!-- Left Column: map and calendar -->
   <div class="column-left">
 
     <!-- Location History Map Card -->
@@ -64,16 +64,7 @@
       </div>
     </p-card>
 
-    <p-card class="dayview-card card-day-links">
-      <nav class="day-links" aria-label="Explore this day">
-        @for (link of dayLinks; track link.label) {
-          <a [href]="link.url" target="_blank" rel="noopener noreferrer" [attr.aria-label]="link.label + ' (opens in a new tab)'">
-            <span class="launcher-icon"><i [class]="'pi ' + link.icon" aria-hidden="true"></i></span>
-            <span class="launcher-label">{{ link.label }}</span>
-          </a>
-        }
-      </nav>
-    </p-card>
+    <app-calendar-card class="card-calendar" [date]="dateToString(selectedDate)" />
 
   </div>
 
@@ -139,6 +130,22 @@
           }
         </span>
       </button>
+      <p-card class="dayview-card daily-stat-card card-day-links">
+        <ng-template #header>
+          <div class="card-header">
+            <i class="pi pi-th-large card-header-icon" aria-hidden="true"></i>
+            <span class="card-header-title">Apps</span>
+          </div>
+        </ng-template>
+        <nav class="day-links" aria-label="Apps for this day">
+          @for (link of dayLinks; track link.label) {
+            <a [href]="link.url" target="_blank" rel="noopener noreferrer" [attr.aria-label]="link.label + ' (opens in a new tab)'">
+              <span class="launcher-icon"><i [class]="'pi ' + link.icon" aria-hidden="true"></i></span>
+              <span class="launcher-label">{{ link.label }}</span>
+            </a>
+          }
+        </nav>
+      </p-card>
     </div>
 
     <!-- Workouts Card (hidden when no workouts for the day) -->

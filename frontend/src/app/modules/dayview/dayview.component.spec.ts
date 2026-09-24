@@ -62,15 +62,14 @@ describe('DayviewComponent', () => {
   });
 
   it.each([
-    [new Date(2026, 8, 23), '2026-09-23', '2026/9/23'],
-    [new Date(2024, 1, 29), '2024-02-29', '2024/2/29'],
-    [new Date(2026, 0, 1, 0, 5), '2026-01-01', '2026/1/1'],
-    [new Date(2026, 2, 29, 23, 55), '2026-03-29', '2026/3/29']
-  ])('builds service links from the selected local date %s', (date, iso, calendar) => {
+    [new Date(2026, 8, 23), '2026-09-23'],
+    [new Date(2024, 1, 29), '2024-02-29'],
+    [new Date(2026, 0, 1, 0, 5), '2026-01-01'],
+    [new Date(2026, 2, 29, 23, 55), '2026-03-29']
+  ])('builds service links from the selected local date %s', (date, iso) => {
     component.selectedDate = date as Date;
     expect(component.dayLinks.map(link => [link.label, link.url])).toEqual([
       ['Photos', `https://photos.google.com/search/${iso}`],
-      ['Calendar', `https://calendar.google.com/calendar/u/0/r/week/${calendar}`],
       ['Expenses', `https://firefly.w1nter.com/transactions/all/${iso}/${iso}`]
     ]);
   });

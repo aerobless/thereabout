@@ -52,6 +52,15 @@ Health cards use the data you import. Missing sleep stages and missing days rema
 - Manage people and groups, and link their application-specific identities across sources.
 - Start, cancel or repeat Telegram history synchronisation from Configuration, and disconnect when needed.
 
+### Calendar
+
+- Import selected Google calendars from Configuration and keep them current using Google webhooks, with daily recovery for missed notifications.
+- Browse a time-scaled event timeline directly below the Day View map, including all-day and overlapping events.
+- Open event details and delete individual events or recurring occurrences locally in Thereabout, without changing Google. Local deletions survive subsequent imports.
+- Link imported guest and account identities to people. Configure Google credentials in the separate Secrets panel.
+
+See [Google Calendar setup and webhook routing](documentation/google-calendar.md).
+
 ### Desktop and mobile
 
 A collapsible desktop sidebar, mobile bottom navigation, compact cards and full-screen mobile detail views make the same history usable on both screens. A home-screen icon is included. Location creation and marker dragging are desktop interactions.
@@ -67,6 +76,7 @@ A collapsible desktop sidebar, mobile bottom navigation, compact cards and full-
 | **Other location clients** | Submit GeoJSON to `/backend/api/v1/location/geojson`. |
 | **Health Auto Export** | Upload its JSON export in Configuration, or submit metrics and workouts to `/backend/api/v1/health`. |
 | **WhatsApp** | Upload a chat export as a `.txt` file and select its receiver. |
+| **Google Calendar** | Save OAuth credentials in Secrets, then choose calendars in Full import. Add an HTTPS callback for automatic updates, or use manual sync locally. |
 | **Telegram** | Configure your Telegram API credentials on the server, then connect your account from Configuration. |
 
 Import progress is shown in Configuration. The same page exposes the ingestion API key and application version. See the API schema for request bodies and authentication requirements.

@@ -1,0 +1,64 @@
+<p-card>
+  <ng-template #header><div class="card-header"><i class="pi pi-key card-header-icon" aria-hidden="true"></i><span class="card-header-title">Secrets</span></div></ng-template>
+  <h3>Google</h3>
+  <p>Enter your OAuth credentials. Values are stored in Thereabout and take effect when saved.</p>
+  @for (field of fields; track field.key) {
+    <div class="secret-field">
+      <label [for]="'google-' + field.key">{{ field.label }} <span class="muted">{{ status?.secrets?.[field.key] ? 'Stored' : 'Not configured' }}</span></label>
+      <small>{{ field.help }}</small>
+      <input pInputText [id]="'google-' + field.key" [type]="focused === field.key ? 'text' : 'password'" autocomplete="off" spellcheck="false"
+        [value]="values[field.key] ?? ''" [placeholder]="status?.secrets?.[field.key] ? '••••••••' : 'Not configured'"
+        [readOnly]="busy || !!revealing[field.key]" (focus)="focus(field.key)" (blur)="blur(field.key)" (input)="change(field.key, $any($event.target).value)" />
+    </div>
+  }
+  <p-button label="Save and validate Google credentials" [disabled]="busy || !status" (onClick)="saveSecrets()" />
+  <p class="muted">Focus a field to reveal it. Clearing a required credential pauses synchronization.</p>
+</p-card>
+<p-card>
+  <ng-template #header><div class="card-header"><i class="pi pi-calendar card-header-icon" aria-hidden="true"></i><span class="card-header-title">Google Calendar sync</span></div></ng-template>
+  <p>Import selected calendars or use Sync now to fetch changes. Add a public webhook URL to receive automatic updates, with a daily safety check for missed notifications.</p>
+  @if (status?.state === 'READY' && !status?.webhookUrl) {
+    <p class="muted" role="status">Manual sync mode: Full import and Sync now work without a public URL. Webhook updates are disabled.</p>
+  }
+  <p role="status">{{ status?.state || 'Loading…' }} @if (status?.account) { · {{ status?.account }} }</p>
+  @if (status?.error) { <p role="alert" class="error">{{ status?.error }}</p> }
+  <div class="secret-field">
+    <label for="google-webhook">Public HTTPS webhook URL (optional)</label>
+    <input id="google-webhook" pInputText type="url" [(ngModel)]="webhookUrl" (ngModelChange)="webhookDirty = true" [disabled]="busy"
+      placeholder="https://your-domain/backend/api/v1/calendar/google/notifications" />
+    <small>For automatic updates, allow Google to reach this exact endpoint without an interactive login challenge. Leave blank for manual sync.</small>
+  </div>
+  <div class="actions">
+    <p-button label="Save webhook URL" severity="secondary" [disabled]="busy || !webhookDirty" (onClick)="saveWebhook()" />
+    <p-button label="Full import" [disabled]="!canSync" (onClick)="chooseCalendars()" />
+    <p-button label="Sync now" severity="secondary" [disabled]="!canSync" (onClick)="syncNow()" />
+  </div>
+  @if (status?.calendars?.length) {
+    <p class="muted">Calendar-list webhook: {{ status?.webhookHealth }}</p>
+    <ul class="calendars">
+      @for (calendar of status?.calendars; track calendar.id) {
+        <li>
+          <strong>{{ calendar.name }}</strong> · {{ calendar.selected ? calendar.state : 'Not syncing' }}
+          @if (calendar.selected) {
+            <span>Webhook: {{ calendar.webhookHealth }} · {{ calendar.importedCount }} events processed in last/current pass</span>
+            <span>Last sync: {{ calendar.lastSyncAt ? (calendar.lastSyncAt | date:'short') : 'Not yet' }} · Channel expires: {{ calendar.channelExpiresAt ? (calendar.channelExpiresAt | date:'short') : 'Not registered' }}</span>
+          }
+          @if (calendar.error) { <span class="error">{{ calendar.error }}</span> }
+        </li>
+      }
+    </ul>
+  }
+</p-card>
+@if (error || loadError) { <p role="alert" class="error">{{ error || loadError }}</p> }
+@if (notice) { <p role="status">{{ notice }}</p> }
+<p-dialog header="Choose Google calendars" [(visible)]="selectionVisible" [modal]="true" [draggable]="false" [resizable]="false" [style]="{width: '36rem', maxWidth: '95vw'}">
+  <p>Selected calendars are fully imported. Automatic updates require a public webhook URL; otherwise use Sync now. Unchecked calendars retain their local history.</p>
+  @for (calendar of available; track calendar.id) {
+    <label class="calendar-option">
+      <input type="checkbox" [checked]="selected.has(calendar.id)" [disabled]="busy || !selectable(calendar)" (change)="toggle(calendar.id, $any($event.target).checked)" />
+      <span class="calendar-dot" [style.backgroundColor]="calendar.color || '#7497cf'"></span>
+      <span>{{ calendar.name }} <small>{{ calendar.accessRole }}</small></span>
+    </label>
+  } @empty { <p>No calendars available.</p> }
+  <ng-template #footer><p-button label="Import selected calendars" [disabled]="busy" (onClick)="import()" /></ng-template>
+</p-dialog>

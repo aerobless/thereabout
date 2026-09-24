@@ -13,7 +13,8 @@ import lombok.RequiredArgsConstructor;
 public enum CommunicationApplication {
     WHATSAPP("WhatsApp"),
     TELEGRAM("Telegram"),
-    SIGNAL("Signal");
+    SIGNAL("Signal"),
+    GOOGLE("Google");
 
     private final String displayName;
 }

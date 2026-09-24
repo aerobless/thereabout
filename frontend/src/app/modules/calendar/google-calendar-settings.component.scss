@@ -1,0 +1,14 @@
+:host { display: grid; gap: 1.5rem; margin: 0; width: 100%; max-width: 1100px; }
+.secret-field { display: grid; gap: .4rem; margin: 1.2rem 0; max-width: 52rem; }
+.secret-field input { width: 100%; }
+.secret-field label { font-weight: 600; }
+.muted, small { color: var(--p-text-muted-color); font-weight: 400; }
+.secret-field label span { margin-left: .8rem; font-size: .85rem; }
+.actions { display: flex; flex-wrap: wrap; gap: .7rem; }
+.error { color: var(--p-red-600); }
+.calendars { list-style: none; padding: 0; }
+.calendars li { padding: .8rem 0; border-bottom: 1px solid var(--p-content-border-color); }
+.calendars li span { display: block; margin-top: .3rem; font-size: .85rem; }
+.calendar-option { display: flex; align-items: center; gap: .7rem; padding: .8rem 0; }
+.calendar-option small { display: block; }
+.calendar-dot { width: .7rem; height: .7rem; border-radius: 50%; flex-shrink: 0; }

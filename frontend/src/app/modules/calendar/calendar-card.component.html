@@ -1,0 +1,56 @@
+<p-card class="dayview-card">
+  <ng-template #header><div class="card-header"><i class="pi pi-calendar card-header-icon" aria-hidden="true"></i><span class="card-header-title">Calendar</span></div></ng-template>
+  @if (loading && !events.length) { <p role="status">Loading events…</p> }
+  @if (error) { <p role="alert">{{ error }} <button type="button" (click)="load()">Retry</button></p> }
+  @if (!loading && !error && !events.length) { <p class="muted">No events for this day.</p> }
+  @if (events.length) {
+    @if (allDay.length) {
+      <div class="all-day" aria-label="All-day events">
+        @for (event of allDay; track event.key) {
+          <button type="button" class="event all-day-event" [style.borderLeftColor]="event.color || '#7497cf'" [title]="event.title + ' · All day · ' + event.calendarName" (click)="open(event, $event)">
+            {{ event.title }} <small>All day</small>
+          </button>
+        }
+      </div>
+    }
+    <div class="timeline-scroll" [scrollLeft]="initialScrollLeft" tabindex="0" aria-label="Day timeline; scroll horizontally to explore">
+      <div class="timeline" [style.height.px]="height">
+        @for (hour of hours; track hour) {
+          <span class="hour" [style.left.%]="hourPosition(hour)" [class.last-hour]="hour === 24">{{ hour.toString().padStart(2,'0') }}:00</span>
+        }
+        @for (block of blocks; track block.event.key) {
+          <button type="button" class="event timed-event" [style.left.%]="block.left" [style.width.%]="block.width" [style.top.px]="32 + block.lane * 38"
+            [style.borderLeftColor]="block.event.color || '#7497cf'" [attr.aria-label]="block.event.title + ', ' + (block.event.start | date:'shortTime') + ' to ' + (block.event.end | date:'shortTime') + ', ' + block.event.calendarName"
+            [title]="block.event.title + ' · ' + (block.event.start | date:'shortTime') + '–' + (block.event.end | date:'shortTime') + ' · ' + block.event.calendarName" (click)="open(block.event, $event)">
+            <span class="event-name">{{ block.event.title }}</span>
+            <span class="event-duration" [style.backgroundColor]="block.event.color || '#7497cf'" aria-hidden="true"></span>
+          </button>
+        }
+      </div>
+    </div>
+  }
+</p-card>
+<p-dialog [header]="selected?.title || 'Calendar event'" [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false" [blockScroll]="true"
+  [closable]="!deleting" [closeOnEscape]="!deleting" (onHide)="closed()" [style]="{width: '42rem', maxWidth: '95vw'}">
+  @if (selected; as event) {
+    <p><strong>{{ event.calendarName }}</strong> @if (!event.syncing) { <span class="muted">· Not syncing</span> }</p>
+    @if (event.allDay) { <p>All day · {{ event.startDate }}@if (lastAllDayDate !== event.startDate) { <span> – {{ lastAllDayDate }}</span> }</p> }
+    @else { <p>{{ event.start | date:'medium' }} – {{ event.end | date:'medium' }}<br/><small>Times shown in {{ viewTimeZone }}@if (event.timeZone !== viewTimeZone) { · Event timezone: {{ event.timeZone }} }</small></p> }
+    @if (event.location) { <p><i class="pi pi-map-marker" aria-hidden="true"></i> {{ event.location }}</p> }
+    @if (event.description) { <p class="description">{{ event.description }}</p> }
+    @if (event.guests.length) {
+      <h3>Guests and organizer</h3>
+      <ul class="guests">
+        @for (guest of event.guests; track guest.applicationIdentityId) {
+          <li>@if (guest.identityId) { <a [routerLink]="['/identities', guest.identityId]">{{ guest.name }}</a> } @else { {{ guest.name }} }
+            @if (guest.self) { <span> · You</span> } @if (guest.organizer) { <span> · Organizer</span> }
+            <small>{{ guest.email }} @if (guest.responseStatus) { · {{ guest.responseStatus }} }</small>
+          </li>
+        }
+      </ul>
+    }
+    @if (deleteError) { <p role="alert" class="error">{{ deleteError }}</p> }
+    <p-button [label]="deleting ? 'Deleting…' : (event.recurring ? 'Delete this occurrence' : 'Delete event')" severity="danger"
+      [disabled]="!event.canDelete || deleting" (onClick)="remove()" />
+  }
+</p-dialog>

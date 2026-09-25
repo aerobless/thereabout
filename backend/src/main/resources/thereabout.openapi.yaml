@@ -4,6 +4,26 @@ info:
   title: Frontend REST API
   version: "1.0"
 paths:
+  /backend/api/v1/launcher:
+    $ref: 'openapi/launcher.yaml#/paths/Collection'
+  /backend/api/v1/launcher/groups:
+    $ref: 'openapi/launcher.yaml#/paths/Groups'
+  /backend/api/v1/launcher/groups/{id}:
+    $ref: 'openapi/launcher.yaml#/paths/Group'
+  /backend/api/v1/launcher/groups/order:
+    $ref: 'openapi/launcher.yaml#/paths/GroupOrder'
+  /backend/api/v1/launcher/groups/{id}/shortcuts/order:
+    $ref: 'openapi/launcher.yaml#/paths/ShortcutOrder'
+  /backend/api/v1/launcher/shortcuts:
+    $ref: 'openapi/launcher.yaml#/paths/Shortcuts'
+  /backend/api/v1/launcher/shortcuts/{id}:
+    $ref: 'openapi/launcher.yaml#/paths/Shortcut'
+  /backend/api/v1/launcher/import:
+    $ref: 'openapi/launcher.yaml#/paths/Import'
+  /backend/api/v1/launcher/shortcuts/{id}/icon:
+    $ref: 'openapi/launcher.yaml#/paths/Icon'
+  /backend/api/v1/launcher/shortcuts/{id}/icon/refresh:
+    $ref: 'openapi/launcher.yaml#/paths/IconRefresh'
   /backend/api/v1/calendar/google/status:
     $ref: 'openapi/calendar.yaml#/paths/Status'
   /backend/api/v1/calendar/google/secrets:
@@ -20,6 +40,8 @@ paths:
     $ref: 'openapi/calendar.yaml#/paths/Sync'
   /backend/api/v1/calendar/google/notifications:
     $ref: 'openapi/calendar.yaml#/paths/Notifications'
+  /backend/api/v1/calendar/upcoming:
+    $ref: 'openapi/calendar.yaml#/paths/Upcoming'
   /backend/api/v1/calendar/day:
     $ref: 'openapi/calendar.yaml#/paths/Day'
   /backend/api/v1/calendar/{calendarId}/events/{eventId}:
@@ -94,6 +116,24 @@ paths:
 
 components:
   schemas:
+    LauncherGroupInput:
+      $ref: 'openapi/launcher.yaml#/components/schemas/LauncherGroupInput'
+    LauncherGroup:
+      $ref: 'openapi/launcher.yaml#/components/schemas/LauncherGroup'
+    LauncherLink:
+      $ref: 'openapi/launcher.yaml#/components/schemas/LauncherLink'
+    LauncherShortcutInput:
+      $ref: 'openapi/launcher.yaml#/components/schemas/LauncherShortcutInput'
+    LauncherShortcut:
+      $ref: 'openapi/launcher.yaml#/components/schemas/LauncherShortcut'
+    LauncherCollection:
+      $ref: 'openapi/launcher.yaml#/components/schemas/LauncherCollection'
+    LauncherOrder:
+      $ref: 'openapi/launcher.yaml#/components/schemas/LauncherOrder'
+    LauncherImportGroup:
+      $ref: 'openapi/launcher.yaml#/components/schemas/LauncherImportGroup'
+    LauncherImport:
+      $ref: 'openapi/launcher.yaml#/components/schemas/LauncherImport'
     GoogleSecretStatus:
       $ref: 'openapi/calendar.yaml#/components/schemas/GoogleSecretStatus'
     GoogleCredentials:

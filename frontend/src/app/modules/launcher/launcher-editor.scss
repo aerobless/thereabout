@@ -1,0 +1,23 @@
+.icon-button,.text-button,.add-button,.danger-button { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; border: 0; border-radius: 7px; cursor: pointer; font: inherit; }
+.icon-button { width: 30px; height: 30px; background: transparent; color: var(--app-muted); padding: 0; flex-shrink: 0; }.icon-button i { font-size: .7rem; }
+.text-button { padding: .5rem .65rem; background: transparent; color: var(--app-muted); font-size: .77rem; }
+.add-button { background: var(--app-ink); color: white; padding: .6rem .85rem; font-size: .77rem; }
+.danger-button { background: #a74646; color: white; padding: .55rem .8rem; font-size: .8rem; }
+.text-button:hover,.icon-button:hover { background: var(--app-selection); color: var(--app-ink); }.add-button:hover { background: #263d69; }
+button:disabled { opacity: .4; cursor: default; }
+.launcher-editor { font-family: inherit; font-size: .875rem; }
+.editor-form { display: grid; gap: .55rem; }
+.launcher-editor label { font-size: .8rem; font-weight: 600; margin-top: .55rem; display: block; }.launcher-editor label span { font-size: .72rem; color: var(--app-muted); font-weight: 400; margin-left: .3rem; }
+.launcher-editor input:not([type=file]),.launcher-editor select,.launcher-editor textarea { font: inherit; width: 100%; border: 1px solid var(--app-border); border-radius: 7px; padding: .7rem .8rem; color: var(--app-ink); background: var(--app-surface); min-width: 0; box-sizing: border-box; }
+.launcher-editor input:focus,.launcher-editor textarea:focus,.launcher-editor select:focus { outline: 2px solid var(--app-accent); outline-offset: 1px; }
+.launcher-editor textarea { margin-top: .6rem; resize: vertical; font-size: .8rem; }
+.launcher-editor .emoji-field { max-width: 8rem; }.launcher-editor small,.muted { color: var(--app-muted); font-size: .75rem; }
+.editor-intro { color: var(--app-muted); line-height: 1.5; margin: 0 0 1rem; }
+.icon-editor { display: flex; align-items: center; gap: 1rem; margin-top: .5rem; padding-block: .5rem; }.icon-editor label { margin: 0 0 .5rem; }.icon-editor > div:last-child { min-width: 0; }.icon-editor input { width: 100%; font-size: .75rem; }.icon-editor small { display: block; margin-top: .4rem; }
+.icon-preview { width: 56px; height: 56px; flex-shrink: 0; border: 1px solid var(--app-border); border-radius: 13px; display: grid; place-items: center; font-size: 1.8rem; }.icon-preview img { width: 36px; height: 36px; object-fit: contain; }
+.editor-footer { display: flex; align-items: center; gap: .5rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--app-border); }.footer-spacer { flex: 1; }.danger-text { color: #a74646; }
+.editor-error { color: #963e3e; background: #fff3f1; padding: .7rem; border-radius: 6px; line-height: 1.4; }.delete-confirm { display: flex; align-items: center; flex-wrap: wrap; gap: .65rem; background: #fff3f1; padding: .8rem; border-radius: 6px; margin-top: 1rem; }.delete-confirm span { flex: 1; }
+.organizer { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; }.organizer > div { min-width: 0; }.organizer-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }.organizer-heading h3 { font-family: inherit; font-size: .85rem; font-weight: 600; margin: 0; }
+.organizer-list { list-style: none; margin: 0; padding: 0; max-height: 55vh; overflow-y: auto; }.organizer-list li { display: flex; align-items: center; gap: .15rem; padding: .3rem; border-radius: 6px; min-height: 40px; }.organizer-list li.chosen { background: var(--app-selection); }
+.organizer-name { display: block; flex: 1; min-width: 0; text-align: left; border: 0; background: transparent; padding: .45rem .35rem; color: var(--app-ink); font: inherit; font-size: .8rem; cursor: pointer; overflow: hidden; text-overflow: ellipsis; }.organizer-name strong { font-weight: 500; }.organizer-name small { display: block; margin-top: .2rem; }
+@media (max-width: 650px) { .organizer { grid-template-columns: 1fr; gap: 1.2rem; }.organizer-list { max-height: 30vh; }.toolbar-actions .text-button { font-size: .7rem; padding-inline: .4rem; }.toolbar-actions .add-button { font-size: .7rem; padding-inline: .65rem; } }

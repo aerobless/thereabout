@@ -29,6 +29,19 @@ public class CalendarOccurrences {
 
     @Transactional(readOnly = true)
     public List<Occurrence> day(LocalDate day, ZoneId viewZone) {
+        return between(day,day.plusDays(1),viewZone);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Occurrence> upcoming(Instant now, ZoneId viewZone) {
+        LocalDate day=now.atZone(viewZone).toLocalDate();
+        return between(day,day.plusDays(31),viewZone).stream()
+                .filter(event -> !event.allDay() && !Instant.parse(event.start()).isBefore(now)
+                        && Instant.parse(event.start()).isBefore(now.atZone(viewZone).plusDays(30).toInstant()))
+                .limit(1).toList();
+    }
+
+    private List<Occurrence> between(LocalDate day, LocalDate endExclusive, ZoneId viewZone) {
         List<Occurrence> result = new ArrayList<>();
         for (CalendarRow calendar : store.calendars()) {
             List<StoredEvent> events = store.events(calendar);
@@ -43,7 +56,7 @@ public class CalendarOccurrences {
             for (StoredEvent item : events) {
                 Event e = item.event();
                 if ("cancelled".equals(e.getStatus()) || cancelledMasters.contains(e.getRecurringEventId())) continue;
-                for (Span span : spans(e,day,viewZone,calendar.timeZone())) {
+                for (Span span : spans(e,day,endExclusive,viewZone,calendar.timeZone())) {
                     boolean master = e.getRecurrence() != null && !e.getRecurrence().isEmpty();
                     if (master && exceptions.contains(e.getId() + "/" + canonical(span.originalStart()))) continue;
                     String original = master ? span.originalStart() : GoogleCalendarGateway.original(e.getOriginalStartTime());
@@ -57,14 +70,17 @@ public class CalendarOccurrences {
                 }
             }
         }
-        result.sort(Comparator.comparing(Occurrence::start).thenComparing(Occurrence::calendarId).thenComparing(Occurrence::key));
+        result.sort(Comparator.comparing((Occurrence o) -> Instant.parse(o.start())).thenComparing(Occurrence::calendarId).thenComparing(Occurrence::key));
         return result;
     }
     public static List<Span> spans(Event e, LocalDate day, ZoneId viewZone, String calendarZone) {
+        return spans(e,day,day.plusDays(1),viewZone,calendarZone);
+    }
+    public static List<Span> spans(Event e, LocalDate day, LocalDate endExclusive, ZoneId viewZone, String calendarZone) {
         if (e.getStart()==null || e.getEnd()==null) return List.of();
         boolean allDay = e.getStart().getDate()!=null;
         ZoneId zone = ZoneId.of(Objects.requireNonNullElse(e.getStart().getTimeZone(),calendarZone));
-        Instant windowStart=day.atStartOfDay(viewZone).toInstant(), windowEnd=day.plusDays(1).atStartOfDay(viewZone).toInstant();
+        Instant windowStart=day.atStartOfDay(viewZone).toInstant(), windowEnd=endExclusive.atStartOfDay(viewZone).toInstant();
         LocalDate startDate = allDay ? LocalDate.parse(e.getStart().getDate().toStringRfc3339()) : null;
         LocalDate endDate = allDay ? LocalDate.parse(e.getEnd().getDate().toStringRfc3339()) : null;
         Instant start = allDay ? startDate.atStartOfDay(viewZone).toInstant() : Instant.ofEpochMilli(e.getStart().getDateTime().getValue());
@@ -87,7 +103,7 @@ public class CalendarOccurrences {
             ics.append("END:VEVENT\r\nEND:VCALENDAR\r\n");
             VEvent event = (VEvent)new CalendarBuilder().build(new StringReader(ics.toString())).getComponent("VEVENT").orElseThrow();
             net.fortuna.ical4j.model.Period<?> period = allDay
-                    ? new net.fortuna.ical4j.model.Period<>(day.minusDays(java.time.temporal.ChronoUnit.DAYS.between(startDate,endDate)),day.plusDays(1))
+                    ? new net.fortuna.ical4j.model.Period<>(day.minusDays(java.time.temporal.ChronoUnit.DAYS.between(startDate,endDate)),endExclusive)
                     : new net.fortuna.ical4j.model.Period<>(windowStart.minus(Duration.between(start,end)).atZone(zone),windowEnd.atZone(zone));
             Set<net.fortuna.ical4j.model.Period<Temporal>> expanded=event.calculateRecurrenceSet(period);
             List<Span> spans=new ArrayList<>();

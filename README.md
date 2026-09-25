@@ -117,6 +117,39 @@ Back up the persistent volume and database before upgrading. To update your chos
 
 Add `TELEGRAM_API_ID` and `TELEGRAM_API_HASH` to the `thereabout` service's `environment` mapping, using your own Telegram application credentials. Merely adding them to `.env` does not pass them through the supplied Compose file. Keep `/data` persistent: Telegram's session is stored under `/data/telegram-tdlib`. Then use **Configuration → Telegram sync** to sign in.
 
+## Launcher
+
+`/launcher` provides a keyboard-first shortcut page. The existing Day View remains at `/`.
+
+- Start typing to search names, descriptions, groups and URLs. Enter opens the selected result in the same tab; Tab/Shift+Tab and arrow keys select results, and Escape clears the search. Tab can leave the result list at either end.
+- The day, steps and next-event summaries open today's Day View. The next event is the next timed calendar occurrence starting within 30 days; all-day and already-started events are excluded.
+- Use the pencil beside a shortcut to edit its name, URL, description, group or icon. **Organize** adds/edits groups and changes the order of groups and shortcuts. Empty groups can be removed.
+- Icons are fetched once in the background and stored in MariaDB. Subsequent page loads use the stored image with browser caching. Icon retrieval accepts public HTTP(S) hosts on ports 80/443; local services use an emoji/letter fallback or a custom uploaded image. Uploads support PNG, JPEG, GIF, WebP and ICO up to 1 MB. **Use website icon** explicitly retries retrieval.
+- The database migration creates empty tables. Personal bookmarks and image bytes belong exclusively in runtime storage, never in migrations, fixtures, source files or checked-in import files.
+
+An empty launcher offers **Import shortcuts**. Paste a JSON collection there (or POST the same body to `/backend/api/v1/launcher/import`):
+
+```json
+{
+  "groups": [
+    {
+      "section": "Example section",
+      "name": "Example group",
+      "shortcuts": [
+        {
+          "title": "Example shortcut",
+          "url": "https://example.com/",
+          "description": "An example website",
+          "emoji": "🌐"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Import is atomic and only available for an empty collection, preventing accidental duplication. Back up the application's MariaDB database to preserve shortcuts and cached icons. The launcher uses the same access boundary as the rest of Thereabout; it does not change authentication or browser startup settings.
+
 ## API and development
 
 - **Swagger UI:** [localhost:9050/swagger-ui/index.html](http://localhost:9050/swagger-ui/index.html)

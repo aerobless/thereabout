@@ -131,6 +131,27 @@ paths:
         required: true
         schema:
           type: string
+  Upcoming:
+    get:
+      tags: [Calendar]
+      operationId: getUpcomingCalendarEvent
+      description: Next timed occurrence starting now or within the next 30 days; empty when none exists. Uses the same imported calendars and local deletions as Day View.
+      parameters:
+      - name: timeZone
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Zero or one upcoming occurrence
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 1
+                items:
+                  $ref: '#/components/schemas/CalendarOccurrence'
   Day:
     get:
       tags:

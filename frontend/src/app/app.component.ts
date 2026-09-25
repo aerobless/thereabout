@@ -1,4 +1,4 @@
-import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import {Component, ChangeDetectionStrategy} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import {ToastModule} from "primeng/toast";
 import {AppShellComponent} from './shared/app-shell/app-shell.component';
@@ -10,28 +10,6 @@ import {AppShellComponent} from './shared/app-shell/app-shell.component';
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './app.component.scss'
 })
-export class AppComponent implements OnInit{
+export class AppComponent {
   title = 'thereabout';
-  googleMapsIntegrationReady = false;
-
-  ngOnInit(): void {
-    this.waitForGoogleMaps().then(() => {
-      this.googleMapsIntegrationReady = true;
-    });
-  }
-
-  waitForGoogleMaps(): Promise<void> {
-    return new Promise((resolve) => {
-      function checkGoogleMapsReady() {
-        if ((window as any)['googleMapsIntegrationReady']) {
-          resolve();
-        } else {
-          setTimeout(checkGoogleMapsReady, 100);
-        }
-      }
-
-      checkGoogleMapsReady();
-    });
-  }
-
 }

@@ -1,0 +1,166 @@
+<div class="launcher">
+  <header class="welcome">
+    <h1>{{ greeting() }}, Theo<span class="greeting-dot">.</span></h1>
+    <p>Your day, one keystroke away.</p>
+  </header>
+
+  <div class="day-glance" aria-label="Your day at a glance">
+    <a routerLink="/" class="glance-item" aria-label="Open today's Day View">
+      <span class="glance-icon blue"><i class="pi pi-calendar" aria-hidden="true"></i></span>
+      <span><strong>{{ now() | date:'EEE, d MMM' }}</strong><small>Today at a glance</small></span>
+    </a>
+    <a routerLink="/" class="glance-item" aria-label="View today's steps in Day View">
+      <span class="glance-icon green"><i class="fa-solid fa-shoe-prints" aria-hidden="true"></i></span>
+      <span><strong>@if (steps() !== null) { {{ steps() | number:'1.0-0' }} steps } @else { Steps }</strong>
+        <small>{{ stepsState() === 'loading' ? 'Loading steps…' : stepsState() === 'error' ? 'Steps unavailable' : steps() === null ? 'No steps recorded yet' : 'Moving through your day' }}</small></span>
+    </a>
+    <a routerLink="/" class="glance-item event-glance" aria-label="View calendar in Day View">
+      <span class="glance-icon violet"><i class="pi pi-clock" aria-hidden="true"></i></span>
+      <span>@if (event(); as next) {
+        <strong [title]="next.title">{{ next.start | date:'HH:mm' }} · {{ next.title }}</strong>
+        <small>{{ eventState() === 'error' ? 'Could not refresh event' : eventWhen(next) }}</small>
+      } @else {
+        <strong>Next event</strong><small>{{ eventState() === 'loading' ? 'Checking your calendar…' : eventState() === 'error' ? 'Calendar unavailable' : 'Nothing in the next 30 days' }}</small>
+      }</span>
+    </a>
+  </div>
+
+  <section class="search-area" aria-label="Find a shortcut">
+    <div class="search-field" [class.has-query]="query().trim()">
+      <i class="pi pi-search" aria-hidden="true"></i>
+      <input #searchInput id="launcher-search" type="text" role="combobox" aria-label="Search shortcuts" aria-autocomplete="list"
+        aria-controls="launcher-results" [attr.aria-expanded]="!!query().trim()" [attr.aria-activedescendant]="query().trim() && activeResult() ? 'launcher-result-' + activeResult()!.id : null"
+        autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Where would you like to go?"
+        [ngModel]="query()" (ngModelChange)="setQuery($event)">
+      @if (query()) { <button type="button" class="icon-button clear-search" aria-label="Clear search" (click)="setQuery(''); searchInput.focus()"><i class="pi pi-times" aria-hidden="true"></i></button> }
+      @else { <span class="type-hint" aria-hidden="true">Just start typing</span> }
+    </div>
+    @if (query().trim()) {
+      <div class="results-panel">
+        <div id="launcher-results" role="listbox" aria-label="Matching shortcuts" class="results-list">
+          @for (shortcut of results(); track shortcut.id; let i=$index) {
+            <a [href]="shortcut.url" class="search-result" role="option" [attr.id]="'launcher-result-' + shortcut.id" tabindex="-1"
+              [class.selected]="activeResult()?.id === shortcut.id" [attr.aria-selected]="activeResult()?.id === shortcut.id" (pointerenter)="activeIndex.set(i)">
+              <span class="result-icon"><ng-container *ngTemplateOutlet="shortcutIcon; context: {$implicit:shortcut}" /></span>
+              <span class="result-copy"><strong>{{ shortcut.title }}</strong><small>{{ shortcut.description || domain(shortcut.url) }} <span class="result-group">· {{ groupLabel(shortcut.groupId) }}</span></small></span>
+              @if (activeResult()?.id === shortcut.id) { <kbd>Enter ↵</kbd> } @else { <i class="pi pi-arrow-up-right result-arrow" aria-hidden="true"></i> }
+            </a>
+          } @empty {
+            <p class="no-results">No shortcuts match “{{ query() }}”. <span>Try another name or add a shortcut below.</span></p>
+          }
+        </div>
+        <div class="search-footer"><span><kbd>Tab</kbd> next result</span><span><kbd>Enter</kbd> open</span><span><kbd>Esc</kbd> clear</span><span class="result-count" aria-live="polite">{{ results().length }} results</span></div>
+      </div>
+    }
+  </section>
+
+  <section class="shortcuts-section" aria-label="Your shortcuts">
+    <div class="collection-toolbar">
+      <span class="collection-caption">Your shortcuts <span>{{ collection().shortcuts.length || '' }}</span></span>
+      <div class="toolbar-actions">
+        @if (!collection().groups.length && !loading()) { <button type="button" class="text-button" (click)="openImport($event)"><i class="pi pi-download" aria-hidden="true"></i> Import</button> }
+        <button type="button" class="text-button" [disabled]="loading()" (click)="openOrganizer($event)"><i class="pi pi-sliders-h" aria-hidden="true"></i> Organize</button>
+        <button type="button" class="add-button" [disabled]="loading()" (click)="collection().groups.length ? openShortcut(undefined,$event) : openGroup(undefined,$event)"><i class="pi pi-plus" aria-hidden="true"></i> {{ collection().groups.length ? 'Add shortcut' : 'Add group' }}</button>
+      </div>
+    </div>
+    @if (error()) { <p class="load-error" role="alert">{{ error() }} <button type="button" class="text-button" (click)="loadCollection()">Try again</button></p> }
+    @if (loading()) { <p class="empty-state" role="status">Loading your shortcuts…</p> }
+    @else if (!collection().groups.length && !error()) {
+      <div class="empty-state"><i class="pi pi-compass" aria-hidden="true"></i><h2>A place for everything you open.</h2><p>Add your first group or import your existing collection.</p><button type="button" class="add-button" (click)="openImport($event)">Import shortcuts</button></div>
+    }
+    @for (section of sections(); track section.name) {
+      <div class="bookmark-section">
+        <h2 class="section-title">{{ section.name }}</h2>
+        <div class="group-grid">
+          @for (group of section.groups; track group.id) {
+            <section class="bookmark-group" [attr.aria-label]="group.name">
+              <div class="group-heading"><h3>{{ group.name }}</h3><button type="button" class="icon-button group-edit" [attr.aria-label]="'Edit group ' + group.name" (click)="openGroup(group,$event)"><i class="pi pi-pencil" aria-hidden="true"></i></button></div>
+              <ul>
+                @for (shortcut of group.shortcuts; track shortcut.id) {
+                  <li class="shortcut-row">
+                    <a [href]="shortcut.url" [title]="shortcut.description || shortcut.title" class="shortcut-link">
+                      <span class="shortcut-icon"><ng-container *ngTemplateOutlet="shortcutIcon; context: {$implicit:shortcut}" /></span><span class="shortcut-title">{{ shortcut.title }}</span>
+                    </a>
+                    <button type="button" class="icon-button shortcut-edit" [attr.aria-label]="'Edit ' + shortcut.title" (click)="openShortcut(shortcut,$event)"><i class="pi pi-pencil" aria-hidden="true"></i></button>
+                  </li>
+                } @empty { <li><button type="button" class="text-button empty-group" (click)="openShortcut(undefined,$event,group.id)">Add a shortcut</button></li> }
+              </ul>
+            </section>
+          }
+        </div>
+      </div>
+    }
+  </section>
+</div>
+
+<ng-template #shortcutIcon let-shortcut>
+  @if (hasIcon(shortcut)) { <img [src]="iconUrl(shortcut)" alt="" width="24" height="24" (error)="iconFailed(shortcut)"> }
+  @else { <span aria-hidden="true" [class.letter-icon]="!shortcut.emoji">{{ shortcut.emoji || shortcut.title.slice(0,1).toUpperCase() }}</span> }
+</ng-template>
+
+<p-dialog [header]="dialogTitle()" [visible]="!!dialog()" (visibleChange)="!$event && closeDialog()" (onHide)="closeDialog()"
+  [modal]="true" [draggable]="false" [resizable]="false" [blockScroll]="true" [closable]="!busy()" [closeOnEscape]="!busy()"
+  [style]="{width: dialog() === 'organize' ? '58rem' : '34rem', maxWidth:'95vw'}">
+  <div class="launcher-editor">
+    @if (dialog() === 'shortcut') {
+      <form (ngSubmit)="saveShortcut()" id="shortcut-form" class="editor-form">
+        <label for="shortcut-title">Name</label><input id="shortcut-title" name="title" [(ngModel)]="draft.title" maxlength="200" required [disabled]="busy()" autofocus>
+        <label for="shortcut-url">URL</label><input id="shortcut-url" name="url" [(ngModel)]="draft.url" type="url" maxlength="4096" placeholder="https://example.com" required [disabled]="busy()">
+        <label for="shortcut-description">Description <span>optional</span></label><input id="shortcut-description" name="description" [(ngModel)]="draft.description" maxlength="500" placeholder="What you use it for" [disabled]="busy()">
+        <label for="shortcut-group">Group</label><select id="shortcut-group" name="group" [(ngModel)]="draft.groupId" [disabled]="busy()">@for (group of collection().groups; track group.id) {<option [ngValue]="group.id">{{ group.section }} · {{ group.name }}</option>}</select>
+        <div class="icon-editor">
+          <div class="icon-preview">@if (imagePreview()) {<img [src]="imagePreview()" alt="Selected icon">} @else if (currentShortcut(); as shortcut) {<ng-container *ngTemplateOutlet="shortcutIcon; context: {$implicit:shortcut}" />} @else {<span>{{ draft.emoji || draft.title.slice(0,1) || '↗' }}</span>}</div>
+          <div><label for="shortcut-image">Icon image</label><input id="shortcut-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/x-icon,.ico" (change)="selectImage($event)" [disabled]="busy()"><small>PNG, JPEG, GIF, WebP or ICO · up to 1 MB</small>
+            @if (draft.id) {<button type="button" class="text-button" (click)="refreshIcon()" [disabled]="busy()">Use website icon</button>}
+            @if (currentShortcut()?.iconState === 'pending') {<small role="status">Saving the website icon…</small>}
+          </div>
+        </div>
+        <label for="shortcut-emoji">Fallback icon <span>emoji or letter</span></label><input id="shortcut-emoji" name="emoji" [(ngModel)]="draft.emoji" maxlength="32" class="emoji-field" [disabled]="busy()">
+      </form>
+    }
+    @if (dialog() === 'group') {
+      <form (ngSubmit)="saveGroup()" id="group-form" class="editor-form">
+        <label for="group-name">Group name</label><input id="group-name" name="name" [(ngModel)]="groupDraft.name" maxlength="160" required [disabled]="busy()" autofocus>
+        <label for="group-section">Section</label><input id="group-section" name="section" [(ngModel)]="groupDraft.section" list="launcher-sections" maxlength="160" required [disabled]="busy()">
+        <datalist id="launcher-sections">@for (section of sections(); track section.name) {<option [value]="section.name"></option>}</datalist>
+        <small>Choose an existing section or type a new one.</small>
+        @if (groupDraft.id && groupHasShortcuts(groupDraft.id)) {<p class="muted">Move or remove this group's shortcuts before deleting the group.</p>}
+      </form>
+    }
+    @if (dialog() === 'organize') {
+      <p class="editor-intro">Choose a group to arrange its shortcuts. Use the arrows to change their order. Edit a group to move it to another section.</p>
+      <div class="organizer">
+        <div><div class="organizer-heading"><h3>Groups</h3><button type="button" class="text-button" (click)="openGroup()" [disabled]="busy()"><i class="pi pi-plus" aria-hidden="true"></i> Add</button></div>
+          <ul class="organizer-list">@for (group of collection().groups; track group.id; let first=$first; let last=$last) {
+            <li [class.chosen]="selectedGroupId() === group.id"><button type="button" class="organizer-name" (click)="selectedGroupId.set(group.id)"><strong>{{ group.name }}</strong><small>{{ group.section }}</small></button>
+              <button type="button" class="icon-button" [attr.aria-label]="'Move group ' + group.name + ' up'" [disabled]="!canMoveGroup(group,-1) || busy()" (click)="moveGroup(group,-1)"><i class="pi pi-arrow-up" aria-hidden="true"></i></button>
+              <button type="button" class="icon-button" [attr.aria-label]="'Move group ' + group.name + ' down'" [disabled]="!canMoveGroup(group,1) || busy()" (click)="moveGroup(group,1)"><i class="pi pi-arrow-down" aria-hidden="true"></i></button>
+              <button type="button" class="icon-button" [attr.aria-label]="'Edit group ' + group.name" [disabled]="busy()" (click)="openGroup(group)"><i class="pi pi-pencil" aria-hidden="true"></i></button>
+            </li>
+          }</ul>
+        </div>
+        <div><div class="organizer-heading"><h3>Shortcuts</h3><button type="button" class="text-button" (click)="openShortcut()" [disabled]="!selectedGroupId() || busy()"><i class="pi pi-plus" aria-hidden="true"></i> Add</button></div>
+          <ul class="organizer-list">@for (shortcut of organizedShortcuts(); track shortcut.id; let first=$first; let last=$last) {
+            <li><span class="shortcut-icon"><ng-container *ngTemplateOutlet="shortcutIcon; context: {$implicit:shortcut}" /></span><button type="button" class="organizer-name" (click)="openShortcut(shortcut)" [disabled]="busy()">{{ shortcut.title }}</button>
+              <button type="button" class="icon-button" [attr.aria-label]="'Move ' + shortcut.title + ' up'" [disabled]="first || busy()" (click)="moveShortcut(shortcut,-1)"><i class="pi pi-arrow-up" aria-hidden="true"></i></button>
+              <button type="button" class="icon-button" [attr.aria-label]="'Move ' + shortcut.title + ' down'" [disabled]="last || busy()" (click)="moveShortcut(shortcut,1)"><i class="pi pi-arrow-down" aria-hidden="true"></i></button>
+            </li>
+          } @empty {<li class="muted">No shortcuts in this group yet.</li>}</ul>
+        </div>
+      </div>
+    }
+    @if (dialog() === 'import') {
+      <p class="editor-intro">Import your collection into this empty launcher. Your links are saved privately on your Thereabout server.</p>
+      <label for="launcher-import">Collection JSON</label><textarea id="launcher-import" [(ngModel)]="importText" rows="10" placeholder='{"groups": [{"section": "Personal", "name": "Tools", "shortcuts": [{"title": "Example", "url": "https://example.com"}]}]}' [disabled]="busy()" spellcheck="false"></textarea>
+    }
+    @if (editorError()) {<p class="editor-error" role="alert">{{ editorError() }}</p>}
+    @if (confirmDelete()) {<div class="delete-confirm" role="alert"><span>Remove this {{ dialog() === 'group' ? 'empty group' : 'shortcut' }}?</span><button type="button" class="text-button" (click)="confirmDelete.set(false)" [disabled]="busy()">Keep it</button><button type="button" class="danger-button" (click)="deleteCurrent()" [disabled]="busy()">Remove</button></div>}
+    <div class="editor-footer">
+      @if ((dialog() === 'shortcut' && draft.id) || (dialog() === 'group' && groupDraft.id)) {<button type="button" class="text-button danger-text" (click)="confirmDelete.set(true)" [disabled]="busy() || (dialog() === 'group' && groupHasShortcuts(groupDraft.id))">Remove</button>}
+      <span class="footer-spacer"></span><button type="button" class="text-button" (click)="closeDialog()" [disabled]="busy()">{{ dialog() === 'organize' ? 'Done' : 'Cancel' }}</button>
+      @if (dialog() === 'shortcut') {<button type="submit" form="shortcut-form" class="add-button" [disabled]="busy()">{{ busy() ? 'Saving…' : 'Save shortcut' }}</button>}
+      @if (dialog() === 'group') {<button type="submit" form="group-form" class="add-button" [disabled]="busy()">{{ busy() ? 'Saving…' : 'Save group' }}</button>}
+      @if (dialog() === 'import') {<button type="button" class="add-button" [disabled]="busy() || !importText.trim()" (click)="importCollection()">{{ busy() ? 'Importing…' : 'Import collection' }}</button>}
+    </div>
+  </div>
+</p-dialog>

@@ -62,6 +62,11 @@ public class CalendarController implements CalendarApi {
         catch (DateTimeException e) { throw new ThereaboutException(HttpStatus.BAD_REQUEST,"Invalid IANA timezone"); }
     }
     @Override
+    public ResponseEntity<List<GenCalendarOccurrence>> getUpcomingCalendarEvent(String timeZone) {
+        try { return noCache(occurrences.upcoming(Instant.now(),ZoneId.of(timeZone)).stream().map(CalendarApiMapper.INSTANCE::occurrence).toList()); }
+        catch (DateTimeException e) { throw new ThereaboutException(HttpStatus.BAD_REQUEST,"Invalid IANA timezone"); }
+    }
+    @Override
     public ResponseEntity<Void> deleteCalendarEvent(Long calendarId,String eventId,Optional<String> originalStart) {
         sync.delete(calendarId,eventId,originalStart.orElse(null)); return ResponseEntity.noContent().build();
     }

@@ -22,6 +22,7 @@ describe('AppShellComponent', () => {
       imports: [TestHost],
       providers: [provideRouter([
         {path: '', component: PageStub},
+        {path: 'launcher', component: PageStub},
         {path: 'locationhistory', component: PageStub},
         {path: 'statistics', component: PageStub},
         {path: 'identities', component: PageStub},
@@ -60,6 +61,9 @@ describe('AppShellComponent', () => {
     await navigate('/?date=2026-09-17');
     expect(root().querySelector('.sidebar-nav [aria-current="page"]')?.textContent).toContain('Day View');
     expect(root().querySelector('.mobile-nav [aria-current="page"]')?.textContent).toContain('Day View');
+    await navigate('/launcher');
+    expect(root().querySelector('.sidebar-nav [aria-current="page"]')?.textContent).toContain('Launcher');
+    expect(root().querySelector('.mobile-nav [aria-current="page"]')?.textContent).toContain('Launcher');
     await navigate('/statistics');
     expect(root().querySelector('.sidebar-nav [aria-current="page"]')?.textContent).toContain('Statistics');
     expect(root().querySelectorAll('.sidebar-nav .active')).toHaveLength(1);

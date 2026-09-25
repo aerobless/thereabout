@@ -23,10 +23,11 @@ describe('AppComponent', () => {
     expect(app.title).toEqual('thereabout');
   });
 
-  it('should render the loading state', () => {
+  it('renders the shell without waiting for map configuration', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Loading Thereabout application...');
+    expect(compiled.querySelector('thereabout-app-shell')).not.toBeNull();
+    expect(compiled.querySelector('router-outlet')).not.toBeNull();
   });
 });

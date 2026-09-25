@@ -1,8 +1,6 @@
 import { Routes } from '@angular/router';
 import {ConfigurationComponent} from "./modules/configuration/configuration.component";
-import {LocationhistoryComponent} from "./modules/locationhistory/locationhistory.component";
 import {StatisticsComponent} from "./modules/statistics/statistics.component";
-import {DayviewComponent} from "./modules/dayview/dayview.component";
 import {IdentitiesComponent} from "./modules/identities/identities.component";
 import {IdentityDetailComponent} from "./modules/identities/identity-detail/identity-detail.component";
 import {MessagesListComponent} from "./modules/messages/messages-list.component";
@@ -10,11 +8,17 @@ import {MessagesListComponent} from "./modules/messages/messages-list.component"
 export const routes: Routes = [
     {
         path: '',
-        component: DayviewComponent
+        loadComponent: () => import('./shared/maps/maps-page.component').then(m => m.MapsPageComponent),
+        data: {mapPage: 'day'}
     },
     {
         path: 'locationhistory',
-        component: LocationhistoryComponent
+        loadComponent: () => import('./shared/maps/maps-page.component').then(m => m.MapsPageComponent),
+        data: {mapPage: 'locations'}
+    },
+    {
+        path: 'launcher',
+        loadComponent: () => import('./modules/launcher/launcher.component').then(m => m.LauncherComponent)
     },
     {
         path: 'configuration',

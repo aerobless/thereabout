@@ -1,0 +1,467 @@
+---
+paths:
+  Collection:
+    get:
+      tags:
+      - Launcher
+      operationId: getLauncher
+      responses:
+        '200':
+          description: Updated collection
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LauncherCollection"
+  Groups:
+    post:
+      tags:
+      - Launcher
+      operationId: createLauncherGroup
+      responses:
+        '200':
+          description: Updated collection
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LauncherCollection"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/LauncherGroupInput"
+  Group:
+    put:
+      tags:
+      - Launcher
+      operationId: updateLauncherGroup
+      responses:
+        '200':
+          description: Updated collection
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LauncherCollection"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/LauncherGroupInput"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+    delete:
+      tags:
+      - Launcher
+      operationId: deleteLauncherGroup
+      responses:
+        '200':
+          description: Updated collection
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LauncherCollection"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+  GroupOrder:
+    put:
+      tags:
+      - Launcher
+      operationId: reorderLauncherGroups
+      responses:
+        '200':
+          description: Updated collection
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LauncherCollection"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/LauncherOrder"
+  ShortcutOrder:
+    put:
+      tags:
+      - Launcher
+      operationId: reorderLauncherShortcuts
+      responses:
+        '200':
+          description: Updated collection
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LauncherCollection"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/LauncherOrder"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+  Shortcuts:
+    post:
+      tags:
+      - Launcher
+      operationId: createLauncherShortcut
+      responses:
+        '200':
+          description: Updated collection
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LauncherCollection"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/LauncherShortcutInput"
+  Shortcut:
+    put:
+      tags:
+      - Launcher
+      operationId: updateLauncherShortcut
+      responses:
+        '200':
+          description: Updated collection
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LauncherCollection"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/LauncherShortcutInput"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+    delete:
+      tags:
+      - Launcher
+      operationId: deleteLauncherShortcut
+      responses:
+        '200':
+          description: Updated collection
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LauncherCollection"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+  Import:
+    post:
+      tags:
+      - Launcher
+      operationId: importLauncher
+      responses:
+        '200':
+          description: Updated collection
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LauncherCollection"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/LauncherImport"
+      description: Import a private collection only into an empty launcher. Never
+        logs or seeds personal bookmarks. Returns 409 when the collection is not empty.
+  IconRefresh:
+    post:
+      tags:
+      - Launcher
+      operationId: refreshLauncherIcon
+      responses:
+        '200':
+          description: Updated collection
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LauncherCollection"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+  Icon:
+    get:
+      tags:
+      - Launcher
+      operationId: getLauncherIcon
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Stored image
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: No stored icon
+    post:
+      tags:
+      - Launcher
+      operationId: uploadLauncherIcon
+      responses:
+        '200':
+          description: Updated collection
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LauncherCollection"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+              - file
+components:
+  schemas:
+    LauncherGroupInput:
+      type: object
+      properties:
+        section:
+          type: string
+          maxLength: 160
+          minLength: 1
+        name:
+          type: string
+          maxLength: 160
+          minLength: 1
+      required:
+      - section
+      - name
+    LauncherGroup:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        section:
+          type: string
+          maxLength: 160
+          minLength: 1
+        name:
+          type: string
+          maxLength: 160
+          minLength: 1
+        position:
+          type: integer
+      required:
+      - id
+      - section
+      - name
+      - position
+    LauncherLink:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+          minLength: 1
+        url:
+          type: string
+          maxLength: 4096
+          minLength: 1
+        description:
+          type: string
+          maxLength: 500
+        emoji:
+          type: string
+          maxLength: 32
+      required:
+      - title
+      - url
+    LauncherShortcutInput:
+      type: object
+      properties:
+        groupId:
+          type: integer
+          format: int64
+          minimum: 1
+        title:
+          type: string
+          maxLength: 200
+          minLength: 1
+        url:
+          type: string
+          maxLength: 4096
+          minLength: 1
+        description:
+          type: string
+          maxLength: 500
+        emoji:
+          type: string
+          maxLength: 32
+      required:
+      - groupId
+      - title
+      - url
+    LauncherShortcut:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        groupId:
+          type: integer
+          format: int64
+          minimum: 1
+        title:
+          type: string
+          maxLength: 200
+          minLength: 1
+        url:
+          type: string
+          maxLength: 4096
+          minLength: 1
+        description:
+          type: string
+          maxLength: 500
+        emoji:
+          type: string
+          maxLength: 32
+        position:
+          type: integer
+        iconVersion:
+          type: integer
+          format: int64
+        hasIcon:
+          type: boolean
+        iconState:
+          type: string
+          enum:
+          - pending
+          - ready
+          - fallback
+      required:
+      - id
+      - groupId
+      - title
+      - url
+      - description
+      - emoji
+      - position
+      - iconVersion
+      - hasIcon
+      - iconState
+    LauncherCollection:
+      type: object
+      properties:
+        groups:
+          type: array
+          items:
+            "$ref": "#/components/schemas/LauncherGroup"
+        shortcuts:
+          type: array
+          items:
+            "$ref": "#/components/schemas/LauncherShortcut"
+      required:
+      - groups
+      - shortcuts
+    LauncherOrder:
+      type: object
+      properties:
+        ids:
+          type: array
+          maxItems: 5000
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+      required:
+      - ids
+    LauncherImportGroup:
+      type: object
+      properties:
+        section:
+          type: string
+          maxLength: 160
+          minLength: 1
+        name:
+          type: string
+          maxLength: 160
+          minLength: 1
+        shortcuts:
+          type: array
+          maxItems: 500
+          items:
+            "$ref": "#/components/schemas/LauncherLink"
+      required:
+      - section
+      - name
+      - shortcuts
+    LauncherImport:
+      type: object
+      properties:
+        groups:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            "$ref": "#/components/schemas/LauncherImportGroup"
+      required:
+      - groups

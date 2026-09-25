@@ -119,7 +119,7 @@ Add `TELEGRAM_API_ID` and `TELEGRAM_API_HASH` to the `thereabout` service's `env
 
 ## Launcher
 
-`/launcher` provides a keyboard-first shortcut page. The existing Day View remains at `/`.
+`/` provides a keyboard-first shortcut page; `/launcher` redirects there. **Today** opens the Day View at `/dayview`. Existing `/?date=YYYY-MM-DD` links redirect to `/dayview?date=YYYY-MM-DD`, preserving their query parameters. Embedded trip maps continue using `/locationhistory?...&embed=true`.
 
 - Start typing to search names, descriptions, groups and URLs. Enter opens the selected result in the same tab; Tab/Shift+Tab and arrow keys select results, and Escape clears the search. Tab can leave the result list at either end.
 - The day, steps and next-event summaries open today's Day View. The next event is the next timed calendar occurrence starting within 30 days; all-day and already-started events are excluded.

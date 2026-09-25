@@ -22,7 +22,7 @@ describe('AppShellComponent', () => {
       imports: [TestHost],
       providers: [provideRouter([
         {path: '', component: PageStub},
-        {path: 'launcher', component: PageStub},
+        {path: 'dayview', component: PageStub},
         {path: 'locationhistory', component: PageStub},
         {path: 'statistics', component: PageStub},
         {path: 'identities', component: PageStub},
@@ -57,13 +57,15 @@ describe('AppShellComponent', () => {
     expect(root().querySelector('[role="status"]')).toBeNull();
   });
 
-  it('keeps Day View active with date query parameters and switches destinations', async () => {
-    await navigate('/?date=2026-09-17');
-    expect(root().querySelector('.sidebar-nav [aria-current="page"]')?.textContent).toContain('Day View');
-    expect(root().querySelector('.mobile-nav [aria-current="page"]')?.textContent).toContain('Day View');
-    await navigate('/launcher');
+  it('keeps Today active with date query parameters and switches destinations', async () => {
+    await navigate('/dayview?date=2026-09-17');
+    expect(root().querySelector('.sidebar-nav [aria-current="page"]')?.textContent).toContain('Today');
+    expect(root().querySelector('.mobile-nav [aria-current="page"]')?.textContent).toContain('Today');
+    await navigate('/');
     expect(root().querySelector('.sidebar-nav [aria-current="page"]')?.textContent).toContain('Launcher');
     expect(root().querySelector('.mobile-nav [aria-current="page"]')?.textContent).toContain('Launcher');
+    expect(Array.from(root().querySelectorAll('.sidebar-nav a')).slice(0,2).map(a=>a.getAttribute('aria-label'))).toEqual(['Launcher','Today']);
+    expect(Array.from(root().querySelectorAll('.mobile-nav a')).slice(0,2).map(a=>a.textContent?.trim())).toEqual(['Launcher','Today']);
     await navigate('/statistics');
     expect(root().querySelector('.sidebar-nav [aria-current="page"]')?.textContent).toContain('Statistics');
     expect(root().querySelectorAll('.sidebar-nav .active')).toHaveLength(1);
@@ -78,8 +80,8 @@ describe('AppShellComponent', () => {
     expect(toggle().getAttribute('aria-label')).toBe('Expand sidebar');
     expect(toggle().getAttribute('aria-expanded')).toBe('false');
     expect(root().querySelector('thereabout-app-shell')?.classList.contains('sidebar-collapsed')).toBe(true);
-    expect(root().querySelector('.sidebar-nav a')?.getAttribute('aria-label')).toBe('Day View');
-    expect(root().querySelector('.sidebar-nav a')?.getAttribute('title')).toBe('Day View');
+    expect(root().querySelector('.sidebar-nav a')?.getAttribute('aria-label')).toBe('Launcher');
+    expect(root().querySelector('.sidebar-nav a')?.getAttribute('title')).toBe('Launcher');
     await navigate('/identities/42');
     expect(root().querySelector('.sidebar-nav [aria-current="page"]')?.getAttribute('aria-label')).toBe('Identities');
     expect(toggle().getAttribute('aria-expanded')).toBe('false');

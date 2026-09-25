@@ -263,7 +263,7 @@ export class LocationhistoryComponent implements OnInit {
     openInThereabout() {
         if (!this.dateRangeFrom || !this.dateRangeTo) return;
 
-        const url = new URL('/', window.location.origin);
+        const url = new URL('/dayview', window.location.origin);
         url.searchParams.set('date', this.dateToString(this.exactDate));
         window.open(url.toString(), '_blank', 'noopener');
     }

@@ -30,8 +30,8 @@ export class AppShellComponent {
   readonly exactMatch: IsActiveMatchOptions = {paths: 'exact', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'};
   readonly sectionMatch: IsActiveMatchOptions = {...this.exactMatch, paths: 'subset'};
   readonly links = [
-    {label: 'Day View', mobileLabel: 'Day View', path: '/', icon: 'pi pi-home', match: this.exactMatch},
-    {label: 'Launcher', mobileLabel: 'Launcher', path: '/launcher', icon: 'pi pi-search', match: this.exactMatch},
+    {label: 'Launcher', mobileLabel: 'Launcher', path: '/', icon: 'pi pi-search', match: this.exactMatch},
+    {label: 'Today', mobileLabel: 'Today', path: '/dayview', icon: 'pi pi-home', match: this.exactMatch},
     {label: 'Location History', mobileLabel: 'Locations', path: '/locationhistory', icon: 'pi pi-map-marker', match: this.exactMatch},
     {label: 'Statistics', mobileLabel: 'Statistics', path: '/statistics', icon: 'pi pi-chart-bar', match: this.exactMatch},
     {label: 'Identities', mobileLabel: 'Identities', path: '/identities', icon: 'pi pi-users', match: this.sectionMatch}

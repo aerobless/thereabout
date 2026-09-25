@@ -238,7 +238,7 @@ describe('LocationhistoryComponent', () => {
     component.openInThereabout();
 
     expect(open).toHaveBeenCalledWith(
-      `${window.location.origin}/?date=2026-06-16`,
+      `${window.location.origin}/dayview?date=2026-06-16`,
       '_blank',
       'noopener'
     );

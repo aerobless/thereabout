@@ -5,16 +5,16 @@
   </header>
 
   <div class="day-glance" aria-label="Your day at a glance">
-    <a routerLink="/" class="glance-item" aria-label="Open today's Day View">
+    <a routerLink="/dayview" class="glance-item" aria-label="Open today's Day View">
       <span class="glance-icon blue"><i class="pi pi-calendar" aria-hidden="true"></i></span>
       <span><strong>{{ now() | date:'EEE, d MMM' }}</strong><small>Today at a glance</small></span>
     </a>
-    <a routerLink="/" class="glance-item" aria-label="View today's steps in Day View">
+    <a routerLink="/dayview" class="glance-item" aria-label="View today's steps in Day View">
       <span class="glance-icon green"><i class="fa-solid fa-shoe-prints" aria-hidden="true"></i></span>
       <span><strong>@if (steps() !== null) { {{ steps() | number:'1.0-0' }} steps } @else { Steps }</strong>
         <small>{{ stepsState() === 'loading' ? 'Loading steps…' : stepsState() === 'error' ? 'Steps unavailable' : steps() === null ? 'No steps recorded yet' : 'Moving through your day' }}</small></span>
     </a>
-    <a routerLink="/" class="glance-item event-glance" aria-label="View calendar in Day View">
+    <a routerLink="/dayview" class="glance-item event-glance" aria-label="View calendar in Day View">
       <span class="glance-icon violet"><i class="pi pi-clock" aria-hidden="true"></i></span>
       <span>@if (event(); as next) {
         <strong [title]="next.title">{{ next.start | date:'HH:mm' }} · {{ next.title }}</strong>

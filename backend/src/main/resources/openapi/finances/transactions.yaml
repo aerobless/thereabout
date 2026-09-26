@@ -1,0 +1,678 @@
+paths:
+  _transactions:
+    get:
+      operationId: financeListTransactions
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceTransactionPage'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 99999
+          default: 0
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: accountId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: categoryId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: type
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/FinanceTransactionType'
+      - name: effect
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/FinanceEffect'
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: includeDeleted
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: operatingOnly
+        in: query
+        required: false
+        schema:
+          type: boolean
+      x-mcp-input:
+        $ref: '#/components/schemas/FinanceTransactionQuery'
+    post:
+      operationId: financeCreateTransactions
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceTransactionResult'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinanceTransactionInput'
+  _transactions_id:
+    put:
+      operationId: financeUpdateTransactions
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceTransactionResult'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinanceTransactionInput'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+    get:
+      operationId: financeTransactionDetail
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceTransactionDetail'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+    delete:
+      operationId: financeDeleteTransaction
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceTransactionResult'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: shared.yaml#/components/schemas/FinanceVersionedInput
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+  _transactions_id_restore:
+    post:
+      operationId: financeRestoreTransaction
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceTransactionResult'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: shared.yaml#/components/schemas/FinanceVersionedInput
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+  _transactions_categories:
+    post:
+      operationId: financeCategorizeTransactions
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceBulkResult'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinanceBulkCategoryInput'
+components:
+  schemas:
+    FinanceTransactionType:
+      type: string
+      enum:
+      - WITHDRAWAL
+      - DEPOSIT
+      - TRANSFER
+      - OPENING
+      - RECONCILIATION
+    FinanceEffect:
+      type: string
+      enum:
+      - OPERATING
+      - VALUATION
+      - OPENING
+      - RECONCILIATION
+    FinanceTransaction:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        sourceId:
+          type: integer
+          format: int64
+          minimum: 1
+        type:
+          $ref: '#/components/schemas/FinanceTransactionType'
+        effect:
+          $ref: '#/components/schemas/FinanceEffect'
+        description:
+          type: string
+        occurredAt:
+          type: string
+        categoryId:
+          type: integer
+          format: int64
+          minimum: 1
+        categoryName:
+          type: string
+        notes:
+          type: string
+        externalReference:
+          type: string
+        deleted:
+          type: boolean
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+        sourceAccountId:
+          type: integer
+          format: int64
+          minimum: 1
+        destinationAccountId:
+          type: integer
+          format: int64
+          minimum: 1
+        sourceName:
+          type: string
+        destinationName:
+          type: string
+        sourceAmount:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        destinationAmount:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        sourceCurrency:
+          type: string
+        destinationCurrency:
+          type: string
+        foreignAmount:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        foreignCurrency:
+          type: string
+        valuationId:
+          type: integer
+          format: int64
+          minimum: 1
+        runningBalance:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+      required:
+      - id
+      - type
+      - effect
+      - description
+      - occurredAt
+      - deleted
+      - version
+      - sourceAccountId
+      - destinationAccountId
+      - sourceName
+      - destinationName
+      - sourceAmount
+      - destinationAmount
+      - sourceCurrency
+      - destinationCurrency
+    FinanceAudit:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        operation:
+          type: string
+        entityId:
+          type: integer
+          format: int64
+          minimum: 1
+        createdAt:
+          type: string
+        beforeJson:
+          type: string
+        afterJson:
+          type: string
+      required:
+      - id
+      - operation
+      - createdAt
+    FinanceTransactionDetail:
+      type: object
+      additionalProperties: false
+      properties:
+        transaction:
+          $ref: '#/components/schemas/FinanceTransaction'
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceAudit'
+      required:
+      - transaction
+      - history
+    FinanceTransactionList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceTransaction'
+      required:
+      - items
+    FinanceTransactionPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceTransaction'
+        total:
+          type: integer
+          format: int64
+        page:
+          type: integer
+          minimum: 0
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 200
+      required:
+      - items
+      - total
+      - page
+      - pageSize
+    FinanceTransactionResult:
+      type: object
+      additionalProperties: false
+      properties:
+        transaction:
+          $ref: '#/components/schemas/FinanceTransaction'
+      required:
+      - transaction
+    FinanceBulkResult:
+      type: object
+      additionalProperties: false
+      properties:
+        updated:
+          type: integer
+      required:
+      - updated
+    FinanceTransactionInput:
+      type: object
+      additionalProperties: false
+      properties:
+        requestKey:
+          type: string
+          minLength: 1
+          maxLength: 100
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        type:
+          $ref: '#/components/schemas/FinanceTransactionType'
+        effect:
+          $ref: '#/components/schemas/FinanceEffect'
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1024
+        date:
+          type: string
+        sourceId:
+          type: integer
+          format: int64
+          minimum: 1
+        destinationId:
+          type: integer
+          format: int64
+          minimum: 1
+        sourceAmount:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+          x-field-extra-annotation: '@tools.jackson.databind.annotation.JsonDeserialize(using = com.sixtymeters.thereabout.finance.transport.DecimalStringDeserializer.class)'
+        destinationAmount:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+          x-field-extra-annotation: '@tools.jackson.databind.annotation.JsonDeserialize(using = com.sixtymeters.thereabout.finance.transport.DecimalStringDeserializer.class)'
+        sourceCurrency:
+          type: string
+        destinationCurrency:
+          type: string
+        categoryId:
+          type: integer
+          format: int64
+          minimum: 0
+        notes:
+          type: string
+        externalReference:
+          type: string
+        foreignAmount:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+          x-field-extra-annotation: '@tools.jackson.databind.annotation.JsonDeserialize(using = com.sixtymeters.thereabout.finance.transport.DecimalStringDeserializer.class)'
+        foreignCurrency:
+          type: string
+      required:
+      - requestKey
+      - type
+      - description
+      - date
+      - sourceId
+      - destinationId
+      - sourceAmount
+      - destinationAmount
+      - sourceCurrency
+      - destinationCurrency
+    FinanceSelection:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+      required:
+      - id
+      - version
+    FinanceBulkCategoryInput:
+      type: object
+      additionalProperties: false
+      properties:
+        requestKey:
+          type: string
+          minLength: 1
+          maxLength: 100
+        categoryId:
+          type: integer
+          format: int64
+          minimum: 0
+        items:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items:
+            $ref: '#/components/schemas/FinanceSelection'
+      required:
+      - requestKey
+      - items
+    FinanceTransactionQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        page:
+          type: integer
+          minimum: 0
+          maximum: 99999
+          default: 0
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+        q:
+          type: string
+        accountId:
+          type: integer
+          format: int64
+          minimum: 0
+        categoryId:
+          type: integer
+          format: int64
+          minimum: 0
+        type:
+          $ref: '#/components/schemas/FinanceTransactionType'
+        effect:
+          $ref: '#/components/schemas/FinanceEffect'
+        from:
+          type: string
+        to:
+          type: string
+        includeDeleted:
+          type: boolean
+        operatingOnly:
+          type: boolean
+      required: []

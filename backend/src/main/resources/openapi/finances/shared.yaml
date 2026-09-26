@@ -1,0 +1,48 @@
+components:
+  schemas:
+    FinanceError:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        detail:
+          type: string
+      required:
+      - code
+      - detail
+    FinanceVersionedInput:
+      type: object
+      additionalProperties: false
+      properties:
+        requestKey:
+          type: string
+          minLength: 1
+          maxLength: 100
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+      required:
+      - requestKey
+      - id
+      - version
+    FinanceEmpty:
+      type: object
+      additionalProperties: false
+      properties: {}
+      required: []
+    FinanceIdQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+      required:
+      - id

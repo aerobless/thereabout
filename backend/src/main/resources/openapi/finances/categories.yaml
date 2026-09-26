@@ -1,0 +1,178 @@
+paths:
+  _categories:
+    get:
+      operationId: financeListCategories
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceCategoryList'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+    post:
+      operationId: financeCreateCategories
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceCategoryResult'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinanceCategoryInput'
+  _categories_id:
+    put:
+      operationId: financeUpdateCategories
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceCategoryResult'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinanceCategoryInput'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+components:
+  schemas:
+    FinanceCategory:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        sourceId:
+          type: integer
+          format: int64
+          minimum: 1
+        name:
+          type: string
+        deleted:
+          type: boolean
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+      required:
+      - id
+      - name
+      - deleted
+      - version
+    FinanceCategoryList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceCategory'
+      required:
+      - items
+    FinanceCategoryResult:
+      type: object
+      additionalProperties: false
+      properties:
+        category:
+          $ref: '#/components/schemas/FinanceCategory'
+      required:
+      - category
+    FinanceCategoryInput:
+      type: object
+      additionalProperties: false
+      properties:
+        requestKey:
+          type: string
+          minLength: 1
+          maxLength: 100
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        name:
+          type: string
+          minLength: 1
+          maxLength: 1024
+      required:
+      - requestKey
+      - name

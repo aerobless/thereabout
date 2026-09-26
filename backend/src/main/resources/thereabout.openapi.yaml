@@ -4,6 +4,42 @@ info:
   title: Frontend REST API
   version: "1.0"
 paths:
+  /api/finances/overview:
+    $ref: 'openapi/finances/reports.yaml#/paths/_overview'
+  /api/finances/accounts:
+    $ref: 'openapi/finances/accounts.yaml#/paths/_accounts'
+  /api/finances/accounts/{id}:
+    $ref: 'openapi/finances/accounts.yaml#/paths/_accounts_id'
+  /api/finances/categories:
+    $ref: 'openapi/finances/categories.yaml#/paths/_categories'
+  /api/finances/categories/{id}:
+    $ref: 'openapi/finances/categories.yaml#/paths/_categories_id'
+  /api/finances/transactions:
+    $ref: 'openapi/finances/transactions.yaml#/paths/_transactions'
+  /api/finances/transactions/{id}:
+    $ref: 'openapi/finances/transactions.yaml#/paths/_transactions_id'
+  /api/finances/currencies:
+    $ref: 'openapi/finances/rates.yaml#/paths/_currencies'
+  /api/finances/transactions/{id}/restore:
+    $ref: 'openapi/finances/transactions.yaml#/paths/_transactions_id_restore'
+  /api/finances/transactions/categories:
+    $ref: 'openapi/finances/transactions.yaml#/paths/_transactions_categories'
+  /api/finances/valuations/preview:
+    $ref: 'openapi/finances/valuations.yaml#/paths/_valuations_preview'
+  /api/finances/valuations:
+    $ref: 'openapi/finances/valuations.yaml#/paths/_valuations'
+  /api/finances/rates:
+    $ref: 'openapi/finances/rates.yaml#/paths/_rates'
+  /api/finances/rates/manual:
+    $ref: 'openapi/finances/rates.yaml#/paths/_rates_manual'
+  /api/finances/rates/refresh:
+    $ref: 'openapi/finances/rates.yaml#/paths/_rates_refresh'
+  /api/finances/reports/income-expenses:
+    $ref: 'openapi/finances/reports.yaml#/paths/_reports_income-expenses'
+  /api/finances/reports/categories:
+    $ref: 'openapi/finances/reports.yaml#/paths/_reports_categories'
+  /api/finances/reports/investments:
+    $ref: 'openapi/finances/reports.yaml#/paths/_reports_investments'
   /backend/api/v1/launcher:
     $ref: 'openapi/launcher.yaml#/paths/Collection'
   /backend/api/v1/launcher/groups:
@@ -116,6 +152,112 @@ paths:
 
 components:
   schemas:
+    FinanceAccountKind:
+      $ref: 'openapi/finances/accounts.yaml#/components/schemas/FinanceAccountKind'
+    FinanceTransactionType:
+      $ref: 'openapi/finances/transactions.yaml#/components/schemas/FinanceTransactionType'
+    FinanceEffect:
+      $ref: 'openapi/finances/transactions.yaml#/components/schemas/FinanceEffect'
+    FinanceScope:
+      $ref: 'openapi/finances/reports.yaml#/components/schemas/FinanceScope'
+    FinanceAccount:
+      $ref: 'openapi/finances/accounts.yaml#/components/schemas/FinanceAccount'
+    FinanceCategory:
+      $ref: 'openapi/finances/categories.yaml#/components/schemas/FinanceCategory'
+    FinanceCurrency:
+      $ref: 'openapi/finances/rates.yaml#/components/schemas/FinanceCurrency'
+    FinanceTransaction:
+      $ref: 'openapi/finances/transactions.yaml#/components/schemas/FinanceTransaction'
+    FinanceAudit:
+      $ref: 'openapi/finances/transactions.yaml#/components/schemas/FinanceAudit'
+    FinanceTransactionDetail:
+      $ref: 'openapi/finances/transactions.yaml#/components/schemas/FinanceTransactionDetail'
+    FinanceValuation:
+      $ref: 'openapi/finances/valuations.yaml#/components/schemas/FinanceValuation'
+    FinanceValuationPreview:
+      $ref: 'openapi/finances/valuations.yaml#/components/schemas/FinanceValuationPreview'
+    FinanceValuationResult:
+      $ref: 'openapi/finances/valuations.yaml#/components/schemas/FinanceValuationResult'
+    FinanceRate:
+      $ref: 'openapi/finances/rates.yaml#/components/schemas/FinanceRate'
+    FinanceRateRefreshResult:
+      $ref: 'openapi/finances/rates.yaml#/components/schemas/FinanceRateRefreshResult'
+    FinanceSeriesPoint:
+      $ref: 'openapi/finances/reports.yaml#/components/schemas/FinanceSeriesPoint'
+    FinanceTotals:
+      $ref: 'openapi/finances/reports.yaml#/components/schemas/FinanceTotals'
+    FinanceOverview:
+      $ref: 'openapi/finances/reports.yaml#/components/schemas/FinanceOverview'
+    FinanceCashflowRow:
+      $ref: 'openapi/finances/reports.yaml#/components/schemas/FinanceCashflowRow'
+    FinanceInvestmentRow:
+      $ref: 'openapi/finances/reports.yaml#/components/schemas/FinanceInvestmentRow'
+    FinanceQuote:
+      $ref: 'openapi/finances/rates.yaml#/components/schemas/FinanceQuote'
+    FinanceReport:
+      $ref: 'openapi/finances/reports.yaml#/components/schemas/FinanceReport'
+    FinanceAccountList:
+      $ref: 'openapi/finances/accounts.yaml#/components/schemas/FinanceAccountList'
+    FinanceCategoryList:
+      $ref: 'openapi/finances/categories.yaml#/components/schemas/FinanceCategoryList'
+    FinanceTransactionList:
+      $ref: 'openapi/finances/transactions.yaml#/components/schemas/FinanceTransactionList'
+    FinanceValuationList:
+      $ref: 'openapi/finances/valuations.yaml#/components/schemas/FinanceValuationList'
+    FinanceRateList:
+      $ref: 'openapi/finances/rates.yaml#/components/schemas/FinanceRateList'
+    FinanceCurrencyList:
+      $ref: 'openapi/finances/rates.yaml#/components/schemas/FinanceCurrencyList'
+    FinanceAccountPage:
+      $ref: 'openapi/finances/accounts.yaml#/components/schemas/FinanceAccountPage'
+    FinanceTransactionPage:
+      $ref: 'openapi/finances/transactions.yaml#/components/schemas/FinanceTransactionPage'
+    FinanceAccountResult:
+      $ref: 'openapi/finances/accounts.yaml#/components/schemas/FinanceAccountResult'
+    FinanceCategoryResult:
+      $ref: 'openapi/finances/categories.yaml#/components/schemas/FinanceCategoryResult'
+    FinanceTransactionResult:
+      $ref: 'openapi/finances/transactions.yaml#/components/schemas/FinanceTransactionResult'
+    FinanceRateResult:
+      $ref: 'openapi/finances/rates.yaml#/components/schemas/FinanceRateResult'
+    FinanceBulkResult:
+      $ref: 'openapi/finances/transactions.yaml#/components/schemas/FinanceBulkResult'
+    FinanceError:
+      $ref: 'openapi/finances/shared.yaml#/components/schemas/FinanceError'
+    FinanceAccountInput:
+      $ref: 'openapi/finances/accounts.yaml#/components/schemas/FinanceAccountInput'
+    FinanceCategoryInput:
+      $ref: 'openapi/finances/categories.yaml#/components/schemas/FinanceCategoryInput'
+    FinanceTransactionInput:
+      $ref: 'openapi/finances/transactions.yaml#/components/schemas/FinanceTransactionInput'
+    FinanceVersionedInput:
+      $ref: 'openapi/finances/shared.yaml#/components/schemas/FinanceVersionedInput'
+    FinanceSelection:
+      $ref: 'openapi/finances/transactions.yaml#/components/schemas/FinanceSelection'
+    FinanceBulkCategoryInput:
+      $ref: 'openapi/finances/transactions.yaml#/components/schemas/FinanceBulkCategoryInput'
+    FinanceValuationPreviewInput:
+      $ref: 'openapi/finances/valuations.yaml#/components/schemas/FinanceValuationPreviewInput'
+    FinanceValuationInput:
+      $ref: 'openapi/finances/valuations.yaml#/components/schemas/FinanceValuationInput'
+    FinanceRateInput:
+      $ref: 'openapi/finances/rates.yaml#/components/schemas/FinanceRateInput'
+    FinanceRefreshInput:
+      $ref: 'openapi/finances/rates.yaml#/components/schemas/FinanceRefreshInput'
+    FinanceAccountQuery:
+      $ref: 'openapi/finances/accounts.yaml#/components/schemas/FinanceAccountQuery'
+    FinanceTransactionQuery:
+      $ref: 'openapi/finances/transactions.yaml#/components/schemas/FinanceTransactionQuery'
+    FinancePeriodQuery:
+      $ref: 'openapi/finances/reports.yaml#/components/schemas/FinancePeriodQuery'
+    FinanceRateQuery:
+      $ref: 'openapi/finances/rates.yaml#/components/schemas/FinanceRateQuery'
+    FinanceValuationQuery:
+      $ref: 'openapi/finances/valuations.yaml#/components/schemas/FinanceValuationQuery'
+    FinanceEmpty:
+      $ref: 'openapi/finances/shared.yaml#/components/schemas/FinanceEmpty'
+    FinanceIdQuery:
+      $ref: 'openapi/finances/shared.yaml#/components/schemas/FinanceIdQuery'
     LauncherGroupInput:
       $ref: 'openapi/launcher.yaml#/components/schemas/LauncherGroupInput'
     LauncherGroup:

@@ -2,5 +2,9 @@
   "/backend/api/v1/": {
     "target": "http://localhost:9050",
     "secure": false
+  },
+  "/api/finances/": {
+    "target": "http://127.0.0.1:9050",
+    "secure": false
   }
 }

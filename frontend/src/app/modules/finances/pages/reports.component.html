@@ -1,0 +1,224 @@
+@if (state().error) {
+  <p class="alert error" role="alert">{{ state().error }}</p>
+}
+@if (state().loading) {
+  <p role="status">Loading your finances…</p>
+}
+@if (state().data; as report) {
+  <div class="toolbar">
+    <div class="segmented">
+      @for (tab of ["cashflow", "categories", "investments"]; track tab) {
+        <button [class.active]="reportTab === tab" (click)="reportTab = tab">
+          {{ tab === "cashflow" ? "Income vs. expenses" : (tab | titlecase) }}
+        </button>
+      }
+    </div>
+    <div class="range">
+      <input aria-label="Report start" type="date" [(ngModel)]="from" /><span
+        >to</span
+      ><input aria-label="Report end" type="date" [(ngModel)]="to" /><select
+        aria-label="Report account"
+        [(ngModel)]="accountFilter"
+      >
+        <option [ngValue]="0">All accounts</option>
+        @for (a of ownAccounts; track a.id) {
+          <option [ngValue]="a.id">{{ a.name }}</option>
+        }</select
+      ><button (click)="loadReport()">Apply</button>
+    </div>
+  </div>
+  @for (w of report.warnings; track w) {
+    <p class="alert warning">{{ w }}</p>
+  }
+  @if (reportTab !== "investments") {
+    <div class="summary-grid report-metrics">
+      <article class="metric">
+        <span>Operating income</span><strong>{{ money(report.income) }}</strong>
+      </article>
+      <article class="metric">
+        <span>Operating expenses</span
+        ><strong>{{ money(report.expenses) }}</strong>
+      </article>
+      <article class="metric hero">
+        <span>Difference</span><strong>{{ money(report.net) }}</strong>
+      </article>
+    </div>
+    <p class="report-note">
+      Transfers, opening balances and valuation changes are excluded. Refunds
+      are shown as income in their original category.
+    </p>
+  }
+  @if (report.exchangeRates?.length) {
+    <details class="report-note">
+      <summary>Exchange rates used</summary>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Currency / transaction date</th>
+              <th>Rate date</th>
+              <th>CHF per unit</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of report.exchangeRates; track r.requested) {
+              <tr>
+                <td>{{ r.requested }}</td>
+                <td>{{ r.date }}</td>
+                <td>{{ r.rate }}</td>
+                <td>{{ r.source }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </details>
+  }
+  @if (reportTab === "cashflow") {
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Income & expenses by month</h2>
+        <span class="legend"
+          ><b></b> Income <b class="expense"></b> Expenses</span
+        >
+      </div>
+      <div class="chart">
+        <p-chart
+          type="bar"
+          [data]="chart"
+          [options]="chartOptions"
+          height="300px"
+        />
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="numeric">Income</th>
+              <th class="numeric">Expenses</th>
+              <th class="numeric">Difference</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of report.months; track r.name) {
+              <tr>
+                <td>
+                  <button class="text-button" (click)="monthDrill(r.name)">
+                    {{ r.name }}
+                  </button>
+                </td>
+                <td class="numeric">{{ money(r.income) }}</td>
+                <td class="numeric">{{ money(r.expenses) }}</td>
+                <td class="numeric">{{ money(r.net) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+  @if (reportTab === "categories") {
+    <section class="panel table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th class="numeric">Spent</th>
+            <th class="numeric">Income / refunds</th>
+            <th class="numeric">Net</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of report.categories; track r.categoryId) {
+            <tr>
+              <td>
+                <button class="text-button" (click)="categoryDrill(r)">
+                  {{ r.name }}
+                </button>
+              </td>
+              <td class="numeric">{{ money(r.expenses) }}</td>
+              <td class="numeric">{{ money(r.income) }}</td>
+              <td class="numeric">{{ money(r.net) }}</td>
+              <td>
+                <button
+                  (click)="categoryDrill(r)"
+                  aria-label="View transactions"
+                >
+                  ↗
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td class="empty" colspan="5">
+                No operating activity in this period.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+  @if (reportTab === "investments") {
+    <p class="report-note">
+      Opening value + inflows − outflows + valuation changes + adjustments =
+      closing value. Amounts remain in each account’s currency.
+    </p>
+    @for (kind of ["INVESTMENT", "REAL_ESTATE", "OTHER_ASSET"]; track kind) {
+      <section class="panel">
+        <div class="panel-header">
+          <h2>{{ label(kind) }}</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th class="numeric">Opening</th>
+                <th class="numeric">In / out</th>
+                <th class="numeric">Valuation change</th>
+                <th class="numeric">Adjustments</th>
+                <th class="numeric">Closing</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of report.investments; track r.id) {
+                @if (r.kind === kind) {
+                  <tr>
+                    <td>
+                      <a
+                        [routerLink]="'/finances/accounts/' + r.id"
+                        [queryParams]="{ from: from, to: to }"
+                        >{{ r.name }}</a
+                      >
+                    </td>
+                    <td class="numeric">{{ money(r.start, r.currency) }}</td>
+                    <td class="numeric">
+                      <span>+ {{ money(r.inflows, r.currency) }}</span
+                      ><small>− {{ money(r.outflows, r.currency) }}</small>
+                    </td>
+                    <td
+                      class="numeric"
+                      [class.positive]="+r.valuationChange >= 0"
+                    >
+                      {{ money(r.valuationChange, r.currency) }}
+                    </td>
+                    <td class="numeric">
+                      {{ money(r.adjustments, r.currency) }}
+                    </td>
+                    <td class="numeric">
+                      <strong>{{ money(r.end, r.currency) }}</strong>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  }
+}

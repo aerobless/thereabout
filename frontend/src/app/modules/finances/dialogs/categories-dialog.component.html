@@ -1,0 +1,21 @@
+<form [formGroup]="form" class="inline" (ngSubmit)="saveCategory()">
+  <input
+    aria-label="Category name"
+    required
+    name="name"
+    formControlName="name"
+    placeholder="Category name"
+  /><button class="primary" [disabled]="saving || form.invalid">
+    {{ form.controls.id.value ? "Save changes" : "Add category" }}
+  </button>
+  @if (form.controls.id.value) {
+    <button type="button" (click)="reset()">New</button>
+  }
+</form>
+<div class="category-list">
+  @for (c of categories; track c.id) {
+    <button (click)="editCategory(c)">
+      {{ c.name }} <i class="pi pi-pencil"></i>
+    </button>
+  }
+</div>

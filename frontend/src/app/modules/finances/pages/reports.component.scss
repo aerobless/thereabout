@@ -1,0 +1,62 @@
+@use "../shared/responsive";
+@use "../shared/common";
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1fr 1.2fr;
+  gap: 14px;
+  margin-bottom: 23px;
+}
+.metric {
+  padding: 23px;
+  background: white;
+  border: 1px solid var(--app-border);
+  border-radius: 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.metric span {
+  font-size: 12px;
+  color: var(--app-muted);
+}
+.metric strong {
+  font-size: 25px;
+  letter-spacing: -0.04em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.metric small {
+  font-size: 11px;
+  color: var(--app-muted);
+  line-height: 1.5;
+}
+.metric.hero {
+  background: #203f62;
+  border-color: #203f62;
+  color: #fff;
+}
+.metric.hero span,
+.metric.hero small {
+  color: #c1d2e6;
+}
+.metric.hero strong {
+  font-size: 30px;
+}
+.summary-grid.single {
+  grid-template-columns: 1fr;
+  max-width: 450px;
+}
+.chart {
+  padding: 0 24px 20px;
+  height: 310px;
+}
+.report-metrics {
+  grid-template-columns: repeat(3, 1fr);
+}
+.report-note {
+  margin-bottom: 20px;
+  font-size: 12px;
+}
+
+@include responsive.layout;

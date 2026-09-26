@@ -1,0 +1,38 @@
+@if (state().error) {
+  <p role="alert" class="alert error">{{ state().error }}</p>
+}
+<div class="editor">
+  <h2>{{ form.description }}</h2>
+  <p>{{ form.sourceName }} → {{ form.destinationName }}</p>
+  <strong>{{ txAmount(form) }}</strong>
+  <p>
+    {{ form.occurredAt | date: "medium" }} ·
+    {{ form.categoryName || "Uncategorized" }}
+  </p>
+  <p class="notes">{{ form.notes || "No notes" }}</p>
+  @if (form.valuationId) {
+    <p>
+      This transaction is linked to a recorded valuation. Record a new total
+      value on the account to make a correction.
+    </p>
+  } @else {
+    <button [disabled]="form.deleted" (click)="openTransaction(form)">
+      Edit transaction
+    </button>
+  }
+  <p>{{ form.externalReference }}</p>
+  <h3>Change history</h3>
+  @for (h of history; track h.id) {
+    <p>
+      {{ h.createdAt | date: "medium" }} ·
+      {{ h.operation.replace("transactions.", "") | titlecase }}
+    </p>
+    <details>
+      <summary>Recorded changes</summary>
+      <pre>{{ h.beforeJson }}</pre>
+      <pre>{{ h.afterJson }}</pre>
+    </details>
+  } @empty {
+    <p>Imported from Firefly. No local changes.</p>
+  }
+</div>

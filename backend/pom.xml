@@ -38,6 +38,19 @@
     </repositories>
     <dependencies>
         <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-jose</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.modelcontextprotocol.sdk</groupId>
+            <artifactId>mcp</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
         </dependency>
@@ -232,7 +245,8 @@
                             <generateApis>true</generateApis>
                             <modelNamePrefix>Gen</modelNamePrefix>
                             <output>${project.build.directory}/generated-sources/openapi</output>
-                            <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
+                            <!-- Referenced finance schemas can change without changing the root spec. -->
+                            <skipIfSpecIsUnchanged>false</skipIfSpecIsUnchanged>
                             <inputSpec>${project.basedir}/src/main/resources/thereabout.openapi.yaml</inputSpec>
                             <modelPackage>com.sixtymeters.thereabout.generated.model</modelPackage>
                             <apiPackage>com.sixtymeters.thereabout.generated.api</apiPackage>

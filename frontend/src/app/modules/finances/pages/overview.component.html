@@ -1,0 +1,140 @@
+@if (state().error) {
+  <p class="alert error" role="alert">{{ state().error }}</p>
+}
+@if (state().loading) {
+  <p role="status">Loading your finances…</p>
+}
+@if (state().data; as overview) {
+  @if (accountId()) {
+    <div class="account-heading">
+      <div>
+        <a routerLink="/finances/accounts">← All accounts</a>
+        <h2>{{ currentAccount?.name }}</h2>
+      </div>
+      <div class="actions">
+        <button (click)="openAccount(currentAccount)">Edit account</button>
+        @if (currentAccount?.kind !== "CASH") {
+          <button class="primary" (click)="openValuation()">
+            Record total value
+          </button>
+        }
+      </div>
+    </div>
+  }
+  @if (accountId() && currentAccount?.currency !== "CHF") {
+    <p>
+      CHF valuation: {{ money(currentAccount?.balanceChf) }} ·
+      {{ currentAccount?.rateSource || "Missing rate" }} ·
+      {{ currentAccount?.rateDate }}
+    </p>
+  }
+  <div class="summary-grid" [class.single]="accountId()">
+    <article class="metric hero">
+      <span>{{ accountId() ? "Current balance" : "Total net worth" }}</span
+      ><strong>{{
+        accountId()
+          ? money(currentAccount?.balance, currentAccount?.currency)
+          : money(overview.netWorth)
+      }}</strong
+      ><small
+        >{{
+          overview.complete === false
+            ? "Partial valuation · missing exchange rates"
+            : "Based on recorded balances"
+        }}
+        · {{ overview.asOf | date: "d MMM y" }}</small
+      >
+    </article>
+    @if (!accountId()) {
+      <article class="metric">
+        <span>Liquid funds</span
+        ><strong>{{ money(overview.totals.cash) }}</strong
+        ><small>Cash & everyday accounts</small>
+      </article>
+      <article class="metric">
+        <span>Investments</span
+        ><strong>{{ money(overview.totals.investment) }}</strong
+        ><small>Brokerage & retirement</small>
+      </article>
+      <article class="metric">
+        <span>Real estate & other assets</span
+        ><strong>{{
+          money(+overview.totals.realEstate + +overview.totals.otherAsset)
+        }}</strong
+        ><small>Recorded equity & valuables</small>
+      </article>
+    }
+  </div>
+  @for (w of overview.warnings; track w) {
+    <p class="alert warning">{{ w }}</p>
+  }
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <h2>
+          {{ accountId() ? "Balance over time" : "Your wealth over time" }}
+        </h2>
+        <p>{{ overview.chartCurrency }} · booked values, not a forecast</p>
+      </div>
+      <div class="range">
+        <select
+          aria-label="Chart period"
+          [(ngModel)]="range"
+          (change)="chooseRange()"
+        >
+          <option value="year">This year</option>
+          <option value="month">This month</option>
+          <option value="all">All history</option>
+          <option value="custom">Custom</option>
+        </select>
+        @if (range === "custom") {
+          <input aria-label="Start date" type="date" [(ngModel)]="from" /><input
+            aria-label="End date"
+            type="date"
+            [(ngModel)]="to"
+          /><button (click)="load()">Apply</button>
+        }
+      </div>
+    </div>
+    <div class="chart">
+      <p-chart
+        type="line"
+        [data]="chart"
+        [options]="chartOptions"
+        height="280px"
+      />
+    </div>
+  </section>
+  @if (!accountId()) {
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>Across your accounts</h2>
+          <p>
+            Original currencies · last transaction
+            {{ overview.latestTransaction | date: "d MMM y" }}
+          </p>
+        </div>
+        <a routerLink="/finances/accounts">Manage accounts →</a>
+      </div>
+      <div class="account-strip">
+        @for (a of ownAccounts; track a.id) {
+          @if (a.active) {
+            <a class="mini-account" [routerLink]="'/finances/accounts/' + a.id"
+              ><span>{{ a.name }}</span
+              ><strong>{{ money(a.balance, a.currency) }}</strong
+              ><small
+                >{{ label(a.kind)
+                }}{{
+                  !a.includeNetWorth ? " · excluded from net worth" : ""
+                }}</small
+              ></a
+            >
+          }
+        }
+      </div>
+    </section>
+  }
+
+  <finance-transactions [accountId]="accountId()" [recent]="!accountId()" />
+}

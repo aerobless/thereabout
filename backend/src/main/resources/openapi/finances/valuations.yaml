@@ -1,0 +1,271 @@
+paths:
+  _valuations_preview:
+    post:
+      operationId: financePreviewValuation
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceValuationPreview'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinanceValuationPreviewInput'
+  _valuations:
+    post:
+      operationId: financeCreateValuation
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceValuationResult'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinanceValuationInput'
+    get:
+      operationId: financeListValuations
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceValuationList'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      parameters:
+      - name: accountId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      x-mcp-input:
+        $ref: '#/components/schemas/FinanceValuationQuery'
+components:
+  schemas:
+    FinanceValuation:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        accountId:
+          type: integer
+          format: int64
+          minimum: 1
+        name:
+          type: string
+        currency:
+          type: string
+        occurredAt:
+          type: string
+        reportedValue:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        previousBalance:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        transactionId:
+          type: integer
+          format: int64
+          minimum: 1
+        reference:
+          type: string
+        origin:
+          type: string
+      required:
+      - id
+      - accountId
+      - occurredAt
+      - reportedValue
+      - previousBalance
+      - reference
+      - origin
+    FinanceValuationPreview:
+      type: object
+      additionalProperties: false
+      properties:
+        accountId:
+          type: integer
+          format: int64
+          minimum: 1
+        date:
+          type: string
+        reportedValue:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        previousBalance:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        difference:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        currency:
+          type: string
+      required:
+      - accountId
+      - date
+      - reportedValue
+      - previousBalance
+      - difference
+      - currency
+    FinanceValuationResult:
+      type: object
+      additionalProperties: false
+      properties:
+        valuation:
+          $ref: '#/components/schemas/FinanceValuation'
+        preview:
+          $ref: '#/components/schemas/FinanceValuationPreview'
+      required:
+      - valuation
+      - preview
+    FinanceValuationList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceValuation'
+      required:
+      - items
+    FinanceValuationPreviewInput:
+      type: object
+      additionalProperties: false
+      properties:
+        accountId:
+          type: integer
+          format: int64
+          minimum: 1
+        date:
+          type: string
+        reportedValue:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+          x-field-extra-annotation: '@tools.jackson.databind.annotation.JsonDeserialize(using = com.sixtymeters.thereabout.finance.transport.DecimalStringDeserializer.class)'
+      required:
+      - accountId
+      - date
+      - reportedValue
+    FinanceValuationInput:
+      type: object
+      additionalProperties: false
+      properties:
+        requestKey:
+          type: string
+          minLength: 1
+          maxLength: 100
+        accountId:
+          type: integer
+          format: int64
+          minimum: 1
+        date:
+          type: string
+        reportedValue:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+          x-field-extra-annotation: '@tools.jackson.databind.annotation.JsonDeserialize(using = com.sixtymeters.thereabout.finance.transport.DecimalStringDeserializer.class)'
+        expectedBalance:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+          x-field-extra-annotation: '@tools.jackson.databind.annotation.JsonDeserialize(using = com.sixtymeters.thereabout.finance.transport.DecimalStringDeserializer.class)'
+        reference:
+          type: string
+          minLength: 1
+          maxLength: 255
+      required:
+      - requestKey
+      - accountId
+      - date
+      - reportedValue
+      - expectedBalance
+      - reference
+    FinanceValuationQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        accountId:
+          type: integer
+          format: int64
+          minimum: 0
+      required: []

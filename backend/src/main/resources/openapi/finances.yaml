@@ -1,0 +1,146 @@
+# Finance API index. Edit resource definitions in finances/*.yaml.
+paths:
+  _overview:
+    $ref: finances/reports.yaml#/paths/_overview
+  _accounts:
+    $ref: finances/accounts.yaml#/paths/_accounts
+  _accounts_id:
+    $ref: finances/accounts.yaml#/paths/_accounts_id
+  _categories:
+    $ref: finances/categories.yaml#/paths/_categories
+  _categories_id:
+    $ref: finances/categories.yaml#/paths/_categories_id
+  _transactions:
+    $ref: finances/transactions.yaml#/paths/_transactions
+  _transactions_id:
+    $ref: finances/transactions.yaml#/paths/_transactions_id
+  _currencies:
+    $ref: finances/rates.yaml#/paths/_currencies
+  _transactions_id_restore:
+    $ref: finances/transactions.yaml#/paths/_transactions_id_restore
+  _transactions_categories:
+    $ref: finances/transactions.yaml#/paths/_transactions_categories
+  _valuations_preview:
+    $ref: finances/valuations.yaml#/paths/_valuations_preview
+  _valuations:
+    $ref: finances/valuations.yaml#/paths/_valuations
+  _rates:
+    $ref: finances/rates.yaml#/paths/_rates
+  _rates_manual:
+    $ref: finances/rates.yaml#/paths/_rates_manual
+  _rates_refresh:
+    $ref: finances/rates.yaml#/paths/_rates_refresh
+  _reports_income-expenses:
+    $ref: finances/reports.yaml#/paths/_reports_income-expenses
+  _reports_categories:
+    $ref: finances/reports.yaml#/paths/_reports_categories
+  _reports_investments:
+    $ref: finances/reports.yaml#/paths/_reports_investments
+components:
+  schemas:
+    FinanceAccountKind:
+      $ref: finances/accounts.yaml#/components/schemas/FinanceAccountKind
+    FinanceTransactionType:
+      $ref: finances/transactions.yaml#/components/schemas/FinanceTransactionType
+    FinanceEffect:
+      $ref: finances/transactions.yaml#/components/schemas/FinanceEffect
+    FinanceScope:
+      $ref: finances/reports.yaml#/components/schemas/FinanceScope
+    FinanceAccount:
+      $ref: finances/accounts.yaml#/components/schemas/FinanceAccount
+    FinanceCategory:
+      $ref: finances/categories.yaml#/components/schemas/FinanceCategory
+    FinanceCurrency:
+      $ref: finances/rates.yaml#/components/schemas/FinanceCurrency
+    FinanceTransaction:
+      $ref: finances/transactions.yaml#/components/schemas/FinanceTransaction
+    FinanceAudit:
+      $ref: finances/transactions.yaml#/components/schemas/FinanceAudit
+    FinanceTransactionDetail:
+      $ref: finances/transactions.yaml#/components/schemas/FinanceTransactionDetail
+    FinanceValuation:
+      $ref: finances/valuations.yaml#/components/schemas/FinanceValuation
+    FinanceValuationPreview:
+      $ref: finances/valuations.yaml#/components/schemas/FinanceValuationPreview
+    FinanceValuationResult:
+      $ref: finances/valuations.yaml#/components/schemas/FinanceValuationResult
+    FinanceRate:
+      $ref: finances/rates.yaml#/components/schemas/FinanceRate
+    FinanceRateRefreshResult:
+      $ref: finances/rates.yaml#/components/schemas/FinanceRateRefreshResult
+    FinanceSeriesPoint:
+      $ref: finances/reports.yaml#/components/schemas/FinanceSeriesPoint
+    FinanceTotals:
+      $ref: finances/reports.yaml#/components/schemas/FinanceTotals
+    FinanceOverview:
+      $ref: finances/reports.yaml#/components/schemas/FinanceOverview
+    FinanceCashflowRow:
+      $ref: finances/reports.yaml#/components/schemas/FinanceCashflowRow
+    FinanceInvestmentRow:
+      $ref: finances/reports.yaml#/components/schemas/FinanceInvestmentRow
+    FinanceQuote:
+      $ref: finances/rates.yaml#/components/schemas/FinanceQuote
+    FinanceReport:
+      $ref: finances/reports.yaml#/components/schemas/FinanceReport
+    FinanceAccountList:
+      $ref: finances/accounts.yaml#/components/schemas/FinanceAccountList
+    FinanceCategoryList:
+      $ref: finances/categories.yaml#/components/schemas/FinanceCategoryList
+    FinanceTransactionList:
+      $ref: finances/transactions.yaml#/components/schemas/FinanceTransactionList
+    FinanceValuationList:
+      $ref: finances/valuations.yaml#/components/schemas/FinanceValuationList
+    FinanceRateList:
+      $ref: finances/rates.yaml#/components/schemas/FinanceRateList
+    FinanceCurrencyList:
+      $ref: finances/rates.yaml#/components/schemas/FinanceCurrencyList
+    FinanceAccountPage:
+      $ref: finances/accounts.yaml#/components/schemas/FinanceAccountPage
+    FinanceTransactionPage:
+      $ref: finances/transactions.yaml#/components/schemas/FinanceTransactionPage
+    FinanceAccountResult:
+      $ref: finances/accounts.yaml#/components/schemas/FinanceAccountResult
+    FinanceCategoryResult:
+      $ref: finances/categories.yaml#/components/schemas/FinanceCategoryResult
+    FinanceTransactionResult:
+      $ref: finances/transactions.yaml#/components/schemas/FinanceTransactionResult
+    FinanceRateResult:
+      $ref: finances/rates.yaml#/components/schemas/FinanceRateResult
+    FinanceBulkResult:
+      $ref: finances/transactions.yaml#/components/schemas/FinanceBulkResult
+    FinanceError:
+      $ref: finances/shared.yaml#/components/schemas/FinanceError
+    FinanceAccountInput:
+      $ref: finances/accounts.yaml#/components/schemas/FinanceAccountInput
+    FinanceCategoryInput:
+      $ref: finances/categories.yaml#/components/schemas/FinanceCategoryInput
+    FinanceTransactionInput:
+      $ref: finances/transactions.yaml#/components/schemas/FinanceTransactionInput
+    FinanceVersionedInput:
+      $ref: finances/shared.yaml#/components/schemas/FinanceVersionedInput
+    FinanceSelection:
+      $ref: finances/transactions.yaml#/components/schemas/FinanceSelection
+    FinanceBulkCategoryInput:
+      $ref: finances/transactions.yaml#/components/schemas/FinanceBulkCategoryInput
+    FinanceValuationPreviewInput:
+      $ref: finances/valuations.yaml#/components/schemas/FinanceValuationPreviewInput
+    FinanceValuationInput:
+      $ref: finances/valuations.yaml#/components/schemas/FinanceValuationInput
+    FinanceRateInput:
+      $ref: finances/rates.yaml#/components/schemas/FinanceRateInput
+    FinanceRefreshInput:
+      $ref: finances/rates.yaml#/components/schemas/FinanceRefreshInput
+    FinanceAccountQuery:
+      $ref: finances/accounts.yaml#/components/schemas/FinanceAccountQuery
+    FinanceTransactionQuery:
+      $ref: finances/transactions.yaml#/components/schemas/FinanceTransactionQuery
+    FinancePeriodQuery:
+      $ref: finances/reports.yaml#/components/schemas/FinancePeriodQuery
+    FinanceRateQuery:
+      $ref: finances/rates.yaml#/components/schemas/FinanceRateQuery
+    FinanceValuationQuery:
+      $ref: finances/valuations.yaml#/components/schemas/FinanceValuationQuery
+    FinanceEmpty:
+      $ref: finances/shared.yaml#/components/schemas/FinanceEmpty
+    FinanceIdQuery:
+      $ref: finances/shared.yaml#/components/schemas/FinanceIdQuery

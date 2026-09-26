@@ -1,0 +1,335 @@
+paths:
+  _accounts:
+    get:
+      operationId: financeListAccounts
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceAccountPage'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 99999
+          default: 0
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+      - name: scope
+        in: query
+        required: false
+        schema:
+          $ref: reports.yaml#/components/schemas/FinanceScope
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: kind
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/FinanceAccountKind'
+      - name: id
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: asOf
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: includeDeleted
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: includeInactive
+        in: query
+        required: false
+        schema:
+          type: boolean
+      x-mcp-input:
+        $ref: '#/components/schemas/FinanceAccountQuery'
+    post:
+      operationId: financeCreateAccounts
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceAccountResult'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinanceAccountInput'
+  _accounts_id:
+    put:
+      operationId: financeUpdateAccounts
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceAccountResult'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinanceAccountInput'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+components:
+  schemas:
+    FinanceAccountKind:
+      type: string
+      enum:
+      - CASH
+      - INVESTMENT
+      - REAL_ESTATE
+      - OTHER_ASSET
+      - EXPENSE
+      - REVENUE
+      - OPENING
+      - RECONCILIATION
+    FinanceAccount:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        sourceId:
+          type: integer
+          format: int64
+          minimum: 1
+        name:
+          type: string
+        kind:
+          $ref: '#/components/schemas/FinanceAccountKind'
+        currency:
+          type: string
+        active:
+          type: boolean
+        deleted:
+          type: boolean
+        includeNetWorth:
+          type: boolean
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+        balance:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        balanceChf:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        rateDate:
+          type: string
+        rateSource:
+          type: string
+      required:
+      - id
+      - name
+      - kind
+      - currency
+      - active
+      - deleted
+      - includeNetWorth
+      - version
+      - balance
+    FinanceAccountList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceAccount'
+      required:
+      - items
+    FinanceAccountPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceAccount'
+        total:
+          type: integer
+          format: int64
+        page:
+          type: integer
+          minimum: 0
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 200
+      required:
+      - items
+      - total
+      - page
+      - pageSize
+    FinanceAccountResult:
+      type: object
+      additionalProperties: false
+      properties:
+        account:
+          $ref: '#/components/schemas/FinanceAccount'
+      required:
+      - account
+    FinanceAccountInput:
+      type: object
+      additionalProperties: false
+      properties:
+        requestKey:
+          type: string
+          minLength: 1
+          maxLength: 100
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        name:
+          type: string
+          minLength: 1
+          maxLength: 1024
+        kind:
+          $ref: '#/components/schemas/FinanceAccountKind'
+        currency:
+          type: string
+          minLength: 1
+        active:
+          type: boolean
+        includeNetWorth:
+          type: boolean
+      required:
+      - requestKey
+      - name
+      - kind
+      - currency
+    FinanceAccountQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        page:
+          type: integer
+          minimum: 0
+          maximum: 99999
+          default: 0
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+        scope:
+          $ref: reports.yaml#/components/schemas/FinanceScope
+        q:
+          type: string
+        kind:
+          $ref: '#/components/schemas/FinanceAccountKind'
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        asOf:
+          type: string
+        includeDeleted:
+          type: boolean
+        includeInactive:
+          type: boolean
+      required: []

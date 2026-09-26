@@ -1,0 +1,57 @@
+@use "../shared/responsive";
+@use "../shared/common";
+.account-group {
+  margin: 27px 0;
+}
+.account-group h2 {
+  margin-bottom: 15px;
+}
+.account-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.account-card {
+  position: relative;
+  border: 1px solid var(--app-border);
+  background: white;
+  border-radius: 10px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  color: var(--app-ink);
+  gap: 10px;
+}
+.account-card:hover {
+  border-color: #91b0d8;
+  box-shadow: 0 4px 20px #16284a08;
+}
+.account-card h3 {
+  margin: 2px 0;
+  font-weight: 500;
+}
+.account-card strong {
+  font-size: 25px;
+  letter-spacing: -0.025em;
+}
+.account-card small {
+  font-size: 11px;
+  color: var(--app-muted);
+}
+.account-icon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: #edf3f9;
+  border-radius: 8px;
+  color: #477eca;
+}
+.card-arrow {
+  position: absolute;
+  right: 22px;
+  top: 25px;
+  color: #8499b2;
+}
+
+@include responsive.layout;

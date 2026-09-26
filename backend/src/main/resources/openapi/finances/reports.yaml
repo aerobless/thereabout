@@ -1,0 +1,425 @@
+paths:
+  _overview:
+    get:
+      operationId: financeOverview
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceOverview'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: accountId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      x-mcp-input:
+        $ref: '#/components/schemas/FinancePeriodQuery'
+  _reports_income-expenses:
+    get:
+      operationId: financeReportIncomeExpenses
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceReport'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: accountId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      x-mcp-input:
+        $ref: '#/components/schemas/FinancePeriodQuery'
+  _reports_categories:
+    get:
+      operationId: financeReportCategories
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceReport'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: accountId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      x-mcp-input:
+        $ref: '#/components/schemas/FinancePeriodQuery'
+  _reports_investments:
+    get:
+      operationId: financeReportInvestments
+      tags:
+      - Finances
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceReport'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: shared.yaml#/components/schemas/FinanceError
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: accountId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      x-mcp-input:
+        $ref: '#/components/schemas/FinancePeriodQuery'
+components:
+  schemas:
+    FinanceScope:
+      type: string
+      enum:
+      - OWN
+      - COUNTERPARTY
+      - ALL
+    FinanceSeriesPoint:
+      type: object
+      additionalProperties: false
+      properties:
+        date:
+          type: string
+        value:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+      required:
+      - date
+      - value
+    FinanceTotals:
+      type: object
+      additionalProperties: false
+      properties:
+        cash:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        investment:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        realEstate:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        otherAsset:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+      required:
+      - cash
+      - investment
+      - realEstate
+      - otherAsset
+    FinanceOverview:
+      type: object
+      additionalProperties: false
+      properties:
+        netWorth:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        totals:
+          $ref: '#/components/schemas/FinanceTotals'
+        accounts:
+          type: array
+          items:
+            $ref: accounts.yaml#/components/schemas/FinanceAccount
+        series:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceSeriesPoint'
+        chartCurrency:
+          type: string
+        warnings:
+          type: array
+          items:
+            type: string
+        complete:
+          type: boolean
+        asOf:
+          type: string
+        latestTransaction:
+          type: string
+        earliestTransaction:
+          type: string
+      required:
+      - netWorth
+      - totals
+      - accounts
+      - series
+      - chartCurrency
+      - warnings
+      - complete
+      - asOf
+    FinanceCashflowRow:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        income:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        expenses:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        net:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        categoryId:
+          type: integer
+          format: int64
+          minimum: 1
+      required:
+      - name
+      - income
+      - expenses
+      - net
+    FinanceInvestmentRow:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        name:
+          type: string
+        kind:
+          $ref: accounts.yaml#/components/schemas/FinanceAccountKind
+        currency:
+          type: string
+        start:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        end:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        inflows:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        outflows:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        valuationChange:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        adjustments:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+      required:
+      - id
+      - name
+      - kind
+      - currency
+      - start
+      - end
+      - inflows
+      - outflows
+      - valuationChange
+      - adjustments
+    FinanceReport:
+      type: object
+      additionalProperties: false
+      properties:
+        months:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceCashflowRow'
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceCashflowRow'
+        investments:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceInvestmentRow'
+        income:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        expenses:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        net:
+          type: string
+          pattern: ^-?\d{1,12}(\.\d{1,24})?$
+          example: '123.45'
+        warnings:
+          type: array
+          items:
+            type: string
+        currency:
+          type: string
+        exchangeRates:
+          type: array
+          items:
+            $ref: rates.yaml#/components/schemas/FinanceQuote
+      required:
+      - months
+      - categories
+      - investments
+      - income
+      - expenses
+      - net
+      - warnings
+      - currency
+      - exchangeRates
+    FinancePeriodQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        accountId:
+          type: integer
+          format: int64
+          minimum: 0
+      required: []

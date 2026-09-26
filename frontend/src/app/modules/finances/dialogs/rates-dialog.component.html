@@ -1,0 +1,65 @@
+@if (manual().error) {
+  <p role="alert" class="alert error">{{ manual().error }}</p>
+}
+<div class="editor">
+  <p>
+    Reference rates value your accounts in CHF. They never change the original
+    transaction amounts.
+  </p>
+  <button class="secondary" [disabled]="saving" (click)="refreshRates()">
+    {{ saving ? "Updating…" : "Refresh ECB reference rates" }}
+  </button>
+  <h3>Manual dated rate</h3>
+  <form [formGroup]="form" (ngSubmit)="saveRate()">
+    <div class="form-grid">
+      <label
+        >From<select
+          name="from"
+          formControlName="fromCurrency"
+          (change)="prepareRate()"
+        >
+          @for (c of currencies; track c.code) {
+            <option [value]="c.code">{{ c.code }}</option>
+          }
+        </select></label
+      ><label
+        >Date<input
+          name="date"
+          type="date"
+          required
+          formControlName="date"
+          (change)="prepareRate()" /></label
+      ><label
+        >CHF per unit<input
+          name="rate"
+          required
+          inputmode="decimal"
+          formControlName="rate"
+      /></label>
+    </div>
+    <button [disabled]="saving || !rateReady">Save rate</button>
+  </form>
+  <h3>Latest stored rates</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Pair</th>
+          <th>Rate</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of rateRows.slice(0, 20); track r.id) {
+          <tr>
+            <td>{{ r.rateDate }}</td>
+            <td>{{ r.fromCurrency }}/{{ r.toCurrency }}</td>
+            <td>{{ +r.rate | number: "1.4-6" }}</td>
+            <td>{{ r.source }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

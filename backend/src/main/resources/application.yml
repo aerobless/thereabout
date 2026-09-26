@@ -10,6 +10,8 @@ server:
   port : 9050
 
 spring:
+  config:
+    import: optional:file:/data/finances.properties
   servlet:
     multipart:
       max-file-size: 5GB

@@ -1,0 +1,32 @@
+<form [formGroup]="form" class="editor" (ngSubmit)="saveAccount()">
+  <label>Name<input name="name" required formControlName="name" /></label>
+  <div class="form-grid">
+    <label
+      >Kind<select name="kind" formControlName="kind">
+        @for (k of kinds; track k[0]) {
+          <option [value]="k[0]">{{ k[1] }}</option>
+        }
+        <option value="EXPENSE">Expense counterparty</option>
+        <option value="REVENUE">Revenue counterparty</option>
+      </select></label
+    ><label
+      >Currency<select name="currency" formControlName="currency">
+        @for (c of currencies; track c.code) {
+          <option [value]="c.code">{{ c.code }}</option>
+        }
+      </select></label
+    >
+  </div>
+  <label class="check"
+    ><input type="checkbox" name="active" formControlName="active" />
+    Active</label
+  ><label class="check"
+    ><input type="checkbox" name="net" formControlName="includeNetWorth" />
+    Include in net worth</label
+  >
+  <div class="dialog-footer">
+    <button class="primary" [disabled]="saving || form.invalid">
+      Save account
+    </button>
+  </div>
+</form>

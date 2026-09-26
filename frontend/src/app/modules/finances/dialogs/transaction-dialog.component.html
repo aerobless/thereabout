@@ -1,0 +1,145 @@
+<form [formGroup]="form" class="editor" (ngSubmit)="saveTransaction()">
+  @if (counterparties().error) {
+    <p class="alert error">{{ counterparties().error }}</p>
+  }
+  <div class="form-grid">
+    <label
+      >Type<select name="type" formControlName="type" (change)="changeType()">
+        <option value="WITHDRAWAL">Expense</option>
+        <option value="DEPOSIT">Income</option>
+        <option value="TRANSFER">Transfer</option>
+        @if (
+          form.controls.type.value === "OPENING" ||
+          form.controls.type.value === "RECONCILIATION"
+        ) {
+          <option [value]="form.controls.type.value">
+            {{ form.controls.type.value }}
+          </option>
+        }
+      </select></label
+    ><label
+      >Date & time<input
+        required
+        type="datetime-local"
+        step="1"
+        name="date"
+        formControlName="date" /></label
+    ><label class="wide"
+      >Description<input
+        required
+        maxlength="1024"
+        name="description"
+        formControlName="description"
+    /></label>
+    @if (form.controls.type.value !== "TRANSFER") {
+      <label class="wide"
+        >Find counterparty
+        <div class="inline">
+          <input
+            name="counterSearch"
+            [(ngModel)]="counterQuery"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Search by name"
+          /><button type="button" (click)="transactionOptions()">Search</button>
+        </div></label
+      >
+    }
+    <label
+      >From<select
+        name="source"
+        required
+        formControlName="sourceId"
+        (change)="alignCurrency()"
+      >
+        <option [ngValue]="0">Select source…</option>
+        @for (a of sourceOptions; track a.id) {
+          <option [ngValue]="a.id">{{ a.name }}</option>
+        }
+      </select></label
+    ><label
+      >To<select
+        name="destination"
+        required
+        formControlName="destinationId"
+        (change)="alignCurrency()"
+      >
+        <option [ngValue]="0">Select destination…</option>
+        @for (a of destinationOptions; track a.id) {
+          <option [ngValue]="a.id">{{ a.name }}</option>
+        }
+      </select></label
+    ><label
+      >Amount · {{ form.controls.sourceCurrency.value
+      }}<input
+        name="amount"
+        required
+        inputmode="decimal"
+        formControlName="sourceAmount"
+        (input)="alignCurrency()"
+        placeholder="0.00"
+    /></label>
+    @if (
+      form.controls.sourceCurrency.value !==
+      form.controls.destinationCurrency.value
+    ) {
+      <label
+        >Received · {{ form.controls.destinationCurrency.value
+        }}<input
+          name="destinationAmount"
+          required
+          inputmode="decimal"
+          formControlName="destinationAmount"
+      /></label>
+    }
+    <label
+      >Category<select name="category" formControlName="categoryId">
+        <option [ngValue]="0">Uncategorized</option>
+        @for (c of categories; track c.id) {
+          <option [ngValue]="c.id">{{ c.name }}</option>
+        }
+      </select></label
+    ><label
+      >Original currency (optional)<select
+        name="foreignCurrency"
+        formControlName="foreignCurrency"
+      >
+        <option value="">None</option>
+        @for (c of currencies; track c.code) {
+          @if (c.enabled) {
+            <option [value]="c.code">{{ c.code }}</option>
+          }
+        }
+      </select></label
+    >
+    @if (form.controls.foreignCurrency.value) {
+      <label
+        >Original amount<input
+          name="foreignAmount"
+          inputmode="decimal"
+          formControlName="foreignAmount"
+      /></label>
+    }
+    <label
+      >Purpose<select name="effect" formControlName="effect">
+        <option value="OPERATING">Normal transaction</option>
+        <option value="VALUATION">Valuation gain / loss</option>
+        @if (
+          form.controls.effect.value === "OPENING" ||
+          form.controls.effect.value === "RECONCILIATION"
+        ) {
+          <option [value]="form.controls.effect.value">
+            {{ form.controls.effect.value }}
+          </option>
+        }
+      </select></label
+    ><label class="wide"
+      >Notes<textarea name="notes" rows="3" formControlName="notes"></textarea>
+    </label>
+  </div>
+  <div class="dialog-footer">
+    <button type="button" (click)="dialogs.close()">Cancel</button
+    ><button class="primary" [disabled]="saving || form.invalid">
+      {{ saving ? "Saving…" : "Save transaction" }}
+    </button>
+  </div>
+</form>

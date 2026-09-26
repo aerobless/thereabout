@@ -1,0 +1,40 @@
+@use "./shared/responsive";
+@use "./shared/common";
+.finance-page {
+  max-width: 1500px;
+  margin: auto;
+  color: var(--app-ink, #172849);
+}
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 8px 0 28px;
+}
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+  color: var(--app-muted);
+  text-decoration: none;
+}
+.section-nav {
+  display: flex;
+  gap: 25px;
+  border-bottom: 1px solid var(--app-border);
+  margin-bottom: 27px;
+}
+.section-nav a {
+  padding: 0 3px 13px;
+  color: var(--app-muted);
+  font-size: 14px;
+  border-bottom: 2px solid transparent;
+}
+.section-nav a.active {
+  color: var(--app-ink);
+  border-color: #477eca;
+  font-weight: 600;
+}
+
+@include responsive.layout;

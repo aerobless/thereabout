@@ -1,0 +1,39 @@
+@use "../shared/responsive";
+@use "../shared/common";
+.editor {
+  display: grid;
+  gap: 16px;
+  font-size: 13px;
+}
+.editor label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--app-muted);
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 17px;
+}
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 15px;
+  border-top: 1px solid var(--app-border);
+}
+.valuation-preview {
+  background: #eef5fc;
+  border-radius: 8px;
+  padding: 15px;
+  display: grid;
+  gap: 12px;
+}
+.valuation-preview span {
+  display: flex;
+  justify-content: space-between;
+}
+
+@include responsive.layout;

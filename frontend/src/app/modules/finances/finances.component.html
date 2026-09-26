@@ -1,0 +1,49 @@
+<div class="finance-page">
+  <header class="page-heading">
+    <div>
+      <a class="eyebrow" routerLink="/finances">THEREABOUT / FINANCES</a>
+      <h1>Finances</h1>
+      <p>A clearer view of what you have, spend and grow.</p>
+    </div>
+    <div class="actions">
+      <button class="secondary" (click)="dialogs.open({ kind: 'rates' })">
+        <i class="pi pi-globe"></i> Exchange rates</button
+      ><button class="primary" (click)="dialogs.open({ kind: 'transaction' })">
+        <i class="pi pi-plus"></i> Add transaction
+      </button>
+    </div>
+  </header>
+  <nav class="section-nav" aria-label="Finance navigation">
+    @for (
+      tab of ["overview", "accounts", "transactions", "reports"];
+      track tab
+    ) {
+      <a
+        [routerLink]="tab === 'overview' ? '/finances' : '/finances/' + tab"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: tab === 'overview' }"
+        >{{ tab | titlecase }}</a
+      >
+    }
+  </nav>
+  @if (context.error() || context.metadata().error) {
+    <div class="alert error" role="alert">
+      {{ context.error() || context.metadata().error
+      }}<button (click)="context.error.set('')" aria-label="Dismiss error">
+        ×
+      </button>
+    </div>
+  }
+  @if (context.notice()) {
+    <div class="notice" role="status">
+      {{ context.notice()
+      }}<button
+        (click)="context.notice.set('')"
+        aria-label="Dismiss notification"
+      >
+        ×
+      </button>
+    </div>
+  }
+  <router-outlet /><finance-dialog-host />
+</div>

@@ -1,0 +1,75 @@
+@if (history().error) {
+  <p role="alert" class="alert error">{{ history().error }}</p>
+}
+<form [formGroup]="form" class="editor" (ngSubmit)="previewValuation()">
+  <p>
+    Record a statement’s total account value. Only the difference from the
+    ledger becomes a gain or loss.
+  </p>
+  <div class="form-grid">
+    <label
+      >Date & time<input
+        name="date"
+        type="datetime-local"
+        required
+        formControlName="date"
+        (change)="preview = null" /></label
+    ><label
+      >Reported value · {{ currentAccount?.currency
+      }}<input
+        required
+        name="value"
+        inputmode="decimal"
+        formControlName="reportedValue"
+        (input)="preview = null" /></label
+    ><label class="wide"
+      >Statement reference<input
+        name="reference"
+        required
+        formControlName="reference"
+        placeholder="e.g. Monthly statement 2026-09"
+    /></label>
+  </div>
+  <button [disabled]="saving || form.invalid">Preview adjustment</button>
+  @if (preview) {
+    <div class="valuation-preview">
+      <span
+        >Ledger balance
+        <strong>{{
+          money(preview.previousBalance, preview.currency)
+        }}</strong></span
+      ><span
+        >Reported total
+        <strong>{{
+          money(preview.reportedValue, preview.currency)
+        }}</strong></span
+      ><span
+        >Adjustment
+        <strong>{{ money(preview.difference, preview.currency) }}</strong></span
+      >
+    </div>
+    <button
+      type="button"
+      class="primary"
+      [disabled]="saving || form.invalid"
+      (click)="saveValuation()"
+    >
+      Confirm reported value
+    </button>
+  }
+</form>
+<h3>Previous valuations</h3>
+<div class="valuation-history">
+  @for (v of valuationHistory; track v.id) {
+    <div>
+      <span
+        >{{ v.occurredAt | date: "d MMM y" }} ·
+        {{ money(v.reportedValue, currentAccount?.currency) }}</span
+      ><small>{{
+        v.origin === "FIREFLY_INFERRED"
+          ? "Reconstructed from imported adjustment"
+          : v.reference
+      }}</small>
+    </div>
+  }
+</div>

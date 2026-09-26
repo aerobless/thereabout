@@ -1,0 +1,8 @@
+server:
+  address: 127.0.0.1
+thereabout:
+  finances:
+    enabled: true
+    mcp-key: ${FINANCE_MCP_KEY}
+  calendar:
+    worker-enabled: false

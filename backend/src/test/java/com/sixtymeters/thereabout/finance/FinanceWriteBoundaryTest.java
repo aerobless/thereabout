@@ -25,7 +25,6 @@ import org.springframework.web.server.ResponseStatusException;
 @TestPropertySource(
     properties = {
       "thereabout.finances.enabled=true",
-      "thereabout.finances.mcp-key=finance-integration-test-key-with-32-characters",
       "thereabout.calendar.worker-enabled=false",
       "thereabout.launcher.fetch-icons=false"
     })

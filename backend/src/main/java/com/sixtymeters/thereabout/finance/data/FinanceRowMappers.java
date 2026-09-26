@@ -1,6 +1,7 @@
 package com.sixtymeters.thereabout.finance.data;
 
 import com.sixtymeters.thereabout.generated.model.*;
+import static com.sixtymeters.thereabout.finance.domain.FinanceRules.money;
 import java.sql.*;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -18,8 +19,10 @@ public final class FinanceRowMappers {
               .active(r.getBoolean("active"))
               .deleted(r.getBoolean("deleted"))
               .includeNetWorth(r.getBoolean("include_net_worth"))
+              .logoUrl(r.getString("logo_url"))
+              .websiteUrl(r.getString("website_url"))
               .version(r.getObject("version", Long.class))
-              .balance(r.getString("balance"));
+              .balance(money(r.getBigDecimal("balance")));
   public static final RowMapper<GenFinanceCategory> CATEGORY =
       (r, index) ->
           new GenFinanceCategory()
@@ -55,11 +58,11 @@ public final class FinanceRowMappers {
               .destinationAccountId(r.getObject("destination_id_account", Long.class))
               .sourceName(r.getString("source_name"))
               .destinationName(r.getString("destination_name"))
-              .sourceAmount(r.getString("source_amount"))
-              .destinationAmount(r.getString("destination_amount"))
+              .sourceAmount(money(r.getBigDecimal("source_amount")))
+              .destinationAmount(money(r.getBigDecimal("destination_amount")))
               .sourceCurrency(r.getString("source_currency"))
               .destinationCurrency(r.getString("destination_currency"))
-              .foreignAmount(r.getString("foreign_amount"))
+              .foreignAmount(money(r.getBigDecimal("foreign_amount")))
               .foreignCurrency(r.getString("foreign_currency"))
               .valuationId(r.getObject("valuation_id", Long.class));
   public static final RowMapper<GenFinanceAudit> AUDIT =
@@ -79,8 +82,8 @@ public final class FinanceRowMappers {
               .name(r.getString("name"))
               .currency(r.getString("currency"))
               .occurredAt(r.getString("occurred_at"))
-              .reportedValue(r.getString("reported_value"))
-              .previousBalance(r.getString("previous_balance"))
+              .reportedValue(money(r.getBigDecimal("reported_value")))
+              .previousBalance(money(r.getBigDecimal("previous_balance")))
               .transactionId(r.getObject("transaction_id", Long.class))
               .reference(r.getString("reference"))
               .origin(r.getString("origin"));
@@ -91,7 +94,7 @@ public final class FinanceRowMappers {
               .fromCurrency(r.getString("from_currency"))
               .toCurrency(r.getString("to_currency"))
               .rateDate(r.getString("rate_date"))
-              .rate(r.getString("rate"))
+              .rate(money(r.getBigDecimal("rate")))
               .source(r.getString("source"))
               .version(r.getObject("version", Long.class));
 }

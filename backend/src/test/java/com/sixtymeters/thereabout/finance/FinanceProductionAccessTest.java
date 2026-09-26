@@ -24,11 +24,13 @@ class FinanceProductionAccessTest {
         };
     ObjectProvider<JwtDecoder> provider = mock(ObjectProvider.class);
     when(provider.getIfAvailable()).thenReturn(decoder);
-    var filter = new FinanceAccessFilter(provider);
+    var keys = mock(com.sixtymeters.thereabout.finance.service.FinanceMcpKeyService.class);
+    when(keys.matchesAuthorization("Bearer a-long-test-mcp-key-with-at-least-32-characters"))
+        .thenReturn(true);
+    var filter = new FinanceAccessFilter(provider, keys);
     ReflectionTestUtils.setField(filter, "enabled", true);
     ReflectionTestUtils.setField(filter, "accessMode", "cloudflare");
     ReflectionTestUtils.setField(filter, "publicOrigin", ORIGIN);
-    ReflectionTestUtils.setField(filter, "key", "a-long-test-mcp-key-with-at-least-32-characters");
     return filter;
   }
 
@@ -71,6 +73,17 @@ class FinanceProductionAccessTest {
         .isEqualTo(401);
     assertThat(call("/mcp/finances", "valid-token", null, bearer).getContentAsString())
         .isEqualTo("passed");
+  }
+
+  @Test
+  void credentialRevealUsesTheSameProtectedBrowserBoundary() throws Exception {
+    String path = "/api/finances/configuration/mcp-key";
+    assertThat(call(path, null, null, null).getStatus()).isEqualTo(401);
+    assertThat(call(path, "forged", ORIGIN, null).getStatus()).isEqualTo(401);
+    assertThat(call(path, "valid-token", "https://evil.test", null).getStatus()).isEqualTo(403);
+    var accepted = call(path, "valid-token", ORIGIN, null);
+    assertThat(accepted.getContentAsString()).isEqualTo("passed");
+    assertThat(accepted.getHeader("Cache-Control")).isEqualTo("no-store");
   }
 
   @Test

@@ -3,6 +3,5 @@ server:
 thereabout:
   finances:
     enabled: true
-    mcp-key: ${FINANCE_MCP_KEY}
   calendar:
     worker-enabled: false

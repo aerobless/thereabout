@@ -18,46 +18,40 @@
       Counterparties
     </button>
   </div>
-  <form (ngSubmit)="page = 0; loadAccounts()">
-    <input
-      name="accountSearch"
-      aria-label="Search accounts"
-      [(ngModel)]="accountSearch"
-      placeholder="Search accounts…"
-    /><button>Search</button>
-  </form>
   <button class="primary" (click)="openAccount()">
     + Add {{ counterparties ? "counterparty" : "account" }}
   </button>
 </div>
 @if (!counterparties) {
+  <div class="section-search">
+    <i class="pi pi-search" aria-hidden="true"></i>
+    <input
+      aria-label="Search your accounts"
+      placeholder="Find an account…"
+      [(ngModel)]="accountSearch"
+      (ngModelChange)="searchChanges.next()"
+    />
+    <span>{{ total }} accounts</span>
+  </div>
   @for (kind of kinds; track kind[0]) {
     <section class="account-group">
       <h2>{{ kind[1] }}</h2>
       <div class="account-cards">
         @for (a of accountGroup(kind[0]); track a.id) {
           <a class="account-card" [routerLink]="'/finances/accounts/' + a.id"
-            ><div class="account-icon">
-              <i
-                [class]="
-                  kind[0] === 'CASH'
-                    ? 'pi pi-wallet'
-                    : kind[0] === 'REAL_ESTATE'
-                      ? 'pi pi-home'
-                      : 'pi pi-chart-line'
-                "
-              ></i>
+            ><finance-account-logo [account]="a" />
+            <div class="account-copy">
+              <h3>{{ a.name }}</h3>
+              <strong>{{ money(a.balance, a.currency) }}</strong
+              ><small>{{
+                !a.active
+                  ? "Inactive"
+                  : !a.includeNetWorth
+                    ? "Excluded from net worth"
+                    : "Included in net worth"
+              }}</small>
             </div>
-            <h3>{{ a.name }}</h3>
-            <strong>{{ money(a.balance, a.currency) }}</strong
-            ><small>{{
-              !a.active
-                ? "Inactive"
-                : !a.includeNetWorth
-                  ? "Excluded from net worth"
-                  : "Included in net worth"
-            }}</small
-            ><span class="card-arrow">↗</span></a
+            <span class="card-arrow">↗</span></a
           >
         } @empty {
           <p class="empty-inline">No accounts in this group yet.</p>
@@ -66,41 +60,86 @@
     </section>
   }
 } @else {
-  <section class="panel table-wrap">
-    <table>
-      <thead>
+  <section class="panel">
+    <p-table
+      [value]="accounts"
+      [lazy]="true"
+      [lazyLoadOnInit]="false"
+      [paginator]="true"
+      [rows]="50"
+      [first]="page * 50"
+      [totalRecords]="total"
+      (onPage)="pageChanged($event)"
+      [loading]="busy"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first}–{last} of {totalRecords} counterparties"
+    >
+      <ng-template #caption
+        ><div class="table-caption">
+          <h2>Counterparties</h2>
+          <span>{{ total }} entries</span>
+        </div></ng-template
+      >
+      <ng-template #header>
         <tr>
           <th>Name</th>
           <th>Kind</th>
           <th>Status</th>
           <th></th>
         </tr>
-      </thead>
-      <tbody>
-        @for (a of accounts; track a.id) {
-          <tr>
-            <td>{{ a.name }}</td>
-            <td>{{ label(a.kind) }}</td>
-            <td>{{ a.active ? "Active" : "Inactive" }}</td>
-            <td><button (click)="openAccount(a)">Edit</button></td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="4" class="empty">No counterparties found.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+        <tr class="column-filters">
+          <th>
+            <input
+              aria-label="Search counterparties"
+              placeholder="Search by name…"
+              [(ngModel)]="accountSearch"
+              (ngModelChange)="searchChanges.next()"
+            />
+          </th>
+          <th>
+            <p-select
+              ariaLabel="Counterparty kind"
+              [options]="kindOptions"
+              optionLabel="label"
+              optionValue="value"
+              [(ngModel)]="kindFilter"
+              (onChange)="filterAccounts()"
+              appendTo="body"
+            />
+          </th>
+          <th>
+            <p-select
+              ariaLabel="Counterparty status"
+              [options]="statusOptions"
+              optionLabel="label"
+              optionValue="value"
+              [(ngModel)]="activeFilter"
+              (onChange)="filterAccounts()"
+              appendTo="body"
+            />
+          </th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-a
+        ><tr>
+          <td>{{ a.name }}</td>
+          <td>{{ label(a.kind) }}</td>
+          <td>
+            <span class="status" [class.inactive]="!a.active">{{
+              a.active ? "Active" : "Inactive"
+            }}</span>
+          </td>
+          <td><button (click)="openAccount(a)">Edit</button></td>
+        </tr></ng-template
+      >
+      <ng-template #emptymessage
+        ><tr>
+          <td colspan="4" class="empty">
+            No counterparties match these filters.
+          </td>
+        </tr></ng-template
+      >
+    </p-table>
   </section>
 }
-
-<div class="pagination">
-  <span>{{ total }} entries · Page {{ page + 1 }}</span>
-  <div>
-    <button [disabled]="page === 0 || busy" (click)="goPage(-1)">
-      ← Previous</button
-    ><button [disabled]="(page + 1) * 50 >= total || busy" (click)="goPage(1)">
-      Next →
-    </button>
-  </div>
-</div>

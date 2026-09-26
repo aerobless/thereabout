@@ -2,21 +2,41 @@
   <label>Name<input name="name" required formControlName="name" /></label>
   <div class="form-grid">
     <label
-      >Kind<select name="kind" formControlName="kind">
-        @for (k of kinds; track k[0]) {
-          <option [value]="k[0]">{{ k[1] }}</option>
-        }
-        <option value="EXPENSE">Expense counterparty</option>
-        <option value="REVENUE">Revenue counterparty</option>
-      </select></label
+      >Kind<p-select
+        ariaLabel="Account kind"
+        name="kind"
+        formControlName="kind"
+        [options]="kindOptions"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        [filter]="false"
+        filterBy="label" /></label
     ><label
-      >Currency<select name="currency" formControlName="currency">
-        @for (c of currencies; track c.code) {
-          <option [value]="c.code">{{ c.code }}</option>
-        }
-      </select></label
-    >
+      >Currency<p-select
+        ariaLabel="Currency"
+        name="currency"
+        formControlName="currency"
+        [options]="currencies"
+        optionLabel="code"
+        optionValue="code"
+        appendTo="body"
+        [filter]="true"
+        filterBy="code"
+    /></label>
   </div>
+  <label
+    >Bank website<input
+      type="text"
+      inputmode="url"
+      name="websiteUrl"
+      formControlName="websiteUrl"
+      placeholder="www.your-bank.com"
+    /><small
+      >We find and cache the website’s icon. Blocked websites use Google’s public favicon cache (domain only). Leave
+      blank for the default account icon.</small
+    ></label
+  >
   <label class="check"
     ><input type="checkbox" name="active" formControlName="active" />
     Active</label

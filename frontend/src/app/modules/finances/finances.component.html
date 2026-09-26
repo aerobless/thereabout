@@ -34,16 +34,5 @@
       </button>
     </div>
   }
-  @if (context.notice()) {
-    <div class="notice" role="status">
-      {{ context.notice()
-      }}<button
-        (click)="context.notice.set('')"
-        aria-label="Dismiss notification"
-      >
-        ×
-      </button>
-    </div>
-  }
   <router-outlet /><finance-dialog-host />
 </div>

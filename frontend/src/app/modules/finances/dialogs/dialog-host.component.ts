@@ -28,7 +28,13 @@ import { DeletionDialogComponent } from "./deletion-dialog.component";
       (visibleChange)="close()"
       [modal]="true"
       [header]="titles[dialog.kind]"
-      [style]="{ width: '680px', maxWidth: '94vw' }"
+      [style]="{
+        width: dialog.kind === 'categories' ? '900px' : '720px',
+        maxWidth: '94vw',
+        maxHeight: '92vh',
+      }"
+      styleClass="finance-dialog"
+      [contentStyle]="{ paddingTop: '12px' }"
       [draggable]="false"
       [closable]="!context.saving()"
     >

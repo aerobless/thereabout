@@ -17,201 +17,243 @@
       </p>
     </div>
     <div class="actions">
-      <button (click)="openCategories()">Categories</button>
+      @if (!recent()) {
+        <button (click)="openCategories()">Categories</button>
+      }
       @if (recent()) {
         <a routerLink="/finances/transactions">View all →</a>
       }
     </div>
   </div>
-  @if (!recent()) {
-    <form class="filters" (ngSubmit)="filterTransactions()">
-      <input
-        name="search"
-        aria-label="Search transactions"
-        placeholder="Search description or counterparty…"
-        [(ngModel)]="q"
-      />
-      @if (!accountId()) {
-        <select
-          name="account"
-          aria-label="Filter account"
-          [(ngModel)]="accountFilter"
-        >
-          <option [ngValue]="0">All accounts</option>
-          @for (a of ownAccounts; track a.id) {
-            <option [ngValue]="a.id">{{ a.name }}</option>
-          }
-        </select>
-      }
-      <select
-        name="category"
-        aria-label="Filter category"
-        [(ngModel)]="categoryFilter"
-      >
-        <option value="">All categories</option>
-        <option value="0">Uncategorized</option>
-        @for (c of categories; track c.id) {
-          <option [value]="c.id">{{ c.name }}</option>
-        }</select
-      ><select name="type" aria-label="Filter type" [(ngModel)]="typeFilter">
-        <option value="">All types</option>
-        <option value="WITHDRAWAL">Expenses</option>
-        <option value="DEPOSIT">Income</option>
-        <option value="TRANSFER">Transfers</option></select
-      ><label class="check"
-        ><input name="useDates" type="checkbox" [(ngModel)]="useDates" /> Date
-        range</label
-      >
-      @if (useDates) {
-        <input
-          name="from"
-          aria-label="Transaction start"
-          type="date"
-          [(ngModel)]="from"
-        /><input
-          name="to"
-          aria-label="Transaction end"
-          type="date"
-          [(ngModel)]="to"
-        />
-      }
-      <label class="check"
-        ><input name="operating" type="checkbox" [(ngModel)]="operatingOnly" />
-        Operating only</label
-      ><button>Filter</button
-      ><label class="check"
-        ><input
-          name="deleted"
-          type="checkbox"
-          [(ngModel)]="showDeleted"
-          (change)="filterTransactions()"
-        />
-        Include deleted</label
-      >
-    </form>
-  }
   @if (selected.size) {
     <div class="bulk">
       <span>{{ selected.size }} selected</span
-      ><select aria-label="New category" [(ngModel)]="bulkCategory">
-        <option [ngValue]="0">Uncategorized</option>
-        @for (c of categories; track c.id) {
-          <option [ngValue]="c.id">{{ c.name }}</option>
-        }</select
-      ><button [disabled]="saving" (click)="bulk()">Apply category</button>
+      ><p-select
+        ariaLabel="New category"
+        [(ngModel)]="bulkCategory"
+        [options]="categoryOptions"
+        optionLabel="name"
+        optionValue="id"
+        appendTo="body"
+        [filter]="true"
+      /><button [disabled]="saving" (click)="bulk()">Apply category</button>
     </div>
   }
-  <div class="table-wrap">
-    <table class="transactions">
-      <thead>
-        <tr>
-          <th class="select-col"></th>
-          <th>Description</th>
-          <th>Date</th>
-          <th>From → To</th>
-          <th>Category</th>
-          <th class="numeric">Amount</th>
+  <p-table
+    styleClass="transactions"
+    [value]="transactions"
+    [lazy]="true"
+    [lazyLoadOnInit]="false"
+    [paginator]="!recent()"
+    [rows]="recent() ? 8 : 50"
+    [first]="page * 50"
+    [totalRecords]="total"
+    (onLazyLoad)="tableChanged($event)"
+    sortField="occurredAt"
+    [sortOrder]="-1"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="{first}–{last} of {totalRecords} transactions"
+  >
+    @if (!recent()) {
+      <ng-template #caption>
+        <div class="table-tools">
+          <label class="search-field"
+            ><i class="pi pi-search" aria-hidden="true"></i
+            ><input
+              aria-label="Search transactions"
+              placeholder="Search description or counterparty…"
+              [(ngModel)]="q"
+              (ngModelChange)="searchChanges.next()"
+          /></label>
+          <div class="table-options">
+            <label class="check"
+              ><input
+                type="checkbox"
+                [(ngModel)]="operatingOnly"
+                (change)="filterTransactions()"
+              />Operating only</label
+            >
+            <label class="check"
+              ><input
+                type="checkbox"
+                [(ngModel)]="showDeleted"
+                (change)="filterTransactions()"
+              />Include deleted</label
+            >
+          </div>
+        </div>
+      </ng-template>
+    }
+    <ng-template #header>
+      <tr>
+        <th class="select-col"></th>
+        <th pSortableColumn="description">
+          Description <p-sorticon field="description" />
+        </th>
+        <th pSortableColumn="occurredAt">
+          Date <p-sorticon field="occurredAt" />
+        </th>
+        <th>From → To</th>
+        <th>Category</th>
+        <th class="numeric">Amount</th>
+        @if (accountId()) {
+          <th class="numeric">Running balance</th>
+        }
+        <th></th>
+      </tr>
+      @if (!recent()) {
+        <tr class="column-filters">
+          <th></th>
+          <th>
+            <p-select
+              ariaLabel="Transaction type"
+              [(ngModel)]="typeFilter"
+              [options]="typeOptions"
+              optionLabel="label"
+              optionValue="value"
+              (onChange)="filterTransactions()"
+              appendTo="body"
+            />
+          </th>
+          <th>
+            <details class="date-filter">
+              <summary>
+                <i class="pi pi-calendar"></i>
+                {{ useDates ? from + " – " + to : "Any date" }}
+              </summary>
+              <div class="date-controls">
+                <label class="check"
+                  ><input
+                    type="checkbox"
+                    [(ngModel)]="useDates"
+                    (change)="filterTransactions()"
+                  />Filter dates</label
+                >
+                @if (useDates) {
+                  <label
+                    >From<finance-date-input
+                      ariaLabel="Transaction start"
+                      [(ngModel)]="from"
+                      (dateChange)="filterTransactions()" /></label
+                  ><label
+                    >To<finance-date-input
+                      ariaLabel="Transaction end"
+                      [(ngModel)]="to"
+                      (dateChange)="filterTransactions()"
+                  /></label>
+                }
+              </div>
+            </details>
+          </th>
+          <th>
+            @if (!accountId()) {
+              <p-select
+                ariaLabel="Filter account"
+                [(ngModel)]="accountFilter"
+                [options]="accountOptions"
+                optionLabel="name"
+                optionValue="id"
+                [filter]="true"
+                (onChange)="filterTransactions()"
+                appendTo="body"
+              />
+            }
+          </th>
+          <th>
+            <p-multiselect
+              ariaLabel="Filter categories"
+              [(ngModel)]="categoryFilters"
+              [options]="categoryOptions"
+              optionLabel="name"
+              optionValue="id"
+              placeholder="All categories"
+              [maxSelectedLabels]="1"
+              selectedItemsLabel="{0} categories"
+              [showClear]="true"
+              (onChange)="filterTransactions()"
+              appendTo="body"
+            />
+          </th>
+          <th></th>
           @if (accountId()) {
-            <th class="numeric">Running balance</th>
+            <th></th>
           }
           <th></th>
         </tr>
-      </thead>
-      <tbody>
-        @for (t of transactions; track t.id) {
-          <tr [class.deleted]="t.deleted">
-            <td>
-              <input
-                type="checkbox"
-                [attr.aria-label]="'Select ' + t.description"
-                [checked]="selected.has(t.id)"
-                (change)="toggle(t, $event)"
-              />
-            </td>
-            <td>
-              <button class="text-button description" (click)="showHistory(t)">
-                {{ t.description }}
-              </button>
-              @if (t.effect === "VALUATION") {
-                <small class="badge">Valuation</small>
-              }
-              @if (t.deleted) {
-                <small class="badge">Deleted</small>
-              }
-            </td>
-            <td class="date-cell">{{ t.occurredAt | date: "d MMM y" }}</td>
-            <td class="flow">
-              <span>{{ t.sourceName }}</span
-              ><small>→ {{ t.destinationName }}</small>
-            </td>
-            <td>
-              <span class="category">{{
-                t.categoryName || "Uncategorized"
-              }}</span>
-            </td>
-            <td class="numeric" [class.positive]="t.type === 'DEPOSIT'">
-              <strong>{{ txAmount(t) }}</strong>
-              @if (t.foreignCurrency) {
-                <small>{{ money(t.foreignAmount, t.foreignCurrency) }}</small>
-              }
-              @if (t.sourceCurrency !== t.destinationCurrency) {
-                <small
-                  >→
-                  {{ money(t.destinationAmount, t.destinationCurrency) }}</small
-                >
-              }
-            </td>
-            @if (accountId()) {
-              <td class="numeric">
-                {{ money(t.runningBalance, currentAccount?.currency) }}
-              </td>
-            }
-            <td class="row-actions">
-              <button
-                (click)="openTransaction(t)"
-                [disabled]="t.deleted || !!t.valuationId"
-                [attr.aria-label]="'Edit ' + t.description"
-              >
-                <i class="pi pi-pencil"></i></button
-              ><button
-                (click)="deletion(t)"
-                [disabled]="!!t.valuationId"
-                [attr.aria-label]="
-                  (t.deleted ? 'Restore ' : 'Delete ') + t.description
-                "
-              >
-                <i [class]="t.deleted ? 'pi pi-replay' : 'pi pi-trash'"></i>
-              </button>
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="8" class="empty">
-              {{
-                busy
-                  ? "Loading transactions…"
-                  : "No transactions match this view."
-              }}
-            </td>
-          </tr>
+      }
+    </ng-template>
+    <ng-template #body let-t>
+      <tr [class.deleted]="t.deleted">
+        <td>
+          <input
+            type="checkbox"
+            [attr.aria-label]="'Select ' + t.description"
+            [checked]="selected.has(t.id)"
+            (change)="toggle(t, $event)"
+          />
+        </td>
+        <td>
+          <button class="text-button description" (click)="showHistory(t)">
+            {{ t.description }}
+          </button>
+          @if (t.effect === "VALUATION") {
+            <small class="badge">Valuation</small>
+          }
+          @if (t.deleted) {
+            <small class="badge">Deleted</small>
+          }
+        </td>
+        <td class="date-cell">{{ t.occurredAt | date: "d MMM y" }}</td>
+        <td class="flow">
+          <span>{{ t.sourceName }}</span
+          ><small>→ {{ t.destinationName }}</small>
+        </td>
+        <td>
+          <span class="category">{{ t.categoryName || "Uncategorized" }}</span>
+        </td>
+        <td class="numeric" [class.positive]="t.type === 'DEPOSIT'">
+          <strong>{{ txAmount(t) }}</strong>
+          @if (t.foreignCurrency) {
+            <small>{{ money(t.foreignAmount, t.foreignCurrency) }}</small>
+          }
+          @if (t.sourceCurrency !== t.destinationCurrency) {
+            <small
+              >→ {{ money(t.destinationAmount, t.destinationCurrency) }}</small
+            >
+          }
+        </td>
+        @if (accountId()) {
+          <td class="numeric">
+            {{ money(t.runningBalance, currentAccount?.currency) }}
+          </td>
         }
-      </tbody>
-    </table>
-  </div>
+        <td class="row-actions">
+          <button
+            (click)="openTransaction(t)"
+            [disabled]="t.deleted || !!t.valuationId"
+            [attr.aria-label]="'Edit ' + t.description"
+          >
+            <i class="pi pi-pencil"></i></button
+          ><button
+            (click)="deletion(t)"
+            [disabled]="!!t.valuationId"
+            [attr.aria-label]="
+              (t.deleted ? 'Restore ' : 'Delete ') + t.description
+            "
+          >
+            <i [class]="t.deleted ? 'pi pi-replay' : 'pi pi-trash'"></i>
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage
+      ><tr>
+        <td colspan="8" class="empty">
+          {{
+            busy ? "Loading transactions…" : "No transactions match this view."
+          }}
+        </td>
+      </tr></ng-template
+    >
+  </p-table>
 </section>
-
-@if (!recent()) {
-  <div class="pagination">
-    <span>{{ total }} entries · Page {{ page + 1 }}</span>
-    <div>
-      <button [disabled]="page === 0 || busy" (click)="goPage(-1)">
-        ← Previous</button
-      ><button
-        [disabled]="(page + 1) * 50 >= total || busy"
-        (click)="goPage(1)"
-      >
-        Next →
-      </button>
-    </div>
-  </div>
-}

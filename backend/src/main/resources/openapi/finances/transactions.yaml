@@ -95,6 +95,28 @@ paths:
         required: false
         schema:
           type: boolean
+      - name: categoryIds
+        in: query
+        required: false
+        schema:
+          type: array
+          maxItems: 100
+          items:
+            type: integer
+            format: int64
+            minimum: 0
+          description: Match any selected category; 0 includes uncategorized. Overrides categoryId.
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - DATE_DESC
+          - DATE_ASC
+          - DESCRIPTION_ASC
+          - DESCRIPTION_DESC
+          default: DATE_DESC
       x-mcp-input:
         $ref: '#/components/schemas/FinanceTransactionQuery'
     post:
@@ -675,4 +697,20 @@ components:
           type: boolean
         operatingOnly:
           type: boolean
+        categoryIds:
+          type: array
+          maxItems: 100
+          items:
+            type: integer
+            format: int64
+            minimum: 0
+          description: Match any selected category; 0 includes uncategorized. Overrides categoryId.
+        sort:
+          type: string
+          enum:
+          - DATE_DESC
+          - DATE_ASC
+          - DESCRIPTION_ASC
+          - DESCRIPTION_DESC
+          default: DATE_DESC
       required: []

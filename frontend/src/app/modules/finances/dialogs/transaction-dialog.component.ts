@@ -1,3 +1,7 @@
+import { FinanceDateInputComponent } from "../shared/finance-date-input.component";
+import { SelectModule } from "primeng/select";
+import { AutoCompleteModule } from "primeng/autocomplete";
+import { dateTimeInput, moneyInput } from "../shared/finance-format";
 import {
   ChangeDetectionStrategy,
   Component,
@@ -30,7 +34,14 @@ import {
   selector: "finance-transaction-dialog",
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [
+    FinanceDateInputComponent,
+    SelectModule,
+    AutoCompleteModule,
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+  ],
   templateUrl: "./transaction-dialog.component.html",
   styleUrl: "./dialog.scss",
 })
@@ -57,6 +68,142 @@ export class TransactionDialogComponent implements OnInit {
     foreignAmount: [""],
   });
   counterQuery = "";
+  counterpartySelection:
+    | Pick<FinanceAccount, "id" | "name" | "currency">
+    | string
+    | null = null;
+  readonly baseTypeOptions = [
+    { value: "WITHDRAWAL", label: "Expense" },
+    { value: "DEPOSIT", label: "Income" },
+    { value: "TRANSFER", label: "Transfer" },
+  ];
+  get typeOptions() {
+    const value = this.form.controls.type.value;
+    return value === "OPENING" || value === "RECONCILIATION"
+      ? [...this.baseTypeOptions, { value, label: value }]
+      : this.baseTypeOptions;
+  }
+  get effectOptions() {
+    const value = this.form.controls.effect.value;
+    const options = [
+      { value: "OPERATING", label: "Normal transaction" },
+      { value: "VALUATION", label: "Valuation gain / loss" },
+    ];
+    return value === "OPENING" || value === "RECONCILIATION"
+      ? [...options, { value, label: value }]
+      : options;
+  }
+  get categoryOptions() {
+    return [{ id: 0, name: "Uncategorized" }, ...this.categories];
+  }
+  get currencyOptions() {
+    return [
+      { code: "", name: "None" },
+      ...this.currencies
+        .filter((c) => c.enabled)
+        .map((c) => ({ ...c, name: c.code })),
+    ];
+  }
+  get suggestions() {
+    const rows = this.counterparties().data ?? [];
+    const name = this.counterQuery.trim();
+    const matches = rows.map((a) => ({ ...a, label: a.name, create: false }));
+    if (
+      name &&
+      !this.counterparties().loading &&
+      !this.counterparties().error &&
+      !rows.some((a) => a.name.toLocaleLowerCase() === name.toLocaleLowerCase())
+    )
+      return [
+        ...matches,
+        {
+          id: 0,
+          name,
+          label: `Create “${name}”`,
+          currency: this.form.controls.sourceCurrency.value,
+          create: true,
+        },
+      ];
+    return matches;
+  }
+  get usesCounterparty() {
+    return ["WITHDRAWAL", "DEPOSIT"].includes(this.form.controls.type.value);
+  }
+  searchCounterparties(query: string) {
+    this.counterQuery = query;
+    this.transactionOptions();
+  }
+  counterpartyChanged(value: unknown) {
+    if (typeof value === "string" || value == null) {
+      this.form.controls[
+        this.form.controls.type.value === "DEPOSIT"
+          ? "sourceId"
+          : "destinationId"
+      ].setValue(0);
+    }
+  }
+  async selectCounterparty(
+    value: Pick<FinanceAccount, "id" | "name" | "currency"> & {
+      create?: boolean;
+    },
+  ) {
+    let account = value;
+    if (value.create) {
+      this.counterpartyChanged(null);
+      const result = await this.context.write(
+        "accounts.save",
+        {
+          name: value.name,
+          kind:
+            this.form.controls.type.value === "DEPOSIT"
+              ? ("REVENUE" as const)
+              : ("EXPENSE" as const),
+          currency: value.currency,
+          active: true,
+          includeNetWorth: false,
+        },
+        (p) => this.context.api.client.financeCreateAccounts(p),
+      );
+      if (!result) {
+        this.counterpartySelection = null;
+        return;
+      }
+      account = result.account;
+    }
+    this.counterpartySelection = account;
+    this.originalCounter.set([
+      {
+        ...account,
+        kind:
+          this.form.controls.type.value === "DEPOSIT" ? "REVENUE" : "EXPENSE",
+        active: true,
+        deleted: false,
+        includeNetWorth: false,
+        version: 0,
+        balance: "0",
+      },
+    ]);
+    this.form.controls[
+      this.form.controls.type.value === "DEPOSIT" ? "sourceId" : "destinationId"
+    ].setValue(account.id);
+    this.alignCurrency(false);
+  }
+  formatAmount(field: "sourceAmount" | "destinationAmount" | "foreignAmount") {
+    const currency =
+      field === "foreignAmount"
+        ? this.form.controls.foreignCurrency.value
+        : field === "sourceAmount"
+          ? this.form.controls.sourceCurrency.value
+          : this.form.controls.destinationCurrency.value;
+    const places =
+      this.currencies.find((c) => c.code === currency)?.decimalPlaces ?? 2;
+    this.form.controls[field].setValue(
+      moneyInput(this.form.controls[field].value, places),
+    );
+    if (field === "sourceAmount" && this.form.controls.sourceAmount.dirty)
+      this.alignCurrency();
+  }
+
   private search = signal({
     type: "WITHDRAWAL" as FinanceTransactionType,
     q: "",
@@ -85,18 +232,27 @@ export class TransactionDialogComponent implements OnInit {
         type: t.type,
         effect: t.effect,
         description: t.description,
-        date: t.occurredAt.replace(" ", "T"),
+        date: dateTimeInput(t.occurredAt),
         sourceId: t.sourceAccountId,
         destinationId: t.destinationAccountId,
-        sourceAmount: t.sourceAmount,
-        destinationAmount: t.destinationAmount,
+        sourceAmount: moneyInput(
+          t.sourceAmount,
+          this.currencyPlaces(t.sourceCurrency),
+        ),
+        destinationAmount: moneyInput(
+          t.destinationAmount,
+          this.currencyPlaces(t.destinationCurrency),
+        ),
         sourceCurrency: t.sourceCurrency,
         destinationCurrency: t.destinationCurrency,
         categoryId: t.categoryId ?? 0,
         notes: t.notes ?? "",
         externalReference: t.externalReference ?? "",
         foreignCurrency: t.foreignCurrency ?? "",
-        foreignAmount: t.foreignAmount?.replace(/^-/, "") ?? "",
+        foreignAmount: moneyInput(
+          t.foreignAmount?.replace(/^-/, ""),
+          this.currencyPlaces(t.foreignCurrency),
+        ),
       });
       this.originalCounter.set([
         {
@@ -118,7 +274,13 @@ export class TransactionDialogComponent implements OnInit {
             ?.id ?? 0,
       });
     }
+    this.counterpartySelection = this.usesCounterparty
+      ? (this.originalCounter()[0] ?? null)
+      : null;
     this.transactionOptions();
+  }
+  private currencyPlaces(currency?: string) {
+    return this.currencies.find((c) => c.code === currency)?.decimalPlaces ?? 2;
   }
   get categories() {
     return this.context.categories();
@@ -147,9 +309,7 @@ export class TransactionDialogComponent implements OnInit {
       ? t
       : undefined;
   }
-  get sourceOptions(): ReadonlyArray<
-    Pick<FinanceAccount, "id" | "name" | "currency">
-  > {
+  get sourceOptions(): Array<Pick<FinanceAccount, "id" | "name" | "currency">> {
     const t = this.importedTechnical;
     if (t)
       return [
@@ -163,7 +323,7 @@ export class TransactionDialogComponent implements OnInit {
       ? this.counters
       : this.own;
   }
-  get destinationOptions(): ReadonlyArray<
+  get destinationOptions(): Array<
     Pick<FinanceAccount, "id" | "name" | "currency">
   > {
     const t = this.importedTechnical;
@@ -188,11 +348,26 @@ export class TransactionDialogComponent implements OnInit {
     });
   }
   changeType() {
+    this.counterpartySelection = null;
+    this.counterQuery = "";
     this.form.patchValue({ sourceId: 0, destinationId: 0 });
     this.originalCounter.set([]);
     this.transactionOptions();
   }
-  alignCurrency() {
+  get hasImportedPrecision() {
+    const t = this.transaction();
+    if (!t) return false;
+    return [
+      [t.sourceAmount, t.sourceCurrency],
+      [t.destinationAmount, t.destinationCurrency],
+      [t.foreignAmount, t.foreignCurrency],
+    ].some(
+      ([value, currency]) =>
+        (value?.split(".")[1]?.replace(/0+$/, "").length ?? 0) >
+        this.currencyPlaces(currency),
+    );
+  }
+  alignCurrency(syncAmount = true) {
     const v = this.form.getRawValue();
     const s = this.sourceOptions.find((a) => a.id === v.sourceId),
       d = this.destinationOptions.find((a) => a.id === v.destinationId);
@@ -200,12 +375,18 @@ export class TransactionDialogComponent implements OnInit {
       v.type === "DEPOSIT" ? (d?.currency ?? "CHF") : (s?.currency ?? "CHF");
     const destinationCurrency =
       v.type === "TRANSFER" ? (d?.currency ?? "CHF") : sourceCurrency;
+    const synchronize =
+      syncAmount &&
+      sourceCurrency === destinationCurrency &&
+      (!this.transaction() ||
+        this.form.controls.sourceAmount.dirty ||
+        sourceCurrency !== v.sourceCurrency ||
+        destinationCurrency !== v.destinationCurrency);
+    if (synchronize) this.form.controls.destinationAmount.markAsDirty();
     this.form.patchValue({
       sourceCurrency,
       destinationCurrency,
-      ...(sourceCurrency === destinationCurrency
-        ? { destinationAmount: v.sourceAmount }
-        : {}),
+      ...(synchronize ? { destinationAmount: v.sourceAmount } : {}),
     });
   }
   async saveTransaction() {
@@ -217,10 +398,32 @@ export class TransactionDialogComponent implements OnInit {
       v = this.form.getRawValue();
     const input: Omit<FinanceTransactionInput, "requestKey"> = {
       ...v,
+      date:
+        t && !this.form.controls.date.dirty
+          ? t.occurredAt.replace(" ", "T")
+          : v.date,
       id: t?.id,
       version: t?.version,
       foreignCurrency: v.foreignCurrency || undefined,
-      foreignAmount: v.foreignCurrency ? v.foreignAmount : undefined,
+      sourceAmount:
+        t &&
+        !this.form.controls.sourceAmount.dirty &&
+        v.sourceCurrency === t.sourceCurrency
+          ? t.sourceAmount
+          : v.sourceAmount,
+      destinationAmount:
+        t &&
+        !this.form.controls.destinationAmount.dirty &&
+        v.destinationCurrency === t.destinationCurrency
+          ? t.destinationAmount
+          : v.destinationAmount,
+      foreignAmount: v.foreignCurrency
+        ? t &&
+          !this.form.controls.foreignAmount.dirty &&
+          v.foreignCurrency === t.foreignCurrency
+          ? t.foreignAmount?.replace(/^-/, "")
+          : v.foreignAmount
+        : undefined,
     };
     const result = await this.context.write("transactions.save", input, (p) =>
       t

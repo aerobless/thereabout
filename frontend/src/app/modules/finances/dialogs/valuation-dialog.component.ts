@@ -1,11 +1,11 @@
+import { FinanceDateInputComponent } from "../shared/finance-date-input.component";
+import { moneyInput } from "../shared/finance-format";
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   inject,
   input,
-  OnInit,
   signal,
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
@@ -15,21 +15,16 @@ import {
   FinanceContext,
   FinanceDialogs,
   FinanceAccount,
-  FinanceAccountKind,
-  FinanceCategory,
-  FinanceTransaction,
   FinanceValuationPreview,
-  assetKinds,
   loadResource,
   localNow,
-  today,
   errorMessage,
 } from "../shared/finance-ui";
 @Component({
   selector: "finance-valuation-dialog",
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [FinanceDateInputComponent, CommonModule, ReactiveFormsModule],
   templateUrl: "./valuation-dialog.component.html",
   styleUrl: "./dialog.scss",
 })
@@ -70,6 +65,14 @@ export class ValuationDialogComponent {
   );
   get valuationHistory() {
     return this.history().data?.items ?? [];
+  }
+  formatValue() {
+    const places =
+      this.currencies.find((c) => c.code === this.account().currency)
+        ?.decimalPlaces ?? 2;
+    this.form.controls.reportedValue.setValue(
+      moneyInput(this.form.controls.reportedValue.value, places),
+    );
   }
   private previewGeneration = 0;
   async previewValuation() {

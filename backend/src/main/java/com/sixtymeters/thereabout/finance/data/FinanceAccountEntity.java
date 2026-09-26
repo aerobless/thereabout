@@ -26,6 +26,12 @@ public class FinanceAccountEntity {
   @Column(length = 51)
   private String currency;
 
+  @Column(length = 2048)
+  private String logoUrl;
+
+  @Column(length = 2048)
+  private String websiteUrl;
+
   private boolean active = true;
   private boolean deleted;
   private boolean includeNetWorth;

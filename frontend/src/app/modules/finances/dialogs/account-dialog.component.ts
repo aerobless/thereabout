@@ -1,35 +1,26 @@
+import { SelectModule } from "primeng/select";
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
-  effect,
   inject,
   input,
   OnInit,
-  signal,
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
-import { firstValueFrom } from "rxjs";
+
 import {
   FinanceContext,
   FinanceDialogs,
   FinanceAccount,
   FinanceAccountKind,
-  FinanceCategory,
-  FinanceTransaction,
-  FinanceValuationPreview,
   assetKinds,
-  loadResource,
-  localNow,
-  today,
-  errorMessage,
 } from "../shared/finance-ui";
 @Component({
   selector: "finance-account-dialog",
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [SelectModule, CommonModule, ReactiveFormsModule],
   templateUrl: "./account-dialog.component.html",
   styleUrl: "./dialog.scss",
 })
@@ -47,8 +38,14 @@ export class AccountDialogComponent implements OnInit {
   readonly account = input<FinanceAccount>();
   readonly counterparty = input(false);
   readonly kinds = assetKinds;
+  readonly kindOptions = [
+    ...assetKinds.map(([value, label]) => ({ value, label })),
+    { value: "EXPENSE", label: "Expense counterparty" },
+    { value: "REVENUE", label: "Revenue counterparty" },
+  ];
   readonly form = this.fb.group({
     name: ["", Validators.required],
+    websiteUrl: ["", Validators.maxLength(2048)],
     kind: this.fb.control<FinanceAccountKind>("CASH"),
     currency: ["CHF", Validators.required],
     active: [true],

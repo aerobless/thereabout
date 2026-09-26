@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from "@angular/core";
+import { MessageService } from "primeng/api";
 import { Observable, firstValueFrom, forkJoin } from "rxjs";
 import { FinanceApi } from "./finance-api.service";
 import { loadResource, errorMessage } from "./finance-resource";
@@ -8,11 +9,11 @@ export class FinanceContext {
   readonly revision = signal(0);
   readonly saving = signal(false);
   readonly error = signal("");
-  readonly notice = signal("");
+  private readonly messages = inject(MessageService);
   private pending?: { fingerprint: string; key: string };
   readonly metadata = loadResource(this.revision, () =>
     forkJoin({
-      accounts: this.api.accounts({
+      accounts: this.api.allOwnAccounts({
         scope: "OWN",
         pageSize: 200,
         includeInactive: true,
@@ -30,10 +31,16 @@ export class FinanceContext {
   readonly currencies = computed(
     () => this.metadata().data?.currencies.items ?? [],
   );
-  money(value: string | number | null | undefined, currency = "CHF"): string {
+  money(
+    value: string | number | null | undefined,
+    currency = "CHF",
+    whole = false,
+  ): string {
     if (value == null || !Number.isFinite(Number(value))) return "—";
-    const places =
-      this.currencies().find((c) => c.code === currency)?.decimalPlaces ?? 2;
+    const places = whole
+      ? 0
+      : (this.currencies().find((c) => c.code === currency)?.decimalPlaces ??
+        2);
     return `${currency} ${new Intl.NumberFormat("en-CH", { minimumFractionDigits: places, maximumFractionDigits: places }).format(Number(value))}`;
   }
   async write<I extends object, T>(
@@ -52,7 +59,7 @@ export class FinanceContext {
         execute({ ...input, requestKey: this.pending.key }),
       );
       this.pending = undefined;
-      this.notice.set("Saved");
+      this.messages.add({ severity: "success", summary: "Saved", life: 3000 });
       this.revision.update((n) => n + 1);
       return result;
     } catch (error) {

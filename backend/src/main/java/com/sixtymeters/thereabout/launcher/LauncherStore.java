@@ -1,5 +1,7 @@
 package com.sixtymeters.thereabout.launcher;
 
+import com.sixtymeters.thereabout.shared.icons.WebsiteIconFetcher;
+
 import com.sixtymeters.thereabout.config.ThereaboutException;
 import com.sixtymeters.thereabout.generated.model.*;
 import lombok.RequiredArgsConstructor;
@@ -137,7 +139,7 @@ public class LauncherStore {
     @Transactional
     public GenLauncherCollection saveCustomIcon(long id, byte[] bytes) {
         requireShortcut(id);
-        String type = LauncherIconFetcher.imageType(bytes);
+        String type = WebsiteIconFetcher.imageType(bytes);
         if (bytes.length>1_048_576 || type==null) throw new ThereaboutException(HttpStatus.BAD_REQUEST,"Choose a PNG, JPEG, GIF, WebP or ICO image up to 1 MB.");
         db.update("UPDATE launcher_shortcut SET icon_data=?,icon_type=?,icon_source='CUSTOM',icon_attempted=TRUE,icon_version=icon_version+1 WHERE id=?",bytes,type,id);
         return collection();
@@ -155,7 +157,7 @@ public class LauncherStore {
                 (r,n) -> new PendingIcon(r.getLong(1),r.getString(2),r.getLong(3)));
     }
 
-    public void finishIcon(PendingIcon pending, LauncherIconFetcher.Image image) {
+    public void finishIcon(PendingIcon pending, WebsiteIconFetcher.Image image) {
         // A slow fetch must never overwrite a newer URL, upload, or refresh.
         if (image==null) db.update("UPDATE launcher_shortcut SET icon_attempted=TRUE WHERE id=? AND url=? AND icon_version=? AND icon_source='AUTO'",
                 pending.id(),pending.url(),pending.version());

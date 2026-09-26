@@ -4,29 +4,38 @@
 @if (state().loading) {
   <p role="status">Loading your finances…</p>
 }
-@if (state().data; as report) {
-  <div class="toolbar">
-    <div class="segmented">
-      @for (tab of ["cashflow", "categories", "investments"]; track tab) {
-        <button [class.active]="reportTab === tab" (click)="reportTab = tab">
-          {{ tab === "cashflow" ? "Income vs. expenses" : (tab | titlecase) }}
-        </button>
-      }
-    </div>
-    <div class="range">
-      <input aria-label="Report start" type="date" [(ngModel)]="from" /><span
-        >to</span
-      ><input aria-label="Report end" type="date" [(ngModel)]="to" /><select
-        aria-label="Report account"
-        [(ngModel)]="accountFilter"
-      >
-        <option [ngValue]="0">All accounts</option>
-        @for (a of ownAccounts; track a.id) {
-          <option [ngValue]="a.id">{{ a.name }}</option>
-        }</select
-      ><button (click)="loadReport()">Apply</button>
-    </div>
+<div class="toolbar">
+  <div class="segmented">
+    @for (tab of ["cashflow", "categories", "investments"]; track tab) {
+      <button [class.active]="reportTab === tab" (click)="reportTab = tab">
+        {{ tab === "cashflow" ? "Income vs. expenses" : (tab | titlecase) }}
+      </button>
+    }
   </div>
+  <div class="range">
+    <finance-date-input
+      ariaLabel="Report start"
+      [(ngModel)]="from"
+      (ngModelChange)="loadReport()"
+    /><span>to</span
+    ><finance-date-input
+      ariaLabel="Report end"
+      [(ngModel)]="to"
+      (ngModelChange)="loadReport()"
+    /><p-select
+      ariaLabel="Report account"
+      [(ngModel)]="accountFilter"
+      (ngModelChange)="loadReport()"
+      [options]="accountOptions"
+      optionLabel="name"
+      optionValue="id"
+      appendTo="body"
+      [filter]="true"
+      filterBy="name"
+    />
+  </div>
+</div>
+@if (state().data; as report) {
   @for (w of report.warnings; track w) {
     <p class="alert warning">{{ w }}</p>
   }
@@ -48,33 +57,6 @@
       are shown as income in their original category.
     </p>
   }
-  @if (report.exchangeRates?.length) {
-    <details class="report-note">
-      <summary>Exchange rates used</summary>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Currency / transaction date</th>
-              <th>Rate date</th>
-              <th>CHF per unit</th>
-              <th>Source</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (r of report.exchangeRates; track r.requested) {
-              <tr>
-                <td>{{ r.requested }}</td>
-                <td>{{ r.date }}</td>
-                <td>{{ r.rate }}</td>
-                <td>{{ r.source }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </details>
-  }
   @if (reportTab === "cashflow") {
     <section class="panel">
       <div class="panel-header">
@@ -86,7 +68,7 @@
       <div class="chart">
         <p-chart
           type="bar"
-          [data]="chart"
+          [data]="chart()"
           [options]="chartOptions"
           height="300px"
         />

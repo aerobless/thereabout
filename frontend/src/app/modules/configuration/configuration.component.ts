@@ -1,3 +1,4 @@
+import {FinanceMcpSettingsComponent} from './finance-mcp-settings.component';
 import {GoogleCalendarSettingsComponent} from '../calendar/google-calendar-settings.component';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
@@ -41,6 +42,7 @@ interface ImportTypeOption {
     selector: 'app-configuration',
     imports: [
     GoogleCalendarSettingsComponent,
+    FinanceMcpSettingsComponent,
     ButtonModule,
     IconFieldModule,
     InputIconModule,

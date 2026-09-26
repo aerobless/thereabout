@@ -62,6 +62,8 @@ public class AccountService {
                 account.getKind() == kind || !account.getKind().isCounterparty(),
                 "Cannot change counterparty direction");
           }
+          if (input.getLogoUrl() != null) account.setLogoUrl(logoUrl(input.getLogoUrl()));
+          if (input.getWebsiteUrl() != null) account.setWebsiteUrl(websiteUrl(input.getWebsiteUrl()));
           account.setName(name);
           account.setKind(kind);
           account.setCurrency(currency);
@@ -73,6 +75,39 @@ public class AccountService {
           writes.audit("accounts.save", account.getId(), before, after);
           return new GenFinanceAccountResult().account(after);
         });
+  }
+
+  private String logoUrl(String value) {
+    if (value.isBlank()) return null;
+    require(value.length() <= 2048, "Logo URL is too long");
+    try {
+      var uri = java.net.URI.create(value.trim());
+      require("https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null
+          && uri.getUserInfo() == null, "Logo must be an HTTPS image URL");
+      return uri.toASCIIString();
+    } catch (IllegalArgumentException ex) {
+      throw new com.sixtymeters.thereabout.config.ThereaboutException(
+          org.springframework.http.HttpStatus.BAD_REQUEST, "Invalid logo URL");
+    }
+  }
+
+  private String websiteUrl(String value) {
+    if (value.isBlank()) return null;
+    require(value.length() <= 2048, "Website URL is too long");
+    String url = value.trim();
+    if (!url.contains("://")) url = "https://" + url;
+    try {
+      var uri = java.net.URI.create(url);
+      require("https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null
+          && uri.getUserInfo() == null && (uri.getPort() == -1 || uri.getPort() == 443),
+          "Enter a bank website using HTTPS without credentials");
+      // Only the public home page is needed; never fetch or retain private paths or query strings.
+      return new java.net.URI("https", null, uri.getHost().toLowerCase(java.util.Locale.ROOT),
+          -1, "/", null, null).toASCIIString();
+    } catch (IllegalArgumentException | java.net.URISyntaxException ex) {
+      throw new com.sixtymeters.thereabout.config.ThereaboutException(
+          org.springframework.http.HttpStatus.BAD_REQUEST, "Invalid website URL");
+    }
   }
 
   public FinanceAccountEntity valuationCounter(AccountKind kind, String currency) {

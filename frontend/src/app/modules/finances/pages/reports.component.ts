@@ -1,3 +1,5 @@
+import { FinanceDateInputComponent } from "../shared/finance-date-input.component";
+import { SelectModule } from "primeng/select";
 import {
   ChangeDetectionStrategy,
   Component,
@@ -20,7 +22,14 @@ import {
 @Component({
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink, ChartModule],
+  imports: [
+    FinanceDateInputComponent,
+    SelectModule,
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    ChartModule,
+  ],
   templateUrl: "./reports.component.html",
   styleUrl: "./reports.component.scss",
 })
@@ -64,7 +73,7 @@ export class ReportsComponent {
       },
     },
   };
-  get chart(): ChartData {
+  readonly chart = computed<ChartData>(() => {
     const rows = this.state().data?.months ?? [];
     return {
       labels: rows.map((r) => r.name),
@@ -83,8 +92,19 @@ export class ReportsComponent {
         },
       ],
     };
+  });
+  get accountOptions() {
+    return [{ id: 0, name: "All accounts" }, ...this.ownAccounts];
   }
   loadReport() {
+    if (!this.from || !this.to || this.from > this.to) return;
+    const current = this.filters();
+    if (
+      current.from === this.from &&
+      current.to === this.to &&
+      current.accountId === this.accountFilter
+    )
+      return;
     this.filters.set({
       from: this.from,
       to: this.to,

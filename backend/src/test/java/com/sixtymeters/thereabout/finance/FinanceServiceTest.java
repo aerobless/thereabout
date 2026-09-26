@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 @TestPropertySource(
     properties = {
       "thereabout.finances.enabled=true",
-      "thereabout.finances.mcp-key=finance-integration-test-key-with-32-characters",
       "thereabout.calendar.worker-enabled=false",
       "thereabout.launcher.fetch-icons=false"
     })
@@ -352,4 +351,83 @@ class FinanceServiceTest {
     assertThat(balance(2)).isEqualByComparingTo("120");
     assertThat(rows(service.execute("valuations.list", Map.of()).get("items"))).hasSize(1);
   }
+  @Test
+  void categoryUnionAndSortAreAppliedBeforePaginationWithoutChangingRunningBalances() {
+    var first = tx("WITHDRAWAL", 1, 3, "10.00", "2026-01-01T12:00:00");
+    first.put("description", "Apple");
+    write("transactions.save", first);
+    var excluded = tx("WITHDRAWAL", 1, 3, "20.00", "2026-01-02T12:00:00");
+    excluded.put("categoryId", 2);
+    write("transactions.save", excluded);
+    var last = tx("WITHDRAWAL", 1, 3, "30.00", "2026-01-03T12:00:00");
+    last.put("categoryId", 0);
+    last.put("description", "Zebra");
+    write("transactions.save", last);
+
+    var query = args("categoryIds", List.of(0, 1), "sort", "DATE_ASC",
+        "accountId", 1, "pageSize", 1, "page", 1);
+    var result = service.execute("transactions.list", query);
+    assertThat(((Number) result.get("total")).longValue()).isEqualTo(2);
+    assertThat(rows(result.get("items"))).singleElement().satisfies(row -> {
+      assertThat(row.get("description")).isEqualTo("Zebra");
+      assertThat(row.get("runningBalance")).isEqualTo("-60");
+      assertThat(row.get("sourceAmount")).isEqualTo("30");
+    });
+    query.put("sort", "DESCRIPTION_DESC");
+    query.put("page", 0);
+    assertThat(rows(service.execute("transactions.list", query).get("items")))
+        .singleElement().extracting(row -> row.get("description")).isEqualTo("Zebra");
+  }
+
+  @Test
+  void accountStatusFilterAndLogoRoundTripDoNotAlterTheBalance() {
+    write("transactions.save", tx("WITHDRAWAL", 1, 3, "25.90", "2026-01-01T12:00:00"));
+    var input = args("id", 1, "version", 0, "name", "Cash", "kind", "CASH",
+        "currency", "CHF", "active", false, "logoUrl", "https://example.com/bank.svg");
+    var saved = map(write("accounts.save", input).get("account"));
+    assertThat(saved.get("logoUrl")).isEqualTo("https://example.com/bank.svg");
+    var inactive = rows(service.execute("accounts.list", args("active", false)).get("items"));
+    assertThat(inactive).singleElement().satisfies(row -> {
+      assertThat(row.get("name")).isEqualTo("Cash");
+      assertThat(row.get("balance")).isEqualTo("-25.9");
+    });
+    input.put("version", saved.get("version"));
+    input.put("requestKey", UUID.randomUUID().toString());
+    input.put("logoUrl", "");
+    assertThat(map(write("accounts.save", input).get("account")).get("logoUrl")).isNull();
+  }
+
+  @Test
+  void unsafeLogoUrlsAreRejected() {
+    var input = args("name", "Unsafe", "kind", "CASH", "currency", "CHF",
+        "logoUrl", "javascript:alert(1)");
+    assertThatThrownBy(() -> write("accounts.save", input))
+        .isInstanceOf(ThereaboutException.class).hasMessageContaining("HTTPS");
+  }
+
+  @Test
+  void bankWebsiteNormalizesToOriginAndSupportsOmissionAndClearing() {
+    var input = args("id", 1, "version", 0, "name", "Cash", "kind", "CASH", "currency", "CHF",
+        "websiteUrl", "WWW.Example.com/private?account=secret");
+    var account = map(write("accounts.save", input).get("account"));
+    assertThat(account.get("websiteUrl")).isEqualTo("https://www.example.com/");
+    input.put("version", account.get("version"));
+    input.remove("websiteUrl");
+    input.remove("requestKey");
+    account = map(write("accounts.save", input).get("account"));
+    assertThat(account.get("websiteUrl")).isEqualTo("https://www.example.com/");
+    input.put("version", account.get("version"));
+    input.put("websiteUrl", "");
+    input.remove("requestKey");
+    assertThat(map(write("accounts.save", input).get("account")).get("websiteUrl")).isNull();
+  }
+
+  @Test
+  void bankWebsiteRejectsCredentialsAndUnsupportedSchemes() {
+    for (String website : List.of("https://user:password@example.com", "http://example.com", "file:///tmp/icon", "https://example.com:8443")) {
+      var input = args("name", "Unsafe", "kind", "CASH", "currency", "CHF", "websiteUrl", website);
+      assertThatThrownBy(() -> write("accounts.save", input)).isInstanceOf(ThereaboutException.class);
+    }
+  }
+
 }

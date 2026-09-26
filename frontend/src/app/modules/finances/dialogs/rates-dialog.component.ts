@@ -1,35 +1,31 @@
+import { FinanceDateInputComponent } from "../shared/finance-date-input.component";
+import { SelectModule } from "primeng/select";
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   effect,
   inject,
-  input,
-  OnInit,
   signal,
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
-import { firstValueFrom } from "rxjs";
+
 import {
   FinanceContext,
   FinanceDialogs,
-  FinanceAccount,
-  FinanceAccountKind,
-  FinanceCategory,
-  FinanceTransaction,
-  FinanceValuationPreview,
-  assetKinds,
   loadResource,
-  localNow,
   today,
-  errorMessage,
 } from "../shared/finance-ui";
 @Component({
   selector: "finance-rates-dialog",
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    FinanceDateInputComponent,
+    SelectModule,
+    CommonModule,
+    ReactiveFormsModule,
+  ],
   templateUrl: "./rates-dialog.component.html",
   styleUrl: "./dialog.scss",
 })
@@ -78,6 +74,7 @@ export class RatesDialogComponent {
   }
   prepareRate() {
     const v = this.form.getRawValue();
+    if (!v.date) return;
     this.query.set({
       currency: v.fromCurrency,
       date: v.date,

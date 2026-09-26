@@ -40,7 +40,7 @@ public final class FinanceRules {
   }
 
   public static String money(BigDecimal value) {
-    return value == null ? null : value.toPlainString();
+    return value == null ? null : value.stripTrailingZeros().toPlainString();
   }
 
   public static LocalDateTime dateTime(String value, LocalDateTime fallback, boolean endOfDay) {

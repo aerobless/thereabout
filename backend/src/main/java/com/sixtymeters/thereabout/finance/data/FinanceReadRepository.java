@@ -149,7 +149,10 @@ public class FinanceReadRepository {
     List<Object> args = new ArrayList<>();
     String where = " WHERE 1=1";
     if (!Boolean.TRUE.equals(p.getIncludeDeleted())) where += " AND a.deleted=FALSE";
-    if (!Boolean.TRUE.equals(p.getIncludeInactive())) where += " AND a.active=TRUE";
+    if (p.getActive() != null) {
+      where += " AND a.active=?";
+      args.add(p.getActive());
+    } else if (!Boolean.TRUE.equals(p.getIncludeInactive())) where += " AND a.active=TRUE";
     if (scope.equals("OWN"))
       where += " AND a.kind IN ('CASH','INVESTMENT','REAL_ESTATE','OTHER_ASSET')";
     if (scope.equals("COUNTERPARTY")) where += " AND a.kind IN ('EXPENSE','REVENUE')";
@@ -220,13 +223,15 @@ public class FinanceReadRepository {
       where += " AND (t.description LIKE ? OR sa.name LIKE ? OR da.name LIKE ? OR t.notes LIKE ?)";
       for (int i = 0; i < 4; i++) args.add("%" + q + "%");
     }
-    if (p.getCategoryId() != null) {
-      long category = p.getCategoryId();
-      if (category == 0) where += " AND t.category_id IS NULL";
-      else {
-        where += " AND t.category_id=?";
-        args.add(category);
-      }
+    var categories = p.getCategoryIds();
+    if (categories == null || categories.isEmpty())
+      categories = p.getCategoryId() == null ? List.of() : List.of(p.getCategoryId());
+    require(categories.size() <= 100 && categories.stream().allMatch(id -> id != null && id >= 0),
+        "Choose up to 100 valid categories");
+    if (!categories.isEmpty()) {
+      where += " AND (COALESCE(t.category_id,0) IN ("
+          + String.join(",", Collections.nCopies(categories.size(), "?")) + "))";
+      args.addAll(categories);
     }
     if (p.getType() != null) {
       where += " AND t.type=?";
@@ -250,9 +255,16 @@ public class FinanceReadRepository {
     int page = page(p.getPage()), size = pageSize(p.getPageSize());
     args.add(size);
     args.add(page * size);
+    String order = p.getSort() == null ? "DATE_DESC" : p.getSort().getValue();
+    String orderBy = switch (order) {
+      case "DATE_ASC" -> "t.occurred_at ASC,t.id ASC";
+      case "DESCRIPTION_ASC" -> "t.description ASC,t.id DESC";
+      case "DESCRIPTION_DESC" -> "t.description DESC,t.id DESC";
+      default -> "t.occurred_at DESC,t.id DESC";
+    };
     var rows =
         db.query(
-            TX_SELECT + TX_FROM + where + " ORDER BY t.occurred_at DESC,t.id DESC LIMIT ? OFFSET ?",
+            TX_SELECT + TX_FROM + where + " ORDER BY " + orderBy + " LIMIT ? OFFSET ?",
             TRANSACTION,
             args.toArray());
     if (account != 0)

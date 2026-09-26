@@ -1,0 +1,25 @@
+paths:
+  _mcp-key:
+    get:
+      tags: [Finances]
+      operationId: financeGetMcpKey
+      summary: Reveal the database-backed MCP credential
+      description: Requires the finance browser access boundary. Never included in general frontend configuration or exposed as an MCP tool. Responses must not be cached.
+      responses:
+        '200':
+          description: Existing MCP bearer key
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum: [no-store]
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Authentication required
+        '403':
+          description: Request outside the allowed origin or network
+        '404':
+          description: Finances are disabled

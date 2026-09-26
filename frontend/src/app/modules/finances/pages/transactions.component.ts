@@ -1,3 +1,9 @@
+import { FinanceDateInputComponent } from "../shared/finance-date-input.component";
+import { SelectModule } from "primeng/select";
+import { MultiSelectModule } from "primeng/multiselect";
+import { TableModule, TableLazyLoadEvent } from "primeng/table";
+import { Subject, debounceTime } from "rxjs";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import {
   ChangeDetectionStrategy,
   Component,
@@ -24,7 +30,15 @@ import {
   selector: "finance-transactions",
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [
+    FinanceDateInputComponent,
+    SelectModule,
+    MultiSelectModule,
+    TableModule,
+    CommonModule,
+    FormsModule,
+    RouterLink,
+  ],
   templateUrl: "./transactions.component.html",
   styleUrl: "./transactions.component.scss",
 })
@@ -38,6 +52,22 @@ export class TransactionsComponent {
   q = "";
   accountFilter = 0;
   categoryFilter = "";
+  categoryFilters: number[] = [];
+  sort: FinanceTransactionQuery.SortEnum = "DATE_DESC";
+  readonly typeOptions = [
+    { label: "All types", value: "" },
+    { label: "Expenses", value: "WITHDRAWAL" },
+    { label: "Income", value: "DEPOSIT" },
+    { label: "Transfers", value: "TRANSFER" },
+  ];
+  get accountOptions() {
+    return [{ id: 0, name: "All accounts" }, ...this.ownAccounts];
+  }
+  get categoryOptions() {
+    return [{ id: 0, name: "Uncategorized" }, ...this.categories];
+  }
+  readonly searchChanges = new Subject<void>();
+
   typeFilter: FinanceTransactionType | "" = "";
   showDeleted = false;
   useDates = false;
@@ -49,12 +79,17 @@ export class TransactionsComponent {
   readonly selected = new Map<number, number>();
   private readonly filters = signal<FinanceTransactionQuery | null>(null);
   constructor() {
+    this.searchChanges
+      .pipe(debounceTime(250), takeUntilDestroyed())
+      .subscribe(() => this.filterTransactions());
     effect(() => {
       const params = this.routeParams();
       this.q = "";
       this.page = 0;
       this.accountFilter = Number(params?.get("account") ?? 0);
       this.categoryFilter = params?.get("category") ?? "";
+      this.categoryFilters =
+        this.categoryFilter === "" ? [] : [Number(this.categoryFilter)];
       this.operatingOnly = params?.get("operating") === "true";
       this.useDates = !!(params?.has("from") || params?.has("to"));
       this.from = params?.get("from") ?? today().slice(0, 4) + "-01-01";
@@ -95,6 +130,8 @@ export class TransactionsComponent {
   }
   readonly money = this.context.money.bind(this.context);
   filterTransactions() {
+    if (this.useDates && (!this.from || !this.to || this.from > this.to))
+      return;
     this.page = 0;
     this.selected.clear();
     this.load();
@@ -105,19 +142,22 @@ export class TransactionsComponent {
       pageSize: 50,
       q: this.q,
       accountId: this.accountFilter || undefined,
-      categoryId:
-        this.categoryFilter === "" ? undefined : Number(this.categoryFilter),
+
+      categoryIds: this.categoryFilters,
+      sort: this.sort,
       type: this.typeFilter || undefined,
       includeDeleted: this.showDeleted,
       operatingOnly: this.operatingOnly,
       ...(this.useDates ? { from: this.from, to: this.to } : {}),
     });
   }
-  goPage(delta: number) {
-    this.page += delta;
+  tableChanged(event: TableLazyLoadEvent) {
+    this.page = Math.floor((event.first ?? 0) / 50);
+    const field = event.sortField === "description" ? "DESCRIPTION" : "DATE";
+    this.sort =
+      `${field}_${event.sortOrder === 1 ? "ASC" : "DESC"}` as FinanceTransactionQuery.SortEnum;
     this.selected.clear();
-    const current = this.query();
-    this.filters.set({ ...current, page: this.page });
+    this.load();
   }
   toggle(transaction: FinanceTransaction, event: Event) {
     const target = event.target;

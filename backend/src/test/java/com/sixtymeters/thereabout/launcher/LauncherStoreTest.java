@@ -1,5 +1,7 @@
 package com.sixtymeters.thereabout.launcher;
 
+import com.sixtymeters.thereabout.shared.icons.WebsiteIconFetcher;
+
 import com.sixtymeters.thereabout.config.ThereaboutException;
 import com.sixtymeters.thereabout.generated.model.*;
 import org.junit.jupiter.api.Test;
@@ -74,7 +76,7 @@ class LauncherStoreTest {
         store.saveCustomIcon(shortcut.getId(),PNG);
         long version=store.icon(shortcut.getId()).orElseThrow().version();
         store.finishIcon(pending,null);
-        store.finishIcon(pending,new LauncherIconFetcher.Image(new byte[]{1,2,3},"image/gif"));
+        store.finishIcon(pending,new WebsiteIconFetcher.Image(new byte[]{1,2,3},"image/gif"));
         assertThat(store.icon(shortcut.getId()).orElseThrow().bytes()).isEqualTo(PNG);
         assertThat(store.icon(shortcut.getId()).orElseThrow().version()).isEqualTo(version);
         var response=mvc.perform(get("/backend/api/v1/launcher/shortcuts/{id}/icon",shortcut.getId())).andReturn().getResponse();
@@ -87,7 +89,7 @@ class LauncherStoreTest {
     @Test void changingUrlQueuesNewIconButKeepsAnUploadedImage() {
         long group=group("URL changes");
         var shortcut=store.createShortcut(link(group,"Demo","https://example.org")).getShortcuts().getFirst();
-        store.finishIcon(store.pendingIcons().getFirst(),new LauncherIconFetcher.Image(PNG,"image/png"));
+        store.finishIcon(store.pendingIcons().getFirst(),new WebsiteIconFetcher.Image(PNG,"image/png"));
         var changed=store.updateShortcut(shortcut.getId(),link(group,"Demo","https://example.com")).getShortcuts().getFirst();
         assertThat(changed.getHasIcon()).isFalse();
         assertThat(changed.getIconState()).isEqualTo(GenLauncherShortcut.IconStateEnum.PENDING);

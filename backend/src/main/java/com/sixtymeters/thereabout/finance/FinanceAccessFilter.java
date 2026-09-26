@@ -1,11 +1,10 @@
 package com.sixtymeters.thereabout.finance;
 
+import com.sixtymeters.thereabout.finance.service.FinanceMcpKeyService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.util.Set;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,9 +23,6 @@ public class FinanceAccessFilter extends OncePerRequestFilter {
   @Value("${thereabout.finances.enabled:false}")
   private boolean enabled;
 
-  @Value("${thereabout.finances.mcp-key:}")
-  private String key;
-
   @Value("${thereabout.finances.access-mode:local}")
   private String accessMode;
 
@@ -34,9 +30,11 @@ public class FinanceAccessFilter extends OncePerRequestFilter {
   private String publicOrigin;
 
   private final ObjectProvider<JwtDecoder> accessTokens;
+  private final FinanceMcpKeyService mcpKeys;
 
-  public FinanceAccessFilter(ObjectProvider<JwtDecoder> accessTokens) {
+  public FinanceAccessFilter(ObjectProvider<JwtDecoder> accessTokens, FinanceMcpKeyService mcpKeys) {
     this.accessTokens = accessTokens;
+    this.mcpKeys = mcpKeys;
   }
 
   private boolean loopback(String host) {
@@ -91,11 +89,7 @@ public class FinanceAccessFilter extends OncePerRequestFilter {
     }
     if (path.startsWith("/mcp/finances")) {
       String auth = request.getHeader("Authorization");
-      if (key.length() < 32
-          || auth == null
-          || !MessageDigest.isEqual(
-              ("Bearer " + key).getBytes(StandardCharsets.UTF_8),
-              auth.getBytes(StandardCharsets.UTF_8))) {
+      if (!mcpKeys.matchesAuthorization(auth)) {
         response.setHeader("WWW-Authenticate", "Bearer");
         response.sendError(401);
         return;

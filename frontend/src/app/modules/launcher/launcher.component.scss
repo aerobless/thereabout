@@ -53,5 +53,13 @@ kbd { border: 1px solid rgb(86 103 134 / 10%); background: rgb(86 103 134 / 6%);
 a:focus-visible,button:focus-visible { outline: 2px solid var(--app-link); outline-offset: 3px; }
 @media (min-width: 1500px) { .group-grid { grid-template-columns: repeat(6,minmax(0,1fr)); } }
 @media (max-width: 1000px) { .day-glance { gap: .6rem; }.glance-item + .glance-item { padding-left: .7rem; }.glance-icon { width: 32px; height: 32px; }.glance-item { gap: .5rem; }.result-group { display: none; } }
-@media (max-width: 768px) { .launcher { padding-top: .5rem; }.welcome { margin: 1rem 0 1.4rem; }.welcome h1 { font-size: 2.2rem; }.welcome p { font-size: 1rem; }.day-glance { grid-template-columns: 1fr 1fr; gap: .5rem; margin-bottom: 1.4rem; }.glance-item.event-glance { grid-column: 1/-1; border-left: 0; padding-left: .1rem; justify-content: center; }.glance-item strong { font-size: .8rem; }.glance-item small { font-size: .7rem; }.search-area { margin-bottom: 1.6rem; }.search-field { height: 52px; border-radius: 14px; padding-inline: .9rem; gap: .7rem; }.search-field input { font-size: .9rem; }.type-hint { display: none; }.group-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1.25rem .8rem; }.shortcut-link { min-height: 38px; font-size: .78rem; }.collection-caption { font-size: .75rem; }.collection-toolbar { align-items: flex-start; }.search-footer { gap: .6rem; }.result-count { display: none; } }
+@media (max-width: 768px) { .launcher { padding-top: .5rem; }.welcome { margin: 1rem 0 1.4rem; }.welcome h1 { font-size: 2.2rem; }.welcome p { font-size: 1rem; }
+  .day-glance { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.35fr); gap: 0; margin-bottom: 1.4rem; }
+  .glance-item { flex-direction: column; align-items: center; gap: .4rem; padding: .35rem .5rem; border-radius: 0; text-align: center; }
+  .glance-item + .glance-item { padding-left: .5rem; }
+  .glance-item > span:last-child { width: 100%; }
+  .glance-icon { width: 26px; height: 26px; font-size: .8rem; }
+  .glance-item strong { font-size: .75rem; }
+  .glance-item small { font-size: .65rem; margin-top: .25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-area { margin-bottom: 1.6rem; }.search-field { height: 52px; border-radius: 14px; padding-inline: .9rem; gap: .7rem; }.search-field input { font-size: .9rem; }.type-hint { display: none; }.group-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1.25rem .8rem; }.shortcut-link { min-height: 38px; font-size: .78rem; }.collection-caption { font-size: .75rem; }.collection-toolbar { align-items: flex-start; }.search-footer { gap: .6rem; }.result-count { display: none; } }
 @media (hover: none) { .shortcut-edit,.group-edit { opacity: .65; }.shortcut-link { padding-right: 30px; } }

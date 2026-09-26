@@ -37,3 +37,15 @@
 }
 
 @include responsive.layout;
+
+.category-editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.category-editor input {
+  flex: 1;
+  min-width: 180px;
+}

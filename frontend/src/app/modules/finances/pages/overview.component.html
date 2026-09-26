@@ -7,10 +7,7 @@
 @if (state().data; as overview) {
   @if (accountId()) {
     <div class="account-heading">
-      <div>
-        <a routerLink="/finances/accounts">← All accounts</a>
-        <h2>{{ currentAccount?.name }}</h2>
-      </div>
+      <a routerLink="/finances/accounts">← All accounts</a>
       <div class="actions">
         <button (click)="openAccount(currentAccount)">Edit account</button>
         @if (currentAccount?.kind !== "CASH") {
@@ -21,20 +18,31 @@
       </div>
     </div>
   }
-  @if (accountId() && currentAccount?.currency !== "CHF") {
-    <p>
-      CHF valuation: {{ money(currentAccount?.balanceChf) }} ·
-      {{ currentAccount?.rateSource || "Missing rate" }} ·
-      {{ currentAccount?.rateDate }}
-    </p>
-  }
-  <div class="summary-grid" [class.single]="accountId()">
+  <div class="summary-grid" [class.account-detail]="accountId()">
+    @if (accountId() && currentAccount; as account) {
+      <article class="metric account-identity">
+        <finance-account-logo [account]="account" />
+        <div class="account-copy">
+          <h2>{{ account.name }}</h2>
+          <span
+            >{{ label(account.kind) }} account · {{ account.currency }}</span
+          >
+          <small
+            >{{
+              account.includeNetWorth
+                ? "Included in net worth"
+                : "Excluded from net worth"
+            }}{{ !account.active ? " · Inactive" : "" }}</small
+          >
+        </div>
+      </article>
+    }
     <article class="metric hero">
       <span>{{ accountId() ? "Current balance" : "Total net worth" }}</span
       ><strong>{{
         accountId()
           ? money(currentAccount?.balance, currentAccount?.currency)
-          : money(overview.netWorth)
+          : money(overview.netWorth, "CHF", true)
       }}</strong
       ><small
         >{{
@@ -44,22 +52,33 @@
         }}
         · {{ overview.asOf | date: "d MMM y" }}</small
       >
+      @if (accountId() && currentAccount?.currency !== "CHF") {
+        <small
+          >CHF valuation: {{ money(currentAccount?.balanceChf) }} ·
+          {{ currentAccount?.rateSource || "Missing rate" }} ·
+          {{ currentAccount?.rateDate }}</small
+        >
+      }
     </article>
     @if (!accountId()) {
       <article class="metric">
         <span>Liquid funds</span
-        ><strong>{{ money(overview.totals.cash) }}</strong
+        ><strong>{{ money(overview.totals.cash, "CHF", true) }}</strong
         ><small>Cash & everyday accounts</small>
       </article>
       <article class="metric">
         <span>Investments</span
-        ><strong>{{ money(overview.totals.investment) }}</strong
+        ><strong>{{ money(overview.totals.investment, "CHF", true) }}</strong
         ><small>Brokerage & retirement</small>
       </article>
       <article class="metric">
         <span>Real estate & other assets</span
         ><strong>{{
-          money(+overview.totals.realEstate + +overview.totals.otherAsset)
+          money(
+            +overview.totals.realEstate + +overview.totals.otherAsset,
+            "CHF",
+            true
+          )
         }}</strong
         ><small>Recorded equity & valuables</small>
       </article>
@@ -74,25 +93,29 @@
         <h2>
           {{ accountId() ? "Balance over time" : "Your wealth over time" }}
         </h2>
-        <p>{{ overview.chartCurrency }} · booked values, not a forecast</p>
+        <p>{{ overview.chartCurrency }}</p>
       </div>
       <div class="range">
-        <select
-          aria-label="Chart period"
+        <p-select
+          ariaLabel="Chart period"
           [(ngModel)]="range"
-          (change)="chooseRange()"
-        >
-          <option value="year">This year</option>
-          <option value="month">This month</option>
-          <option value="all">All history</option>
-          <option value="custom">Custom</option>
-        </select>
+          (onChange)="chooseRange()"
+          [options]="rangeOptions"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+          [filter]="false"
+          filterBy="label"
+        />
         @if (range === "custom") {
-          <input aria-label="Start date" type="date" [(ngModel)]="from" /><input
-            aria-label="End date"
-            type="date"
-            [(ngModel)]="to"
-          /><button (click)="load()">Apply</button>
+          <finance-date-input
+            ariaLabel="Start date"
+            [(ngModel)]="from"
+          /><finance-date-input ariaLabel="End date" [(ngModel)]="to" /><button
+            (click)="load()"
+          >
+            Apply
+          </button>
         }
       </div>
     </div>
@@ -121,14 +144,17 @@
         @for (a of ownAccounts; track a.id) {
           @if (a.active) {
             <a class="mini-account" [routerLink]="'/finances/accounts/' + a.id"
-              ><span>{{ a.name }}</span
-              ><strong>{{ money(a.balance, a.currency) }}</strong
-              ><small
-                >{{ label(a.kind)
-                }}{{
-                  !a.includeNetWorth ? " · excluded from net worth" : ""
-                }}</small
-              ></a
+              ><finance-account-logo [account]="a" />
+              <div class="account-copy">
+                <span>{{ a.name }}</span
+                ><strong>{{ money(a.balance, a.currency) }}</strong
+                ><small
+                  >{{ label(a.kind)
+                  }}{{
+                    !a.includeNetWorth ? " · excluded from net worth" : ""
+                  }}</small
+                >
+              </div></a
             >
           }
         }

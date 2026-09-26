@@ -43,9 +43,25 @@
 .metric.hero strong {
   font-size: 30px;
 }
-.summary-grid.single {
-  grid-template-columns: 1fr;
-  max-width: 450px;
+.summary-grid.account-detail {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.account-heading {
+  align-items: center;
+  margin-bottom: 24px;
+}
+.account-identity {
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
+}
+.account-identity finance-account-logo {
+  width: 64px;
+  height: 64px;
+  flex-basis: 64px;
+}
+.account-identity h2 {
+  overflow-wrap: anywhere;
 }
 .chart {
   padding: 0 24px 20px;
@@ -59,8 +75,8 @@
 }
 .mini-account {
   display: flex;
-  flex-direction: column;
-  gap: 7px;
+  align-items: center;
+  gap: 12px;
   color: var(--app-ink);
   padding: 12px 0;
   border-top: 1px solid #edf0f4;
@@ -78,3 +94,18 @@
 }
 
 @include responsive.layout;
+
+.account-copy {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+@media (max-width: 650px) {
+  .summary-grid.account-detail {
+    grid-template-columns: 1fr;
+  }
+  .account-strip {
+    grid-template-columns: 1fr;
+  }
+}

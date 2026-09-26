@@ -4,6 +4,10 @@ info:
   title: Frontend REST API
   version: "1.0"
 paths:
+  /api/finances/accounts/{id}/icon:
+    $ref: 'openapi/finances/accounts.yaml#/paths/_accounts_id_icon'
+  /api/finances/configuration/mcp-key:
+    $ref: 'openapi/finances/settings.yaml#/paths/_mcp-key'
   /api/finances/overview:
     $ref: 'openapi/finances/reports.yaml#/paths/_overview'
   /api/finances/accounts:

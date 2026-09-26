@@ -18,7 +18,7 @@ export PATH="/opt/homebrew/opt/node@24/bin:$PATH"
 npm start -- --host 127.0.0.1
 ```
 
-Java 25, Maven and Node 24 are required. The launcher script enables the `development,finance-local` profiles, binds the backend to loopback and reads the MCP key from `~/Library/Application Support/thereabout-finances/mcp-key`. On first use it creates a random key with mode 0600. Calendar background synchronization and launcher icon fetching are disabled for this local demo.
+Java 25, Maven and Node 24 are required. The launcher script enables the `development,finance-local` profiles, binds the backend to loopback and uses the database-backed MCP key. At application startup, a cryptographically random 256-bit key is generated if `configuration.FINANCE_MCP_KEY` does not exist. Existing keys survive restarts. Reveal it in **Configuration → Finances MCP** by focusing the masked field; leaving the field clears it from the component. Calendar background synchronization and launcher icon fetching are disabled for this local demo.
 
 The default configuration does not enable finance endpoints. The finance filter rejects non-loopback callers/Host names and foreign browser origins. REST uses the local browser boundary; MCP additionally requires the bearer key. This is intentionally a single-user local experiment, not a production authentication design.
 
@@ -37,7 +37,7 @@ MCP uses the official Java SDK (`io.modelcontextprotocol.sdk:mcp:2.0.1`) with it
 }
 ```
 
-A client that supports environment-backed headers should resolve `FINANCE_MCP_KEY` locally. No client is configured automatically.
+Copy the key from Configuration into your MCP client's private credential storage. The application no longer reads a `FINANCE_MCP_KEY` environment variable or key file. No client is configured automatically.
 
 The 19 operations cover overview, accounts, categories, currencies, transaction listing/details/creation/editing/deletion/restoration/bulk classification, valuation preview/save/history, reports, and exchange-rate listing/manual correction/ECB refresh. Tool names are `finance_` followed by the operation with dots replaced by underscores. Their input schemas are derived from `backend/src/main/resources/openapi/finances.yaml`, the same contract used to generate REST DTOs and the Angular client.
 

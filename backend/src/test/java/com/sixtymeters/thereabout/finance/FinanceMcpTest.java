@@ -20,12 +20,14 @@ import org.springframework.test.context.TestPropertySource;
 @TestPropertySource(
     properties = {
       "thereabout.finances.enabled=true",
-      "thereabout.finances.mcp-key=finance-integration-test-key-with-32-characters",
       "thereabout.calendar.worker-enabled=false",
       "thereabout.launcher.fetch-icons=false"
     })
 class FinanceMcpTest {
   @LocalServerPort int port;
+
+  @org.springframework.beans.factory.annotation.Autowired
+  com.sixtymeters.thereabout.finance.service.FinanceMcpKeyService keys;
 
   @Test
   void authenticatesAndUsesRealMcpClientForDiscoveryReadWriteAndErrors() {
@@ -35,7 +37,7 @@ class FinanceMcpTest {
             .requestBuilder(
                 HttpRequest.newBuilder()
                     .header(
-                        "Authorization", "Bearer finance-integration-test-key-with-32-characters"))
+                        "Authorization", "Bearer " + keys.getKey()))
             .build();
     try (var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(15)).build()) {
       assertThat(client.initialize().serverInfo().name()).isEqualTo("thereabout-finances");
@@ -107,7 +109,7 @@ class FinanceMcpTest {
             .requestBuilder(
                 HttpRequest.newBuilder()
                     .header(
-                        "Authorization", "Bearer finance-integration-test-key-with-32-characters"))
+                        "Authorization", "Bearer " + keys.getKey()))
             .build();
     try (var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(15)).build()) {
       client.initialize();
@@ -148,6 +150,16 @@ class FinanceMcpTest {
                 .build(),
             HttpResponse.BodyHandlers.ofString());
     assertThat(invalidFilter.statusCode()).isEqualTo(400);
+  }
+
+  @Test
+  void revealsPersistedKeyOnlyThroughTheUncachedFinanceEndpoint() throws Exception {
+    var response = HttpClient.newHttpClient().send(
+        HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/finances/configuration/mcp-key"))
+            .GET().build(), HttpResponse.BodyHandlers.ofString());
+    assertThat(response.statusCode()).isEqualTo(200);
+    assertThat(response.body()).isEqualTo(keys.getKey());
+    assertThat(response.headers().firstValue("Cache-Control")).contains("no-store");
   }
 
   @Test

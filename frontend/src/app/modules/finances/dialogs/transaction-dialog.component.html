@@ -2,26 +2,29 @@
   @if (counterparties().error) {
     <p class="alert error">{{ counterparties().error }}</p>
   }
+  @if (hasImportedPrecision) {
+    <p class="precision-note">
+      Amounts are rounded for display. The exact imported values are retained
+      unless you edit an amount.
+    </p>
+  }
   <div class="form-grid">
     <label
-      >Type<select name="type" formControlName="type" (change)="changeType()">
-        <option value="WITHDRAWAL">Expense</option>
-        <option value="DEPOSIT">Income</option>
-        <option value="TRANSFER">Transfer</option>
-        @if (
-          form.controls.type.value === "OPENING" ||
-          form.controls.type.value === "RECONCILIATION"
-        ) {
-          <option [value]="form.controls.type.value">
-            {{ form.controls.type.value }}
-          </option>
-        }
-      </select></label
+      >Type<p-select
+        ariaLabel="Transaction type"
+        name="type"
+        formControlName="type"
+        (onChange)="changeType()"
+        [options]="typeOptions"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        [filter]="false" /></label
     ><label
-      >Date & time<input
+      >Date & time<finance-date-input
+        [dateTime]="true"
+        ariaLabel="Date and time"
         required
-        type="datetime-local"
-        step="1"
         name="date"
         formControlName="date" /></label
     ><label class="wide"
@@ -31,43 +34,94 @@
         name="description"
         formControlName="description"
     /></label>
-    @if (form.controls.type.value !== "TRANSFER") {
-      <label class="wide"
-        >Find counterparty
-        <div class="inline">
-          <input
-            name="counterSearch"
-            [(ngModel)]="counterQuery"
-            [ngModelOptions]="{ standalone: true }"
-            placeholder="Search by name"
-          /><button type="button" (click)="transactionOptions()">Search</button>
-        </div></label
-      >
-    }
     <label
-      >From<select
-        name="source"
-        required
-        formControlName="sourceId"
-        (change)="alignCurrency()"
-      >
-        <option [ngValue]="0">Select source…</option>
-        @for (a of sourceOptions; track a.id) {
-          <option [ngValue]="a.id">{{ a.name }}</option>
-        }
-      </select></label
+      >From
+      @if (usesCounterparty && form.controls.type.value === "DEPOSIT") {
+        <p-autocomplete
+          [ngModel]="counterpartySelection"
+          (ngModelChange)="
+            counterpartySelection = $event; counterpartyChanged($event)
+          "
+          [ngModelOptions]="{ standalone: true }"
+          [suggestions]="suggestions"
+          optionLabel="name"
+          [dropdown]="true"
+          [delay]="250"
+          [minQueryLength]="0"
+          (completeMethod)="searchCounterparties($event.query)"
+          (onSelect)="selectCounterparty($event.value)"
+          appendTo="body"
+          placeholder="Find or create counterparty…"
+          ariaLabel="From counterparty"
+        >
+          <ng-template #item let-item
+            ><span
+              ><i
+                [class]="item.create ? 'pi pi-plus' : 'pi pi-building'"
+                aria-hidden="true"
+              ></i>
+              {{ item.label }}</span
+            ></ng-template
+          >
+        </p-autocomplete>
+      } @else {
+        <p-select
+          ariaLabel="Source account"
+          name="source"
+          required
+          formControlName="sourceId"
+          (onChange)="alignCurrency()"
+          [options]="sourceOptions"
+          optionLabel="name"
+          optionValue="id"
+          appendTo="body"
+          [filter]="true"
+        />
+      }</label
     ><label
-      >To<select
-        name="destination"
-        required
-        formControlName="destinationId"
-        (change)="alignCurrency()"
-      >
-        <option [ngValue]="0">Select destination…</option>
-        @for (a of destinationOptions; track a.id) {
-          <option [ngValue]="a.id">{{ a.name }}</option>
-        }
-      </select></label
+      >To
+      @if (usesCounterparty && form.controls.type.value === "WITHDRAWAL") {
+        <p-autocomplete
+          [ngModel]="counterpartySelection"
+          (ngModelChange)="
+            counterpartySelection = $event; counterpartyChanged($event)
+          "
+          [ngModelOptions]="{ standalone: true }"
+          [suggestions]="suggestions"
+          optionLabel="name"
+          [dropdown]="true"
+          [delay]="250"
+          [minQueryLength]="0"
+          (completeMethod)="searchCounterparties($event.query)"
+          (onSelect)="selectCounterparty($event.value)"
+          appendTo="body"
+          placeholder="Find or create counterparty…"
+          ariaLabel="To counterparty"
+        >
+          <ng-template #item let-item
+            ><span
+              ><i
+                [class]="item.create ? 'pi pi-plus' : 'pi pi-building'"
+                aria-hidden="true"
+              ></i>
+              {{ item.label }}</span
+            ></ng-template
+          >
+        </p-autocomplete>
+      } @else {
+        <p-select
+          ariaLabel="Destination account"
+          name="destination"
+          required
+          formControlName="destinationId"
+          (onChange)="alignCurrency()"
+          [options]="destinationOptions"
+          optionLabel="name"
+          optionValue="id"
+          appendTo="body"
+          [filter]="true"
+        />
+      }</label
     ><label
       >Amount · {{ form.controls.sourceCurrency.value
       }}<input
@@ -75,6 +129,7 @@
         required
         inputmode="decimal"
         formControlName="sourceAmount"
+        (blur)="formatAmount('sourceAmount')"
         (input)="alignCurrency()"
         placeholder="0.00"
     /></label>
@@ -89,49 +144,49 @@
           required
           inputmode="decimal"
           formControlName="destinationAmount"
+          (blur)="formatAmount('destinationAmount')"
       /></label>
     }
     <label
-      >Category<select name="category" formControlName="categoryId">
-        <option [ngValue]="0">Uncategorized</option>
-        @for (c of categories; track c.id) {
-          <option [ngValue]="c.id">{{ c.name }}</option>
-        }
-      </select></label
+      >Category<p-select
+        ariaLabel="Category"
+        name="category"
+        formControlName="categoryId"
+        [options]="categoryOptions"
+        optionLabel="name"
+        optionValue="id"
+        appendTo="body"
+        [filter]="true" /></label
     ><label
-      >Original currency (optional)<select
+      >Original currency (optional)<p-select
+        ariaLabel="Original currency"
         name="foreignCurrency"
         formControlName="foreignCurrency"
-      >
-        <option value="">None</option>
-        @for (c of currencies; track c.code) {
-          @if (c.enabled) {
-            <option [value]="c.code">{{ c.code }}</option>
-          }
-        }
-      </select></label
-    >
+        [options]="currencyOptions"
+        optionLabel="name"
+        optionValue="code"
+        appendTo="body"
+        [filter]="true"
+    /></label>
     @if (form.controls.foreignCurrency.value) {
       <label
         >Original amount<input
           name="foreignAmount"
           inputmode="decimal"
           formControlName="foreignAmount"
+          (blur)="formatAmount('foreignAmount')"
       /></label>
     }
     <label
-      >Purpose<select name="effect" formControlName="effect">
-        <option value="OPERATING">Normal transaction</option>
-        <option value="VALUATION">Valuation gain / loss</option>
-        @if (
-          form.controls.effect.value === "OPENING" ||
-          form.controls.effect.value === "RECONCILIATION"
-        ) {
-          <option [value]="form.controls.effect.value">
-            {{ form.controls.effect.value }}
-          </option>
-        }
-      </select></label
+      >Purpose<p-select
+        ariaLabel="Purpose"
+        name="effect"
+        formControlName="effect"
+        [options]="effectOptions"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        [filter]="false" /></label
     ><label class="wide"
       >Notes<textarea name="notes" rows="3" formControlName="notes"></textarea>
     </label>

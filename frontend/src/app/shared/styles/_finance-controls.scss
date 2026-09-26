@@ -1,0 +1,168 @@
+// Shared finance controls use the application PrimeNG preset, including overlays.
+app-finances,
+.finance-dialog {
+  .p-select,
+  .p-multiselect,
+  .p-autocomplete {
+    min-width: 0;
+    font-size: 13px;
+  }
+  .p-select-label,
+  .p-multiselect-label {
+    padding: 9px 10px;
+  }
+  .p-select-dropdown,
+  .p-multiselect-dropdown {
+    width: 2rem;
+  }
+  .p-autocomplete {
+    display: flex;
+    width: 100%;
+  }
+  .p-autocomplete-input {
+    min-width: 0;
+    width: 100%;
+    font-size: 13px;
+  }
+  .p-datatable {
+    font-size: 12px;
+  }
+  .p-datatable-header {
+    background: var(--app-surface);
+    padding: 16px 20px;
+    border: 0;
+  }
+  .p-paginator {
+    font-size: 12px;
+    border-top: 1px solid var(--app-border);
+  }
+  .p-paginator button {
+    padding: 0;
+    border: 0;
+  }
+  .p-datatable-sort-icon {
+    width: 11px;
+    height: 11px;
+    margin-left: 4px;
+  }
+  .column-filters th {
+    padding: 8px 12px 14px;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  .column-filters .p-select,
+  .column-filters .p-multiselect {
+    width: 100%;
+    min-width: 140px;
+    max-width: 240px;
+  }
+  .column-filters input {
+    width: 100%;
+  }
+  .p-datatable-tbody > tr > td {
+    padding: 13px 16px;
+  }
+}
+.finance-dialog .p-dialog-content {
+  padding-inline: 24px;
+}
+
+app-finances,
+.finance-dialog {
+  .section-search,
+  .table-caption,
+  .table-tools,
+  .table-options,
+  .search-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-search {
+    margin: 18px 0;
+    color: var(--app-muted);
+    font-size: 12px;
+  }
+  .section-search input {
+    width: min(330px, 65vw);
+  }
+  .table-caption span {
+    color: var(--app-muted);
+    font-size: 12px;
+  }
+  .table-tools {
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  .table-options {
+    flex-wrap: wrap;
+  }
+  .search-field {
+    flex: 1;
+    min-width: 220px;
+    max-width: 450px;
+    font-weight: 400;
+    color: var(--app-muted);
+  }
+  .search-field input {
+    width: 100%;
+  }
+  .date-filter {
+    font-size: 12px;
+    font-weight: 400;
+    min-width: 165px;
+  }
+  .date-filter summary {
+    cursor: pointer;
+    padding: 9px 0;
+    color: var(--app-link);
+  }
+  .date-controls {
+    display: grid;
+    gap: 10px;
+    padding: 12px 0;
+  }
+  .date-controls label {
+    display: grid;
+    gap: 5px;
+  }
+  .status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 5px;
+    background: #edf6f1;
+    color: #387f69;
+  }
+  .status.inactive {
+    background: #f0f3f7;
+    color: var(--app-muted);
+  }
+  p-select,
+  p-multiselect {
+    max-width: 100%;
+    min-width: 0;
+  }
+  @media (max-width: 650px) {
+    .account-strip {
+      grid-template-columns: 1fr;
+    }
+    .table-tools {
+      align-items: stretch;
+    }
+  }
+}
+
+app-finances, .finance-dialog {
+  finance-date-input .p-datepicker {
+    width: 100%;
+  }
+  finance-date-input .p-datepicker-input {
+    width: 100%;
+    min-width: 0;
+    font-size: 13px;
+    padding-block: 9px;
+  }
+  .range finance-date-input {
+    width: 155px;
+  }
+}

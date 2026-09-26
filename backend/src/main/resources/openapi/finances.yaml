@@ -1,5 +1,9 @@
 # Finance API index. Edit resource definitions in finances/*.yaml.
 paths:
+  _accounts_id_icon:
+    $ref: finances/accounts.yaml#/paths/_accounts_id_icon
+  _mcp-key:
+    $ref: finances/settings.yaml#/paths/_mcp-key
   _overview:
     $ref: finances/reports.yaml#/paths/_overview
   _accounts:

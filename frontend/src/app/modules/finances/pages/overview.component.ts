@@ -1,3 +1,6 @@
+import { FinanceDateInputComponent } from "../shared/finance-date-input.component";
+import { AccountLogoComponent } from "../shared/account-logo.component";
+import { SelectModule } from "primeng/select";
 import {
   ChangeDetectionStrategy,
   Component,
@@ -25,6 +28,9 @@ import { TransactionsComponent } from "./transactions.component";
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    FinanceDateInputComponent,
+    AccountLogoComponent,
+    SelectModule,
     CommonModule,
     FormsModule,
     RouterLink,
@@ -41,6 +47,12 @@ export class OverviewComponent {
   from = today().slice(0, 4) + "-01-01";
   to = today();
   range = "year";
+  readonly rangeOptions = [
+    { label: "This year", value: "year" },
+    { label: "This month", value: "month" },
+    { label: "All history", value: "all" },
+    { label: "Custom", value: "custom" },
+  ];
   private readonly period = signal({ from: this.from, to: this.to });
   private readonly query = computed(() => ({
     ...this.period(),
@@ -94,6 +106,7 @@ export class OverviewComponent {
     };
   }
   load() {
+    if (!this.from || !this.to || this.from > this.to) return;
     this.period.set({ from: this.from, to: this.to });
   }
   chooseRange() {

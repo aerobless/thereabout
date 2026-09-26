@@ -1,4 +1,4 @@
-package com.sixtymeters.thereabout.launcher;
+package com.sixtymeters.thereabout.shared.icons;
 
 import jakarta.annotation.PreDestroy;
 import org.apache.hc.client5.http.DnsResolver;
@@ -19,15 +19,15 @@ import java.util.regex.Pattern;
 
 /** Fetches only site icons, never authenticated pages or a bookmark's private path/query. */
 @Component
-public class LauncherIconFetcher {
+public class WebsiteIconFetcher {
     public record Image(byte[] bytes,String type) {}
-    private record Download(URI uri,byte[] bytes,String location,int status) {}
+    record Download(URI uri,byte[] bytes,String location,int status) {}
     private static final int MAX_BYTES=1_048_576;
     private static final Pattern LINK=Pattern.compile("(?is)<link\\b[^>]{0,4096}>");
     private static final Pattern ATTRIBUTE=Pattern.compile("(?is)\\b(rel|href)\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s>]+))");
     private final CloseableHttpClient client;
 
-    public LauncherIconFetcher() {
+    public WebsiteIconFetcher() {
         var connections=PoolingHttpClientConnectionManagerBuilder.create()
                 .setDnsResolver(new DnsResolver() {
                     @Override public InetAddress[] resolve(String host) throws UnknownHostException {
@@ -40,7 +40,7 @@ public class LauncherIconFetcher {
                 .setDefaultConnectionConfig(ConnectionConfig.custom().setConnectTimeout(Timeout.ofSeconds(3)).setSocketTimeout(Timeout.ofSeconds(3)).build())
                 .setMaxConnTotal(4).setMaxConnPerRoute(2).build();
         client=HttpClients.custom().setConnectionManager(connections).disableRedirectHandling().disableCookieManagement()
-                .disableAutomaticRetries().setUserAgent("Thereabout/1.0 (bookmark icon cache)")
+                .disableAutomaticRetries().setUserAgent("Thereabout/1.0 (website icon cache)")
                 .setDefaultRequestConfig(RequestConfig.custom().setResponseTimeout(Timeout.ofSeconds(3)).setConnectionRequestTimeout(Timeout.ofSeconds(3)).build()).build();
     }
 
@@ -51,24 +51,38 @@ public class LauncherIconFetcher {
             validateDestination(origin);
             // Check literal IPs too: HttpClient need not call the DNS resolver for them.
             var candidates=new LinkedHashSet<URI>();
+            boolean blocked = false;
             try {
-                var home=download(origin);
+                var home=download(origin, true);
+                blocked = home.status()==403 || home.status()==429;
                 if(home.status()==200) candidates.addAll(iconLinks(home.bytes(),home.uri()));
                 candidates.add(home.uri().resolve("/favicon.ico"));
             } catch(IOException ignored) { /* A favicon can be available when a homepage is protected. */ }
             candidates.add(origin.resolve("/favicon.ico"));
             for(URI candidate:candidates.stream().limit(4).toList()) {
                 try {
-                    var result=download(candidate);
+                    var result=download(candidate, false);
                     String type=imageType(result.bytes());
                     if(result.status()==200 && type!=null) return new Image(result.bytes(),type);
                 } catch(IOException | IllegalArgumentException ignored) { /* Keep the stored fallback. */ }
+            }
+            if (blocked) {
+                // A blocked public website may still have an icon in Google's public favicon cache.
+                // Send only the hostname, never a path, query, account name or other user data.
+                var cached = download(fallbackIcon(origin.getHost()), false);
+                String type = imageType(cached.bytes());
+                if (cached.status()==200 && type!=null) return new Image(cached.bytes(), type);
             }
         } catch(IOException | URISyntaxException | IllegalArgumentException ignored) { /* Never log private bookmark URLs. */ }
         return null;
     }
 
-    private Download download(URI initial) throws IOException {
+    static URI fallbackIcon(String host) {
+        return URI.create("https://www.google.com/s2/favicons?domain="
+                + URLEncoder.encode(host, StandardCharsets.UTF_8) + "&sz=128");
+    }
+
+    Download download(URI initial, boolean homepage) throws IOException {
         URI uri=initial;
         for(int redirects=0;redirects<=3;redirects++) {
             validateDestination(uri);
@@ -78,8 +92,7 @@ public class LauncherIconFetcher {
                 if(status>=300 && status<400) return new Download(current,new byte[0],response.getFirstHeader("Location")==null?null:response.getFirstHeader("Location").getValue(),status);
                 if(status!=200 || response.getEntity()==null) return new Download(current,new byte[0],null,status);
                 try(var stream=response.getEntity().getContent()) {
-                    byte[] bytes=stream.readNBytes(MAX_BYTES+1);
-                    if(bytes.length>MAX_BYTES) throw new IOException("Icon response is too large.");
+                    byte[] bytes=readBytes(stream, homepage);
                     return new Download(current,bytes,null,status);
                 }
             });
@@ -87,6 +100,13 @@ public class LauncherIconFetcher {
             uri=uri.resolve(result.location());
         }
         throw new IOException("Too many redirects.");
+    }
+
+    static byte[] readBytes(java.io.InputStream stream, boolean homepage) throws IOException {
+        // Icon hints live in the document head; a large page need not be downloaded in full.
+        byte[] bytes = stream.readNBytes(homepage ? MAX_BYTES : MAX_BYTES + 1);
+        if (!homepage && bytes.length > MAX_BYTES) throw new IOException("Icon response is too large.");
+        return bytes;
     }
 
     static List<URI> iconLinks(byte[] html,URI base) {

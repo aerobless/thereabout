@@ -1,5 +1,7 @@
 package com.sixtymeters.thereabout.launcher;
 
+import com.sixtymeters.thereabout.shared.icons.WebsiteIconFetcher;
+
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +18,7 @@ import java.util.concurrent.*;
 @ConditionalOnProperty(name="thereabout.launcher.fetch-icons",havingValue="true",matchIfMissing=true)
 public class LauncherIconWorker {
     private final LauncherStore store;
-    private final LauncherIconFetcher fetcher;
+    private final WebsiteIconFetcher fetcher;
     private final ScheduledExecutorService worker=Executors.newSingleThreadScheduledExecutor(
             Thread.ofPlatform().daemon(true).name("launcher-icons").factory());
 

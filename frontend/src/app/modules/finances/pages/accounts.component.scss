@@ -16,11 +16,11 @@
   border: 1px solid var(--app-border);
   background: white;
   border-radius: 10px;
-  padding: 22px;
+  padding: 18px 32px 18px 18px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   color: var(--app-ink);
-  gap: 10px;
+  gap: 16px;
 }
 .account-card:hover {
   border-color: #91b0d8;
@@ -55,3 +55,9 @@
 }
 
 @include responsive.layout;
+
+.account-copy {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}

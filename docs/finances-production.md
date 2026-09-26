@@ -10,12 +10,19 @@ thereabout.finances.access-mode=cloudflare
 thereabout.finances.public-origin=https://your-app.example.com
 thereabout.finances.access-issuer=https://your-team.cloudflareaccess.com
 thereabout.finances.access-audience=YOUR_ACCESS_APPLICATION_AUDIENCE
-thereabout.finances.mcp-key=GENERATE_A_RANDOM_KEY_OF_AT_LEAST_32_CHARACTERS
 ```
 
-Use the Access application's audience, not a service-token ID. The backend fetches and caches the team's signing keys and validates signature, issuer, audience, expiration and not-before. Browser origins must match the configured public origin exactly. Unknown access modes fail closed. Keep this file and its key out of Git, frontend configuration and logs. Do not enable the local profile on the server.
+Use the Access application's audience, not a service-token ID. The backend fetches and caches the team's signing keys and validates signature, issuer, audience, expiration and not-before. Browser origins must match the configured public origin exactly. Unknown access modes fail closed. Keep this file out of Git. The MCP credential is stored in the existing `configuration` table under `FINANCE_MCP_KEY`, not in this properties file. Do not enable the local profile on the server.
 
 For MCP, authenticate through Cloudflare Access and supply the bearer key to `/mcp/finances`. No agent integration or Cloudflare policy changes are performed by the application.
+
+## MCP credential lifecycle
+
+At application startup, a missing MCP key is generated using 32 cryptographically random bytes and persisted as a URL-safe string. An atomic insert preserves the first key even when several instances start concurrently. Existing keys are never regenerated on restart. Database backups therefore include the credential and must remain private.
+
+**Configuration → Finances MCP** shows a masked, read-only field. Focusing it fetches the key through `GET /api/finances/configuration/mcp-key`; blur or Escape clears it. This endpoint requires the same validated Cloudflare Access identity and origin checks as the finance UI, sends `Cache-Control: no-store`, and is not part of the public frontend configuration or MCP tool list. The key must never be logged.
+
+When upgrading an installation that previously used `thereabout.finances.mcp-key`, stop the old application and copy that exact credential privately into `configuration` as `config_key = 'FINANCE_MCP_KEY'` before starting the new version. Insert only if absent; never overwrite an existing database key. Remove the obsolete property after verifying MCP access. Without this one-time migration the new application generates a different key and clients must update their credential from Configuration. The server no longer reads key properties, environment variables, or files.
 
 ## First import and rollback
 

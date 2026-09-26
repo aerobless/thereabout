@@ -13,22 +13,24 @@
   <form [formGroup]="form" (ngSubmit)="saveRate()">
     <div class="form-grid">
       <label
-        >From<select
+        >From<p-select
+          ariaLabel="Rate currency"
           name="from"
           formControlName="fromCurrency"
-          (change)="prepareRate()"
-        >
-          @for (c of currencies; track c.code) {
-            <option [value]="c.code">{{ c.code }}</option>
-          }
-        </select></label
+          (onChange)="prepareRate()"
+          [options]="currencies"
+          optionLabel="code"
+          optionValue="code"
+          appendTo="body"
+          [filter]="true"
+          filterBy="code" /></label
       ><label
-        >Date<input
+        >Date<finance-date-input
+          ariaLabel="Rate date"
           name="date"
-          type="date"
           required
           formControlName="date"
-          (change)="prepareRate()" /></label
+          (dateChange)="prepareRate()" /></label
       ><label
         >CHF per unit<input
           name="rate"

@@ -1,4 +1,26 @@
 paths:
+  _accounts_id_icon:
+    get:
+      tags: [Finances]
+      operationId: financeGetAccountIcon
+      summary: Get the cached icon discovered from an account website
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Cached website icon
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: No supported icon found
   _accounts:
     get:
       operationId: financeListAccounts
@@ -83,6 +105,12 @@ paths:
         required: false
         schema:
           type: boolean
+      - name: active
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Filter active or inactive accounts; takes precedence over includeInactive.
       x-mcp-input:
         $ref: '#/components/schemas/FinanceAccountQuery'
     post:
@@ -217,6 +245,14 @@ components:
           type: string
         rateSource:
           type: string
+        websiteUrl:
+          type: string
+          maxLength: 2048
+          description: Bank website for automatic site icon discovery. Empty clears it; omitted preserves it. A missing scheme defaults to HTTPS.
+        logoUrl:
+          type: string
+          maxLength: 2048
+          description: Optional HTTPS image URL. Empty string clears the logo.
       required:
       - id
       - name
@@ -297,6 +333,14 @@ components:
           type: boolean
         includeNetWorth:
           type: boolean
+        websiteUrl:
+          type: string
+          maxLength: 2048
+          description: Bank website for automatic site icon discovery. Empty clears it; omitted preserves it. A missing scheme defaults to HTTPS.
+        logoUrl:
+          type: string
+          maxLength: 2048
+          description: Optional HTTPS image URL. Empty string clears the logo.
       required:
       - requestKey
       - name
@@ -332,4 +376,7 @@ components:
           type: boolean
         includeInactive:
           type: boolean
+        active:
+          type: boolean
+          description: Filter active or inactive accounts; takes precedence over includeInactive.
       required: []

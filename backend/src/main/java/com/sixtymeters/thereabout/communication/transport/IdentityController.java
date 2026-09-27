@@ -22,6 +22,20 @@ public class IdentityController implements IdentityApi {
     private static final IdentityMapper IDENTITY_MAPPER = IdentityMapper.INSTANCE;
     private final IdentityService identityService;
 
+    private final com.sixtymeters.thereabout.communication.service.IdentityUserService identityUserService;
+
+    @Override
+    public ResponseEntity<GenIdentity> createIdentityUser(BigDecimal id,
+            com.sixtymeters.thereabout.generated.model.GenCreateUserRequest request) {
+        try {
+            return ResponseEntity.ok(IDENTITY_MAPPER.mapToGenIdentity(identityUserService.createUser(id.longValueExact(), request.getEmail())));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // The transactional service has already rolled back. Do not expose SQL or identifiers.
+            throw new com.sixtymeters.thereabout.config.ThereaboutException(org.springframework.http.HttpStatus.CONFLICT,
+                    "This Cloudflare email is already assigned to another person.");
+        }
+    }
+
     @Override
     public ResponseEntity<List<GenIdentity>> getIdentities() {
         List<GenIdentity> identities = identityService.getAllIdentities().stream()

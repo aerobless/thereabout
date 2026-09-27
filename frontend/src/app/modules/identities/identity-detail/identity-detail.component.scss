@@ -43,3 +43,9 @@ a {
     flex: 1;
   }
 }
+
+.field-value {overflow-wrap: anywhere; min-width: 0;}
+@media (max-width: 640px) {
+  :host ::ng-deep .card-header {flex-wrap: wrap;}
+  :host ::ng-deep td {overflow-wrap: anywhere;}
+}

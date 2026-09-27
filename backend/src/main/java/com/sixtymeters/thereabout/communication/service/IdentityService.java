@@ -27,7 +27,11 @@ public class IdentityService {
 
     @Transactional
     public IdentityEntity createIdentity(IdentityEntity identity) {
+        identity.setUser(false);
         if (identity.getIdentityInApplications() != null) {
+            if (identity.getIdentityInApplications().stream().anyMatch(IdentityService::isCloudflare)) {
+                throw new ThereaboutException(HttpStatusCode.valueOf(400), "Use Create User to assign a Cloudflare email.");
+            }
             identity.getIdentityInApplications().forEach(app -> app.setIdentity(identity));
         }
         return identityRepository.save(identity);
@@ -35,9 +39,12 @@ public class IdentityService {
 
     @Transactional
     public IdentityEntity updateIdentity(Long id, IdentityEntity updatedIdentity) {
-        IdentityEntity existing = identityRepository.findById(id)
+        IdentityEntity existing = identityRepository.findForUpdateById(id)
                 .orElseThrow(() -> new ThereaboutException(HttpStatusCode.valueOf(404), "Identity with id %d not found".formatted(id)));
 
+        if (existing.isUser() && updatedIdentity.isGroup()) {
+            throw new ThereaboutException(HttpStatusCode.valueOf(400), "Users cannot become groups.");
+        }
         existing.setShortName(updatedIdentity.getShortName());
         existing.setGroup(updatedIdentity.isGroup());
         existing.setRelationship(updatedIdentity.getRelationship());
@@ -52,7 +59,14 @@ public class IdentityService {
                     .filter(appId -> appId != null && appId != 0)
                     .collect(Collectors.toSet());
 
-            existingApps.removeIf(app -> app.getId() != null && !updatedIds.contains(app.getId()));
+            for (IdentityInApplicationEntity app : updatedApps) {
+                if (isCloudflare(app) && existingApps.stream().noneMatch(old -> isCloudflare(old)
+                        && java.util.Objects.equals(old.getId(), app.getId())
+                        && old.getIdentifier().equals(app.getIdentifier()) && !app.isGroup())) {
+                    throw new ThereaboutException(HttpStatusCode.valueOf(400), "Cloudflare identities are managed by Create User.");
+                }
+            }
+            existingApps.removeIf(app -> !isCloudflare(app) && app.getId() != null && !updatedIds.contains(app.getId()));
 
             for (IdentityInApplicationEntity app : updatedApps) {
                 if (app.getId() == null || app.getId() == 0) {
@@ -65,10 +79,16 @@ public class IdentityService {
         return identityRepository.save(existing);
     }
 
+    private static boolean isCloudflare(IdentityInApplicationEntity app) {
+        return app.getApplication() == com.sixtymeters.thereabout.communication.data.CommunicationApplication.CLOUDFLARE;
+    }
+
     @Transactional
     public void deleteIdentity(Long id) {
-        if (!identityRepository.existsById(id)) {
-            throw new ThereaboutException(HttpStatusCode.valueOf(404), "Identity with id %d not found".formatted(id));
+        IdentityEntity existing = identityRepository.findForUpdateById(id)
+                .orElseThrow(() -> new ThereaboutException(HttpStatusCode.valueOf(404), "Identity not found."));
+        if (existing.isUser()) {
+            throw new ThereaboutException(HttpStatusCode.valueOf(400), "User deletion is not supported.");
         }
         identityRepository.deleteById(id);
     }

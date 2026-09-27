@@ -10,6 +10,8 @@ import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 import {dailyStepTotals} from '../dayview/steps-progress';
 import {greeting, localDate, searchShortcuts, shortcutDomain} from './launcher-search';
 
+import {CurrentUserService} from '../../shared/current-user/current-user.service';
+
 type DialogMode='shortcut'|'group'|'organize'|'import'|null;
 interface ShortcutDraft extends LauncherShortcutInput {id?: number}
 
@@ -21,6 +23,7 @@ interface ShortcutDraft extends LauncherShortcutInput {id?: number}
   changeDetection:ChangeDetectionStrategy.OnPush
 })
 export class LauncherComponent {
+  readonly currentUser=inject(CurrentUserService);
   private readonly api=inject(LauncherService);
   private readonly health=inject(HealthService);
   private readonly calendar=inject(CalendarService);

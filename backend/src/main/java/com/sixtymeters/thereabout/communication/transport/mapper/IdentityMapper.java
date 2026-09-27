@@ -19,6 +19,7 @@ public interface IdentityMapper {
 
     @Mapping(target = "identityInApplications", source = "identityInApplications")
     @Mapping(source = "group", target = "isGroup")
+    @Mapping(source = "user", target = "isUser")
     GenIdentity mapToGenIdentity(IdentityEntity entity);
 
     @Mapping(target = "id", ignore = true)
@@ -26,6 +27,7 @@ public interface IdentityMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "identityInApplications", source = "identityInApplications")
     @Mapping(source = "isGroup", target = "isGroup")
+    @Mapping(target = "isUser", ignore = true)
     IdentityEntity mapToIdentityEntity(GenIdentity genIdentity);
 
     @Mapping(source = "application", target = "application", qualifiedByName = "enumToDisplayName")

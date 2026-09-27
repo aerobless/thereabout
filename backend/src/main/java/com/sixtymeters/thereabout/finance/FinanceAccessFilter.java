@@ -32,7 +32,7 @@ public class FinanceAccessFilter extends OncePerRequestFilter {
   private final ObjectProvider<JwtDecoder> accessTokens;
   private final FinanceMcpKeyService mcpKeys;
 
-  public FinanceAccessFilter(ObjectProvider<JwtDecoder> accessTokens, FinanceMcpKeyService mcpKeys) {
+  public FinanceAccessFilter(@org.springframework.beans.factory.annotation.Qualifier("financeAccessTokenDecoder") ObjectProvider<JwtDecoder> accessTokens, FinanceMcpKeyService mcpKeys) {
     this.accessTokens = accessTokens;
     this.mcpKeys = mcpKeys;
   }

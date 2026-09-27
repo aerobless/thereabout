@@ -1,5 +1,8 @@
 <p-toast></p-toast>
 <p-confirmdialog></p-confirmdialog>
+@if (creatingUser) {
+  <app-create-user-dialog [identity]="creatingUser" (closed)="creatingUser = null" (created)="loadIdentities()" />
+}
 
 <div class="identities-container">
 
@@ -21,9 +24,9 @@
       [rowsPerPageOptions]="[15, 25, 50]"
       sortField="shortName"
       [sortOrder]="1"
-      styleClass="p-datatable-striped"
+      class="identity-table" styleClass="p-datatable-striped"
       [globalFilterFields]="['shortName', 'relationship']"
-      [tableStyle]="{'min-width': '60rem'}">
+      [tableStyle]="{'min-width': '40rem'}">
       <ng-template #header>
         <tr>
           <th pSortableColumn="shortName">Short Name <p-sorticon field="shortName"/></th>
@@ -35,27 +38,32 @@
       </ng-template>
       <ng-template #body let-identity>
         <tr>
-          <td><a [routerLink]="['/identities', identity.id]">{{ identity.shortName }}</a></td>
-          <td>{{ identity.relationship }}</td>
-          <td style="text-align: center">
+          <td><a [routerLink]="['/identities', identity.id]">{{ identity.shortName }}</a>
+            @if (identity.isUser) { <p-tag value="User" severity="success" /> }
+            @if (cloudflareEmail(identity); as email) { <small class="cloudflare-identity">Cloudflare: {{ email }}</small> }</td>
+          <td data-label="Relationship">{{ identity.relationship || '—' }}</td>
+          <td data-label="Group" style="text-align: center">
             @if (identity.isGroup) {
               <p-tag value="Group" severity="info"></p-tag>
             } @else {
               <span>—</span>
             }
           </td>
-          <td style="text-align: center">
+          <td data-label="App identities" style="text-align: center">
             <p-tag [value]="'' + getAppIdentityCount(identity)"
                    [severity]="getAppIdentityCount(identity) > 0 ? 'info' : 'secondary'"
                    pTooltip="Linked application identities"
                    tooltipPosition="top"></p-tag>
           </td>
           <td style="text-align: center">
+            @if (!identity.isGroup && !identity.isUser) {
+              <p-button label="Create User" ariaLabel="Create User" icon="pi pi-user-plus" [text]="true" (onClick)="creatingUser = identity" />
+            }
             <p-button icon="pi pi-pencil" [rounded]="true" [text]="true"
                       pTooltip="Edit" tooltipPosition="top"
                       (onClick)="showEditIdentityDialog(identity)"></p-button>
             <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
-                      pTooltip="Delete" tooltipPosition="top"
+                      [disabled]="identity.isUser" pTooltip="Delete" tooltipPosition="top"
                       (onClick)="confirmDeleteIdentity(identity)"></p-button>
           </td>
         </tr>
@@ -193,7 +201,7 @@
     </p-floatlabel>
 
     <div style="margin-bottom: 10px; display: flex; align-items: flex-start; gap: 8px">
-      <p-checkbox [(ngModel)]="editingIdentity.isGroup" [binary]="true" inputId="isGroup" label="Is a group"></p-checkbox>
+      <p-checkbox [(ngModel)]="editingIdentity.isGroup" [disabled]="!!editingIdentity.isUser" [binary]="true" inputId="isGroup" label="Is a group"></p-checkbox>
       <small style="flex: 1; color: var(--text-color-secondary); line-height: 1.4">
         Use for group chats or other non-person identities.
       </small>
@@ -216,7 +224,7 @@
               <td>{{ appIdentity.identifier }}</td>
               <td style="text-align: center">
                 <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger"
-                          pTooltip="Unlink" tooltipPosition="top"
+                          [disabled]="appIdentity.application === 'Cloudflare'" pTooltip="Unlink" tooltipPosition="top"
                           (onClick)="unlinkAppIdentity(appIdentity)"></p-button>
               </td>
             </tr>

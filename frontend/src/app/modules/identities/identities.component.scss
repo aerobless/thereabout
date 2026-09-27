@@ -52,3 +52,15 @@ a {
     .header-search { width: 100%; }
   }
 }
+
+.cloudflare-identity {display: block; margin-top: .35rem; overflow-wrap: anywhere;}
+@media (max-width: 640px) {
+  :host ::ng-deep .identity-table {
+    table {min-width: 0 !important;}
+    thead {display: none;}
+    tbody, tr, td {display: block; width: 100%;}
+    tr {padding: .5rem; border-bottom: 1px solid var(--p-content-border-color);}
+    td {border: 0; text-align: left !important; padding: .4rem;}
+    td[data-label]::before {content: attr(data-label) ': '; font-weight: 600; margin-right: .5rem;}
+  }
+}

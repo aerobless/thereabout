@@ -1,0 +1,96 @@
+# Thereabout users through Cloudflare Access
+
+An existing person identity becomes a user through **Create User**, available in the identity list and detail. Enter the email used to sign in through Cloudflare Access. The server trims and lowercases it, validates it, and atomically stores `identity.is_user` and a `CLOUDFLARE` application identity. The person's stable identity ID and `shortName` remain the source of identity and display name. Existing chat links are retained. Groups cannot become users.
+
+One email per person is supported in this slice. Repeating the same request is harmless. Conflicting requests return HTTP 409 without a partial user flag or link. Generic identity edits preserve the flag and mapping, including stale payloads. Generic link/unlink cannot modify Cloudflare links; users cannot become groups or be deleted through generic identity deletion. Email changes and deactivation are not provided.
+
+This is a visible end-to-end identity slice. It adds no role model, global application lockout, domain ownership filtering, or location/health/finance migration. A Cloudflare-admitted person with no Thereabout mapping can still access identity management and create the initial mapping. Keep the origin protected by the existing Cloudflare deployment boundary; current-user recognition itself is not authorization for other API routes.
+
+## Minimum configuration
+
+Recognition defaults to disabled. Enable it independently of finance:
+
+```properties
+thereabout.users.enabled=true
+thereabout.users.access-issuer=https://your-team.cloudflareaccess.com
+thereabout.users.access-audience=YOUR_ACCESS_APPLICATION_AUDIENCE
+```
+
+Use the Access application audience for the browser application and backend path, not a service-token identifier. Set these through the normal Spring environment (`THEREABOUT_USERS_ENABLED`, `THEREABOUT_USERS_ACCESS_ISSUER`, `THEREABOUT_USERS_ACCESS_AUDIENCE`) or the existing optional `/data/finances.properties` import. No new file import is required. Do not put real mappings, credentials, JWTs, or private deployment configuration in source control.
+
+For compatibility, when the user issuer/audience properties are absent they fall back individually to `thereabout.finances.access-issuer` and `thereabout.finances.access-audience`. This only works if that existing Access application also covers the user endpoint. `thereabout.users.enabled=true` is still required. Finance enabled/access-mode/public-origin settings retain their existing meaning; finance and MCP protections remain in place. The two JWT decoder beans have explicit qualifiers, so simultaneous enablement does not create ambiguous injection. Enabling recognition without a usable issuer/audience fails startup rather than assigning a fallback user.
+
+Only `Cf-Access-Jwt-Assertion` is used. Signature, issuer, audience, expiration (required), and not-before are validated before reading email. Plain email headers and client-supplied person IDs do not authenticate anyone. Shared verification uses Nimbus and the Cloudflare signing-key endpoint, following [Cloudflare's JWT validation documentation](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/). Tokens are neither logged nor returned by this flow.
+
+`GET /backend/api/v1/current-user` always sends `Cache-Control: no-store` and returns an explicit status:
+
+| Status | Meaning |
+| --- | --- |
+| `resolved` | Verified email linked to a person user; includes `identityId` and `displayName` (`shortName`). |
+| `unlinked` | Verified login email has no eligible Thereabout user. |
+| `missing_token` | Recognition enabled, assertion absent. |
+| `invalid_token` | Invalid assertion, claims, signature, lifetime, or email. |
+| `verification_unavailable` | Technical JWT verification/key retrieval failure. |
+| `disabled` | Recognition not configured/enabled. |
+
+Non-resolved states never contain a resolved identity or name. The frontend uses a generic time-based greeting while loading, clears any previous identity on reload, and displays **No Thereabout user assigned.** for `unlinked`. Technical/HTTP failures show a neutral verification-unavailable state. The in-memory user is cleared when hiding/leaving the page and refreshed when returning, including browser back/forward-cache restoration. Nothing is stored in local/session storage. There is no local impersonation or default Theo fallback.
+
+## Local development and verification
+
+Keep development servers bound to loopback. Leave recognition disabled for ordinary local UI work; the greeting stays generic and initial mapping remains possible. Production has no development user override. JWT tests generate their own local RSA keys and synthetic claims; browser greeting fixtures are test-only and do not establish a real Cloudflare session.
+
+**Use a disposable MariaDB container, never the normal development or production database.** Existing repository tests can remove data, and legacy migration V5 explicitly names schema `thereabout`. Use that schema name inside a separate container on another loopback port:
+
+```sh
+docker run --name thereabout-users-test-db \
+  -e MARIADB_DATABASE=thereabout -e MARIADB_USER=users_test \
+  -e MARIADB_PASSWORD=users_test_only -e MARIADB_ROOT_PASSWORD=disposable_test_only \
+  -p 127.0.0.1:3337:3306 -d mariadb:latest
+# Wait for MariaDB readiness, then verify the container and empty target schema:
+docker exec thereabout-users-test-db mariadb -uusers_test -pusers_test_only thereabout \
+  -e 'SELECT DATABASE(), @@hostname; SHOW TABLES;'
+cd backend
+SPRING_DATASOURCE_URL=jdbc:mariadb://127.0.0.1:3337/thereabout \
+SPRING_DATASOURCE_USERNAME=users_test SPRING_DATASOURCE_PASSWORD=users_test_only \
+mvn clean install
+```
+
+Do not run the app against this database while running destructive tests. These credentials are disposable examples, not deployment credentials. Stop/remove only the container you created once its test data is no longer needed.
+
+Regenerate contracts through existing workflows; never edit generated files:
+
+```sh
+cd backend && mvn generate-sources
+# From repository root:
+cd frontend
+PATH=/opt/homebrew/opt/node@24/bin:$PATH npm ci
+PATH=/opt/homebrew/opt/node@24/bin:$PATH npm run openapi:generate
+PATH=/opt/homebrew/opt/node@24/bin:$PATH npm test -- --watch=false
+PATH=/opt/homebrew/opt/node@24/bin:$PATH npm run build
+```
+
+The server output is under `backend/target/generated-sources/openapi`; Angular contracts under `frontend/generated` are ignored by Git and regenerated during normal builds. Migration V25 only adds a non-null false-default flag; it does not rewrite identities or links. Back up the database using the normal release procedure before deployment. Application rollback can retain the additive column and Cloudflare rows; do not use older identity editors against those mappings because older code does not enforce their preservation.
+
+## Live acceptance after a separately authorized deployment
+
+This work does not deploy, change Cloudflare policies, or create real mappings. Local JWT and browser tests are not proof of live Access behavior.
+
+1. Deploy the tested build separately. Configure recognition with the correct team issuer and browser application's audience. Keep finance/MCP configuration intact. Confirm the edge forwards the signed assertion to `/backend/api/v1/current-user`; never copy tokens into reports or logs.
+2. In a clean browser profile sign in through Cloudflare as the first real account. Before mapping, verify a generic greeting and **No Thereabout user assigned.**, with an `unlinked` response and `Cache-Control: no-store`. Confirm identity management is usable.
+3. Find that person's existing identity (for example Theo). Choose **Create User**, enter that account's email, and submit. Verify the toast, User status, exactly one Cloudflare link, unchanged identity ID, and retained chat identities. Confirm the launcher now greets that person's `shortName`.
+4. In a second clean browser profile sign in with the second real Cloudflare account (for example Heidi). Verify it does not greet Theo before or during loading. Map Heidi's existing identity through its detail page and verify the launcher greets Heidi. Check `/current-user` returns Heidi's stable ID and shortName, distinct from Theo's.
+5. Attempt assigning the same email to another person. The dialog must retain the email and show an actionable conflict; the other person must remain a non-user. Verify groups have no Create User action. Edit an unrelated contact/chat identity to confirm the existing workflow remains usable.
+6. Repeat the modal and successful detail/list refresh at desktop and narrow phone widths. Verify keyboard focus, Cancel, required email, error visibility, pending/double-click behavior, status and linked email.
+7. Sign out/re-authenticate between the two real accounts in one browser, including refresh and back/forward navigation and returning to an already open hidden tab. Confirm loading is generic and no previous-user greeting survives. A missing/invalid assertion must never resolve a user. Exercise key-service unavailability in a controlled non-production environment and verify the distinct technical-failure state.
+8. Verify finance same-origin access remains protected, unauthenticated direct-origin finance requests fail, and MCP still requires both Cloudflare verification and its own bearer key. Record the deployed version, both observed names/IDs, cache headers, viewport checks, and finance/MCP results without capturing JWTs.
+
+## Implementation verification (2026-09-27)
+
+- Java 25: `mvn clean install` from `backend/`, with the datasource explicitly pointing to the disposable container on `127.0.0.1:3337`: **191 tests, zero failures/errors/skips**.
+- Node 24.18.0: regenerated Angular contracts, **186 frontend tests passed**, production build passed. The build retains the existing Day View stylesheet budget warning (8.50 kB vs 8.00 kB).
+- Backend coverage includes normalized email (including pasted Unicode edge whitespace), bad/missing email shapes, groups, missing identities, repeat creation, changed/duplicate email, simultaneous same-person and competing-person requests, actual database unique-index arbitration and loser rollback, stale generic edits, chat-link preservation, and blocked Cloudflare creation/link/unlink via generic routes.
+- Generated RSA JWT tests exercise known/unlinked login, ignored plain email header, invalid signature/issuer/audience/expiry, missing expiry/email, disabled recognition, and distinct verification failure. Configuration tests check recognition with finances disabled, simultaneous named decoders, finance-setting fallback, and fail-fast missing configuration; existing finance origin/MCP tests remain green.
+- Local Chromium browser checks used the actual API and disposable database for list/detail creation, normalization, conflict retention, toast/status/link refresh, and group exclusion at **1440×1000** and **390×844**. Additional **320×844** and **390×844** modal checks verified focus, Escape, visible actions and no page overflow. Screenshots were visually inspected. The new buttons have explicit accessible names; the identity list uses stacked rows on phones.
+- Launcher browser checks used explicitly synthetic `current-user` responses for unlinked, Theo, and Heidi; frontend tests cover loading, old-response cancellation and clearing/restoring state across hidden pages and back/forward-cache navigation. These checks do **not** constitute live Cloudflare acceptance. The local browser preview had no uncaught page errors; it reported the existing missing local PrimeUI license asset/configuration warning.
+
+No production deployment, Cloudflare policy/settings changes, or real-person mappings were performed. Local verification servers and the disposable database were stopped after verification. Existing development services on ports 4200, 9050 and 3306 were left untouched.

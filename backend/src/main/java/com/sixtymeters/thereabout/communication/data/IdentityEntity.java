@@ -26,6 +26,10 @@ public class IdentityEntity {
     @Builder.Default
     private boolean isGroup = false;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean isUser = false;
+
     private String relationship;
 
     @Column(updatable = false)

@@ -1,4 +1,7 @@
 
+@if (creatingUser) {
+  <app-create-user-dialog [identity]="creatingUser" (closed)="creatingUser = null" (created)="loadIdentity()" />
+}
 <div class="detail-container">
 
   <div class="back-row">
@@ -12,9 +15,16 @@
         <div class="card-header">
           <i class="pi pi-id-card card-header-icon"></i>
           <span class="card-header-title">Identity Details</span>
+          @if (!identity.isGroup && !identity.isUser) {
+            <p-button label="Create User" ariaLabel="Create User" icon="pi pi-user-plus" (onClick)="creatingUser = identity" />
+          }
         </div>
       </ng-template>
       <div class="detail-fields">
+        <div class="detail-field">
+          <span class="field-label">User status</span>
+          <span class="field-value">{{ identity.isUser ? 'Thereabout user' : 'Not a user' }}</span>
+        </div>
         <div class="detail-field">
           <span class="field-label">Short Name</span>
           <span class="field-value">{{ identity.shortName }}</span>

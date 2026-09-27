@@ -39,6 +39,53 @@ paths:
           $ref: '../thereabout.openapi.yaml#/components/responses/400'
         500:
           $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  IdentityUser:
+    post:
+      summary: Make an existing person a user with one Cloudflare email.
+      tags: [identity]
+      operationId: createIdentityUser
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        200:
+          description: Created user, or the same existing mapping.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Identity'
+        400:
+          $ref: '../thereabout.openapi.yaml#/components/responses/400'
+        404:
+          $ref: '../thereabout.openapi.yaml#/components/responses/404'
+        409:
+          description: Email already assigned, or person already has a different email.
+  CurrentUser:
+    get:
+      summary: Resolve only the cryptographically verified Cloudflare login; never cached.
+      tags: [current-user]
+      operationId: getCurrentUser
+      responses:
+        200:
+          description: Resolution result. Non-resolved states contain no identity or display name.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUser'
   IdentityById:
     put:
       summary: Update an existing identity.
@@ -290,6 +337,25 @@ paths:
 
 components:
   schemas:
+    CreateUserRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          description: Trimmed and lowercased before email validation and storage.
+    CurrentUser:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [resolved, unlinked, missing_token, invalid_token, verification_unavailable, disabled]
+        identityId:
+          type: integer
+          format: int64
+        displayName:
+          type: string
     Identity:
       description: A person or contact identity.
       type: object
@@ -305,6 +371,10 @@ components:
           type: string
           description: A short name or alias for the identity
           example: "johndoe"
+        isUser:
+          type: boolean
+          readOnly: true
+          description: Managed only by Create User; generic edits preserve this flag.
         isGroup:
           type: boolean
           description: Whether this identity represents a group (e.g. a group chat)

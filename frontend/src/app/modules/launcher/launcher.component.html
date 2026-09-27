@@ -1,6 +1,12 @@
 <div class="launcher">
   <header class="welcome">
-    <h1>{{ greeting() }}, Theo<span class="greeting-dot">.</span></h1>
+    <h1>{{ greeting() }}@if (currentUser.displayName()) {, {{ currentUser.displayName() }}}<span class="greeting-dot">.</span></h1>
+    @if (currentUser.state().status === 'unlinked') {
+      <p role="status">No Thereabout user assigned.</p>
+    }
+    @if (currentUser.state().status === 'verification_unavailable') {
+      <p role="status">User verification is temporarily unavailable.</p>
+    }
     <p>Your day, one keystroke away.</p>
   </header>
 

@@ -1,3 +1,4 @@
+import {CreateUserDialogComponent} from './create-user-dialog/create-user-dialog.component';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {FormsModule} from '@angular/forms';
@@ -27,6 +28,7 @@ import {
 @Component({
     selector: 'app-identities',
     imports: [
+        CreateUserDialogComponent,
         FormsModule,
         RouterModule,
         ButtonModule,
@@ -50,8 +52,9 @@ import {
     styleUrl: './identities.component.scss'
 })
 export class IdentitiesComponent implements OnInit {
-  private readonly refresh = registerRefresh(() => { this.loadIdentities(); this.loadUnlinkedAppIdentities(); }, () => this.identityDialogVisible || this.linkDialogVisible);
+  private readonly refresh = registerRefresh(() => { this.loadIdentities(); this.loadUnlinkedAppIdentities(); }, () => this.identityDialogVisible || this.linkDialogVisible || !!this.creatingUser);
 
+    creatingUser: Identity | null = null;
     identities: Identity[] = [];
     unlinkedAppIdentities: IdentityInApplication[] = [];
     unlinkedGroupIdentities: IdentityInApplication[] = [];
@@ -203,6 +206,10 @@ export class IdentitiesComponent implements OnInit {
 
     private emptyIdentity(): Identity {
         return {id: 0, shortName: '', isGroup: false, relationship: '', identityInApplications: []};
+    }
+
+    cloudflareEmail(identity: Identity): string | undefined {
+        return identity.identityInApplications?.find(app => app.application === 'Cloudflare')?.identifier;
     }
 
     getAppIdentityCount(identity: Identity): number {

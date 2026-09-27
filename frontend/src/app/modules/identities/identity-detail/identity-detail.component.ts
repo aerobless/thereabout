@@ -1,3 +1,4 @@
+import {CreateUserDialogComponent} from '../create-user-dialog/create-user-dialog.component';
 import {registerRefresh} from '../../../shared/refresh/refresh-coordinator';
 import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {ActivatedRoute, RouterModule} from '@angular/router';
@@ -9,6 +10,7 @@ import {Identity, IdentityService} from '../../../../../generated/backend-api/th
 @Component({
     selector: 'app-identity-detail',
     imports: [
+        CreateUserDialogComponent,
         RouterModule,
         ButtonModule,
         CardModule,
@@ -19,8 +21,9 @@ import {Identity, IdentityService} from '../../../../../generated/backend-api/th
     styleUrl: './identity-detail.component.scss'
 })
 export class IdentityDetailComponent implements OnInit {
-  private readonly refresh = registerRefresh(() => this.loadIdentity());
+  private readonly refresh = registerRefresh(() => this.loadIdentity(), () => !!this.creatingUser);
 
+    creatingUser: Identity | null = null;
     identity: Identity | null = null;
 
     constructor(
@@ -30,7 +33,7 @@ export class IdentityDetailComponent implements OnInit {
 
     ngOnInit(): void { this.loadIdentity(); }
 
-    private loadIdentity() {
+    loadIdentity() {
         const id = Number(this.route.snapshot.paramMap.get('id'));
         this.identityService.getIdentities().pipe(this.refresh.track('identity')).subscribe({next: identities => {
             this.identity = identities.find(i => i.id === id) || null;

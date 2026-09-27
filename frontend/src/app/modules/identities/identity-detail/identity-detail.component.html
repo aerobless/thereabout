@@ -1,4 +1,11 @@
+<p-confirmdialog />
+@if (editing && identity) {
+  <app-identity-editor [identity]="identity" (closed)="editing = false" (saved)="loadIdentity()" (changed)="loadIdentity()" />
+}
 
+@if (creatingUser) {
+  <app-create-user-dialog [identity]="creatingUser" (closed)="creatingUser = null" (created)="loadIdentity()" />
+}
 <div class="detail-container">
 
   <div class="back-row">
@@ -7,24 +14,18 @@
   </div>
 
   @if (identity) {
-    @if (createUserVisible) {
-      <app-create-user-dialog [identity]="identity" (dismissed)="createUserVisible = false"
-        (created)="identity = $event; createUserVisible = false" />
-    }
     <p-card>
       <ng-template #header>
         <div class="card-header">
           <i class="pi pi-id-card card-header-icon"></i>
           <span class="card-header-title">Identity Details</span>
+
         </div>
       </ng-template>
       <div class="detail-fields">
         <div class="detail-field">
-          <span class="field-label">User</span>
-          <span class="field-value">{{ identity.isUser ? 'Yes' : 'No' }}</span>
-          @if (!identity.isGroup && !identity.isUser) {
-            <p-button label="Create User" icon="pi pi-user-plus" (onClick)="createUserVisible = true" />
-          }
+          <span class="field-label">User status</span>
+          <span class="field-value">{{ identity.isUser ? 'Thereabout user' : 'Not a user' }}</span>
         </div>
         <div class="detail-field">
           <span class="field-label">Short Name</span>
@@ -38,6 +39,21 @@
           <span class="field-label">Relationship</span>
           <span class="field-value">{{ identity.relationship || '--' }}</span>
         </div>
+      </div>
+    </p-card>
+
+    <p-card>
+      <ng-template #header><div class="card-header">
+        <i class="pi pi-cog card-header-icon" aria-hidden="true"></i>
+        <span class="card-header-title">Actions</span>
+      </div></ng-template>
+      <div class="identity-actions">
+        @if (!identity.isGroup && !identity.isUser) {
+          <p-button label="Create User" ariaLabel="Create User" icon="pi pi-user-plus" (onClick)="creatingUser = identity" />
+        }
+        <p-button label="Edit Identity" ariaLabel="Edit Identity" icon="pi pi-pencil" [outlined]="true" (onClick)="editing = true" />
+        <p-button label="Delete Identity" ariaLabel="Delete Identity" icon="pi pi-trash" severity="danger" [outlined]="true"
+                  [disabled]="!!identity.isUser" (onClick)="confirmDelete()" />
       </div>
     </p-card>
 

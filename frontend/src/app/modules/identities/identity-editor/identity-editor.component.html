@@ -1,0 +1,58 @@
+<!-- Identity Edit/Create Dialog -->
+<p-dialog
+  [header]="isNewIdentity ? 'New Identity' : 'Edit Identity'"
+  [visible]="true" (visibleChange)="close()" [closable]="!busy()" [closeOnEscape]="!busy()"
+  [modal]="true"
+  [style]="{width: '550px', maxWidth: 'calc(100vw - 2rem)'}">
+  <div class="dialog-form">
+    <p-floatlabel>
+      <input pInputText id="shortName" [(ngModel)]="editingIdentity.shortName" style="width: 100%" />
+      <label for="shortName">Short Name *</label>
+    </p-floatlabel>
+
+    <p-floatlabel>
+      <input pInputText id="relationship" [(ngModel)]="editingIdentity.relationship" style="width: 100%" />
+      <label for="relationship">Relationship</label>
+    </p-floatlabel>
+
+    <div style="margin-bottom: 10px; display: flex; align-items: flex-start; gap: 8px">
+      <p-checkbox [(ngModel)]="editingIdentity.isGroup" [disabled]="!!editingIdentity.isUser" [binary]="true" inputId="isGroup" label="Is a group"></p-checkbox>
+      <small style="flex: 1; color: var(--text-color-secondary); line-height: 1.4">
+        Use for group chats or other non-person identities.
+      </small>
+    </div>
+
+    @if (!isNewIdentity && editingIdentity.identityInApplications && editingIdentity.identityInApplications.length > 0) {
+      <div class="linked-app-identities">
+        <h4>Linked Application Identities</h4>
+        <p-table [value]="editingIdentity.identityInApplications" styleClass="p-datatable-sm">
+          <ng-template #header>
+            <tr>
+              <th>Application</th>
+              <th>Identifier</th>
+              <th style="text-align: center">Action</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-appIdentity>
+            <tr>
+              <td>{{ appIdentity.application }}</td>
+              <td>{{ appIdentity.identifier }}</td>
+              <td style="text-align: center">
+                <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger"
+                          ariaLabel="Unlink" [disabled]="busy() || appIdentity.application === 'Cloudflare'" pTooltip="Unlink" tooltipPosition="top"
+                          (onClick)="unlinkAppIdentity(appIdentity)"></p-button>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    }
+  </div>
+
+  @if (error()) { <p role="alert">{{ error() }}</p> }
+  <ng-template #footer>
+    <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="close()" [disabled]="busy()"></p-button>
+    <p-button label="Save" icon="pi pi-check" (onClick)="saveIdentity()"
+              [disabled]="!editingIdentity.shortName.trim() || busy()" [loading]="busy()"></p-button>
+  </ng-template>
+</p-dialog>

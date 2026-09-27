@@ -37,7 +37,7 @@ public class IdentityInApplicationService {
                         "Identity with id %d not found".formatted(identityId)));
 
         if (appIdentity.getApplication() == CommunicationApplication.CLOUDFLARE) {
-            throw new ThereaboutException(HttpStatusCode.valueOf(400), "Cloudflare user links cannot be changed here.");
+            throw new ThereaboutException(HttpStatusCode.valueOf(400), "Cloudflare identities are managed by Create User.");
         }
         appIdentity.setIdentity(identity);
         return identityInApplicationRepository.save(appIdentity);
@@ -50,7 +50,7 @@ public class IdentityInApplicationService {
                         "Application identity with id %d not found".formatted(appIdentityId)));
 
         if (appIdentity.getApplication() == CommunicationApplication.CLOUDFLARE) {
-            throw new ThereaboutException(HttpStatusCode.valueOf(400), "Cloudflare user links cannot be changed here.");
+            throw new ThereaboutException(HttpStatusCode.valueOf(400), "Cloudflare identities are managed by Create User.");
         }
         appIdentity.setIdentity(null);
         return identityInApplicationRepository.save(appIdentity);

@@ -1,4 +1,4 @@
-import { CurrentUserService } from '../../shared/users/current-user.service';
+import { CurrentUserService } from '../../shared/current-user/current-user.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DayviewComponent } from './dayview.component';
 import { provideHttpClient } from '@angular/common/http';
@@ -49,7 +49,7 @@ describe('DayviewComponent', () => {
             .compileComponents();
         fixture = TestBed.createComponent(DayviewComponent);
         component = fixture.componentInstance;
-        TestBed.inject(CurrentUserService).user.set({ status: 'AUTHENTICATED', identityId: 1 });
+        TestBed.inject(CurrentUserService).verifiedState.set({ status: 'resolved', identityId: 1 });
         component.selectedDate = new Date(2026, 8, 15);
     });
     it('should create', () => {
@@ -464,10 +464,10 @@ describe('DayviewComponent', () => {
         ]);
         expect(component.messages.sentMessageCount()).toBe(1);
         expect(component.messages.receivedMessageCount()).toBe(1);
-        users.user.set({status: 'AUTHENTICATED', identityId: 2});
+        users.verifiedState.set({status: 'resolved', identityId: 2});
         expect(component.messages.sentMessageCount()).toBe(2);
         expect(component.messages.receivedMessageCount()).toBe(0);
-        users.user.set({status: 'UNASSIGNED'});
+        users.verifiedState.set({status: 'unlinked'});
         expect(component.messages.identityId()).toBeNull();
         expect(component.messages.messages()).toHaveLength(3);
     });

@@ -5,13 +5,11 @@ import static com.sixtymeters.thereabout.finance.domain.FinanceRules.missing;
 import com.sixtymeters.thereabout.finance.service.AccountService;
 import com.sixtymeters.thereabout.shared.icons.WebsiteIconService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@ConditionalOnProperty(name = "thereabout.finances.enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class FinanceAccountIconController {
   private final AccountService accounts;

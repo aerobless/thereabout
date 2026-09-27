@@ -4,14 +4,14 @@ import { registerRefresh } from '../../shared/refresh/refresh-coordinator';
 import { localDateString } from '../../shared/dates/local-date';
 import { DayViewData } from './day-view-data';
 import { Message, MessageService as MessageApiService } from '../../../../generated/backend-api/thereabout';
-import { CurrentUserService } from '../../shared/users/current-user.service';
+import { CurrentUserService } from '../../shared/current-user/current-user.service';
 @Injectable()
 export class DayMessageData {
   private readonly day = inject(DayViewData);
   private readonly destroyRef = inject(DestroyRef);
   private readonly messageApiService = inject(MessageApiService);
   private readonly currentUser = inject(CurrentUserService);
-  readonly identityId = computed(() => { const user = this.currentUser.user(); return user?.status === 'AUTHENTICATED' ? user.identityId ?? null : null; });
+  readonly identityId = computed(() => { const user = this.currentUser.state(); return user.status === 'resolved' ? user.identityId ?? null : null; });
   private readonly refresh = registerRefresh(() => this.loadMessages(true));
   get selectedDate(): Date { return this.day.selectedDate(); }
   readonly dateToString = localDateString;

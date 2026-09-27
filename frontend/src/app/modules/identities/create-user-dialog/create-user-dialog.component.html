@@ -1,0 +1,15 @@
+<p-dialog header="Create User" [visible]="true" (visibleChange)="close()" [modal]="true"
+          [closable]="!busy()" [closeOnEscape]="!busy()" [style]="{width: '450px', maxWidth: 'calc(100vw - 2rem)'}">
+  <form id="create-user-form" class="dialog-form" (ngSubmit)="create()" novalidate>
+    <p>Create a Thereabout user for <strong>{{ identity().shortName }}</strong>.</p>
+    <label for="cloudflare-email">Cloudflare email *</label>
+    <input pInputText id="cloudflare-email" name="email" type="email" autocomplete="email" required
+           [(ngModel)]="email" [disabled]="busy()" [attr.aria-invalid]="!!error()"
+           [attr.aria-describedby]="error() ? 'cloudflare-email-error' : null" />
+    @if (error()) { <small id="cloudflare-email-error" class="field-error" role="alert">{{ error() }}</small> }
+  </form>
+  <ng-template #footer>
+    <p-button label="Cancel" [text]="true" [disabled]="busy()" (onClick)="close()" />
+    <p-button label="Create User" [loading]="busy()" [disabled]="busy()" (onClick)="create()" />
+  </ng-template>
+</p-dialog>

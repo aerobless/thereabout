@@ -18,16 +18,16 @@ public interface IdentityMapper {
     IdentityMapper INSTANCE = Mappers.getMapper(IdentityMapper.class);
 
     @Mapping(target = "identityInApplications", source = "identityInApplications")
-    @Mapping(source = "user", target = "isUser")
     @Mapping(source = "group", target = "isGroup")
+    @Mapping(source = "user", target = "isUser")
     GenIdentity mapToGenIdentity(IdentityEntity entity);
 
-    @Mapping(target = "isUser", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "identityInApplications", source = "identityInApplications")
     @Mapping(source = "isGroup", target = "isGroup")
+    @Mapping(target = "isUser", ignore = true)
     IdentityEntity mapToIdentityEntity(GenIdentity genIdentity);
 
     @Mapping(source = "application", target = "application", qualifiedByName = "enumToDisplayName")

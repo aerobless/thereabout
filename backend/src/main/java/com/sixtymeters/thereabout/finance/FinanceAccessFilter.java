@@ -20,19 +20,22 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 @Order(-200)
 public class FinanceAccessFilter extends OncePerRequestFilter {
-  @Value("${thereabout.finances.enabled:false}")
-  private boolean enabled;
-
   @Value("${thereabout.finances.access-mode:local}")
   private String accessMode;
 
   @Value("${thereabout.finances.public-origin:}")
   private String publicOrigin;
 
+  @Value("${thereabout.finances.local-ui-port:4200}")
+  private int localUiPort = 4200;
+
+  @Value("${server.port:9050}")
+  private int serverPort = 9050;
+
   private final ObjectProvider<JwtDecoder> accessTokens;
   private final FinanceMcpKeyService mcpKeys;
 
-  public FinanceAccessFilter(ObjectProvider<JwtDecoder> accessTokens, FinanceMcpKeyService mcpKeys) {
+  public FinanceAccessFilter(@org.springframework.beans.factory.annotation.Qualifier("financeAccessTokenDecoder") ObjectProvider<JwtDecoder> accessTokens, FinanceMcpKeyService mcpKeys) {
     this.accessTokens = accessTokens;
     this.mcpKeys = mcpKeys;
   }
@@ -49,10 +52,6 @@ public class FinanceAccessFilter extends OncePerRequestFilter {
     String path = request.getRequestURI();
     if (!path.startsWith("/api/finances") && !path.startsWith("/mcp/finances")) {
       chain.doFilter(request, response);
-      return;
-    }
-    if (!enabled) {
-      response.sendError(404);
       return;
     }
     boolean local = "local".equals(accessMode);
@@ -75,7 +74,7 @@ public class FinanceAccessFilter extends OncePerRequestFilter {
         boolean allowed =
             local
                 ? loopback(uri.getHost())
-                    && Set.of(4200, 9050).contains(uri.getPort())
+                    && (uri.getPort() == localUiPort || uri.getPort() == serverPort)
                     && "http".equals(uri.getScheme())
                 : !publicOrigin.isBlank() && publicOrigin.equals(origin);
         if (!allowed) {

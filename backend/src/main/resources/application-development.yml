@@ -1,3 +1,6 @@
+server:
+  address: 127.0.0.1
+
 spring:
   config:
     import: optional:file:backend/.env[.properties]
@@ -5,10 +8,10 @@ spring:
     url: jdbc:mariadb://localhost:3306/thereabout
 
 thereabout:
-  users:
-    access-mode: local
-  import:
-    import-folder: /Users/thwi/git/thereabout/private-test-data
+  apiKeys:
+    googleMaps: ${GOOGLE_MAPS_API_KEY:LOCAL_DEVELOPMENT}
+  calendar:
+    worker-enabled: false
   telegram:
     tdlib:
       database-directory: data/telegram-tdlib

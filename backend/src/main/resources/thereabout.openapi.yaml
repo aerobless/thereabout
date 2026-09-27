@@ -138,9 +138,9 @@ paths:
 
   # Communication
   /backend/api/v1/current-user:
-    $ref: "openapi/users.yaml#/paths/CurrentUser"
+    $ref: './openapi/communication.yaml#/paths/CurrentUser'
   /backend/api/v1/identity/{id}/user:
-    $ref: "openapi/users.yaml#/paths/CreateUser"
+    $ref: './openapi/communication.yaml#/paths/IdentityUser'
   /backend/api/v1/identity:
     $ref: 'openapi/communication.yaml#/paths/Identity'
   /backend/api/v1/identity/{id}:

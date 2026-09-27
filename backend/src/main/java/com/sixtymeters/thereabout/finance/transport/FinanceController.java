@@ -7,12 +7,10 @@ import com.sixtymeters.thereabout.finance.service.*;
 import com.sixtymeters.thereabout.generated.model.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/finances")
-@ConditionalOnProperty(name = "thereabout.finances.enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class FinanceController {
   private final FinanceReadRepository reads;

@@ -168,7 +168,7 @@ File imports run one at a time. Configuration reports success and failure separa
 - **OpenAPI definition:** [thereabout.openapi.yaml](backend/src/main/resources/thereabout.openapi.yaml)
 - **Stack:** Angular 22, PrimeNG, Chart.js, Google Maps and deck.gl; Spring Boot 4, Java 25 and MariaDB.
 - **Frontend tooling:** Node.js 24. From `frontend/`, run `npm ci`, `npm run openapi:generate`, then `npm start`. The development server runs on port 4200 and proxies backend requests to port 9050.
-- **Backend tooling:** Maven with Java 25. Run Maven from `backend/`; there is no root Maven reactor. The `development` profile uses local MariaDB. Override its machine-specific import-folder setting with a writable local directory before using imports.
+- **Backend tooling:** Maven with Java 25. Run Maven from `backend/`; there is no root Maven reactor. Start the complete backend with `mvn spring-boot:run -Dspring-boot.run.profiles=development`. This profile uses local MariaDB, binds to loopback, and provides a Google Maps placeholder when no key is set. Finance needs no enable flag or separate profile. Calendar background synchronization is off locally; launcher icons load normally.
 
 Run checks with a MariaDB instance available and database credentials configured in your environment:
 
@@ -189,3 +189,11 @@ npm run build
 ```
 
 The backend imports more health metric types than the dashboard currently visualises. The API schema is the source of truth for supported payloads; the feature list above describes the implemented UI.
+
+### Startup configuration
+
+Finance is always available. Cloudflare user recognition automatically uses configured issuer/audience values (falling back to the finance Access settings); partial or invalid settings fail startup. Ordinary local development needs no Cloudflare credentials, and the frontend supports local impersonation. Production still requires the finance Cloudflare access mode, issuer, audience and public origin; see [production access](docs/finances-production.md).
+
+Only two optional background-task switches remain: `thereabout.calendar.worker-enabled` and `thereabout.launcher.fetch-icons` (both default to `true`). The development profile disables the calendar worker to avoid synchronizing external calendars during local work; explicitly enable it when testing real synchronization. The test profile disables both tasks. Ports, database connections and integration credentials remain configuration, rather than feature switches.
+
+The obsolete `thereabout.finances.enabled`, `thereabout.users.enabled`, `finance-local` profile and unused `thereabout.import.import-folder` have been removed. Remove the old properties from deployment configuration; they no longer control functionality. Replace `development,finance-local` with `development` in local start commands.

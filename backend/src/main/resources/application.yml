@@ -30,8 +30,6 @@ spring:
 thereabout:
   apiKeys:
     googleMaps: ${GOOGLE_MAPS_API_KEY}
-  import:
-    import-folder: /data
   config:
     routing:
       frontend-path: /frontend/
@@ -39,7 +37,7 @@ thereabout:
     tdlib:
       api-id: ${TELEGRAM_API_ID:0}
       api-hash: ${TELEGRAM_API_HASH:}
-      # Same root as import-folder so Docker volumes keep the session without extra env keys.
+      # Persistent session storage inside the application data volume.
       database-directory: /data/telegram-tdlib
       history-batch-size: 100
       # Delay in ms between GetChatHistory batches during resync (default 800). Increase if you hit rate limits.

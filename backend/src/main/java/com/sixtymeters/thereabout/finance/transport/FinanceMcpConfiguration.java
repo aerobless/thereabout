@@ -12,7 +12,6 @@ import jakarta.validation.Validator;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.*;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -20,7 +19,6 @@ import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.*;
 
 @Configuration
-@ConditionalOnProperty(name = "thereabout.finances.enabled", havingValue = "true")
 public class FinanceMcpConfiguration {
   @Bean
   public HttpServletStreamableServerTransportProvider financeTransport() {

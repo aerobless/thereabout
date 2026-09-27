@@ -34,10 +34,10 @@ public class FinanceCloudflareAccessConfiguration {
             && originUri.getUserInfo() == null
             && originUri.getPath().isEmpty(),
         "Finance public origin must be an HTTPS origin without a path");
-    return com.sixtymeters.thereabout.shared.access.CloudflareTokens.decoder(issuer, audience);
+    return com.sixtymeters.thereabout.access.CloudflareAccessTokens.decoder(issuer, audience);
   }
 
   static OAuth2TokenValidator<Jwt> validators(String issuer, String audience) {
-    return com.sixtymeters.thereabout.shared.access.CloudflareTokens.validators(issuer, audience);
+    return com.sixtymeters.thereabout.access.CloudflareAccessTokens.validators(issuer, audience);
   }
 }

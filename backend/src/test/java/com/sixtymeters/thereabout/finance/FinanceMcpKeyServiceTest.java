@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest(properties = {"thereabout.calendar.worker-enabled=false", "thereabout.launcher.fetch-icons=false"})
+@SpringBootTest
 @ActiveProfiles("test")
 class FinanceMcpKeyServiceTest {
   @Autowired ConfigurationRepository configuration;

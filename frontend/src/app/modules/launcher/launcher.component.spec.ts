@@ -1,5 +1,5 @@
-import {signal, computed} from '@angular/core';
-import {CurrentUserService} from '../../shared/users/current-user.service';
+import {signal} from '@angular/core';
+import {CurrentUserService} from '../../shared/current-user/current-user.service';
 import {TestBed,ComponentFixture} from '@angular/core/testing';
 import {provideRouter} from '@angular/router';
 import {of,Subject,throwError} from 'rxjs';
@@ -13,33 +13,32 @@ const collection:LauncherCollection={groups:[{id:1,section:'Example',name:'Tools
 describe('LauncherComponent',()=> {
   let fixture:ComponentFixture<LauncherComponent>;
   let api:any,health:any,calendar:any;
-  const current = signal<{status: string; displayName?: string} | null>(null);
-  const currentUser = {displayName: computed(() => current()?.status === 'AUTHENTICATED' ? current()?.displayName ?? '' : ''),
-    notice: computed(() => current()?.status === 'UNASSIGNED' ? 'No Thereabout user assigned' : '')};
+  const currentUser = {state: signal<any>({status: 'loading'}), displayName: signal<string | undefined>(undefined)};
   const root=()=>fixture.nativeElement as HTMLElement;
   const input=()=>root().querySelector<HTMLInputElement>('#launcher-search')!;
   beforeEach(async()=> {
-    current.set(null);
+    currentUser.state.set({status: 'loading'}); currentUser.displayName.set(undefined);
     Element.prototype.scrollIntoView=vi.fn();
     api={getLauncher:vi.fn(()=>of(collection)),updateLauncherShortcut:vi.fn(()=>of(collection)),createLauncherShortcut:vi.fn(()=>of(collection)),importLauncher:vi.fn(()=>of(collection)),reorderLauncherShortcuts:vi.fn(()=>of(collection))};
     health={getHealthDataByDateRange:vi.fn(()=>of({metrics:{}}))};
     calendar={getUpcomingCalendarEvent:vi.fn(()=>of([]))};
-    await TestBed.configureTestingModule({imports:[LauncherComponent],providers:[provideRouter([]),{provide:CurrentUserService,useValue:currentUser},{provide:LauncherService,useValue:api},{provide:HealthService,useValue:health},{provide:CalendarService,useValue:calendar}]}).compileComponents();
+    await TestBed.configureTestingModule({imports:[LauncherComponent],providers:[{provide:CurrentUserService,useValue:currentUser},provideRouter([]),{provide:LauncherService,useValue:api},{provide:HealthService,useValue:health},{provide:CalendarService,useValue:calendar}]}).compileComponents();
     fixture=TestBed.createComponent(LauncherComponent);fixture.detectChanges();
   });
   afterEach(()=>fixture.destroy());
   function key(target:HTMLElement,key:string,options:KeyboardEventInit={}) {
     const event=new KeyboardEvent('keydown',{key,bubbles:true,cancelable:true,...options});target.dispatchEvent(event);fixture.detectChanges();return event;
   }
-  it('greets the resolved person and never falls back to Theo while loading or unassigned', () => {
-    const heading = () => root().querySelector('h1')!.textContent;
+  it('uses neutral loading and unknown greetings, and distinct verified names', () => {
+    const heading = () => root().querySelector('h1')!.textContent!;
     expect(heading()).not.toContain('Theo');
-    current.set({status: 'AUTHENTICATED', displayName: 'Heidi'}); fixture.detectChanges();
-    expect(heading()).toContain('Heidi'); expect(heading()).not.toContain('Theo');
-    current.set({status: 'AUTHENTICATED', displayName: 'Theo'}); fixture.detectChanges();
-    expect(heading()).toContain('Theo'); expect(heading()).not.toContain('Heidi');
-    current.set({status: 'UNASSIGNED'}); fixture.detectChanges();
-    expect(heading()).not.toContain('Theo'); expect(root().textContent).toContain('No Thereabout user assigned');
+    expect(heading()).not.toContain(',');
+    currentUser.state.set({status: 'unlinked'}); fixture.detectChanges();
+    expect(root().textContent).toContain('No Thereabout user assigned.');
+    currentUser.state.set({status: 'resolved'}); currentUser.displayName.set('Theo'); fixture.detectChanges();
+    expect(heading()).toContain(', Theo.');
+    currentUser.displayName.set('Heidi'); fixture.detectChanges();
+    expect(heading()).toContain(', Heidi.'); expect(heading()).not.toContain('Theo');
   });
   it('captures typing outside the search and opens the highlighted result with Enter',()=> {
     const page=fixture.componentInstance,launch=vi.spyOn(page,'launch').mockImplementation(()=>{});

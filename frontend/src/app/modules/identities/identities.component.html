@@ -1,9 +1,7 @@
 <p-toast></p-toast>
-@if (createUserIdentity) {
-  <app-create-user-dialog [identity]="createUserIdentity" (dismissed)="createUserIdentity = null"
-    (created)="createUserIdentity = null; loadIdentities()" />
+@if (identityDialogVisible) {
+  <app-identity-editor (closed)="identityDialogVisible = false" (saved)="loadIdentities()" />
 }
-<p-confirmdialog></p-confirmdialog>
 
 <div class="identities-container">
 
@@ -25,53 +23,42 @@
       [rowsPerPageOptions]="[15, 25, 50]"
       sortField="shortName"
       [sortOrder]="1"
-      styleClass="p-datatable-striped"
+      class="identity-table" styleClass="p-datatable-striped"
       [globalFilterFields]="['shortName', 'relationship']"
-      [tableStyle]="{'min-width': '60rem'}">
+      [tableStyle]="{'min-width': '40rem'}">
       <ng-template #header>
         <tr>
           <th pSortableColumn="shortName">Short Name <p-sorticon field="shortName"/></th>
           <th pSortableColumn="relationship">Relationship <p-sorticon field="relationship"/></th>
           <th style="text-align: center">Group</th>
           <th style="text-align: center">App Identities</th>
-          <th style="text-align: center">Actions</th>
         </tr>
       </ng-template>
       <ng-template #body let-identity>
         <tr>
           <td><a [routerLink]="['/identities', identity.id]">{{ identity.shortName }}</a>
             @if (identity.isUser) { <p-tag value="User" severity="success" /> }
-          </td>
-          <td>{{ identity.relationship }}</td>
-          <td style="text-align: center">
+            @if (cloudflareEmail(identity); as email) { <small class="cloudflare-identity">Cloudflare: {{ email }}</small> }</td>
+          <td data-label="Relationship">{{ identity.relationship || '—' }}</td>
+          <td data-label="Group" style="text-align: center">
             @if (identity.isGroup) {
               <p-tag value="Group" severity="info"></p-tag>
             } @else {
               <span>—</span>
             }
           </td>
-          <td style="text-align: center">
+          <td data-label="App identities" style="text-align: center">
             <p-tag [value]="'' + getAppIdentityCount(identity)"
                    [severity]="getAppIdentityCount(identity) > 0 ? 'info' : 'secondary'"
                    pTooltip="Linked application identities"
                    tooltipPosition="top"></p-tag>
           </td>
-          <td style="text-align: center">
-            @if (!identity.isGroup && !identity.isUser) {
-              <p-button label="Create User" icon="pi pi-user-plus" [text]="true" (onClick)="createUserIdentity = identity" />
-            }
-            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true"
-                      pTooltip="Edit" tooltipPosition="top"
-                      (onClick)="showEditIdentityDialog(identity)"></p-button>
-            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
-                      pTooltip="Delete" tooltipPosition="top"
-                      (onClick)="confirmDeleteIdentity(identity)"></p-button>
-          </td>
+
         </tr>
       </ng-template>
       <ng-template #emptymessage>
         <tr>
-          <td colspan="5" style="text-align: center">No identities found.</td>
+          <td colspan="4" style="text-align: center">No identities found.</td>
         </tr>
       </ng-template>
     </p-table>
@@ -183,66 +170,6 @@
     </p-table>
   </p-card>
 </div>
-
-<!-- Identity Edit/Create Dialog -->
-<p-dialog
-  [header]="isNewIdentity ? 'New Identity' : 'Edit Identity'"
-  [(visible)]="identityDialogVisible"
-  [modal]="true"
-  [style]="{width: '550px'}">
-  <div class="dialog-form">
-    <p-floatlabel>
-      <input pInputText id="shortName" [(ngModel)]="editingIdentity.shortName" style="width: 100%" />
-      <label for="shortName">Short Name *</label>
-    </p-floatlabel>
-
-    <p-floatlabel>
-      <input pInputText id="relationship" [(ngModel)]="editingIdentity.relationship" style="width: 100%" />
-      <label for="relationship">Relationship</label>
-    </p-floatlabel>
-
-    <div style="margin-bottom: 10px; display: flex; align-items: flex-start; gap: 8px">
-      <p-checkbox [disabled]="!!editingIdentity.isUser" [(ngModel)]="editingIdentity.isGroup" [binary]="true" inputId="isGroup" label="Is a group"></p-checkbox>
-      <small style="flex: 1; color: var(--text-color-secondary); line-height: 1.4">
-        Use for group chats or other non-person identities.
-      </small>
-    </div>
-
-    @if (!isNewIdentity && editingIdentity.identityInApplications && editingIdentity.identityInApplications.length > 0) {
-      <div class="linked-app-identities">
-        <h4>Linked Application Identities</h4>
-        <p-table [value]="editingIdentity.identityInApplications" styleClass="p-datatable-sm">
-          <ng-template #header>
-            <tr>
-              <th>Application</th>
-              <th>Identifier</th>
-              <th style="text-align: center">Action</th>
-            </tr>
-          </ng-template>
-          <ng-template #body let-appIdentity>
-            <tr>
-              <td>{{ appIdentity.application }}</td>
-              <td>{{ appIdentity.identifier }}</td>
-              <td style="text-align: center">
-                @if (appIdentity.application !== 'Cloudflare') {
-                <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger"
-                          pTooltip="Unlink" tooltipPosition="top"
-                          (onClick)="unlinkAppIdentity(appIdentity)"></p-button>
-                }
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </div>
-    }
-  </div>
-
-  <ng-template #footer>
-    <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="identityDialogVisible = false"></p-button>
-    <p-button label="Save" icon="pi pi-check" (onClick)="saveIdentity()"
-              [disabled]="!editingIdentity.shortName"></p-button>
-  </ng-template>
-</p-dialog>
 
 <!-- Link Application Identity Dialog -->
 <p-dialog

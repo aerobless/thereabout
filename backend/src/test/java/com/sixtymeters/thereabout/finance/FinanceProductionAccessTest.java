@@ -28,7 +28,6 @@ class FinanceProductionAccessTest {
     when(keys.matchesAuthorization("Bearer a-long-test-mcp-key-with-at-least-32-characters"))
         .thenReturn(true);
     var filter = new FinanceAccessFilter(provider, keys);
-    ReflectionTestUtils.setField(filter, "enabled", true);
     ReflectionTestUtils.setField(filter, "accessMode", "cloudflare");
     ReflectionTestUtils.setField(filter, "publicOrigin", ORIGIN);
     return filter;
@@ -84,6 +83,25 @@ class FinanceProductionAccessTest {
     var accepted = call(path, "valid-token", ORIGIN, null);
     assertThat(accepted.getContentAsString()).isEqualTo("passed");
     assertThat(accepted.getHeader("Cache-Control")).isEqualTo("no-store");
+  }
+
+  @Test
+  void localPreviewAcceptsOnlyConfiguredLoopbackOrigins() throws Exception {
+    var filter = filter();
+    ReflectionTestUtils.setField(filter, "accessMode", "local");
+    ReflectionTestUtils.setField(filter, "localUiPort", 4201);
+    ReflectionTestUtils.setField(filter, "serverPort", 9051);
+    for (String origin : List.of("http://127.0.0.1:4201", "http://localhost:9051",
+        "http://127.0.0.1:4202", "http://evil.test:4201", "https://localhost:4201")) {
+      var request = new MockHttpServletRequest("POST", "/api/finances/accounts");
+      request.setRemoteAddr("127.0.0.1");
+      request.setServerName("localhost");
+      request.addHeader("Origin", origin);
+      var response = new MockHttpServletResponse();
+      filter.doFilter(request, response, (req, res) -> res.getWriter().write("passed"));
+      assertThat(response.getStatus()).isEqualTo(
+          origin.equals("http://127.0.0.1:4201") || origin.equals("http://localhost:9051") ? 200 : 403);
+    }
   }
 
   @Test

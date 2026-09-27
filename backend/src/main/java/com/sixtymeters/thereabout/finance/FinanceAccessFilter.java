@@ -20,9 +20,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 @Order(-200)
 public class FinanceAccessFilter extends OncePerRequestFilter {
-  @Value("${thereabout.finances.enabled:false}")
-  private boolean enabled;
-
   @Value("${thereabout.finances.access-mode:local}")
   private String accessMode;
 
@@ -55,10 +52,6 @@ public class FinanceAccessFilter extends OncePerRequestFilter {
     String path = request.getRequestURI();
     if (!path.startsWith("/api/finances") && !path.startsWith("/mcp/finances")) {
       chain.doFilter(request, response);
-      return;
-    }
-    if (!enabled) {
-      response.sendError(404);
       return;
     }
     boolean local = "local".equals(accessMode);

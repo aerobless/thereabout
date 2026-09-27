@@ -14,10 +14,12 @@ spring:
     clean-disabled: false
 
 thereabout:
+  calendar:
+    worker-enabled: false
+  launcher:
+    fetch-icons: false
   apiKeys:
     googleMaps: NO_KEY_NEEDED_FOR_TESTS
-  import:
-    import-folder: /tmp
   telegram:
     tdlib:
       api-id: 0

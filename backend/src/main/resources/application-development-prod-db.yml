@@ -3,8 +3,6 @@ spring:
     url: jdbc:mariadb://192.168.178.160:3306/thereabout
 
 thereabout:
-  import:
-    import-folder: /Users/thwi/git/thereabout/private-test-data
   telegram:
     tdlib:
       database-directory: data/telegram-tdlib

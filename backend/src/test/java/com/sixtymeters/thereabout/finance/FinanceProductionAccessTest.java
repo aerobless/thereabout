@@ -28,7 +28,6 @@ class FinanceProductionAccessTest {
     when(keys.matchesAuthorization("Bearer a-long-test-mcp-key-with-at-least-32-characters"))
         .thenReturn(true);
     var filter = new FinanceAccessFilter(provider, keys);
-    ReflectionTestUtils.setField(filter, "enabled", true);
     ReflectionTestUtils.setField(filter, "accessMode", "cloudflare");
     ReflectionTestUtils.setField(filter, "publicOrigin", ORIGIN);
     return filter;

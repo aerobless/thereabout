@@ -1,7 +1,0 @@
-server:
-  address: 127.0.0.1
-thereabout:
-  finances:
-    enabled: true
-  calendar:
-    worker-enabled: false

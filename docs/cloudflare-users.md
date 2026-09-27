@@ -8,17 +8,16 @@ This is a visible end-to-end identity slice. It adds no role model, global appli
 
 ## Minimum configuration
 
-Recognition defaults to disabled. Enable it independently of finance:
+Recognition starts automatically when Cloudflare issuer/audience settings are present. Configure a separate Access application only if needed:
 
 ```properties
-thereabout.users.enabled=true
 thereabout.users.access-issuer=https://your-team.cloudflareaccess.com
 thereabout.users.access-audience=YOUR_ACCESS_APPLICATION_AUDIENCE
 ```
 
-Use the Access application audience for the browser application and backend path, not a service-token identifier. Set these through the normal Spring environment (`THEREABOUT_USERS_ENABLED`, `THEREABOUT_USERS_ACCESS_ISSUER`, `THEREABOUT_USERS_ACCESS_AUDIENCE`) or the existing optional `/data/finances.properties` import. No new file import is required. Do not put real mappings, credentials, JWTs, or private deployment configuration in source control.
+Use the Access application audience for the browser application and backend path, not a service-token identifier. Set these through the normal Spring environment (`THEREABOUT_USERS_ACCESS_ISSUER`, `THEREABOUT_USERS_ACCESS_AUDIENCE`) or the existing optional `/data/finances.properties` import. No new file import is required. Do not put real mappings, credentials, JWTs, or private deployment configuration in source control.
 
-For compatibility, when the user issuer/audience properties are absent they fall back individually to `thereabout.finances.access-issuer` and `thereabout.finances.access-audience`. This only works if that existing Access application also covers the user endpoint. `thereabout.users.enabled=true` is still required. Finance enabled/access-mode/public-origin settings retain their existing meaning; finance and MCP protections remain in place. The two JWT decoder beans have explicit qualifiers, so simultaneous enablement does not create ambiguous injection. Enabling recognition without a usable issuer/audience fails startup rather than assigning a fallback user.
+For compatibility, when the user issuer/audience properties are absent they fall back individually to `thereabout.finances.access-issuer` and `thereabout.finances.access-audience`. This only works if that existing Access application also covers the user endpoint. No enable flag is required. Finance access-mode/public-origin settings retain their existing meaning; finance and MCP protections remain in place. The two JWT decoder beans have explicit qualifiers, so simultaneous enablement does not create ambiguous injection. If any issuer/audience setting is supplied, incomplete or invalid settings fail startup rather than assigning a fallback user. With no Access settings, local startup needs no Cloudflare credentials.
 
 Only `Cf-Access-Jwt-Assertion` is used. Signature, issuer, audience, expiration (required), and not-before are validated before reading email. Plain email headers and client-supplied person IDs do not authenticate anyone. Shared verification uses Nimbus and the Cloudflare signing-key endpoint, following [Cloudflare's JWT validation documentation](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/). Tokens are neither logged nor returned by this flow.
 
@@ -31,13 +30,13 @@ Only `Cf-Access-Jwt-Assertion` is used. Signature, issuer, audience, expiration 
 | `missing_token` | Recognition enabled, assertion absent. |
 | `invalid_token` | Invalid assertion, claims, signature, lifetime, or email. |
 | `verification_unavailable` | Technical JWT verification/key retrieval failure. |
-| `disabled` | Recognition not configured/enabled. |
+| `disabled` | No Cloudflare recognition settings configured. |
 
 Non-resolved states never contain a resolved identity or name. The frontend uses a generic time-based greeting while loading, clears any previous identity on reload, and displays **No Thereabout user assigned.** for `unlinked`. Technical/HTTP failures show a neutral verification-unavailable state. The in-memory user is cleared when hiding/leaving the page and refreshed when returning, including browser back/forward-cache restoration. Nothing is stored in local/session storage. Production has no impersonation or default Theo fallback. Local development has the explicit preview described below.
 
 ## Local development and verification
 
-Keep development servers bound to loopback. Leave recognition disabled for ordinary local UI work; the greeting stays generic and initial mapping remains possible.
+Keep development servers bound to loopback. Leave Cloudflare settings unset for ordinary local UI work; the greeting stays generic and initial mapping remains possible.
 
 In **Configuration → Local impersonation**, select an existing person with `isUser=true` and choose **Start impersonation**. A fixed banner at the top centre shows the selected name; its **×** button ends simulation and re-fetches the verified current user. Selection survives SPA navigation and tab visibility changes, but a full reload ends it. It is kept only in memory in the current tab.
 
@@ -108,4 +107,4 @@ The UI follow-up passed 193 frontend tests and the Node 24 production build. Bac
 
 Desktop (1440px) and narrow (390px) checks confirmed the separate Actions card, no per-row person actions, identity creation/edit/deletion against the disposable database, user selection, the persistent top-centre banner, SPA greeting changes, and restoring the verified state through the close button. The narrow configuration page and banner have no horizontal overflow. The review preview is left running on port 4201 with the isolated backend on 9051 and disposable MariaDB on 3337; normal local services on 4200/9050/3306 are unchanged.
 
-The review backend is now started with the `finance-local` profile so the complete finance API is available as well. For previews on alternate ports, set `thereabout.finances.local-ui-port=4201` and `server.port=9051`; the local finance origin check permits exactly that loopback UI port and the actual backend port. Defaults remain 4200/9050, and production Cloudflare origin rules are unchanged. Keep the isolated datasource overrides when restarting this preview.
+The review backend uses the `development` profile. The complete finance API is always available; no module enable flags are needed. For previews on alternate ports, set `thereabout.finances.local-ui-port=4201` and `server.port=9051`; the local finance origin check permits exactly that loopback UI port and the actual backend port. Defaults remain 4200/9050, and production Cloudflare origin rules are unchanged. Keep the isolated datasource overrides when restarting this preview.

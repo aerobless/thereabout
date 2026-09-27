@@ -15,19 +15,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.server.ResponseStatusException;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@TestPropertySource(
-    properties = {
-      "thereabout.finances.enabled=true",
-      "thereabout.calendar.worker-enabled=false",
-      "thereabout.launcher.fetch-icons=false"
-    })
 class FinanceWriteBoundaryTest {
   @Autowired TransactionService transactions;
   @Autowired CategoryService categories;

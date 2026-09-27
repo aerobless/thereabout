@@ -15,7 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest(properties = {"thereabout.calendar.worker-enabled=false", "thereabout.launcher.fetch-icons=false"})
+@SpringBootTest
 @ActiveProfiles("test")
 @Transactional
 class WebsiteIconServiceTest {

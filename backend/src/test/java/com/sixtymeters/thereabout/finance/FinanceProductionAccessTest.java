@@ -87,6 +87,25 @@ class FinanceProductionAccessTest {
   }
 
   @Test
+  void localPreviewAcceptsOnlyConfiguredLoopbackOrigins() throws Exception {
+    var filter = filter();
+    ReflectionTestUtils.setField(filter, "accessMode", "local");
+    ReflectionTestUtils.setField(filter, "localUiPort", 4201);
+    ReflectionTestUtils.setField(filter, "serverPort", 9051);
+    for (String origin : List.of("http://127.0.0.1:4201", "http://localhost:9051",
+        "http://127.0.0.1:4202", "http://evil.test:4201", "https://localhost:4201")) {
+      var request = new MockHttpServletRequest("POST", "/api/finances/accounts");
+      request.setRemoteAddr("127.0.0.1");
+      request.setServerName("localhost");
+      request.addHeader("Origin", origin);
+      var response = new MockHttpServletResponse();
+      filter.doFilter(request, response, (req, res) -> res.getWriter().write("passed"));
+      assertThat(response.getStatus()).isEqualTo(
+          origin.equals("http://127.0.0.1:4201") || origin.equals("http://localhost:9051") ? 200 : 403);
+    }
+  }
+
+  @Test
   void validatesApplicationIssuerAndExpiry() {
     var validator = FinanceCloudflareAccessConfiguration.validators(ISSUER, "application");
     assertThat(

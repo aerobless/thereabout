@@ -1,5 +1,5 @@
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
-import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import {inject, ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 
 import {PanelModule} from "primeng/panel";
 import {CountryStatistic, StatisticsService} from "../../../../generated/backend-api/thereabout";
@@ -19,6 +19,7 @@ import {getFlagEmoji} from "../../util/country-util";
     styleUrl: './statistics.component.scss'
 })
 export class StatisticsComponent implements OnInit {
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly refresh = registerRefresh(() => this.loadStatistics());
 
   visitedCountries: Array<CountryStatistic> = [];
@@ -31,6 +32,7 @@ export class StatisticsComponent implements OnInit {
   private loadStatistics() {
     this.statisticsService.getStatistics().pipe(this.refresh.track('statistics')).subscribe({next: statistics => {
       this.visitedCountries = statistics.visitedCountries.sort((a, b) => b.numberOfDaysSpent - a.numberOfDaysSpent);
+      this.changeDetector.markForCheck();
     }, error: () => { /* The refresh coordinator reports failed reads. */ }});
   }
 

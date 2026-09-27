@@ -1,6 +1,6 @@
 import {Component, Input, Output, EventEmitter, OnChanges} from '@angular/core';
 import {DatePipe, TitleCasePipe} from '@angular/common';
-import {DialogModule} from 'primeng/dialog';
+import { AppModalComponent } from '../../../shared/modal/app-modal.component';
 import {ChartModule} from 'primeng/chart';
 import {ChartData, ChartOptions} from 'chart.js';
 import {DailyMetricValue} from '../../../../../generated/backend-api/thereabout';
@@ -8,7 +8,7 @@ import {average, duration, durationHistory, DurationDay, stages} from './duratio
 
 @Component({
   selector: 'app-duration-card',
-  imports: [DatePipe, TitleCasePipe, DialogModule, ChartModule],
+  imports: [DatePipe, TitleCasePipe, AppModalComponent, ChartModule],
   templateUrl: './duration-card.component.html',
   styleUrl: './duration-card.component.scss'
 })

@@ -1,21 +1,22 @@
 import {registerRefresh} from '../../../shared/refresh/refresh-coordinator';
-import {ChangeDetectionStrategy, Component, DestroyRef, Input, OnChanges, inject} from '@angular/core';
+import {ChangeDetectorRef, ChangeDetectionStrategy, Component, DestroyRef, Input, OnChanges, inject} from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {DatePipe} from '@angular/common';
 import {FormsModule} from '@angular/forms';
-import {DialogModule} from 'primeng/dialog';
+import { AppModalComponent } from '../../../shared/modal/app-modal.component';
 import {ChartModule} from 'primeng/chart';
 import {ChartData, ChartOptions} from 'chart.js';
 import {Preferences, PreferencesService, WeightProgress, WeightService} from '../../../../../generated/backend-api/thereabout';
 
 @Component({
   selector: 'app-weight-card',
-  imports: [DatePipe, FormsModule, DialogModule, ChartModule],
+  imports: [DatePipe, FormsModule, AppModalComponent, ChartModule],
   templateUrl: './weight-card.component.html',
   styleUrl: './weight-card.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager
 })
 export class WeightCardComponent implements OnChanges {
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly refresh = registerRefresh(() => this.load(true), () => this.saving || this.editing);
   @Input({required: true}) date = '';
   private readonly api = inject(WeightService);
@@ -46,6 +47,7 @@ export class WeightCardComponent implements OnChanges {
     const requestId = ++this.requestId;
     this.loading = true;
     this.error = false;
+    this.changeDetector.markForCheck();
     if (!preserve) { this.progress = null; this.chartData = null; }
     this.api.getWeightProgress(this.date, this.days).pipe(this.refresh.track('weight'), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: progress => {
@@ -54,11 +56,13 @@ export class WeightCardComponent implements OnChanges {
         this.preferences = progress.preferences;
         this.loading = false;
         this.buildChart(progress);
+        this.changeDetector.markForCheck();
       },
       error: () => {
         if (requestId !== this.requestId) return;
         this.loading = false;
         this.error = true;
+        this.changeDetector.markForCheck();
       }
     });
   }
@@ -100,6 +104,7 @@ export class WeightCardComponent implements OnChanges {
       error: () => {
         this.saving = false;
         this.saveError = 'Could not save your goal. Your previous goal is unchanged. Please try again.';
+        this.changeDetector.markForCheck();
       }
     });
   }

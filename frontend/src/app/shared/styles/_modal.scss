@@ -1,0 +1,95 @@
+// Shared modal chrome. Overlays are attached to body, outside component style scopes.
+.app-modal-mask {
+  background: rgb(0 0 0 / 32%);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.p-dialog.app-modal {
+  max-width: calc(100vw - 2rem);
+  max-height: 92dvh;
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+  background: var(--app-surface);
+  box-shadow: 0 24px 72px rgb(0 0 0 / 18%);
+  overflow: hidden;
+
+  .p-dialog-header {
+    gap: 1rem;
+    padding: 0.5rem 1.25rem;
+    background: #F5F5F5;
+    border-bottom: 1px solid #E5E7EB;
+  }
+  .p-dialog-title {
+    font-family: var(--app-font-display);
+    font-size: 1.25rem;
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    color: var(--app-ink);
+  }
+  .p-dialog-close-button {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: #6B7280;
+    .p-icon { width: 1rem; height: 1rem; }
+    &:hover { background: #E5E7EB; color: #374151; }
+    &:focus-visible { outline: 2px solid var(--app-link); outline-offset: 2px; }
+  }
+  .p-dialog-content { padding: 1.5rem; background: var(--app-surface); }
+  .p-dialog-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--app-border);
+    background: var(--app-surface);
+  }
+}
+
+@media (max-width: 768px) {
+  .p-dialog.app-modal {
+    position: fixed;
+    inset: 0;
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh !important;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: var(--app-surface);
+    box-shadow: none;
+    transform: none !important;
+
+    .p-dialog-header {
+      flex-shrink: 0;
+      gap: 0.75rem;
+      padding: calc(0.5rem + env(safe-area-inset-top))
+        calc(1rem + env(safe-area-inset-right)) 0.5rem
+        calc(1rem + env(safe-area-inset-left)) !important;
+    }
+
+    .p-dialog-title { min-width: 0; overflow-wrap: anywhere; font-size: 1.25rem; }
+    .p-dialog-header-actions { flex-shrink: 0; }
+    .p-dialog-close-button { min-width: 44px; min-height: 44px; }
+
+    .p-dialog-content {
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+      overflow: auto;
+      overscroll-behavior: contain;
+      padding-inline: calc(1rem + env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-right));
+      padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    }
+
+    .p-dialog-footer {
+      flex-shrink: 0;
+      padding-inline: calc(1rem + env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-right));
+      padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    }
+  }
+}

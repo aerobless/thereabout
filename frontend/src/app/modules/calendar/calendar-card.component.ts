@@ -1,10 +1,10 @@
-import {Component, ChangeDetectionStrategy, DestroyRef, inject, Input, OnChanges} from '@angular/core';
+import {Component, ChangeDetectionStrategy, ChangeDetectorRef, DestroyRef, inject, Input, OnChanges} from '@angular/core';
 import {DatePipe} from '@angular/common';
 import {RouterLink} from '@angular/router';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {interval, finalize} from 'rxjs';
 import {CardModule} from 'primeng/card';
-import {DialogModule} from 'primeng/dialog';
+import { AppModalComponent } from '../../shared/modal/app-modal.component';
 import {ButtonModule} from 'primeng/button';
 import {MessageService} from 'primeng/api';
 import {CalendarOccurrence, CalendarService} from '../../../../generated/backend-api/thereabout';
@@ -13,7 +13,7 @@ import {CalendarBlock, timeline} from './calendar-timeline';
 
 @Component({
   selector: 'app-calendar-card',
-  imports: [DatePipe, RouterLink, CardModule, DialogModule, ButtonModule],
+  imports: [DatePipe, RouterLink, CardModule, AppModalComponent, ButtonModule],
   templateUrl: './calendar-card.component.html',
   styleUrl: './calendar-card.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager
@@ -21,6 +21,7 @@ import {CalendarBlock, timeline} from './calendar-timeline';
 export class CalendarCardComponent implements OnChanges {
   @Input({required: true}) date = '';
   private readonly api = inject(CalendarService);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly toast = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly refresh = registerRefresh(() => this.load(), () => this.deleting);
@@ -60,6 +61,7 @@ export class CalendarCardComponent implements OnChanges {
   load() {
     if (!this.date) return;
     const id = ++this.requestId; this.loading = true;
+    this.changeDetector.markForCheck();
     this.api.getCalendarDay(this.date, this.viewTimeZone)
       .pipe(this.refresh.track('calendar'), takeUntilDestroyed(this.destroyRef)).subscribe({
         next: events => {
@@ -74,8 +76,15 @@ export class CalendarCardComponent implements OnChanges {
             if (refreshed) this.selected = refreshed;
             else { this.visible = false; this.selected = null; }
           }
+          // Notify the OnPush Day View after asynchronous state changes.
+          this.changeDetector.markForCheck();
         },
-        error: () => { if (id === this.requestId) { this.loading = false; this.error = 'Unable to load calendar events. Previous data is still shown.'; } }
+        error: () => {
+          if (id !== this.requestId) return;
+          this.loading = false;
+          this.error = 'Unable to load calendar events. Previous data is still shown.';
+          this.changeDetector.markForCheck();
+        }
       });
   }
   open(event: CalendarOccurrence, trigger: Event) {
@@ -88,7 +97,7 @@ export class CalendarCardComponent implements OnChanges {
     if (!event?.canDelete || this.deleting) return;
     this.deleting = true; this.deleteError = ''; ++this.requestId;
     this.api.deleteCalendarEvent(event.calendarId,event.eventId,event.originalStart ?? undefined)
-      .pipe(finalize(() => this.deleting = false), takeUntilDestroyed(this.destroyRef)).subscribe({
+      .pipe(finalize(() => { this.deleting = false; this.changeDetector.markForCheck(); }), takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.events = this.events.filter(e => e.key !== event.key);
           this.blocks = timeline(this.events,this.date);

@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, inject, input, output, signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {DialogModule} from 'primeng/dialog';
+import { AppModalComponent } from '../../../shared/modal/app-modal.component';
 import {ButtonModule} from 'primeng/button';
 import {InputTextModule} from 'primeng/inputtext';
 import {MessageService} from 'primeng/api';
@@ -16,7 +16,7 @@ export function validCloudflareEmail(email: string): boolean {
 
 @Component({
   selector: 'app-create-user-dialog',
-  imports: [FormsModule, DialogModule, ButtonModule, InputTextModule],
+  imports: [FormsModule, AppModalComponent, ButtonModule, InputTextModule],
   templateUrl: './create-user-dialog.component.html',
   styles: [`.dialog-form {display: flex; flex-direction: column; gap: .75rem; padding-top: .5rem;}
     input {width: 100%;} .field-error {color: var(--p-red-600);} p {margin: 0 0 .5rem; overflow-wrap: anywhere;}`],

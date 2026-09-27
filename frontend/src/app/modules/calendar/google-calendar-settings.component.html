@@ -4,10 +4,11 @@
   <p>Enter your OAuth credentials. Values are stored in Thereabout and take effect when saved.</p>
   @for (field of fields; track field.key) {
     <div class="secret-field">
-      <label [for]="'google-' + field.key">{{ field.label }} <span class="muted">{{ status?.secrets?.[field.key] ? 'Stored' : 'Not configured' }}</span></label>
+      <label [for]="'google-' + field.key">{{ field.label }} <span class="muted">{{ status ? (status.secrets[field.key] ? 'Stored' : 'Not configured') : (loadError ? 'Unavailable' : 'Loading…') }}</span></label>
       <small>{{ field.help }}</small>
       <input pInputText [id]="'google-' + field.key" [type]="focused === field.key ? 'text' : 'password'" autocomplete="off" spellcheck="false"
-        [value]="values[field.key] ?? ''" [placeholder]="status?.secrets?.[field.key] ? '••••••••' : 'Not configured'"
+        [value]="values[field.key] ?? ''" [disabled]="!status"
+        [placeholder]="revealing[field.key] ? 'Loading…' : (status ? (status.secrets[field.key] ? '••••••••' : 'Not configured') : (loadError ? 'Unavailable' : 'Loading…'))"
         [readOnly]="busy || !!revealing[field.key]" (focus)="focus(field.key)" (blur)="blur(field.key)" (input)="change(field.key, $any($event.target).value)" />
     </div>
   }
@@ -51,7 +52,7 @@
 </p-card>
 @if (error || loadError) { <p role="alert" class="error">{{ error || loadError }}</p> }
 @if (notice) { <p role="status">{{ notice }}</p> }
-<p-dialog header="Choose Google calendars" [(visible)]="selectionVisible" [modal]="true" [draggable]="false" [resizable]="false" [style]="{width: '36rem', maxWidth: '95vw'}">
+<app-modal header="Choose Google calendars" [dismissible]="!busy" [(visible)]="selectionVisible" [dialogStyle]="{width: '36rem', maxWidth: '95vw'}">
   <p>Selected calendars are fully imported. Automatic updates require a public webhook URL; otherwise use Sync now. Unchecked calendars retain their local history.</p>
   @for (calendar of available; track calendar.id) {
     <label class="calendar-option">
@@ -61,4 +62,4 @@
     </label>
   } @empty { <p>No calendars available.</p> }
   <ng-template #footer><p-button label="Import selected calendars" [disabled]="busy" (onClick)="import()" /></ng-template>
-</p-dialog>
+</app-modal>

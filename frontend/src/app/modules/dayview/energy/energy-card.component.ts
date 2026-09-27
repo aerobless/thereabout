@@ -1,6 +1,6 @@
 import {Component, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
 import {DatePipe} from '@angular/common';
-import {DialogModule} from 'primeng/dialog';
+import { AppModalComponent } from '../../../shared/modal/app-modal.component';
 import {ChartModule} from 'primeng/chart';
 import {ChartData, ChartOptions} from 'chart.js';
 import {DailyMetricValue} from '../../../../../generated/backend-api/thereabout';
@@ -8,7 +8,7 @@ import {EnergyDay, energyHistory, formatEnergy} from './energy-history';
 
 @Component({
   selector: 'app-energy-card',
-  imports: [DatePipe, DialogModule, ChartModule],
+  imports: [DatePipe, AppModalComponent, ChartModule],
   templateUrl: './energy-card.component.html',
   styleUrl: './energy-card.component.scss'
 })

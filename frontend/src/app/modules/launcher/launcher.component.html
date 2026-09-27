@@ -104,9 +104,8 @@
   @else { <span aria-hidden="true" [class.letter-icon]="!shortcut.emoji">{{ shortcut.emoji || shortcut.title.slice(0,1).toUpperCase() }}</span> }
 </ng-template>
 
-<p-dialog [header]="dialogTitle()" [visible]="!!dialog()" (visibleChange)="!$event && closeDialog()" (onHide)="closeDialog()"
-  [modal]="true" [draggable]="false" [resizable]="false" [blockScroll]="true" [closable]="!busy()" [closeOnEscape]="!busy()"
-  [style]="{width: dialog() === 'organize' ? '58rem' : '34rem', maxWidth:'95vw'}">
+<app-modal [header]="dialogTitle()" [visible]="!!dialog()" (visibleChange)="!$event && closeDialog()" (onHide)="closeDialog()"
+  [dialogStyle]="{width: dialog() === 'organize' ? '58rem' : '34rem', maxWidth:'95vw'}" [dismissible]="!busy()">
   <div class="launcher-editor">
     @if (dialog() === 'shortcut') {
       <form (ngSubmit)="saveShortcut()" id="shortcut-form" class="editor-form">
@@ -169,4 +168,4 @@
       @if (dialog() === 'import') {<button type="button" class="add-button" [disabled]="busy() || !importText.trim()" (click)="importCollection()">{{ busy() ? 'Importing…' : 'Import collection' }}</button>}
     </div>
   </div>
-</p-dialog>
+</app-modal>

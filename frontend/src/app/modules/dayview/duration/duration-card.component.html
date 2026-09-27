@@ -14,9 +14,9 @@
     }
   </span>
 </button>
-<p-dialog [header]="title + ' — ' + (date | date:'dd.MM.yyyy')" styleClass="dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
-  [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false" [dismissableMask]="true" [closeOnEscape]="true" [focusTrap]="true" [blockScroll]="true"
-  [closeAriaLabel]="'Close ' + title" (onHide)="card.focus()" [style]="dialogStyle">
+<app-modal [header]="title + ' — ' + (date | date:'dd.MM.yyyy')" styleClass="dayview-detail-dialog"
+  [(visible)]="visible"
+  [closeAriaLabel]="'Close ' + title" (onHide)="card.focus()" [dialogStyle]="dialogStyle">
   @if (visible) {
     <div class="chart-heading"><h3>{{ sleep ? 'Sleep duration and stages' : 'Daily standing time' }}</h3><div class="ranges" [attr.aria-label]="title + ' chart range'">
       <button class="action" [attr.aria-pressed]="days === 7" (click)="selectRange(7)">7 days</button><button class="action" [attr.aria-pressed]="days === 30" (click)="selectRange(30)">30 days</button>
@@ -38,4 +38,4 @@
       </tbody></table></div></details>
     }
   }
-</p-dialog>
+</app-modal>

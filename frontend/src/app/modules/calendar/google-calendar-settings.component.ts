@@ -1,11 +1,11 @@
-import {Component, ChangeDetectionStrategy, DestroyRef, inject, OnInit} from '@angular/core';
+import {Component, ChangeDetectionStrategy, ChangeDetectorRef, DestroyRef, inject, OnInit} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {DatePipe} from '@angular/common';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {interval, Observable, finalize} from 'rxjs';
 import {CardModule} from 'primeng/card';
 import {ButtonModule} from 'primeng/button';
-import {DialogModule} from 'primeng/dialog';
+import { AppModalComponent } from '../../shared/modal/app-modal.component';
 import {InputTextModule} from 'primeng/inputtext';
 import {CalendarService, CalendarInfo, GoogleCalendarStatus, GoogleCredentials} from '../../../../generated/backend-api/thereabout';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
@@ -13,13 +13,14 @@ import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 type SecretKey = 'clientId' | 'clientSecret' | 'refreshToken';
 @Component({
   selector: 'app-google-calendar-settings',
-  imports: [FormsModule, DatePipe, CardModule, ButtonModule, DialogModule, InputTextModule],
+  imports: [FormsModule, DatePipe, CardModule, ButtonModule, AppModalComponent, InputTextModule],
   templateUrl: './google-calendar-settings.component.html',
   styleUrl: './google-calendar-settings.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager
 })
 export class GoogleCalendarSettingsComponent implements OnInit {
   private readonly api = inject(CalendarService);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly refresh = registerRefresh(() => this.load(), () => this.busy || Object.keys(this.dirty).length > 0 || this.webhookDirty);
   readonly fields: {key: SecretKey; label: string; help: string}[] = [
@@ -53,12 +54,18 @@ export class GoogleCalendarSettingsComponent implements OnInit {
     const revision = this.revision;
     this.api.getGoogleCalendarStatus().pipe(this.refresh.track('google-status'), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: status => { if (revision === this.revision) { this.loadError = ''; this.accept(status); } },
-      error: () => this.loadError = 'Unable to load Google Calendar settings.'
+      error: () => {
+        if (revision !== this.revision) return;
+        this.loadError = 'Unable to load Google Calendar settings.';
+        this.changeDetector.markForCheck();
+      }
     });
   }
   private accept(status: GoogleCalendarStatus) {
     this.status = status;
     if (!this.webhookDirty) this.webhookUrl = status.webhookUrl ?? '';
+    // HTTP and polling callbacks must notify Angular even without a user interaction.
+    this.changeDetector.markForCheck();
   }
   focus(key: SecretKey) {
     this.focused = key;
@@ -68,8 +75,13 @@ export class GoogleCalendarSettingsComponent implements OnInit {
       next: response => {
         this.revealing[key] = false;
         if (this.focused === key && !this.dirty[key]) this.values[key] = response.value;
+        this.changeDetector.markForCheck();
       },
-      error: () => { this.revealing[key] = false; this.error = 'Unable to reveal this credential.'; }
+      error: () => {
+        this.revealing[key] = false;
+        this.error = 'Unable to reveal this credential.';
+        this.changeDetector.markForCheck();
+      }
     });
   }
   blur(key: SecretKey) {
@@ -108,8 +120,8 @@ export class GoogleCalendarSettingsComponent implements OnInit {
   private run<T>(request: Observable<T>, success: (value: T) => void) {
     if (this.busy) return;
     ++this.revision; this.busy = true; this.error = ''; this.notice = '';
-    request.pipe(finalize(() => this.busy = false), takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: success,
+    request.pipe(finalize(() => { this.busy = false; this.changeDetector.markForCheck(); }), takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: value => { success(value); this.changeDetector.markForCheck(); },
       error: () => this.error = 'The operation failed. Check credentials, permissions, and the HTTPS callback URL, then retry.'
     });
   }

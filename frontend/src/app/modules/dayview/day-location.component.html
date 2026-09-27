@@ -33,11 +33,10 @@
         </div>
       </div>
     </p-card>
-<p-dialog header="Location History" styleClass="messages-dialog location-dialog dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
-  [(visible)]="state.locationDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
-  [closeOnEscape]="!state.locationEditDraft() && !state.locationSaving()" [dismissableMask]="!state.locationEditDraft() && !state.locationSaving()" [closable]="!state.locationSaving()" [focusTrap]="true" [blockScroll]="true"
+<app-modal header="Location History" styleClass="messages-dialog location-dialog dayview-detail-dialog"
+  [(visible)]="state.locationDialogVisible"
   closeAriaLabel="Close location history" (onShow)="state.fitExpandedMap()" (onHide)="state.onLocationDialogHidden()"
-  [style]="{ width: '1200px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '92dvh' }">
+  [dialogStyle]="{ width: '1200px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '92dvh' }" [dismissible]="!state.locationEditDraft() && !state.locationSaving()">
   @if (state.locationDialogVisible()) {
     <div class="location-editor">
       <div class="expanded-map">
@@ -86,4 +85,4 @@
       }
     </ng-template>
   }
-</p-dialog>
+</app-modal>

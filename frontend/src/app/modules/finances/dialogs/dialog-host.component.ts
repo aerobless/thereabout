@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
-import { DialogModule } from "primeng/dialog";
+import { AppModalComponent } from '../../../shared/modal/app-modal.component';
 import { FinanceDialogs, FinanceContext } from "../shared/finance-ui";
 import { AccountDialogComponent } from "./account-dialog.component";
 import { TransactionDialogComponent } from "./transaction-dialog.component";
@@ -13,7 +13,7 @@ import { DeletionDialogComponent } from "./deletion-dialog.component";
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DialogModule,
+    AppModalComponent,
     AccountDialogComponent,
     TransactionDialogComponent,
     CategoriesDialogComponent,
@@ -23,21 +23,17 @@ import { DeletionDialogComponent } from "./deletion-dialog.component";
     DeletionDialogComponent,
   ],
   template: ` @if (dialogs.selected(); as dialog) {
-    <p-dialog
+    <app-modal
       [visible]="true"
       (visibleChange)="close()"
-      [modal]="true"
       [header]="titles[dialog.kind]"
-      [style]="{
+      [dialogStyle]="{
         width: dialog.kind === 'categories' ? '900px' : '720px',
         maxWidth: '94vw',
         maxHeight: '92vh',
       }"
       styleClass="finance-dialog"
-      [contentStyle]="{ paddingTop: '12px' }"
-      [draggable]="false"
-      [closable]="!context.saving()"
-    >
+      [dismissible]="!context.saving()">
       @if (context.error()) {
         <p role="alert">{{ context.error() }}</p>
       }
@@ -67,7 +63,7 @@ import { DeletionDialogComponent } from "./deletion-dialog.component";
           <finance-history-dialog [transaction]="dialog.transaction" />
         }
       }
-    </p-dialog>
+    </app-modal>
   }`,
 })
 export class DialogHostComponent {

@@ -172,11 +172,10 @@
 </div>
 
 <!-- Link Application Identity Dialog -->
-<p-dialog
+<app-modal
   header="Link Application Identity"
   [(visible)]="linkDialogVisible"
-  [modal]="true"
-  [style]="{width: '450px'}">
+  [dialogStyle]="{width: '450px'}">
   <div class="dialog-form">
     @if (linkingAppIdentity) {
       <p>Link <b>{{ linkingAppIdentity.application }}: {{ linkingAppIdentity.identifier }}</b> to an identity:</p>
@@ -204,4 +203,4 @@
     <p-button label="Link" icon="pi pi-link" (onClick)="linkAppIdentity()"
               [disabled]="!selectedIdentityForLink"></p-button>
   </ng-template>
-</p-dialog>
+</app-modal>

@@ -15,10 +15,9 @@
   @if (error) { <p role="alert">Unable to load Choices. <button type="button" (click)="load()">Retry</button></p> }
 </section>
 
-<p-dialog [header]="'Choices — ' + (date | date:'dd.MM.yyyy')" styleClass="dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
-  [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false" [dismissableMask]="true"
-  [closeOnEscape]="true" [focusTrap]="true" [blockScroll]="true" closeAriaLabel="Close Choices"
-  (onHide)="expand.focus()" [style]="{width: '960px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '90dvh'}">
+<app-modal [header]="'Choices — ' + (date | date:'dd.MM.yyyy')" styleClass="dayview-detail-dialog"
+  [(visible)]="visible" closeAriaLabel="Close Choices"
+  (onHide)="expand.focus()" [dialogStyle]="{width: '960px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '90dvh'}">
   @if (visible) {
     <div class="chart-heading"><h3>Daily scores</h3><div class="ranges" aria-label="Choices chart range">
       <button class="action" type="button" [attr.aria-pressed]="days === 7" (click)="selectRange(7)">7 days</button>
@@ -40,4 +39,4 @@
       </table></div></details>
     }
   }
-</p-dialog>
+</app-modal>

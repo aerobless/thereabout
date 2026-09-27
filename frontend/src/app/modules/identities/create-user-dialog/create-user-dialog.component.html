@@ -1,5 +1,4 @@
-<p-dialog header="Create User" [visible]="true" (visibleChange)="close()" [modal]="true"
-          [closable]="!busy()" [closeOnEscape]="!busy()" [style]="{width: '450px', maxWidth: 'calc(100vw - 2rem)'}">
+<app-modal header="Create User" [visible]="true" (visibleChange)="close()" [dialogStyle]="{width: '450px', maxWidth: 'calc(100vw - 2rem)'}" [dismissible]="!busy()">
   <form id="create-user-form" class="dialog-form" (ngSubmit)="create()" novalidate>
     <p>Create a Thereabout user for <strong>{{ identity().shortName }}</strong>.</p>
     <label for="cloudflare-email">Cloudflare email *</label>
@@ -12,4 +11,4 @@
     <p-button label="Cancel" [text]="true" [disabled]="busy()" (onClick)="close()" />
     <p-button label="Create User" [loading]="busy()" [disabled]="busy()" (onClick)="create()" />
   </ng-template>
-</p-dialog>
+</app-modal>

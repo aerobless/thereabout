@@ -1,6 +1,6 @@
 import {Component, Input, OnInit, inject, output, signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {DialogModule} from 'primeng/dialog';
+import { AppModalComponent } from '../../../shared/modal/app-modal.component';
 import {ButtonModule} from 'primeng/button';
 import {InputTextModule} from 'primeng/inputtext';
 import {FloatLabelModule} from 'primeng/floatlabel';
@@ -12,7 +12,7 @@ import {Identity, IdentityInApplication, IdentityService, IdentityInApplicationS
 
 @Component({
   selector: 'app-identity-editor',
-  imports: [FormsModule, DialogModule, ButtonModule, InputTextModule, FloatLabelModule, CheckboxModule, TableModule, TooltipModule],
+  imports: [FormsModule, AppModalComponent, ButtonModule, InputTextModule, FloatLabelModule, CheckboxModule, TableModule, TooltipModule],
   templateUrl: './identity-editor.component.html',
   styles: [`.dialog-form {display: flex; flex-direction: column; gap: 1.5rem; padding-top: .5rem;}
     td {overflow-wrap: anywhere;} h4 {margin-top: 0;} [role=alert] {color: var(--p-red-600);}`]

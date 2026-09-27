@@ -30,8 +30,7 @@
     </div>
   }
 </p-card>
-<p-dialog [header]="selected?.title || 'Calendar event'" [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false" [blockScroll]="true"
-  [closable]="!deleting" [closeOnEscape]="!deleting" (onHide)="closed()" [style]="{width: '42rem', maxWidth: '95vw'}">
+<app-modal [header]="selected?.title || 'Calendar event'" [(visible)]="visible" (onHide)="closed()" [dialogStyle]="{width: '42rem', maxWidth: '95vw'}" [dismissible]="!deleting">
   @if (selected; as event) {
     <p><strong>{{ event.calendarName }}</strong> @if (!event.syncing) { <span class="muted">· Not syncing</span> }</p>
     @if (event.allDay) { <p>All day · {{ event.startDate }}@if (lastAllDayDate !== event.startDate) { <span> – {{ lastAllDayDate }}</span> }</p> }
@@ -53,4 +52,4 @@
     <p-button [label]="deleting ? 'Deleting…' : (event.recurring ? 'Delete this occurrence' : 'Delete event')" severity="danger"
       [disabled]="!event.canDelete || deleting" (onClick)="remove()" />
   }
-</p-dialog>
+</app-modal>

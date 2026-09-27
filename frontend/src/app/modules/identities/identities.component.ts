@@ -1,11 +1,11 @@
 import {IdentityEditorComponent} from './identity-editor/identity-editor.component';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
-import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import {inject, ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {RouterModule} from '@angular/router';
 import {ButtonModule} from 'primeng/button';
 import {CardModule} from 'primeng/card';
-import {DialogModule} from 'primeng/dialog';
+import { AppModalComponent } from '../../shared/modal/app-modal.component';
 import {InputTextModule} from 'primeng/inputtext';
 import {TableModule} from 'primeng/table';
 import {TagModule} from 'primeng/tag';
@@ -30,7 +30,7 @@ import {
         RouterModule,
         ButtonModule,
         CardModule,
-        DialogModule,
+        AppModalComponent,
         InputTextModule,
         TableModule,
         TagModule,
@@ -46,6 +46,7 @@ import {
     styleUrl: './identities.component.scss'
 })
 export class IdentitiesComponent implements OnInit {
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly refresh = registerRefresh(() => { this.loadIdentities(); this.loadUnlinkedAppIdentities(); }, () => this.identityDialogVisible || this.linkDialogVisible);
 
     identities: Identity[] = [];
@@ -76,6 +77,7 @@ export class IdentitiesComponent implements OnInit {
     loadIdentities(): void {
         this.identityService.getIdentities().pipe(this.refresh.track('identities')).subscribe({next: identities => {
             this.identities = identities;
+            this.changeDetector.markForCheck();
         }, error: () => {}});
     }
 
@@ -83,6 +85,7 @@ export class IdentitiesComponent implements OnInit {
         this.identityInApplicationService.getUnlinkedIdentityInApplications().pipe(this.refresh.track('unlinked')).subscribe({next: appIdentities => {
             this.unlinkedAppIdentities = appIdentities.filter(a => !a.isGroup);
             this.unlinkedGroupIdentities = appIdentities.filter(a => a.isGroup);
+            this.changeDetector.markForCheck();
         }, error: () => {}});
     }
 
@@ -106,6 +109,7 @@ export class IdentitiesComponent implements OnInit {
             next: () => {
                 this.messageService.add({severity: 'success', summary: 'Linked', detail: 'Application identity linked successfully'});
                 this.linkDialogVisible = false;
+                this.changeDetector.markForCheck();
                 this.loadIdentities();
                 this.loadUnlinkedAppIdentities();
             },

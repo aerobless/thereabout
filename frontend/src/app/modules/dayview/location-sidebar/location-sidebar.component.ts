@@ -4,7 +4,7 @@ import {ButtonModule} from 'primeng/button';
 import {DatePickerModule} from 'primeng/datepicker';
 import {TableModule} from 'primeng/table';
 import {TooltipModule} from 'primeng/tooltip';
-import {DialogModule} from 'primeng/dialog';
+import { AppModalComponent } from '../../../shared/modal/app-modal.component';
 import {InputNumberModule} from 'primeng/inputnumber';
 import {TextareaModule} from 'primeng/textarea';
 import {LocationHistoryEntry} from '../../../../../generated/backend-api/thereabout';
@@ -16,7 +16,7 @@ export interface LocationEditDraft {
 
 @Component({
   selector: 'thereabout-location-sidebar',
-  imports: [FormsModule, ButtonModule, DatePickerModule, TableModule, TooltipModule, DialogModule, InputNumberModule, TextareaModule],
+  imports: [FormsModule, ButtonModule, DatePickerModule, TableModule, TooltipModule, AppModalComponent, InputNumberModule, TextareaModule],
   templateUrl: './location-sidebar.component.html',
   styleUrl: './location-sidebar.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager

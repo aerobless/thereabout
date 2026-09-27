@@ -1,13 +1,13 @@
 import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 import {DatePipe} from '@angular/common';
-import {DialogModule} from 'primeng/dialog';
+import { AppModalComponent } from '../../../shared/modal/app-modal.component';
 import {ChartModule} from 'primeng/chart';
 import {HeartRateHistory, HeartService} from '../../../../../generated/backend-api/thereabout';
 import {HistoryCard} from './history-card';
 
 @Component({
   selector: 'app-heart-rate-card',
-  imports: [DatePipe, DialogModule, ChartModule],
+  imports: [DatePipe, AppModalComponent, ChartModule],
   templateUrl: './heart-rate-card.component.html',
   styleUrl: './heart-history.scss',
   changeDetection: ChangeDetectionStrategy.Eager

@@ -1,6 +1,6 @@
 import {localDateString, parseLocalDate} from '../../shared/dates/local-date';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
-import {Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject} from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject} from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {
     GoogleMap,
@@ -45,6 +45,7 @@ import {ThereaboutHeatmapLayerDirective} from "./thereabout-heatmap-layer.direct
     styleUrl: './locationhistory.component.scss'
 })
 export class LocationhistoryComponent implements OnInit {
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly refresh = registerRefresh(() => this.loadHeatmapData(true), () => this.embedMode);
 
     // Embed view
@@ -93,6 +94,7 @@ export class LocationhistoryComponent implements OnInit {
 
     ngOnInit() {
         this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+            this.changeDetector.markForCheck();
             this.embedMode = params['embed'] === 'true';
             ++this.dayRequestId;
             ++this.rangeRequestId;
@@ -126,6 +128,7 @@ export class LocationhistoryComponent implements OnInit {
         const requestId = ++this.heatmapRequestId;
         if (!preserve) this.heatmapData = [];
         this.heatmapError = false;
+        this.changeDetector.markForCheck();
         this.heatmapLoading = false;
         if (!this.fromDate || !this.toDate || this.fromDate > this.toDate) return;
         this.heatmapLoading = true;
@@ -135,11 +138,13 @@ export class LocationhistoryComponent implements OnInit {
                     if (requestId !== this.heatmapRequestId) return;
                     this.heatmapData = locations.map(location => ({lat: location.latitude, lng: location.longitude}));
                     this.heatmapLoading = false;
+                    this.changeDetector.markForCheck();
                 },
                 error: () => {
                     if (requestId !== this.heatmapRequestId) return;
                     this.heatmapLoading = false;
                     this.heatmapError = true;
+                    this.changeDetector.markForCheck();
                 }
             });
     }
@@ -148,11 +153,13 @@ export class LocationhistoryComponent implements OnInit {
         if (!this.exactDate) return;
         const requestId = ++this.dayRequestId;
         this.dayViewDataFull = [];
+        this.changeDetector.markForCheck();
         this.locationService.getLocations(localDateString(this.exactDate), localDateString(this.exactDate))
             .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
                 next: locations => {
                     if (requestId !== this.dayRequestId) return;
                     this.dayViewDataFull = locations;
+                    this.changeDetector.markForCheck();
                     if (focusEmbedDay) this.fitEmbedDayBounds();
                 },
                 error: () => { /* Keep the trip visible when a day cannot be loaded. */ }
@@ -167,6 +174,7 @@ export class LocationhistoryComponent implements OnInit {
                 next: locations => {
                     if (requestId !== this.rangeRequestId) return;
                     this.dateRangeViewDataFull = locations;
+                    this.changeDetector.markForCheck();
                     this.fitEmbedTripBounds();
                 },
                 error: () => { /* Keep the map usable when the trip cannot be loaded. */ }
@@ -275,6 +283,7 @@ export class LocationhistoryComponent implements OnInit {
                     let location = result.results[0].geometry.location;
                     this.center = {lat: location.lat(), lng: location.lng()};
                     this.applyZoom(11);
+                    this.changeDetector.markForCheck();
                 }
             });
         }

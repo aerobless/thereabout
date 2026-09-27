@@ -1,5 +1,5 @@
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TableModule, TableLazyLoadEvent } from 'primeng/table';
@@ -32,6 +32,7 @@ interface FilterMeta {
   styleUrl: './messages-list.component.scss',
 })
 export class MessagesListComponent {
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly refresh = registerRefresh(() => this.loadMessages(this.lastQuery, true));
   messages: Message[] = [];
   totalRecords = 0;
@@ -126,15 +127,18 @@ export class MessagesListComponent {
     preserve = false
   ): void {
     this.loading = true;
+    this.changeDetector.markForCheck();
     this.messageApiService.getMessageList(page, size, sort, search, dateFrom, dateTo, source, sender, receiver).pipe(this.refresh.track('messages')).subscribe({
       next: (pageResponse) => {
         this.messages = pageResponse.content ?? [];
         this.totalRecords = pageResponse.totalElements ?? 0;
         this.loading = false;
+        this.changeDetector.markForCheck();
       },
       error: () => {
         if (!preserve) { this.messages = []; this.totalRecords = 0; }
         this.loading = false;
+        this.changeDetector.markForCheck();
       },
     });
   }

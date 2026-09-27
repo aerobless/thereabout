@@ -18,7 +18,7 @@ describe('calendar settings and day state', () => {
     TestBed.configureTestingModule({providers:[{provide:CalendarService,useValue:api},{provide:MessageService,useValue:toast},RefreshCoordinator]});
   });
   it('does not fetch secrets until focus and clears unedited reveals on blur', () => {
-    const page=TestBed.runInInjectionContext(() => new GoogleCalendarSettingsComponent());
+    const page=TestBed.createComponent(GoogleCalendarSettingsComponent).componentInstance;
     page.load();
     expect(api.revealGoogleCalendarSecret).not.toHaveBeenCalled();
     page.focus('refreshToken');
@@ -29,23 +29,23 @@ describe('calendar settings and day state', () => {
   });
   it('does not retain a reveal that completes after blur', () => {
     const response=new Subject<{value:string}>(); api.revealGoogleCalendarSecret.mockReturnValue(response);
-    const page=TestBed.runInInjectionContext(() => new GoogleCalendarSettingsComponent());
+    const page=TestBed.createComponent(GoogleCalendarSettingsComponent).componentInstance;
     page.load(); page.focus('refreshToken'); page.blur('refreshToken'); response.next({value:'late'});
     expect(page.values.refreshToken).toBeUndefined();
   });
   it('saves only edited credentials, including explicit clearing', () => {
-    const page=TestBed.runInInjectionContext(() => new GoogleCalendarSettingsComponent());
+    const page=TestBed.createComponent(GoogleCalendarSettingsComponent).componentInstance;
     page.load(); page.change('refreshToken',''); page.saveSecrets();
     expect(api.saveGoogleCalendarCredentials).toHaveBeenCalledWith({refreshToken:''});
     expect(page.values).toEqual({});
   });
   it('preserves settings drafts while refreshing status', () => {
-    const page=TestBed.runInInjectionContext(() => new GoogleCalendarSettingsComponent());
+    const page=TestBed.createComponent(GoogleCalendarSettingsComponent).componentInstance;
     page.load(); page.webhookDirty=true; page.webhookUrl='draft'; page.change('clientSecret','draft-secret'); page.load();
     expect(page.webhookUrl).toBe('draft'); expect(page.values.clientSecret).toBe('draft-secret');
   });
   it('enables manual import without a webhook but still requires valid credentials', () => {
-    const page=TestBed.runInInjectionContext(() => new GoogleCalendarSettingsComponent());
+    const page=TestBed.createComponent(GoogleCalendarSettingsComponent).componentInstance;
     page.status={...status,webhookUrl:null,webhookHealth:'DISABLED'};
     expect(page.canSync).toBe(true);
     page.busy=true;
@@ -55,7 +55,7 @@ describe('calendar settings and day state', () => {
   });
   it('ignores obsolete day responses and preserves the open event during refresh', () => {
     const first=new Subject<CalendarOccurrence[]>(); api.getCalendarDay.mockReturnValueOnce(first);
-    const page=TestBed.runInInjectionContext(() => new CalendarCardComponent());
+    const page=TestBed.createComponent(CalendarCardComponent).componentInstance;
     page.date='2026-09-23'; page.load(); page.date='2026-09-24'; page.ngOnChanges(); first.next([]);
     expect(page.events).toEqual([sample]);
     page.selected=sample; page.visible=true; page.load();
@@ -63,13 +63,13 @@ describe('calendar settings and day state', () => {
   });
   it('failed local deletion keeps the modal and event without showing success', () => {
     api.deleteCalendarEvent.mockReturnValue(throwError(() => new Error('offline')));
-    const page=TestBed.runInInjectionContext(() => new CalendarCardComponent());
+    const page=TestBed.createComponent(CalendarCardComponent).componentInstance;
     page.date='2026-09-24'; page.load(); page.selected=sample; page.visible=true; page.remove();
     expect(page.visible).toBe(true); expect(page.events).toHaveLength(1); expect(page.deleteError).toContain('Unable to delete from Thereabout'); expect(toast.add).not.toHaveBeenCalled();
   });
   it.each([false,true])('deletes directly and shows one toast on success (recurring=%s)', recurring => {
     const response=new Subject<void>(); api.deleteCalendarEvent.mockReturnValue(response);
-    const page=TestBed.runInInjectionContext(() => new CalendarCardComponent());
+    const page=TestBed.createComponent(CalendarCardComponent).componentInstance;
     const event={...sample,recurring,originalStart:recurring?sample.start:null};
     page.date='2026-09-24'; page.events=[event]; page.selected=event; page.visible=true;
     page.remove(); page.remove();

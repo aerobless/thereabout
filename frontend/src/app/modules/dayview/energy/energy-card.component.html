@@ -16,9 +16,8 @@
   </span>
 </button>
 
-<p-dialog [header]="'Energy — ' + (date | date:'dd.MM.yyyy')" styleClass="dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
-  [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false" [dismissableMask]="true"
-  [closeOnEscape]="true" [focusTrap]="true" [blockScroll]="true" closeAriaLabel="Close energy" (onHide)="card.focus()" [style]="dialogStyle">
+<app-modal [header]="'Energy — ' + (date | date:'dd.MM.yyyy')" styleClass="dayview-detail-dialog"
+  [(visible)]="visible" closeAriaLabel="Close energy" (onHide)="card.focus()" [dialogStyle]="dialogStyle">
   @if (visible) {
     <div class="chart-heading">
       <h3>Daily energy</h3>
@@ -56,4 +55,4 @@
       </details>
     }
   }
-</p-dialog>
+</app-modal>

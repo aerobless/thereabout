@@ -1,9 +1,8 @@
 <!-- Identity Edit/Create Dialog -->
-<p-dialog
+<app-modal
   [header]="isNewIdentity ? 'New Identity' : 'Edit Identity'"
-  [visible]="true" (visibleChange)="close()" [closable]="!busy()" [closeOnEscape]="!busy()"
-  [modal]="true"
-  [style]="{width: '550px', maxWidth: 'calc(100vw - 2rem)'}">
+  [visible]="true" (visibleChange)="close()"
+  [dialogStyle]="{width: '550px', maxWidth: 'calc(100vw - 2rem)'}" [dismissible]="!busy()">
   <div class="dialog-form">
     <p-floatlabel>
       <input pInputText id="shortName" [(ngModel)]="editingIdentity.shortName" style="width: 100%" />
@@ -55,4 +54,4 @@
     <p-button label="Save" icon="pi pi-check" (onClick)="saveIdentity()"
               [disabled]="!editingIdentity.shortName.trim() || busy()" [loading]="busy()"></p-button>
   </ng-template>
-</p-dialog>
+</app-modal>

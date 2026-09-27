@@ -1,20 +1,21 @@
 import {registerRefresh} from '../../../shared/refresh/refresh-coordinator';
-import {Component, ChangeDetectionStrategy, DestroyRef, Input, OnChanges, inject} from '@angular/core';
+import {ChangeDetectorRef, Component, ChangeDetectionStrategy, DestroyRef, Input, OnChanges, inject} from '@angular/core';
 import {DatePipe} from '@angular/common';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {ChartModule} from 'primeng/chart';
-import {DialogModule} from 'primeng/dialog';
+import { AppModalComponent } from '../../../shared/modal/app-modal.component';
 import {ChartData, ChartOptions} from 'chart.js';
 import {ChoicesHistory, ChoicesService} from '../../../../../generated/backend-api/thereabout';
 
 @Component({
   selector: 'app-choices-card',
-  imports: [DatePipe, ChartModule, DialogModule],
+  imports: [DatePipe, ChartModule, AppModalComponent],
   templateUrl: './choices-card.component.html',
   styleUrl: './choices-card.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager
 })
 export class ChoicesCardComponent implements OnChanges {
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly refresh = registerRefresh(() => this.load(), () => this.saving);
   @Input({required: true}) date = '';
   private readonly api = inject(ChoicesService);
@@ -58,6 +59,7 @@ export class ChoicesCardComponent implements OnChanges {
     if (!this.date) { this.loading = false; return; }
     this.loading = true;
     this.error = false;
+    this.changeDetector.markForCheck();
     this.api.getChoicesHistory(this.date, this.days).pipe(this.refresh.track('choices'), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: history => {
         if (id !== this.requestId) return;
@@ -70,8 +72,9 @@ export class ChoicesCardComponent implements OnChanges {
             borderColor: history.series.map(day => day.date === this.date ? '#101b4a' : 'transparent'),
             borderWidth: history.series.map(day => day.date === this.date ? 2 : 0), borderRadius: 3}]
         };
+        this.changeDetector.markForCheck();
       },
-      error: () => { if (id === this.requestId) { this.error = true; this.loading = false; } }
+      error: () => { if (id === this.requestId) { this.error = true; this.loading = false; this.changeDetector.markForCheck(); } }
     });
   }
 

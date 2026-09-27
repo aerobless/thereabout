@@ -1,4 +1,10 @@
-<p-confirmdialog />
+<app-modal header="Delete Identity" [(visible)]="deleteVisible" [dismissible]="!deleting()">
+  <p>Are you sure you want to delete "{{ identity?.shortName }}"?</p>
+  <ng-template #footer>
+    <p-button label="Cancel" severity="secondary" [disabled]="deleting()" (onClick)="deleteVisible.set(false)" />
+    <p-button label="Delete" severity="danger" [loading]="deleting()" [disabled]="deleting()" (onClick)="deleteIdentity()" />
+  </ng-template>
+</app-modal>
 @if (editing && identity) {
   <app-identity-editor [identity]="identity" (closed)="editing = false" (saved)="loadIdentity()" (changed)="loadIdentity()" />
 }

@@ -1,14 +1,9 @@
-app-dayview {
+// Day View content can live on the page or in a modal attached to body.
+app-dayview { display: block; }
+app-dayview, .dayview-detail-dialog {
 a {
   text-decoration: none;
   color: var(--app-link);
-}
-
-// ============================================================================
-// Component Host
-// ============================================================================
-& {
-  display: block;
 }
 
 // ============================================================================

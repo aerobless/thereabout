@@ -13,10 +13,9 @@
   </span>
 </button>
 
-<p-dialog [header]="'Heart rate — ' + (date | date:'dd.MM.yyyy')" styleClass="heart-history-dialog dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
-  [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false" [dismissableMask]="true"
-  [closeOnEscape]="true" [focusTrap]="true" [blockScroll]="true" closeAriaLabel="Close heart rate"
-  (onHide)="card.focus()" [style]="dialogStyle">
+<app-modal [header]="'Heart rate — ' + (date | date:'dd.MM.yyyy')" styleClass="heart-history-dialog dayview-detail-dialog"
+  [(visible)]="visible" closeAriaLabel="Close heart rate"
+  (onHide)="card.focus()" [dialogStyle]="dialogStyle">
   @if (visible) {
     <div class="chart-header"><h3>Daily heart rate</h3><div class="range-controls" aria-label="Heart rate chart range">
       <button class="action" type="button" [attr.aria-pressed]="days === 7" (click)="selectRange(7)">7 days</button>
@@ -50,4 +49,4 @@
       </table></div></details>
     }
   }
-</p-dialog>
+</app-modal>

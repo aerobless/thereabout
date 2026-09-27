@@ -21,6 +21,7 @@ These instructions extend the repository's root `agents.md` for work in `fronten
 
 ## Layout and responsive behaviour
 
+- Use `AppModalComponent` (`app-modal`) for all modal dialogs, including confirmations. It owns the blurred backdrop, backdrop/Escape dismissal, focus trap, scroll locking and mobile fullscreen layout. Supply content, an optional `#footer`, title and desktop size; use `dismissible=false` only while an operation or nested editor prevents closing. Do not introduce direct `p-dialog`/`p-confirmdialog` instances or duplicate modal chrome.
 - Give modal content space below the header and between inputs and buttons. Size dialogs for the normal amount of content, using columns where helpful, while keeping them usable within narrow and short viewports. Avoid unnecessary nested scrolling.
 - Use compact account cards with the logo beside the name, value and details. On account details, show the identity card before the balance card, with a clearly separated back link.
 - Reuse the shared website-icon/account-logo mechanism for configurable bank websites, including a graceful fallback. Do not hardcode bank-specific icon URLs in page templates.
@@ -44,6 +45,7 @@ These instructions extend the repository's root `agents.md` for work in `fronten
 ## Angular conventions
 
 - For new or substantially revised code, use standalone components, signals for local state, `computed` for derived state, `input()`/`output()`, native control flow and `host` bindings. Use OnPush together with reactive state; do not switch change detection without adapting asynchronous updates.
+- Angular runs zoneless: async UI changes (HTTP, polling, promises; success, error and cleanup) must notify through template-read signals/`AsyncPipe`, or `markForCheck()` for existing mutable state; `Eager` alone is insufficient. Test delayed responses with `whenStable()`, without an extra click or manual `detectChanges()` after the response.
 - Preserve strict typing. Prefer inference and `unknown` with narrowing; do not hide type errors with `any` or unchecked casts.
 - Keep templates simple and feature routes lazy. Avoid unrelated syntax-only rewrites.
 - Do not add `::ng-deep` or other deep combinators. Prefer PrimeNG configuration, styles owned by the component or narrowly scoped shared styles. Replace existing deep selectors when substantially changing that area.

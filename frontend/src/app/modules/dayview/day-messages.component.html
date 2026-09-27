@@ -24,10 +24,9 @@
           }
         </span>
       </button>
-<p-dialog [header]="'Messages — ' + (day.selectedDate() | date:'dd.MM.yyyy')" styleClass="messages-dialog dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
-  [(visible)]="state.messagesDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
-  [closeOnEscape]="true" [dismissableMask]="true" [focusTrap]="true" [blockScroll]="true" closeAriaLabel="Close messages"
-  [style]="{ width: '960px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '85dvh' }"
+<app-modal [header]="'Messages — ' + (day.selectedDate() | date:'dd.MM.yyyy')" styleClass="messages-dialog dayview-detail-dialog"
+  [(visible)]="state.messagesDialogVisible" closeAriaLabel="Close messages"
+  [dialogStyle]="{ width: '960px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '85dvh' }"
   (onHide)="messagesCard.focus()">
   @if (state.messagesDialogVisible()) {
     @if (state.messagesLoading()) {
@@ -86,4 +85,4 @@
   <ng-template #footer>
     <a routerLink="/messages">All messages</a>
   </ng-template>
-</p-dialog>
+</app-modal>

@@ -79,9 +79,8 @@
 <ng-content select="[location-status]" />
 
 
-<p-dialog header="Edit Location" [modal]="true" [visible]="draft !== null" (visibleChange)="!$event && cancel.emit()"
-  appendTo="body" [draggable]="false" [resizable]="false" [closable]="!saving" [closeOnEscape]="!saving"
-  [style]="{width: '28rem', maxWidth: 'calc(100vw - 2rem)'}">
+<app-modal header="Edit Location" [visible]="draft !== null" (visibleChange)="!$event && cancel.emit()"
+  [dialogStyle]="{width: '28rem', maxWidth: 'calc(100vw - 2rem)'}" [dismissible]="!saving">
   @if (draft; as current) {
     <div class="edit-fields">
       <label for="location-time">Date &amp; Time</label>
@@ -97,4 +96,4 @@
       <p-button label="Save" [loading]="saving" [disabled]="saving || !validDraft" (onClick)="save.emit()" />
     </div>
   }
-</p-dialog>
+</app-modal>

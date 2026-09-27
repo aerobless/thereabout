@@ -25,11 +25,10 @@
           }
         </span>
       </button>
-<p-dialog [header]="'Steps — ' + (day.selectedDate() | date:'dd.MM.yyyy')" styleClass="messages-dialog steps-dialog dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
-  [(visible)]="state.stepsDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
-  [closeOnEscape]="true" [dismissableMask]="true" [focusTrap]="true" [blockScroll]="true"
+<app-modal [header]="'Steps — ' + (day.selectedDate() | date:'dd.MM.yyyy')" styleClass="messages-dialog steps-dialog dayview-detail-dialog"
+  [(visible)]="state.stepsDialogVisible"
   closeAriaLabel="Close steps" (onHide)="stepsCard.focus()"
-  [style]="{ width: '960px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '85dvh' }">
+  [dialogStyle]="{ width: '960px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '85dvh' }">
   @if (state.stepsDialogVisible()) {
     @if (state.stepsLoading()) {
       <p role="status">Loading step history…</p>
@@ -105,4 +104,4 @@
       </details>
     }
   }
-</p-dialog>
+</app-modal>

@@ -3,7 +3,7 @@ import {DatePipe, DecimalPipe, NgTemplateOutlet} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {RouterLink} from '@angular/router';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
-import {DialogModule} from 'primeng/dialog';
+import { AppModalComponent } from '../../shared/modal/app-modal.component';
 import {finalize, interval, Observable, of, switchMap} from 'rxjs';
 import {CalendarOccurrence, CalendarService, HealthService, LauncherCollection, LauncherGroup, LauncherImport, LauncherService, LauncherShortcut, LauncherShortcutInput} from '../../../../generated/backend-api/thereabout';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
@@ -17,7 +17,7 @@ interface ShortcutDraft extends LauncherShortcutInput {id?: number}
 
 @Component({
   selector:'app-launcher',
-  imports:[FormsModule,RouterLink,DatePipe,DecimalPipe,DialogModule,NgTemplateOutlet],
+  imports:[FormsModule,RouterLink,DatePipe,DecimalPipe,AppModalComponent,NgTemplateOutlet],
   templateUrl:'./launcher.component.html',
   styleUrls:['./launcher.component.scss','./launcher-editor.scss'],
   changeDetection:ChangeDetectionStrategy.OnPush

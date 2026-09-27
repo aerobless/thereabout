@@ -49,3 +49,5 @@ a {
   :host ::ng-deep .card-header {flex-wrap: wrap;}
   :host ::ng-deep td {overflow-wrap: anywhere;}
 }
+
+.identity-actions {display: flex; flex-wrap: wrap; gap: .75rem;}

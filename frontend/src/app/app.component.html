@@ -1,2 +1,8 @@
+@if (currentUser.impersonatedUser(); as user) {
+  <div class="impersonation-banner" role="status" aria-live="polite">
+    <span>Impersonating <strong>{{ user.shortName }}</strong></span>
+    <button type="button" aria-label="Stop impersonation" title="Stop impersonation" (click)="currentUser.stopImpersonation()">×</button>
+  </div>
+}
 <thereabout-app-shell><router-outlet /></thereabout-app-shell>
 <p-toast />

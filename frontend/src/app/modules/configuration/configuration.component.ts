@@ -1,3 +1,4 @@
+import {ImpersonationSettingsComponent} from './impersonation-settings.component';
 import {FinanceMcpSettingsComponent} from './finance-mcp-settings.component';
 import {GoogleCalendarSettingsComponent} from '../calendar/google-calendar-settings.component';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
@@ -41,6 +42,7 @@ interface ImportTypeOption {
 @Component({
     selector: 'app-configuration',
     imports: [
+    ImpersonationSettingsComponent,
     GoogleCalendarSettingsComponent,
     FinanceMcpSettingsComponent,
     ButtonModule,

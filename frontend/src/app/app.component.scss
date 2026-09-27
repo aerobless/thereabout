@@ -1,0 +1,13 @@
+
+.impersonation-banner {
+  position: fixed; top: max(.75rem, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+  z-index: 1200; display: flex; align-items: center; gap: .75rem;
+  width: max-content; max-width: calc(100vw - 2rem); padding: .4rem .5rem .4rem 1rem;
+  color: #422006; background: #fef3c7; border: 1px solid #d97706; border-radius: .65rem;
+  box-shadow: 0 4px 18px #0002;
+  span {min-width: 0; overflow-wrap: anywhere;}
+  button {flex-shrink: 0; width: 2.5rem; height: 2.5rem; border: 0; background: transparent;
+    color: inherit; font-size: 1.5rem; cursor: pointer; border-radius: .4rem;}
+  button:hover {background: #fde68a;}
+  button:focus-visible {outline: 2px solid #92400e;}
+}

@@ -1,23 +1,20 @@
-import {CreateUserDialogComponent} from './create-user-dialog/create-user-dialog.component';
+import {IdentityEditorComponent} from './identity-editor/identity-editor.component';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {RouterModule} from '@angular/router';
 import {ButtonModule} from 'primeng/button';
 import {CardModule} from 'primeng/card';
-import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {DialogModule} from 'primeng/dialog';
-import {FloatLabelModule} from 'primeng/floatlabel';
 import {InputTextModule} from 'primeng/inputtext';
 import {TableModule} from 'primeng/table';
 import {TagModule} from 'primeng/tag';
 import {ToastModule} from 'primeng/toast';
 import {TooltipModule} from 'primeng/tooltip';
 import {SelectModule} from 'primeng/select';
-import {CheckboxModule} from 'primeng/checkbox';
 import {IconFieldModule} from 'primeng/iconfield';
 import {InputIconModule} from 'primeng/inputicon';
-import {ConfirmationService, MessageService} from 'primeng/api';
+import {MessageService} from 'primeng/api';
 import {
     Identity,
     IdentityInApplication,
@@ -28,33 +25,29 @@ import {
 @Component({
     selector: 'app-identities',
     imports: [
-        CreateUserDialogComponent,
+        IdentityEditorComponent,
         FormsModule,
         RouterModule,
         ButtonModule,
         CardModule,
-        ConfirmDialogModule,
         DialogModule,
-        FloatLabelModule,
         InputTextModule,
         TableModule,
         TagModule,
         ToastModule,
         TooltipModule,
         SelectModule,
-        CheckboxModule,
         IconFieldModule,
         InputIconModule,
     ],
-    providers: [ConfirmationService, MessageService],
+    providers: [MessageService],
     templateUrl: './identities.component.html',
     changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './identities.component.scss'
 })
 export class IdentitiesComponent implements OnInit {
-  private readonly refresh = registerRefresh(() => { this.loadIdentities(); this.loadUnlinkedAppIdentities(); }, () => this.identityDialogVisible || this.linkDialogVisible || !!this.creatingUser);
+  private readonly refresh = registerRefresh(() => { this.loadIdentities(); this.loadUnlinkedAppIdentities(); }, () => this.identityDialogVisible || this.linkDialogVisible);
 
-    creatingUser: Identity | null = null;
     identities: Identity[] = [];
     unlinkedAppIdentities: IdentityInApplication[] = [];
     unlinkedGroupIdentities: IdentityInApplication[] = [];
@@ -63,8 +56,6 @@ export class IdentitiesComponent implements OnInit {
 
     // Identity dialog
     identityDialogVisible = false;
-    editingIdentity: Identity = this.emptyIdentity();
-    isNewIdentity = true;
 
     // Link dialog
     linkDialogVisible = false;
@@ -74,7 +65,6 @@ export class IdentitiesComponent implements OnInit {
     constructor(
         private readonly identityService: IdentityService,
         private readonly identityInApplicationService: IdentityInApplicationService,
-        private readonly confirmationService: ConfirmationService,
         private readonly messageService: MessageService,
     ) {}
 
@@ -96,66 +86,7 @@ export class IdentitiesComponent implements OnInit {
         }, error: () => {}});
     }
 
-    // --- Identity CRUD ---
-
-    showNewIdentityDialog(): void {
-        this.editingIdentity = this.emptyIdentity();
-        this.isNewIdentity = true;
-        this.identityDialogVisible = true;
-    }
-
-    showEditIdentityDialog(identity: Identity): void {
-        this.editingIdentity = {...identity, identityInApplications: [...(identity.identityInApplications || [])]};
-        this.isNewIdentity = false;
-        this.identityDialogVisible = true;
-    }
-
-    saveIdentity(): void {
-        if (this.isNewIdentity) {
-            this.identityService.createIdentity(this.editingIdentity).subscribe({
-                next: () => {
-                    this.messageService.add({severity: 'success', summary: 'Created', detail: 'Identity created successfully'});
-                    this.identityDialogVisible = false;
-                    this.loadIdentities();
-                },
-                error: () => {
-                    this.messageService.add({severity: 'error', summary: 'Error', detail: 'Failed to create identity'});
-                }
-            });
-        } else {
-            this.identityService.updateIdentity(this.editingIdentity.id, this.editingIdentity).subscribe({
-                next: () => {
-                    this.messageService.add({severity: 'success', summary: 'Updated', detail: 'Identity updated successfully'});
-                    this.identityDialogVisible = false;
-                    this.loadIdentities();
-                },
-                error: () => {
-                    this.messageService.add({severity: 'error', summary: 'Error', detail: 'Failed to update identity'});
-                }
-            });
-        }
-    }
-
-    confirmDeleteIdentity(identity: Identity): void {
-        this.confirmationService.confirm({
-            message: `Are you sure you want to delete "${identity.shortName}"?`,
-            header: 'Delete Identity',
-            icon: 'pi pi-exclamation-triangle',
-            acceptButtonStyleClass: 'p-button-danger',
-            accept: () => {
-                this.identityService.deleteIdentity(identity.id).subscribe({
-                    next: () => {
-                        this.messageService.add({severity: 'success', summary: 'Deleted', detail: 'Identity deleted successfully'});
-                        this.loadIdentities();
-                        this.loadUnlinkedAppIdentities();
-                    },
-                    error: () => {
-                        this.messageService.add({severity: 'error', summary: 'Error', detail: 'Failed to delete identity'});
-                    }
-                });
-            }
-        });
-    }
+    showNewIdentityDialog(): void { this.identityDialogVisible = true; }
 
     // --- Link / Unlink ---
 
@@ -182,30 +113,6 @@ export class IdentitiesComponent implements OnInit {
                 this.messageService.add({severity: 'error', summary: 'Error', detail: 'Failed to link application identity'});
             }
         });
-    }
-
-    unlinkAppIdentity(appIdentity: IdentityInApplication): void {
-        this.identityInApplicationService.unlinkIdentityInApplication(appIdentity.id).subscribe({
-            next: () => {
-                this.messageService.add({severity: 'success', summary: 'Unlinked', detail: 'Application identity unlinked successfully'});
-                this.loadIdentities();
-                this.loadUnlinkedAppIdentities();
-                // Update the editing dialog's list if open
-                if (this.identityDialogVisible && this.editingIdentity.identityInApplications) {
-                    this.editingIdentity.identityInApplications =
-                        this.editingIdentity.identityInApplications.filter(a => a.id !== appIdentity.id);
-                }
-            },
-            error: () => {
-                this.messageService.add({severity: 'error', summary: 'Error', detail: 'Failed to unlink application identity'});
-            }
-        });
-    }
-
-    // --- Helpers ---
-
-    private emptyIdentity(): Identity {
-        return {id: 0, shortName: '', isGroup: false, relationship: '', identityInApplications: []};
     }
 
     cloudflareEmail(identity: Identity): string | undefined {

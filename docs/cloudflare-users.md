@@ -1,6 +1,6 @@
 # Thereabout users through Cloudflare Access
 
-An existing person identity becomes a user through **Create User**, available in the identity list and detail. Enter the email used to sign in through Cloudflare Access. The server trims and lowercases it, validates it, and atomically stores `identity.is_user` and a `CLOUDFLARE` application identity. The person's stable identity ID and `shortName` remain the source of identity and display name. Existing chat links are retained. Groups cannot become users.
+An existing person identity becomes a user through **Create User**, available in the Actions card on the identity detail page. Enter the email used to sign in through Cloudflare Access. The server trims and lowercases it, validates it, and atomically stores `identity.is_user` and a `CLOUDFLARE` application identity. The person's stable identity ID and `shortName` remain the source of identity and display name. Existing chat links are retained. Groups cannot become users.
 
 One email per person is supported in this slice. Repeating the same request is harmless. Conflicting requests return HTTP 409 without a partial user flag or link. Generic identity edits preserve the flag and mapping, including stale payloads. Generic link/unlink cannot modify Cloudflare links; users cannot become groups or be deleted through generic identity deletion. Email changes and deactivation are not provided.
 
@@ -33,11 +33,17 @@ Only `Cf-Access-Jwt-Assertion` is used. Signature, issuer, audience, expiration 
 | `verification_unavailable` | Technical JWT verification/key retrieval failure. |
 | `disabled` | Recognition not configured/enabled. |
 
-Non-resolved states never contain a resolved identity or name. The frontend uses a generic time-based greeting while loading, clears any previous identity on reload, and displays **No Thereabout user assigned.** for `unlinked`. Technical/HTTP failures show a neutral verification-unavailable state. The in-memory user is cleared when hiding/leaving the page and refreshed when returning, including browser back/forward-cache restoration. Nothing is stored in local/session storage. There is no local impersonation or default Theo fallback.
+Non-resolved states never contain a resolved identity or name. The frontend uses a generic time-based greeting while loading, clears any previous identity on reload, and displays **No Thereabout user assigned.** for `unlinked`. Technical/HTTP failures show a neutral verification-unavailable state. The in-memory user is cleared when hiding/leaving the page and refreshed when returning, including browser back/forward-cache restoration. Nothing is stored in local/session storage. Production has no impersonation or default Theo fallback. Local development has the explicit preview described below.
 
 ## Local development and verification
 
-Keep development servers bound to loopback. Leave recognition disabled for ordinary local UI work; the greeting stays generic and initial mapping remains possible. Production has no development user override. JWT tests generate their own local RSA keys and synthetic claims; browser greeting fixtures are test-only and do not establish a real Cloudflare session.
+Keep development servers bound to loopback. Leave recognition disabled for ordinary local UI work; the greeting stays generic and initial mapping remains possible.
+
+In **Configuration → Local impersonation**, select an existing person with `isUser=true` and choose **Start impersonation**. A fixed banner at the top centre shows the selected name; its **×** button ends simulation and re-fetches the verified current user. Selection survives SPA navigation and tab visibility changes, but a full reload ends it. It is kept only in memory in the current tab.
+
+This preview is available only when Angular `isDevMode()` is true **and** the browser hostname is `localhost`, `127.0.0.1` or `[::1]`. The production bundle hides the card even on localhost, and the service rejects attempts to start simulation outside that boundary. No selected identity is sent to the backend, and no authentication header, cookie, mapping or database flag is changed. The backend's verified Cloudflare identity and finance/MCP authentication remain authoritative. Preview changes the frontend's current-user identity and greeting; domain tables remain shared until ownership filtering is implemented.
+
+The identity list now links to each identity's detail page. Its separate **Actions** card contains Create User, Edit Identity and Delete Identity. The shared editor retains chat-link editing and protects Cloudflare links. User deletion remains unavailable. JWT tests generate their own local RSA keys and synthetic claims; browser greeting fixtures are test-only and do not establish a real Cloudflare session.
 
 **Use a disposable MariaDB container, never the normal development or production database.** Existing repository tests can remove data, and legacy migration V5 explicitly names schema `thereabout`. Use that schema name inside a separate container on another loopback port:
 
@@ -77,7 +83,7 @@ This work does not deploy, change Cloudflare policies, or create real mappings. 
 
 1. Deploy the tested build separately. Configure recognition with the correct team issuer and browser application's audience. Keep finance/MCP configuration intact. Confirm the edge forwards the signed assertion to `/backend/api/v1/current-user`; never copy tokens into reports or logs.
 2. In a clean browser profile sign in through Cloudflare as the first real account. Before mapping, verify a generic greeting and **No Thereabout user assigned.**, with an `unlinked` response and `Cache-Control: no-store`. Confirm identity management is usable.
-3. Find that person's existing identity (for example Theo). Choose **Create User**, enter that account's email, and submit. Verify the toast, User status, exactly one Cloudflare link, unchanged identity ID, and retained chat identities. Confirm the launcher now greets that person's `shortName`.
+3. Open that person's existing identity (for example Theo) by clicking the name in the list. In its **Actions** card, choose **Create User**, enter that account's email, and submit. Verify the toast, User status, exactly one Cloudflare link, unchanged identity ID, and retained chat identities. Confirm the launcher now greets that person's `shortName`.
 4. In a second clean browser profile sign in with the second real Cloudflare account (for example Heidi). Verify it does not greet Theo before or during loading. Map Heidi's existing identity through its detail page and verify the launcher greets Heidi. Check `/current-user` returns Heidi's stable ID and shortName, distinct from Theo's.
 5. Attempt assigning the same email to another person. The dialog must retain the email and show an actionable conflict; the other person must remain a non-user. Verify groups have no Create User action. Edit an unrelated contact/chat identity to confirm the existing workflow remains usable.
 6. Repeat the modal and successful detail/list refresh at desktop and narrow phone widths. Verify keyboard focus, Cancel, required email, error visibility, pending/double-click behavior, status and linked email.
@@ -94,3 +100,10 @@ This work does not deploy, change Cloudflare policies, or create real mappings. 
 - Launcher browser checks used explicitly synthetic `current-user` responses for unlinked, Theo, and Heidi; frontend tests cover loading, old-response cancellation and clearing/restoring state across hidden pages and back/forward-cache navigation. These checks do **not** constitute live Cloudflare acceptance. The local browser preview had no uncaught page errors; it reported the existing missing local PrimeUI license asset/configuration warning.
 
 No production deployment, Cloudflare policy/settings changes, or real-person mappings were performed. Local verification servers and the disposable database were stopped after verification. Existing development services on ports 4200, 9050 and 3306 were left untouched.
+
+
+## Follow-up verification: actions and local impersonation
+
+The UI follow-up passed 193 frontend tests and the Node 24 production build. Backend code and APIs did not change. Browser verification uses the isolated database and localhost preview, with real API identity editing and user selection. The production bundle was also served locally to verify that the impersonation card/banner are absent even on localhost. Existing Day View stylesheet budget and absent local PrimeUI license warnings remain unrelated to this change.
+
+Desktop (1440px) and narrow (390px) checks confirmed the separate Actions card, no per-row person actions, identity creation/edit/deletion against the disposable database, user selection, the persistent top-centre banner, SPA greeting changes, and restoring the verified state through the close button. The narrow configuration page and banner have no horizontal overflow. The review preview is left running on port 4201 with the isolated backend on 9051 and disposable MariaDB on 3337; normal local services on 4200/9050/3306 are unchanged.

@@ -1,30 +1,8 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  OnInit,
-  signal,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, computed, inject, input } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
-import { firstValueFrom } from "rxjs";
-import {
-  FinanceContext,
-  FinanceDialogs,
-  FinanceAccount,
-  FinanceAccountKind,
-  FinanceCategory,
-  FinanceTransaction,
-  FinanceValuationPreview,
-  assetKinds,
-  loadResource,
-  localNow,
-  today,
-  errorMessage,
-} from "../shared/finance-ui";
+import { ReactiveFormsModule } from "@angular/forms";
+
+import { FinanceContext, FinanceDialogs, FinanceTransaction, loadResource } from "../shared/finance-ui";
 @Component({
   selector: "finance-history-dialog",
   standalone: true,

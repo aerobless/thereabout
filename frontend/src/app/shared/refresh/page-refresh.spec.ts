@@ -1,3 +1,5 @@
+import {FileImportComponent} from '../../modules/configuration/file-import.component';
+import {TelegramSettingsComponent} from '../../modules/configuration/telegram-settings.component';
 import {TestBed} from '@angular/core/testing';
 import {ActivatedRoute, provideRouter} from '@angular/router';
 import {of, Subject, throwError} from 'rxjs';
@@ -45,39 +47,53 @@ describe('Page refresh integration', () => {
     await TestBed.compileComponents();
   });
 
-  it('refreshes all seven Day View sources without changing dates, map position or card ranges', async () => {
+it('refreshes all seven Day View sources without changing dates, map position or card ranges', async () => {
     // Pending responses let us inspect preserved data and completion across independent cards.
     const pending = new Subject<never>();
-    for (const fn of [locations.getLocations, health.getHealthDataByDateRange, messages.getMessages, choices.getChoicesHistory, weight.getWeightProgress, heart.getHeartRateHistory, heart.getHrvHistory]) fn.mockReturnValue(pending);
+    for (const fn of [locations.getLocations, health.getHealthDataByDateRange, messages.getMessages, choices.getChoicesHistory, weight.getWeightProgress, heart.getHeartRateHistory, heart.getHrvHistory])
+        fn.mockReturnValue(pending);
     const page = TestBed.createComponent(DayviewComponent).componentInstance;
-    page.selectedDate = new Date(2026, 8, 15); page.center = {lat: 12, lng: 34}; page.zoom = 9; page.selectedDaySteps = 1234;
+    page.selectedDate = new Date(2026, 8, 15);
+    page.location.center.set({ lat: 12, lng: 34 });
+    page.location.zoom.set(9);
+    page.health.selectedDaySteps.set(1234);
     const cards = [TestBed.createComponent(ChoicesCardComponent).componentInstance, TestBed.createComponent(WeightCardComponent).componentInstance, TestBed.createComponent(HeartRateCardComponent).componentInstance, TestBed.createComponent(HrvCardComponent).componentInstance];
-    for (const card of cards) { card.date = '2026-09-15'; card.days = 7; }
-    const coordinator = TestBed.inject(RefreshCoordinator); const run = coordinator.refresh();
+    for (const card of cards) {
+        card.date = '2026-09-15';
+        card.days = 7;
+    }
+    const coordinator = TestBed.inject(RefreshCoordinator);
+    const run = coordinator.refresh();
     expect(locations.getLocations).toHaveBeenCalledWith('2026-09-15', '2026-09-15');
     expect(health.getHealthDataByDateRange).toHaveBeenCalledWith('2026-07-18', '2026-09-15');
     expect(messages.getMessages).toHaveBeenCalledWith('2026-09-15');
-    for (const fn of [choices.getChoicesHistory, weight.getWeightProgress, heart.getHeartRateHistory, heart.getHrvHistory]) expect(fn).toHaveBeenCalledWith('2026-09-15', 7);
-    expect(page.selectedDaySteps).toBe(1234); expect(page.stepsLoading).toBe(false);
-    expect(page.center).toEqual({lat: 12, lng: 34}); expect(page.zoom).toBe(9);
+    for (const fn of [choices.getChoicesHistory, weight.getWeightProgress, heart.getHeartRateHistory, heart.getHrvHistory])
+        expect(fn).toHaveBeenCalledWith('2026-09-15', 7);
+    expect(page.health.selectedDaySteps()).toBe(1234);
+    expect(page.health.stepsLoading()).toBe(false);
+    expect(page.location.center()).toEqual({ lat: 12, lng: 34 });
+    expect(page.location.zoom()).toBe(9);
     expect(coordinator.refreshing()).toBe(true);
-    pending.complete(); await run; expect(coordinator.refreshing()).toBe(false);
-  });
-
-  it('keeps health and message values on failure while applying successful location updates', async () => {
+    pending.complete();
+    await run;
+    expect(coordinator.refreshing()).toBe(false);
+});
+it('keeps health and message values on failure while applying successful location updates', async () => {
     locations.getLocations.mockReturnValue(of([]));
     health.getHealthDataByDateRange.mockReturnValue(throwError(() => new Error('offline')));
     messages.getMessages.mockReturnValue(throwError(() => new Error('offline')));
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => { });
     const page = TestBed.createComponent(DayviewComponent).componentInstance;
-    page.selectedDaySteps = 1234; page.activeEnergyRecords = [{date: '2026-09-15', qty: 500}];
-    page.messages = [{id: 1, type: 'text', source: 'Telegram', sender: {name: 'Sender'}, receiver: {name: 'Receiver'}, timestamp: '2026-09-15T12:00:00Z', body: 'kept'}];
+    page.health.selectedDaySteps.set(1234);
+    page.health.activeEnergyRecords.set([{ date: '2026-09-15', qty: 500 }]);
+    page.messages.messages.set([{ id: 1, type: 'text', source: 'Telegram', sender: { name: 'Sender' }, receiver: { name: 'Receiver' }, timestamp: '2026-09-15T12:00:00Z', body: 'kept' }]);
     await TestBed.inject(RefreshCoordinator).refresh();
-    expect(page.selectedDaySteps).toBe(1234); expect(page.activeEnergyRecords).toEqual([{date: '2026-09-15', qty: 500}]);
-    expect(page.messages[0].body).toBe('kept'); expect(page.messagesError).toBe(false);
+    expect(page.health.selectedDaySteps()).toBe(1234);
+    expect(page.health.activeEnergyRecords()).toEqual([{ date: '2026-09-15', qty: 500 }]);
+    expect(page.messages.messages()[0].body).toBe('kept');
+    expect(page.messages.messagesError()).toBe(false);
     error.mockRestore();
-  });
-
+});
   it('replays the exact message page, filters and ordering', async () => {
     messages.getMessageList.mockReturnValue(of({content: [], totalElements: 100}));
     const page = TestBed.createComponent(MessagesListComponent).componentInstance;
@@ -115,9 +131,11 @@ describe('Page refresh integration', () => {
     config.getFrontendConfiguration.mockReturnValue(of({})); config.fileImportStatus.mockReturnValue(of({status: 'IN_PROGRESS', progress: 50}));
     config.getTelegramStatus.mockReturnValue(of({status: 'WAIT_CODE'})); linked.getIdentityInApplicationsByApplication.mockReturnValue(of([]));
     const page = TestBed.createComponent(ConfigurationComponent).componentInstance;
-    page.telegramPhone = 'draft'; page.telegramCode = '123'; page.receiverName = 'kept';
+    const imports = TestBed.createComponent(FileImportComponent).componentInstance;
+    const telegram = TestBed.createComponent(TelegramSettingsComponent).componentInstance;
+    telegram.phone.set('draft'); telegram.code.set('123'); imports.receiverName.set('kept');
     await TestBed.inject(RefreshCoordinator).refresh();
-    expect(page.importStatusProgress).toBe(50); expect(page.telegramPhone).toBe('draft'); expect(page.telegramCode).toBe('123'); expect(page.receiverName).toBe('kept');
-    expect(page.telegramPolling).toBe(false); expect(config.getTelegramStatus).toHaveBeenCalledTimes(1);
+    expect(imports.status()?.progress).toBe(50); expect(telegram.phone()).toBe('draft'); expect(telegram.code()).toBe('123'); expect(imports.receiverName()).toBe('kept');
+    expect(config.getTelegramStatus).toHaveBeenCalledTimes(2);
   });
 });

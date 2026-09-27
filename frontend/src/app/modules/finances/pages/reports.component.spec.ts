@@ -26,10 +26,17 @@ describe("Finance report chart updates", () => {
   const fetchReport = vi.fn(() => of(report));
 
   beforeEach(() => {
+    vi.stubGlobal("matchMedia", () => ({
+      matches: false,
+      addEventListener() {},
+      removeEventListener() {},
+    }));
     revision.set(0);
     fetchReport.mockReset().mockReturnValue(of(report));
     // Observe PrimeNG's redraw boundary without requiring a browser canvas in jsdom.
-    vi.spyOn(UIChart.prototype, "initChart").mockImplementation(() => {});
+    vi.spyOn(UIChart.prototype, "initChart").mockImplementation(function (this: UIChart) {
+      this.initialized = true;
+    });
     vi.spyOn(UIChart.prototype, "reinit").mockImplementation(() => {});
     TestBed.configureTestingModule({
       providers: [
@@ -38,7 +45,7 @@ describe("Finance report chart updates", () => {
           provide: FinanceContext,
           useValue: {
             revision,
-            accounts: signal([]),
+            accounts: signal([{ id: 5, name: "Test account" }]),
             money: (value: string) => value,
             api: { client: { financeReportIncomeExpenses: fetchReport } },
           },
@@ -47,7 +54,11 @@ describe("Finance report chart updates", () => {
     });
   });
 
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
 
   async function render() {
     const fixture = TestBed.createComponent(ReportsComponent);
@@ -83,6 +94,40 @@ describe("Finance report chart updates", () => {
     await fixture.whenStable();
     expect(fetchReport).toHaveBeenCalledTimes(1);
     expect(fixture.componentInstance.chart()).toBe(originalData);
+  });
+
+  it("does not redraw on account-option hover, but reloads on selection", async () => {
+    const fixture = await render();
+    const chart = fixture.debugElement.query(By.directive(UIChart))
+      .componentInstance as UIChart;
+    const originalData = chart.data();
+    vi.mocked(UIChart.prototype.reinit).mockClear();
+    const dropdown = fixture.nativeElement.querySelector(
+      '[role="combobox"][aria-label="Report account"]',
+    ) as HTMLElement;
+    dropdown.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const option = Array.from(document.querySelectorAll('[role="option"]')).find(
+      (element) => element.textContent?.trim() === "Test account",
+    );
+    expect(option).toBeDefined();
+    option!.dispatchEvent(new MouseEvent("mouseenter"));
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(chart.data()).toBe(originalData);
+    expect(UIChart.prototype.reinit).not.toHaveBeenCalled();
+    expect(fetchReport).toHaveBeenCalledTimes(1);
+    (option as HTMLElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fetchReport).toHaveBeenCalledTimes(2);
+    expect(fetchReport).toHaveBeenLastCalledWith(
+      fixture.componentInstance.from,
+      fixture.componentInstance.to,
+      5,
+    );
   });
 
   it("updates the chart when the date filter changes", async () => {

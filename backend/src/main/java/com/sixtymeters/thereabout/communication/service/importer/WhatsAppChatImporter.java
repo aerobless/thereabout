@@ -47,7 +47,6 @@ public class WhatsAppChatImporter implements FileImporter {
     @Override
     public void importFile(File file, String receiver) {
         log.info("Starting WhatsApp chat import from file: {}, receiver: {}", file.getName(), receiver);
-        importProgressService.setProgress(1);
 
         try {
             long totalMessages = countMessages(file);
@@ -61,9 +60,6 @@ public class WhatsAppChatImporter implements FileImporter {
         } catch (IOException e) {
             throw new ThereaboutException(HttpStatusCode.valueOf(400),
                     "Failed to read WhatsApp chat file '%s': %s".formatted(file.getName(), e.getMessage()));
-        } finally {
-            importProgressService.reset();
-            cleanupTempFile(file);
         }
 
         log.info("Finished WhatsApp chat import from file: {}", file.getName());
@@ -266,12 +262,4 @@ public class WhatsAppChatImporter implements FileImporter {
         return size;
     }
 
-    private void cleanupTempFile(File file) {
-        try {
-            java.nio.file.Files.deleteIfExists(file.toPath());
-            java.nio.file.Files.deleteIfExists(file.toPath().getParent());
-        } catch (IOException e) {
-            log.warn("Failed to clean up temporary file: {}", file.getAbsolutePath(), e);
-        }
-    }
 }

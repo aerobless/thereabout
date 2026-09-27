@@ -18,9 +18,11 @@ public interface IdentityMapper {
     IdentityMapper INSTANCE = Mappers.getMapper(IdentityMapper.class);
 
     @Mapping(target = "identityInApplications", source = "identityInApplications")
+    @Mapping(source = "user", target = "isUser")
     @Mapping(source = "group", target = "isGroup")
     GenIdentity mapToGenIdentity(IdentityEntity entity);
 
+    @Mapping(target = "isUser", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)

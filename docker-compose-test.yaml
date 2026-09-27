@@ -1,0 +1,18 @@
+name: thereabout-tests
+services:
+  mariadb:
+    image: mariadb:11.8
+    environment:
+      MARIADB_DATABASE: thereabout_test
+      MARIADB_USER: thereabout_test
+      MARIADB_PASSWORD: test-only
+      MARIADB_ROOT_PASSWORD: test-root-only
+    ports:
+      - "127.0.0.1:3307:3306"
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 2s
+      timeout: 5s
+      retries: 30

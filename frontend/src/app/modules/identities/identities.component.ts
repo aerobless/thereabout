@@ -1,3 +1,4 @@
+import {CreateUserDialogComponent} from './create-user-dialog.component';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {FormsModule} from '@angular/forms';
@@ -28,6 +29,7 @@ import {
     selector: 'app-identities',
     imports: [
         FormsModule,
+        CreateUserDialogComponent,
         RouterModule,
         ButtonModule,
         CardModule,
@@ -50,8 +52,9 @@ import {
     styleUrl: './identities.component.scss'
 })
 export class IdentitiesComponent implements OnInit {
-  private readonly refresh = registerRefresh(() => { this.loadIdentities(); this.loadUnlinkedAppIdentities(); }, () => this.identityDialogVisible || this.linkDialogVisible);
+  private readonly refresh = registerRefresh(() => { this.loadIdentities(); this.loadUnlinkedAppIdentities(); }, () => this.identityDialogVisible || this.linkDialogVisible || !!this.createUserIdentity);
 
+    createUserIdentity: Identity | null = null;
     identities: Identity[] = [];
     unlinkedAppIdentities: IdentityInApplication[] = [];
     unlinkedGroupIdentities: IdentityInApplication[] = [];
@@ -182,6 +185,7 @@ export class IdentitiesComponent implements OnInit {
     }
 
     unlinkAppIdentity(appIdentity: IdentityInApplication): void {
+        if (appIdentity.application.toLowerCase() === "cloudflare") return;
         this.identityInApplicationService.unlinkIdentityInApplication(appIdentity.id).subscribe({
             next: () => {
                 this.messageService.add({severity: 'success', summary: 'Unlinked', detail: 'Application identity unlinked successfully'});

@@ -86,7 +86,7 @@ export class OverviewComponent {
       },
     },
   };
-  get chart(): ChartData {
+  readonly chart = computed<ChartData>(() => {
     const data = this.state().data;
     return {
       labels: data?.series.map((p) => p.date) ?? [],
@@ -104,9 +104,11 @@ export class OverviewComponent {
         },
       ],
     };
-  }
+  });
   load() {
     if (!this.from || !this.to || this.from > this.to) return;
+    const current = this.period();
+    if (current.from === this.from && current.to === this.to) return;
     this.period.set({ from: this.from, to: this.to });
   }
   chooseRange() {

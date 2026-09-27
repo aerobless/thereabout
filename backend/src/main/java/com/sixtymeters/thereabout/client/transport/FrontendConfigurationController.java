@@ -2,8 +2,7 @@ package com.sixtymeters.thereabout.client.transport;
 
 import com.sixtymeters.thereabout.client.service.ConfigurationService;
 import com.sixtymeters.thereabout.client.service.ImportProgressService;
-import com.sixtymeters.thereabout.communication.service.importer.FileImporter;
-import com.sixtymeters.thereabout.location.service.LocationHistoryService;
+import com.sixtymeters.thereabout.client.service.FileImportService;
 import com.sixtymeters.thereabout.generated.api.FrontendApi;
 import com.sixtymeters.thereabout.generated.model.GenFileImportStatus;
 import com.sixtymeters.thereabout.generated.model.GenFrontendConfigurationResponse;
@@ -26,17 +25,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 
-import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @RestController
@@ -46,25 +38,20 @@ public class FrontendConfigurationController implements FrontendApi {
     @Value("${thereabout.apiKeys.googleMaps}")
     private String googleMapsApiKey;
 
-    private final LocationHistoryService locationHistoryService;
+    private final FileImportService fileImportService;
     private final ConfigurationService configurationService;
     private final ImportProgressService importProgressService;
     private final GitProperties gitProperties;
-    private final List<FileImporter> fileImporters;
     private final TelegramConnectionService telegramConnectionService;
 
     @Override
     public ResponseEntity<GenFileImportStatus> fileImportStatus() {
-        final var importProgress = importProgressService.getProgress();
-
+        var snapshot = importProgressService.snapshot();
         return ResponseEntity.ok(GenFileImportStatus.builder()
-                .status(mapImportProgressToStatus(importProgress))
-                .progress(new BigDecimal(importProgress))
+                .status(GenFileImportStatus.StatusEnum.valueOf(snapshot.status().name()))
+                .progress(new BigDecimal(snapshot.progress()))
+                .error(snapshot.error())
                 .build());
-    }
-
-    private GenFileImportStatus.StatusEnum mapImportProgressToStatus(int importProgress) {
-        return importProgress == 0 ? GenFileImportStatus.StatusEnum.IDLE : GenFileImportStatus.StatusEnum.IN_PROGRESS;
     }
 
     @Override
@@ -92,42 +79,8 @@ public class FrontendConfigurationController implements FrontendApi {
 
     @Override
     public ResponseEntity<Void> importFromFile(MultipartFile file, GenImportType importType, Optional<String> receiver) {
-        log.info("Received file %s with import type %s via HTTP Endpoint /backend/api/v1/config/import-file"
-                .formatted(file.getOriginalFilename(), importType));
-
-        if (file.isEmpty()) {
-            throw new ThereaboutException(HttpStatusCode.valueOf(400), "file is required");
-        }
-        if (importType == GenImportType.WHATSAPP_CHAT && receiver.filter(value -> !value.isBlank()).isEmpty()) {
-            throw new ThereaboutException(HttpStatusCode.valueOf(400), "receiver is required for WhatsApp imports");
-        }
-
-        final var importDataToBeProcessed = persistTempFileForProcessing(file);
-
-        if (importType == GenImportType.GOOGLE_MAPS_RECORDS) {
-            locationHistoryService.importGoogleLocationHistory(importDataToBeProcessed);
-        } else {
-            FileImporter importer = fileImporters.stream()
-                    .filter(fi -> fi.getSupportedImportType() == importType)
-                    .findFirst()
-                    .orElseThrow(() -> new ThereaboutException(HttpStatusCode.valueOf(400),
-                            "No importer found for import type: %s".formatted(importType)));
-            CompletableFuture.runAsync(() -> importer.importFile(importDataToBeProcessed, receiver.orElse(null)));
-        }
-
+        fileImportService.start(file, importType, receiver);
         return ResponseEntity.noContent().build();
-    }
-
-    private File persistTempFileForProcessing(MultipartFile file) {
-        try {
-            Path tempDir = Files.createTempDirectory("upload");
-            File tempFile = new File(tempDir.toFile(), Objects.requireNonNull(file.getOriginalFilename()));
-            file.transferTo(tempFile);
-            log.info("Stored temporary file %s in %s".formatted(file.getName(), tempFile.getAbsolutePath()));
-            return tempFile;
-        } catch (IOException e) {
-            throw new ThereaboutException(HttpStatusCode.valueOf(500), "Failed to create temporary directory for file upload: %s".formatted(e.getMessage()));
-        }
     }
 
     @Override

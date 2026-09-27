@@ -1,0 +1,108 @@
+      <button #stepsCard type="button" class="daily-stat-card steps-summary-card"
+        [attr.data-step-level]="state.selectedStepProgress()?.level"
+        aria-haspopup="dialog" [attr.aria-expanded]="state.stepsDialogVisible()" (click)="state.stepsDialogVisible.set(true)">
+        <span class="card-header">
+          <i class="fa-solid fa-shoe-prints card-header-icon" aria-hidden="true"></i>
+          <span class="card-header-title">Steps &amp; Distance</span>
+        </span>
+        <span class="daily-stat-content daily-stat-content-two steps-summary-content">
+          @if (state.stepsLoading()) {
+            <span class="daily-stat-value muted">--</span>
+            <span class="daily-stat-unit" role="status">Loading steps…</span>
+          } @else if (state.stepsError()) {
+            <span class="messages-status">Unable to load steps</span>
+          } @else {
+            <span class="daily-stat-line">
+              <span class="daily-stat-value" [class.muted]="state.selectedDaySteps() === null">{{ state.formatSteps(state.selectedDaySteps()) }}</span>
+              <span class="daily-stat-unit">{{ state.isSelectedDayToday ? 'steps so far' : 'steps' }}</span>
+            </span>
+            <span class="step-status">
+              @if (state.selectedStepProgress()?.level === 'exceptional') { <i class="fa-solid fa-fire" aria-hidden="true"></i> }
+              @if (state.selectedStepProgress()?.percentage != null) { {{ state.formatStepPercentage(state.selectedStepProgress()!.percentage) }} · }
+              {{ state.selectedStepProgress()?.label }}
+            </span>
+            <span class="daily-stat-unit">{{ state.formatDistanceKm(state.selectedDayDistanceKm()) }} km</span>
+          }
+        </span>
+      </button>
+<p-dialog [header]="'Steps — ' + (day.selectedDate() | date:'dd.MM.yyyy')" styleClass="messages-dialog steps-dialog dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
+  [(visible)]="state.stepsDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
+  [closeOnEscape]="true" [dismissableMask]="true" [focusTrap]="true" [blockScroll]="true"
+  closeAriaLabel="Close steps" (onHide)="stepsCard.focus()"
+  [style]="{ width: '960px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '85dvh' }">
+  @if (state.stepsDialogVisible()) {
+    @if (state.stepsLoading()) {
+      <p role="status">Loading step history…</p>
+    } @else if (state.stepsError()) {
+      <p role="alert">Unable to load steps. Please try again.</p>
+    } @else if (state.selectedStepProgress(); as progress) {
+      <div class="steps-details">
+        <section class="steps-detail" [attr.data-step-level]="progress.level">
+          <h3>{{ state.isSelectedDayToday ? 'So far' : 'Daily total' }}</h3>
+          <span class="steps-detail-value">{{ state.formatSteps(progress.steps) }}</span>
+          <span class="step-status">
+            @if (progress.level === 'exceptional') { <i class="fa-solid fa-fire" aria-hidden="true"></i> }
+            {{ progress.label }}
+          </span>
+          @if (progress.percentage !== null) {
+            <span>{{ state.formatStepPercentage(progress.percentage) }} · {{ state.stepDifference(progress) }}</span>
+          }
+        </section>
+        <section class="steps-detail">
+          <h3>Previous 30-day average</h3>
+          <span class="steps-detail-value">{{ state.formatSteps(progress.baseline) }}</span>
+          <span>{{ progress.coverage }}/30 days recorded</span>
+          @if (progress.baseline === null || progress.baseline === 0) { <span>Baseline unavailable</span> }
+        </section>
+        <section class="steps-detail">
+          <h3>Next level</h3>
+          @if (progress.stepsToNextLevel !== null) {
+            <span class="steps-detail-value">{{ state.formatSteps(progress.stepsToNextLevel) }}</span>
+            <span>more steps to {{ progress.nextLevel }}</span>
+          } @else if (progress.level === 'exceptional') {
+            <span class="step-status"><i class="fa-solid fa-fire" aria-hidden="true"></i> Exceptional achieved</span>
+          } @else {
+            <span>{{ progress.steps === null ? 'No step data for this day' : 'Baseline unavailable' }}</span>
+          }
+        </section>
+      </div>
+      <div class="steps-chart-heading">
+        <h3>Last 30 days</h3>
+        <span>The outlined bar marks the selected day.</span>
+      </div>
+      @if (!state.hasStepHistory) {
+        <p class="empty-state">No step data for these 30 days.</p>
+      } @else if (state.stepsChartData(); as chartData) {
+        <div class="steps-chart">
+          <p-chart type="bar" [data]="chartData" [options]="state.stepsChartOptions()"
+            [style]="{ width: '100%', height: '320px' }"
+            ariaLabel="Daily steps and each day's previous 30-day average. Details are available in the daily values table below."></p-chart>
+        </div>
+      }
+      <p class="steps-explanation">Each day is compared with its previous 30 calendar days, excluding that day.
+        Missing days are excluded from the average; recorded zeroes count. Today's steps are still in progress.</p>
+      <div class="steps-levels" aria-label="Step levels">
+        <span data-step-level="below">Below 90% · Below baseline</span>
+        <span data-step-level="almost">90–100% · Almost there</span>
+        <span data-step-level="reached">100–110% · Baseline reached</span>
+        <span data-step-level="bonus">110–125% · Bonus</span>
+        <span data-step-level="exceptional">125%+ · Exceptional</span>
+      </div>
+      <details class="steps-daily-values">
+        <summary>Daily values</summary>
+        <div class="steps-values-scroll">
+          <table>
+            <caption>Daily steps and preceding baseline</caption>
+            <thead><tr><th scope="col">Date</th><th scope="col">Steps</th><th scope="col">Average</th><th scope="col">Progress</th><th scope="col">Coverage</th></tr></thead>
+            <tbody>
+              @for (day of state.stepsHistory(); track day.date) {
+                <tr><th scope="row">{{ day.date }}</th><td>{{ state.formatSteps(day.steps) }}</td><td>{{ state.formatSteps(day.baseline) }}</td>
+                  <td>{{ state.formatStepPercentage(day.percentage) }} · {{ day.label }}</td><td>{{ day.coverage }}/30</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </details>
+    }
+  }
+</p-dialog>

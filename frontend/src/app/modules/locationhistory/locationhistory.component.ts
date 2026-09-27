@@ -1,3 +1,4 @@
+import {localDateString, parseLocalDate} from '../../shared/dates/local-date';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 import {Component, OnInit, ChangeDetectionStrategy, DestroyRef, inject} from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
@@ -98,12 +99,12 @@ export class LocationhistoryComponent implements OnInit {
             ++this.heatmapRequestId;
             this.dayViewDataFull = [];
             this.dateRangeViewDataFull = [];
-            const selectedDate = this.parseIsoDate(params['date']);
-            const fromDate = this.parseIsoDate(params['fromDate']);
-            const toDate = this.parseIsoDate(params['toDate']);
+            const selectedDate = parseLocalDate(params['date']);
+            const fromDate = parseLocalDate(params['fromDate']);
+            const toDate = parseLocalDate(params['toDate']);
             const valid = fromDate !== null && toDate !== null && fromDate <= toDate;
-            this.dateRangeFrom = valid ? this.dateToString(fromDate) : undefined;
-            this.dateRangeTo = valid ? this.dateToString(toDate) : undefined;
+            this.dateRangeFrom = valid ? localDateString(fromDate) : undefined;
+            this.dateRangeTo = valid ? localDateString(toDate) : undefined;
             this.embedRangeValid = valid;
             this.embedFromDate = valid ? fromDate : undefined;
             this.embedToDate = valid ? toDate : undefined;
@@ -119,20 +120,7 @@ export class LocationhistoryComponent implements OnInit {
         });
     }
 
-    private parseIsoDate(value: unknown): Date | null {
-        if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-            return null;
-        }
 
-        const [year, month, day] = value.split('-').map(Number);
-        const date = new Date(year, month - 1, day);
-
-        if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-            return null;
-        }
-
-        return date;
-    }
 
     loadHeatmapData(preserve = false) {
         const requestId = ++this.heatmapRequestId;
@@ -141,7 +129,7 @@ export class LocationhistoryComponent implements OnInit {
         this.heatmapLoading = false;
         if (!this.fromDate || !this.toDate || this.fromDate > this.toDate) return;
         this.heatmapLoading = true;
-        this.locationService.getSparseLocations(this.dateToString(this.fromDate), this.dateToString(this.toDate))
+        this.locationService.getSparseLocations(localDateString(this.fromDate), localDateString(this.toDate))
             .pipe(this.refresh.track('heatmap'), takeUntilDestroyed(this.destroyRef)).subscribe({
                 next: locations => {
                     if (requestId !== this.heatmapRequestId) return;
@@ -160,7 +148,7 @@ export class LocationhistoryComponent implements OnInit {
         if (!this.exactDate) return;
         const requestId = ++this.dayRequestId;
         this.dayViewDataFull = [];
-        this.locationService.getLocations(this.dateToString(this.exactDate), this.dateToString(this.exactDate))
+        this.locationService.getLocations(localDateString(this.exactDate), localDateString(this.exactDate))
             .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
                 next: locations => {
                     if (requestId !== this.dayRequestId) return;
@@ -264,7 +252,7 @@ export class LocationhistoryComponent implements OnInit {
         if (!this.dateRangeFrom || !this.dateRangeTo) return;
 
         const url = new URL('/dayview', window.location.origin);
-        url.searchParams.set('date', this.dateToString(this.exactDate));
+        url.searchParams.set('date', localDateString(this.exactDate));
         window.open(url.toString(), '_blank', 'noopener');
     }
 
@@ -292,13 +280,7 @@ export class LocationhistoryComponent implements OnInit {
         }
     }
 
-    dateToString(date: Date) {
-        const year = date.getFullYear().toString().padStart(4, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
 
-        return `${year}-${month}-${day}`;
-    }
 
     resetSearch() {
         this.searchValue = '';

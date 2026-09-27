@@ -309,6 +309,10 @@ components:
           type: boolean
           description: Whether this identity represents a group (e.g. a group chat)
           example: false
+        isUser:
+          type: boolean
+          readOnly: true
+          description: Whether this person is a Thereabout user. Managed through Create User.
         relationship:
           type: string
           description: The relationship to the user

@@ -1,0 +1,79 @@
+paths:
+  CreateUser:
+    post:
+      tags: [users]
+      operationId: createUser
+      summary: Turn an existing person into a user with a Cloudflare email.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '200':
+          description: Updated identity, including its user status and application identities.
+          content:
+            application/json:
+              schema:
+                $ref: 'communication.yaml#/components/schemas/Identity'
+        '400':
+          description: Invalid email, identity ID, or group identity.
+        '401':
+          description: A verified login is required outside local development.
+        '403':
+          description: Request origin is not allowed.
+        '404':
+          description: Identity not found.
+        '409':
+          description: Cloudflare email is already assigned or this user has a different email.
+        '503':
+          description: Cloudflare verification is temporarily unavailable.
+  CurrentUser:
+    get:
+      tags: [users]
+      operationId: getCurrentUser
+      summary: Resolve the current verified Cloudflare login without blocking initial setup.
+      responses:
+        '200':
+          description: Current user or explicit unresolved status. Never cached.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUser'
+components:
+  schemas:
+    CreateUserRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          maxLength: 255
+          description: Cloudflare email, trimmed and matched case-insensitively.
+    CurrentUser:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [AUTHENTICATED, UNASSIGNED, NO_IDENTITY, INVALID_IDENTITY, NOT_CONFIGURED, UNAVAILABLE]
+        identityId:
+          type: number
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
+        displayName:
+          type: string
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"

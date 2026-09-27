@@ -2,6 +2,12 @@
 
 This document provides instructions for AI agents and developers working on the Thereabout project.
 
+## Component guidance and simplicity
+
+- Follow `backend/AGENTS.md` and `frontend/AGENTS.md` for the relevant component.
+- Prefer the simplest design that fully meets the requirements. Do not add speculative abstractions or weaken correctness, security or data integrity to reduce code.
+- Explain constraints and invariants rather than repeating signatures in comments. Keep changes scoped and preserve unrelated work.
+
 ## Running Tests
 
 Only [`backend/pom.xml`](backend/pom.xml) is a Maven project (no root reactor). Run Maven from `backend/`—not `mvn -pl backend` from the repo root.
@@ -20,18 +26,19 @@ This command will:
 
 ## Database Setup for Tests
 
-The tests require a MariaDB database to be available. If the database is unavailable when running tests, you can start it using Docker Compose:
+Use the isolated test instance, never the development or production database:
 
 ```bash
-docker-compose -f docker-compose-development.yaml up -d
+docker compose -f docker-compose-test.yaml up -d --wait
+cd backend && mvn clean install
 ```
 
-This will start a MariaDB container that the tests can connect to. The database will be available on port 3306.
+The instance binds to `127.0.0.1:3307` and uses `thereabout_test` with a dedicated user and storage. Test settings use `THEREABOUT_TEST_DB_URL`, `THEREABOUT_TEST_DB_USER` and `THEREABOUT_TEST_DB_PASSWORD`; the database name must end in `_test`. Tests may delete fixture data. Never reset existing development data without explicit permission.
 
-To stop the database when you're done:
+Stop only the test instance when finished:
 
 ```bash
-docker-compose -f docker-compose-development.yaml down
+docker compose -f docker-compose-test.yaml down
 ```
 
 ## Testing
@@ -66,6 +73,6 @@ Do not use `@Column(name = "...")` when the column name matches Hibernate's auto
 
 ## Notes
 
-- The test profile is configured to use the database connection settings from your environment variables
-- Make sure the database is running before executing tests, otherwise tests will fail with connection errors
-- The `docker-compose-development.yaml` file contains the MariaDB service configuration needed for development and testing
+- Run targeted behavioural tests during implementation, then the relevant full checks. Avoid redundant tests that merely mirror the implementation.
+- Use real domain objects in tests; mock external dependencies and collaborators.
+- The test database must be running before backend integration tests. CI follows the same isolated database naming convention.

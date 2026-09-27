@@ -1,3 +1,4 @@
+import {CurrentUserService} from './shared/users/current-user.service';
 import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 import { MessageService } from 'primeng/api';
@@ -7,7 +8,7 @@ describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
-      providers: [MessageService, provideRouter([])],
+      providers: [MessageService, provideRouter([]), {provide: CurrentUserService, useValue: {refresh: vi.fn()}}],
     }).compileComponents();
   });
 

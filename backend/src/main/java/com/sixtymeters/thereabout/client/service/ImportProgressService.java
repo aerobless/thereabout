@@ -2,27 +2,28 @@ package com.sixtymeters.thereabout.client.service;
 
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-/**
- * Shared service for tracking the progress of file imports across all import types.
- * Progress is represented as a percentage (0 = idle, 1-99 = in progress).
- * Resetting to 0 signals that the import has completed.
- */
+/** One application-wide import. Terminal results survive polling until the next import or restart. */
 @Service
 public class ImportProgressService {
+    public enum State { IDLE, IN_PROGRESS, SUCCEEDED, FAILED }
+    public record Snapshot(State status, int progress, String error) {}
+    private Snapshot snapshot = new Snapshot(State.IDLE, 0, null);
 
-    private final AtomicInteger progress = new AtomicInteger(0);
-
-    public int getProgress() {
-        return progress.get();
+    public synchronized Snapshot snapshot() { return snapshot; }
+    public synchronized int getProgress() { return snapshot.progress(); }
+    public synchronized boolean begin() {
+        if (snapshot.status() == State.IN_PROGRESS) return false;
+        snapshot = new Snapshot(State.IN_PROGRESS, 0, null);
+        return true;
     }
-
-    public void setProgress(int value) {
-        progress.set(value);
+    public synchronized void setProgress(int value) {
+        if (snapshot.status() == State.IN_PROGRESS) {
+            snapshot = new Snapshot(State.IN_PROGRESS, Math.max(0, Math.min(value, 100)), null);
+        }
     }
-
-    public void reset() {
-        progress.set(0);
+    public synchronized void succeed() { snapshot = new Snapshot(State.SUCCEEDED, 100, null); }
+    public synchronized void fail() {
+        snapshot = new Snapshot(State.FAILED, snapshot.progress(),
+                "Import failed. Some records may already have been saved. Check the server log before retrying.");
     }
 }

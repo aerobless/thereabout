@@ -56,6 +56,8 @@ paths:
       responses:
         204:
           description: The file is successfully being imported.
+        409:
+          description: Another file import is already running.
         500:
           $ref: '../thereabout.openapi.yaml#/components/responses/500'
   ConfigTelegram:
@@ -209,6 +211,11 @@ components:
           enum:
             - IN_PROGRESS
             - IDLE
+            - SUCCEEDED
+            - FAILED
+        error:
+          type: string
+          description: Safe failure description. Earlier records may already have been saved.
         progress:
           type: number
           example: 60

@@ -40,6 +40,7 @@ public class TelegramTdlibService {
     private static final int MAX_LOAD_CHATS_ITERATIONS = 50;
     private static final int LOAD_CHATS_WAIT_MS = 800;
 
+    private final TelegramBackfill backfill;
     private final TelegramProperties properties;
     private final TelegramConnectionRepository connectionRepository;
     private final TelegramSyncCheckpointRepository checkpointRepository;
@@ -82,6 +83,9 @@ public class TelegramTdlibService {
         this.checkpointRepository = checkpointRepository;
         this.messageMapper = messageMapper;
         this.messageRepository = messageRepository;
+        this.backfill = new TelegramBackfill(checkpointRepository, messageMapper, messageRepository,
+                resyncCancelRequested, chatTitleCache, this::resolveAndCacheUser,
+                this::resolveSenderUserId, this::resolveSenderUsernameHint);
     }
 
     public ThereaboutClientInteraction getClientInteraction() {
@@ -308,32 +312,6 @@ public class TelegramTdlibService {
         }
     }
 
-    private void fetchChatTitle(long chatId) {
-        SimpleTelegramClient client = clientRef.get();
-        if (client == null) return;
-        client.send(new TdApi.GetChat(chatId))
-                .whenComplete((chat, err) -> {
-                    if (err == null && chat != null) {
-                        chatTitleCache.put(chatId, chat.title != null ? chat.title : "chat-" + chatId);
-                        chatIsGroupCache.put(chatId, chat.type instanceof TdApi.ChatTypeBasicGroup || chat.type instanceof TdApi.ChatTypeSupergroup);
-                    }
-                });
-    }
-
-    private void fetchUserName(long userId) {
-        SimpleTelegramClient client = clientRef.get();
-        if (client == null) return;
-        client.send(new TdApi.GetUser(userId))
-                .whenComplete((user, err) -> {
-                    if (err == null && user != null) {
-                        String name = user.firstName != null ? user.firstName : "";
-                        if (user.lastName != null && !user.lastName.isEmpty()) name += " " + user.lastName;
-                        if (name.isEmpty()) name = "user";
-                        userDisplayNameCache.put(userId, name.trim().isEmpty() ? "user" : name.trim());
-                    }
-                });
-    }
-
     /** Schedule a full backfill on the worker thread (e.g. for manual resync). */
     public void triggerResyncAsync() {
         executor.execute(() -> runFullBackfill(BackfillMode.FORCE_REBUILD));
@@ -388,7 +366,7 @@ public class TelegramTdlibService {
                     log.info("Resync cancelled by user");
                     return;
                 }
-                backfillChat(client, connection, chatIds[i], throttleMs, historyBatchSize);
+                backfill.backfillChat(client, connection, chatIds[i], throttleMs, historyBatchSize);
                 resyncProgress = (i + 1) * 100 / totalChats;
                 if (i < totalChats - 1 && throttleMs > 0) {
                     try {
@@ -489,174 +467,6 @@ public class TelegramTdlibService {
             log.warn("GetChats fallback failed for {} list: {}", listLabel, e.getMessage());
         }
         return new long[0];
-    }
-
-    private void backfillChat(SimpleTelegramClient client, TelegramConnectionEntity connection, long chatId, long throttleMs, int historyBatchSize) {
-        try {
-            TdApi.Chat chat = client.send(new TdApi.GetChat(chatId)).get(1, TimeUnit.MINUTES);
-            String chatTitle = chat != null && chat.title != null ? chat.title : ("chat-" + chatId);
-            chatTitleCache.put(chatId, chatTitle);
-            boolean receiverIsGroup = chat != null && (chat.type instanceof TdApi.ChatTypeBasicGroup || chat.type instanceof TdApi.ChatTypeSupergroup);
-            if (chat != null && chat.type instanceof TdApi.ChatTypeSupergroup supergroupType) {
-                long supergroupId = supergroupType.supergroupId;
-                try {
-                    TdApi.SupergroupFullInfo fullInfo = client.send(new TdApi.GetSupergroupFullInfo(supergroupId)).get(1, TimeUnit.MINUTES);
-                    if (fullInfo != null && fullInfo.upgradedFromBasicGroupId != 0) {
-                        TdApi.Chat basicChat = client.send(new TdApi.CreateBasicGroupChat(fullInfo.upgradedFromBasicGroupId, true)).get(1, TimeUnit.MINUTES);
-                        if (basicChat != null) {
-                            backfillChatHistoryWithReceiverOverride(client, connection, basicChat.id, throttleMs, historyBatchSize,
-                                    String.valueOf(chatId), chatTitle);
-                        }
-                    }
-                } catch (Exception e) {
-                    if (resyncCancelRequested.get()) return;
-                    log.debug("Could not backfill basic group history for supergroup {}: {}", chatId, e.getMessage());
-                }
-            }
-            backfillChatHistory(client, connection, chatId, throttleMs, historyBatchSize, chatTitle, String.valueOf(chatId), chatTitle, receiverIsGroup);
-        } catch (Exception e) {
-            if (resyncCancelRequested.get()) return;
-            log.warn("Backfill failed for chat {}: {}", chatId, e.getMessage());
-        }
-    }
-
-    /** Backfill one chat's history; receiver id/title used for DB and mapper (same as chat when no override). */
-    private void backfillChatHistory(SimpleTelegramClient client, TelegramConnectionEntity connection, long chatId,
-                                     long throttleMs, int historyBatchSize, String chatTitle, String receiverIdForDb, String receiverTitleForDb, boolean receiverIsGroup) {
-        try {
-            var checkpointOpt = checkpointRepository.findByConnectionAndChatId(connection, chatId);
-            if (checkpointOpt.map(TelegramSyncCheckpointEntity::getBackfillComplete).orElse(false)) {
-                log.debug("Skipping chat {} because checkpoint is already complete", chatId);
-                return;
-            }
-            long fromMessageId = checkpointOpt.map(cp -> cp.getLastMessageId() != null ? cp.getLastMessageId() : 0L).orElse(0L);
-            int total = 0;
-            while (true) {
-                if (resyncCancelRequested.get()) return;
-                TdApi.Messages messages = client.send(
-                        new TdApi.GetChatHistory(chatId, fromMessageId, 0, historyBatchSize, false)
-                ).get(1, TimeUnit.MINUTES);
-                if (messages == null || messages.messages == null || messages.messages.length == 0) {
-                    saveCheckpoint(connection, chatId, fromMessageId, true);
-                    log.info("Completed backfill for chat {} after reaching empty history response", chatTitle);
-                    break;
-                }
-                for (TdApi.Message msg : messages.messages) {
-                    if (msg.senderId instanceof TdApi.MessageSenderUser u) resolveAndCacheUser(client, u.userId);
-                }
-                List<MessageEntity> batch = new ArrayList<>();
-                for (TdApi.Message msg : messages.messages) {
-                    String senderUserId = resolveSenderUserId(msg);
-                    String senderUsernameHint = resolveSenderUsernameHint(msg);
-                    MessageEntity entity = messageMapper.toMessageEntity(msg, receiverIdForDb, receiverIdForDb, receiverTitleForDb, receiverIsGroup, senderUserId, senderUsernameHint);
-                    if (entity != null) batch.add(entity);
-                }
-                if (!batch.isEmpty()) {
-                    messageRepository.saveAll(batch);
-                    total += batch.size();
-                }
-                long previousFromMessageId = fromMessageId;
-                long lastId = messages.messages[messages.messages.length - 1].id;
-                boolean progressed = previousFromMessageId == 0 || lastId < previousFromMessageId;
-                saveCheckpoint(connection, chatId, lastId, !progressed);
-                if (!progressed) {
-                    log.info("Completed backfill for chat {} because history pagination stopped progressing at message {}", chatTitle, lastId);
-                    break;
-                }
-                if (messages.messages.length < historyBatchSize) {
-                    log.debug("Continuing backfill for chat {} after short batch of {} messages", chatTitle, messages.messages.length);
-                }
-                fromMessageId = lastId;
-                if (throttleMs > 0) {
-                    try {
-                        Thread.sleep(throttleMs);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException("Resync interrupted", e);
-                    }
-                }
-            }
-            if (total > 0) log.info("Backfilled {} messages for chat {}", total, chatTitle);
-        } catch (Exception e) {
-            if (resyncCancelRequested.get()) return;
-            throw new RuntimeException(e);
-        }
-    }
-
-    /** Backfill basic group history storing messages under supergroup receiver (sourceIdentifier: telegram-{receiverId}-b-{msgId}). */
-    private void backfillChatHistoryWithReceiverOverride(SimpleTelegramClient client, TelegramConnectionEntity connection,
-                                                          long basicChatId, long throttleMs, int historyBatchSize,
-                                                          String receiverIdForDb, String receiverTitleForDb) {
-        try {
-            var checkpointOpt = checkpointRepository.findByConnectionAndChatId(connection, basicChatId);
-            if (checkpointOpt.map(TelegramSyncCheckpointEntity::getBackfillComplete).orElse(false)) {
-                log.debug("Skipping upgraded basic group {} because checkpoint is already complete", basicChatId);
-                return;
-            }
-            long fromMessageId = checkpointOpt.map(cp -> cp.getLastMessageId() != null ? cp.getLastMessageId() : 0L).orElse(0L);
-            int total = 0;
-            while (true) {
-                if (resyncCancelRequested.get()) return;
-                TdApi.Messages messages = client.send(
-                        new TdApi.GetChatHistory(basicChatId, fromMessageId, 0, historyBatchSize, false)
-                ).get(1, TimeUnit.MINUTES);
-                if (messages == null || messages.messages == null || messages.messages.length == 0) {
-                    saveCheckpoint(connection, basicChatId, fromMessageId, true);
-                    log.info("Completed upgraded basic-group backfill for receiver {} after reaching empty history response", receiverIdForDb);
-                    break;
-                }
-                for (TdApi.Message msg : messages.messages) {
-                    if (msg.senderId instanceof TdApi.MessageSenderUser u) resolveAndCacheUser(client, u.userId);
-                }
-                String sourceIdPrefix = "telegram-" + receiverIdForDb + "-b-";
-                List<MessageEntity> batch = new ArrayList<>();
-                for (TdApi.Message msg : messages.messages) {
-                    String senderUserId = resolveSenderUserId(msg);
-                    String senderUsernameHint = resolveSenderUsernameHint(msg);
-                    MessageEntity entity = messageMapper.toMessageEntityWithSourcePrefix(msg, sourceIdPrefix, receiverIdForDb, receiverTitleForDb, true, senderUserId, senderUsernameHint);
-                    if (entity != null) batch.add(entity);
-                }
-                if (!batch.isEmpty()) {
-                    messageRepository.saveAll(batch);
-                    total += batch.size();
-                }
-                long previousFromMessageId = fromMessageId;
-                long lastId = messages.messages[messages.messages.length - 1].id;
-                boolean progressed = previousFromMessageId == 0 || lastId < previousFromMessageId;
-                saveCheckpoint(connection, basicChatId, lastId, !progressed);
-                if (!progressed) {
-                    log.info("Completed upgraded basic-group backfill for receiver {} because history pagination stopped progressing at message {}", receiverIdForDb, lastId);
-                    break;
-                }
-                if (messages.messages.length < historyBatchSize) {
-                    log.debug("Continuing upgraded basic-group backfill for receiver {} after short batch of {} messages", receiverIdForDb, messages.messages.length);
-                }
-                fromMessageId = lastId;
-                if (throttleMs > 0) {
-                    try {
-                        Thread.sleep(throttleMs);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException("Resync interrupted", e);
-                    }
-                }
-            }
-            if (total > 0) log.info("Backfilled {} pre-upgrade messages for supergroup (receiver {})", total, receiverIdForDb);
-        } catch (Exception e) {
-            if (resyncCancelRequested.get()) return;
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void saveCheckpoint(TelegramConnectionEntity connection, long chatId, long lastMessageId, boolean complete) {
-        TelegramSyncCheckpointEntity checkpoint = checkpointRepository.findByConnectionAndChatId(connection, chatId)
-                .orElse(TelegramSyncCheckpointEntity.builder()
-                        .connection(connection)
-                        .chatId(chatId)
-                        .build());
-        checkpoint.setLastMessageId(lastMessageId);
-        checkpoint.setBackfillComplete(complete);
-        checkpointRepository.save(checkpoint);
     }
 
     private void updateConnectionStatus(String authStatus, String phoneNumber) {

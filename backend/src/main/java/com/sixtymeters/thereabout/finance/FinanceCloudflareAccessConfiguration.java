@@ -34,16 +34,10 @@ public class FinanceCloudflareAccessConfiguration {
             && originUri.getUserInfo() == null
             && originUri.getPath().isEmpty(),
         "Finance public origin must be an HTTPS origin without a path");
-    var decoder = NimbusJwtDecoder.withJwkSetUri(issuer + "/cdn-cgi/access/certs").build();
-    decoder.setJwtValidator(validators(issuer, audience));
-    return decoder;
+    return com.sixtymeters.thereabout.shared.access.CloudflareTokens.decoder(issuer, audience);
   }
 
   static OAuth2TokenValidator<Jwt> validators(String issuer, String audience) {
-    return new DelegatingOAuth2TokenValidator<>(
-        JwtValidators.createDefaultWithIssuer(issuer),
-        new JwtClaimValidator<java.util.List<String>>(
-            "aud", value -> value != null && value.contains(audience)),
-        new JwtClaimValidator<java.time.Instant>("exp", value -> value != null));
+    return com.sixtymeters.thereabout.shared.access.CloudflareTokens.validators(issuer, audience);
   }
 }

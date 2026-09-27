@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { localDateString } from '../../shared/dates/local-date';
 import { LocationhistoryComponent } from './locationhistory.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -50,8 +51,8 @@ describe('LocationhistoryComponent', () => {
     const detail = vi.spyOn(locationService, 'getLocations').mockReturnValue(of([]) as any);
     component.ngOnInit();
     queryParams.next({fromDate: '2026-07-14', toDate: '2026-07-16', date: '2026-07-15'});
-    expect(component.dateToString(component.fromDate)).toBe('2026-07-14');
-    expect(component.dateToString(component.toDate)).toBe('2026-07-16');
+    expect(localDateString(component.fromDate)).toBe('2026-07-14');
+    expect(localDateString(component.toDate)).toBe('2026-07-16');
     expect(sparse).toHaveBeenCalledWith('2026-07-14', '2026-07-16');
     expect(detail).not.toHaveBeenCalled();
     queryParams.next({fromDate: '2026-08-01', toDate: '2026-08-02'});
@@ -112,7 +113,7 @@ describe('LocationhistoryComponent', () => {
 
     expect(component.embedMode).toBe(true);
     expect(component.embedRangeValid).toBe(true);
-    expect(component.dateToString(component.exactDate)).toBe('2026-06-13');
+    expect(localDateString(component.exactDate)).toBe('2026-06-13');
     expect(loadHeatmapData).not.toHaveBeenCalled();
     expect(getLocations).toHaveBeenCalledTimes(2);
     expect(getLocations).toHaveBeenCalledWith('2026-06-13', '2026-06-20');
@@ -124,10 +125,10 @@ describe('LocationhistoryComponent', () => {
     component.ngOnInit();
 
     queryParams.next({embed: 'true', fromDate: '2026-06-13', toDate: '2026-06-20', date: '2026-06-16'});
-    expect(component.dateToString(component.exactDate)).toBe('2026-06-16');
+    expect(localDateString(component.exactDate)).toBe('2026-06-16');
 
     queryParams.next({embed: 'true', fromDate: '2026-06-13', toDate: '2026-06-20', date: '2026-06-21'});
-    expect(component.dateToString(component.exactDate)).toBe('2026-06-13');
+    expect(localDateString(component.exactDate)).toBe('2026-06-13');
   });
 
   it('does not load location data for an invalid embed range', () => {
@@ -148,13 +149,13 @@ describe('LocationhistoryComponent', () => {
     const loadDayViewData = vi.spyOn(component, 'loadDayViewData').mockImplementation(() => undefined);
 
     component.decrementEmbedDate();
-    expect(component.dateToString(component.exactDate)).toBe('2026-06-13');
+    expect(localDateString(component.exactDate)).toBe('2026-06-13');
     expect(loadDayViewData).not.toHaveBeenCalled();
 
     component.incrementEmbedDate();
     component.incrementEmbedDate();
     component.incrementEmbedDate();
-    expect(component.dateToString(component.exactDate)).toBe('2026-06-15');
+    expect(localDateString(component.exactDate)).toBe('2026-06-15');
     expect(loadDayViewData).toHaveBeenCalledTimes(2);
     expect(component.canIncrementEmbedDate()).toBe(false);
     expect(component.canDecrementEmbedDate()).toBe(true);

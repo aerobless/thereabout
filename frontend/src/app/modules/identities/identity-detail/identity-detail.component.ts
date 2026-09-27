@@ -1,3 +1,4 @@
+import {CreateUserDialogComponent} from '../create-user-dialog.component';
 import {registerRefresh} from '../../../shared/refresh/refresh-coordinator';
 import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {ActivatedRoute, RouterModule} from '@angular/router';
@@ -10,6 +11,7 @@ import {Identity, IdentityService} from '../../../../../generated/backend-api/th
     selector: 'app-identity-detail',
     imports: [
         RouterModule,
+        CreateUserDialogComponent,
         ButtonModule,
         CardModule,
         TableModule,
@@ -22,6 +24,7 @@ export class IdentityDetailComponent implements OnInit {
   private readonly refresh = registerRefresh(() => this.loadIdentity());
 
     identity: Identity | null = null;
+    createUserVisible = false;
 
     constructor(
         private readonly route: ActivatedRoute,

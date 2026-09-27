@@ -41,7 +41,7 @@ Health cards use the data you import. Missing sleep stages and missing days rema
 - **Location editing on desktop:** add points, drag markers, edit timestamps and details, and delete one or several entries.
 - **Daily photo shortcut:** open Google Photos search for the selected day.
 - **Embeddable map:** display a date-range route with day navigation using `/locationhistory?embed=true&fromDate=YYYY-MM-DD&toDate=YYYY-MM-DD`.
-- **Travel statistics:** country count, days abroad, and a country list with first visit, last visit and days spent.
+- **Travel statistics:** country count and a country list with first visit, last visit and days spent.
 
 ![Location History heatmap showing fictional European trips](documentation/img/location-history.jpg)
 
@@ -152,6 +152,18 @@ Import is atomic and only available for an empty collection, preventing accident
 
 ## API and development
 
+Backend tests use a disposable MariaDB on `127.0.0.1:3307`, database `thereabout_test`:
+
+```sh
+docker compose -f docker-compose-test.yaml up -d --wait
+cd backend && mvn clean install
+```
+
+Use `THEREABOUT_TEST_DB_URL`, `THEREABOUT_TEST_DB_USER` and `THEREABOUT_TEST_DB_PASSWORD` for overrides. A startup guard rejects databases without an `_test` suffix. The dedicated user has no access to development databases. Historical migrations V5 and V14 contain the original schema name; Maven generates unqualified copies under `backend/target/test-migrations` exclusively for tests, leaving production history intact. Stop the test service with `docker compose -f docker-compose-test.yaml down`; its data is disposable.
+
+File imports run one at a time. Configuration reports success and failure separately; an import failure can leave earlier records saved and must not be mistaken for rollback. The last result remains visible until the next import or server restart.
+
+
 - **Swagger UI:** [localhost:9050/swagger-ui/index.html](http://localhost:9050/swagger-ui/index.html)
 - **OpenAPI definition:** [thereabout.openapi.yaml](backend/src/main/resources/thereabout.openapi.yaml)
 - **Stack:** Angular 22, PrimeNG, Chart.js, Google Maps and deck.gl; Spring Boot 4, Java 25 and MariaDB.
@@ -162,7 +174,7 @@ Run checks with a MariaDB instance available and database credentials configured
 
 ```sh
 # From the repository root, with the Compose variables configured:
-docker compose -f docker-compose-development.yaml up -d
+docker compose -f docker-compose-test.yaml up -d --wait
 
 # Backend unit and integration tests, then packaging:
 cd backend

@@ -5,6 +5,8 @@ spring:
     url: jdbc:mariadb://localhost:3306/thereabout
 
 thereabout:
+  users:
+    access-mode: local
   import:
     import-folder: /Users/thwi/git/thereabout/private-test-data
   telegram:

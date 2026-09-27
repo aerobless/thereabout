@@ -22,14 +22,14 @@ jobs:
       mariadb:
         image: mariadb:11.8
         env:
-          MARIADB_DATABASE: thereabout
-          MARIADB_USER: thereabout
+          MARIADB_DATABASE: thereabout_test
+          MARIADB_USER: thereabout_test
           MARIADB_PASSWORD: secret
           MARIADB_ROOT_PASSWORD: verysecret
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mariadb-admin ping --host=127.0.0.1 --port=3306 --user=thereabout --password=secret --silent"
+          --health-cmd="mariadb-admin ping --host=127.0.0.1 --port=3306 --user=thereabout_test --password=secret --silent"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=30
@@ -50,7 +50,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y mariadb-client
-          until mariadb-admin ping -h 127.0.0.1 -P 3306 -u thereabout -psecret --silent; do
+          until mariadb-admin ping -h 127.0.0.1 -P 3306 -u thereabout_test -psecret --silent; do
             echo "Waiting for MariaDB to be ready..."
             sleep 2
           done
@@ -59,9 +59,9 @@ jobs:
       - name: Build with Maven
         working-directory: backend
         env:
-          THEREABOUT_DATABASE: thereabout
-          THEREABOUT_DB_USER: thereabout
-          THEREABOUT_DB_PASSWORD: secret
+          THEREABOUT_TEST_DB_URL: jdbc:mariadb://127.0.0.1:3306/thereabout_test
+          THEREABOUT_TEST_DB_USER: thereabout_test
+          THEREABOUT_TEST_DB_PASSWORD: secret
         run: mvn -B clean install
 
       # FRONTEND BUILD
@@ -87,6 +87,7 @@ jobs:
         run: |
           npm ci
           npm run openapi:generate
+          npm test -- --watch=false
           npm run build
 
       # BUILD AND PUSH DEVELOPMENT TAG

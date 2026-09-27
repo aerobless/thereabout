@@ -7,6 +7,10 @@
   </div>
 
   @if (identity) {
+    @if (createUserVisible) {
+      <app-create-user-dialog [identity]="identity" (dismissed)="createUserVisible = false"
+        (created)="identity = $event; createUserVisible = false" />
+    }
     <p-card>
       <ng-template #header>
         <div class="card-header">
@@ -15,6 +19,13 @@
         </div>
       </ng-template>
       <div class="detail-fields">
+        <div class="detail-field">
+          <span class="field-label">User</span>
+          <span class="field-value">{{ identity.isUser ? 'Yes' : 'No' }}</span>
+          @if (!identity.isGroup && !identity.isUser) {
+            <p-button label="Create User" icon="pi pi-user-plus" (onClick)="createUserVisible = true" />
+          }
+        </div>
         <div class="detail-field">
           <span class="field-label">Short Name</span>
           <span class="field-value">{{ identity.shortName }}</span>

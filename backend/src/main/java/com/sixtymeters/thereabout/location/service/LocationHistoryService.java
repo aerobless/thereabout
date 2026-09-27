@@ -8,7 +8,6 @@ import com.sixtymeters.thereabout.location.data.LocationHistoryRepository;
 import com.sixtymeters.thereabout.location.data.LocationHistorySource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.recurse.geocoding.reverse.Country;
@@ -42,9 +41,7 @@ public class LocationHistoryService {
         return allTimestamps;
     }
 
-    @Async
     public void importGoogleLocationHistory(File file) {
-        importProgressService.setProgress(1);
         final var locationHistory = locationHistoryImporter.importLocationHistory(file);
         computeAdditionalFields(locationHistory);
 
@@ -57,7 +54,6 @@ public class LocationHistoryService {
         });
 
         locationHistoryRepository.flush();
-        importProgressService.reset();
         log.info("Finished importing %d entries of Google Location History.".formatted(locationHistory.size()));
     }
 

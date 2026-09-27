@@ -1,10 +1,5 @@
 import {inject} from '@angular/core';
 import {CanActivateFn, Router, Routes} from '@angular/router';
-import {ConfigurationComponent} from "./modules/configuration/configuration.component";
-import {StatisticsComponent} from "./modules/statistics/statistics.component";
-import {IdentitiesComponent} from "./modules/identities/identities.component";
-import {IdentityDetailComponent} from "./modules/identities/identity-detail/identity-detail.component";
-import {MessagesListComponent} from "./modules/messages/messages-list.component";
 
 const legacyDayLink: CanActivateFn = route => route.queryParamMap.has('date')
     ? inject(Router).createUrlTree(['/dayview'], {queryParams: route.queryParams, fragment: route.fragment ?? undefined})
@@ -42,22 +37,22 @@ export const routes: Routes = [
     },
     {
         path: 'configuration',
-        component: ConfigurationComponent
+        loadComponent: () => import('./modules/configuration/configuration.component').then(m => m.ConfigurationComponent)
     },
     {
         path: 'statistics',
-        component: StatisticsComponent
+        loadComponent: () => import('./modules/statistics/statistics.component').then(m => m.StatisticsComponent)
     },
     {
         path: 'identities',
-        component: IdentitiesComponent
+        loadComponent: () => import('./modules/identities/identities.component').then(m => m.IdentitiesComponent)
     },
     {
         path: 'identities/:id',
-        component: IdentityDetailComponent
+        loadComponent: () => import('./modules/identities/identity-detail/identity-detail.component').then(m => m.IdentityDetailComponent)
     },
     {
         path: 'messages',
-        component: MessagesListComponent
+        loadComponent: () => import('./modules/messages/messages-list.component').then(m => m.MessagesListComponent)
     },
 ];

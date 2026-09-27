@@ -1,0 +1,75 @@
+  <p-card>
+    <ng-template #header>
+      <div class="card-header">
+        <i class="pi pi-send card-header-icon"></i>
+        <span class="card-header-title">Telegram sync</span>
+      </div>
+    </ng-template>
+    @if (!status()?.configured) {
+      <p>Telegram sync is not configured. Set <code>TELEGRAM_API_ID</code> and <code>TELEGRAM_API_HASH</code> (from <a href="https://my.telegram.org" target="_blank">my.telegram.org</a>) in the server environment.</p>
+    } @else {
+      <p>Connect your Telegram account to continuously import messages into Thereabout. Your password is used only for login and is never stored.</p>
+      <p class="flex align-items-center gap-2">
+        <span>Status:</span>
+        @switch ($safeNavigationMigration(status()?.status)) {
+          @case (TelegramStatus.StatusEnum.Disconnected) { <span>Not connected</span> }
+          @case (TelegramStatus.StatusEnum.Connecting) { <span>Connecting…</span> }
+          @case (TelegramStatus.StatusEnum.WaitPhone) { <span>Enter your phone number</span> }
+          @case (TelegramStatus.StatusEnum.WaitCode) { <span>Waiting for login code</span> }
+          @case (TelegramStatus.StatusEnum.WaitPassword) { <span>Waiting for 2FA password</span> }
+          @case (TelegramStatus.StatusEnum.Ready) { <span>Connected</span> }
+          @case (TelegramStatus.StatusEnum.Syncing) { <span>Syncing</span> }
+          @case (TelegramStatus.StatusEnum.Error) { <span>Error</span> }
+          @default { <span>{{ status()?.status }}</span> }
+        }
+        @if (status()?.lastSyncAt) {
+          <span class="text-color-secondary">(last sync: {{ $safeNavigationMigration(status()?.lastSyncAt) | date:'short' }})</span>
+        }
+      </p>
+      @if (status()?.status === TelegramStatus.StatusEnum.Disconnected || status()?.status === TelegramStatus.StatusEnum.Error || status()?.status === TelegramStatus.StatusEnum.WaitPhone) {
+        <div class="config-block">
+          <label for="telegram-phone" class="config-label">Phone number</label>
+          <input id="telegram-phone" type="text" pInputText class="config-input-full" [(ngModel)]="phone" placeholder="+1234567890"/>
+          <p-button label="Connect Telegram" (onClick)="connectTelegram()" [disabled]="!phone().trim()"></p-button>
+        </div>
+      }
+      @if (status()?.status === TelegramStatus.StatusEnum.WaitCode || status()?.status === TelegramStatus.StatusEnum.Connecting) {
+        <div class="config-block">
+          <label for="telegram-code" class="config-label">Login code (from Telegram app/SMS)</label>
+          <input id="telegram-code" type="text" pInputText class="config-input-full" [(ngModel)]="code" placeholder="12345" (keyup.enter)="submitTelegramCode()"/>
+          <div class="flex gap-2 align-items-center">
+            <p-button label="Submit code" (onClick)="submitTelegramCode()" [disabled]="!code().trim()"></p-button>
+            <p-button label="Start over" severity="secondary" (onClick)="disconnectTelegram()"></p-button>
+          </div>
+        </div>
+      }
+      @if (status()?.status === TelegramStatus.StatusEnum.WaitPassword) {
+        <div class="config-block">
+          <label for="telegram-password" class="config-label">2FA password (used only for this step; never stored)</label>
+          <input id="telegram-password" type="password" pInputText class="config-input-full" [(ngModel)]="password" placeholder="Cloud password" (keyup.enter)="submitTelegramPassword()"/>
+          <div class="flex gap-2 align-items-center">
+            <p-button label="Submit password" (onClick)="submitTelegramPassword()" [disabled]="!password()"></p-button>
+            <p-button label="Start over" severity="secondary" (onClick)="disconnectTelegram()"></p-button>
+          </div>
+        </div>
+      }
+      @if (status()?.status === TelegramStatus.StatusEnum.Ready) {
+        @if (resyncing()) {
+          <div class="flex flex-column gap-2">
+            <p-progressbar [value]="status()?.resyncProgress ?? 0"></p-progressbar>
+            <p class="text-color-secondary">Syncing message history…</p>
+            <p-button label="Cancel resync" severity="secondary" (onClick)="cancelTelegramResync()"></p-button>
+          </div>
+        } @else {
+          <div class="flex gap-2">
+            <p-button label="Resync now" (onClick)="resyncTelegram()"></p-button>
+            <p-button label="Disconnect" severity="secondary" (onClick)="disconnectTelegram()"></p-button>
+          </div>
+        }
+      }
+      @if (status()?.status === TelegramStatus.StatusEnum.Error) {
+        <p-button label="Start over" severity="secondary" (onClick)="disconnectTelegram()"></p-button>
+      }
+    }
+    @if (error()) { <p role="alert">{{ error() }}</p><p-button label="Retry status" (onClick)="loadStatus()" [text]="true" /> }
+  </p-card>

@@ -1,0 +1,54 @@
+  <p-card>
+    <ng-template #header>
+      <div class="card-header">
+        <i class="pi pi-upload card-header-icon"></i>
+        <span class="card-header-title">Data Import</span>
+      </div>
+    </ng-template>
+    <div class="config-block">
+      <p-select [options]="importTypeOptions"
+        [(ngModel)]="selectedImportType"
+        (ngModelChange)="receiverName.set('')"
+        optionLabel="label"
+        [style]="{'width': '100%'}">
+      </p-select>
+    </div>
+    <p [innerHTML]="selectedImportType().description"></p>
+    @if (isReceiverRequired()) {
+      <div class="config-block">
+        <label for="receiver" class="config-label"
+               pTooltip="Link with an existing application identity, if none exist create a new one."
+               tooltipPosition="top">Receiver</label>
+        <p-autocomplete
+          id="receiver"
+          [(ngModel)]="receiverName"
+          [suggestions]="filteredReceivers()"
+          (completeMethod)="filterReceivers($event)"
+          placeholder="Enter or select a receiver"
+          [style]="{'width': '100%'}"
+          [inputStyle]="{'width': '100%'}">
+        </p-autocomplete>
+      </div>
+    }
+    @if (status()?.status !== FileImportStatus.StatusEnum.InProgress) {
+      <p-fileupload
+        name="file"
+        mode="basic"
+        chooseIcon="pi pi-upload"
+        [accept]="selectedImportType().accept"
+        maxFileSize="5073741824"
+        fileLimit="1"
+        [auto]="true"
+        [disabled]="isBrowseDisabled()"
+        [customUpload]="true"
+        (uploadHandler)="customUpload($event)"
+        (onError)="onError()"
+        chooseLabel="Browse"/>
+    }
+    @if (status()?.status == FileImportStatus.StatusEnum.InProgress) {
+      <p-progressbar [value]="status()?.progress ?? 0"
+        />
+    }
+    @if (error()) { <p role="alert">{{ error() }}</p><p-button label="Retry status" (onClick)="pollStatus()" [text]="true" /> }
+    @if (status()?.status === FileImportStatus.StatusEnum.Failed) { <p role="alert">{{ status()?.error }}</p> }
+  </p-card>

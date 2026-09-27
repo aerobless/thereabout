@@ -5,7 +5,7 @@
   padding: 0;
   gap: 1.25rem;
 
-  > p-card {
+  > p-card, > app-file-import, > app-telegram-settings, > app-google-calendar-settings {
     width: 100%;
     max-width: 1100px;
   }

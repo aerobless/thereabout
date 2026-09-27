@@ -45,7 +45,6 @@ public class HealthAutoExportImporter implements FileImporter {
     @Override
     public void importFile(File file, String receiver) {
         log.info("Starting Health Auto Export import from file: {}", file.getName());
-        importProgressService.setProgress(1);
 
         try {
             String content = Files.readString(file.toPath());
@@ -80,9 +79,6 @@ public class HealthAutoExportImporter implements FileImporter {
         } catch (IOException | JacksonException e) {
             throw new ThereaboutException(HttpStatusCode.valueOf(400),
                     "Failed to read Health Auto Export file '%s': %s".formatted(file.getName(), e.getMessage()));
-        } finally {
-            importProgressService.reset();
-            cleanupTempFile(file);
         }
 
         log.info("Finished Health Auto Export import from file: {}", file.getName());
@@ -107,11 +103,4 @@ public class HealthAutoExportImporter implements FileImporter {
         }
     }
 
-    private void cleanupTempFile(File file) {
-        try {
-            Files.deleteIfExists(file.toPath());
-        } catch (IOException e) {
-            log.warn("Failed to clean up temporary file: {}", file.getAbsolutePath(), e);
-        }
-    }
 }

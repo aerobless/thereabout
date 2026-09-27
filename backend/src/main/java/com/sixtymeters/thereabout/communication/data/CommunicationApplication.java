@@ -14,7 +14,8 @@ public enum CommunicationApplication {
     WHATSAPP("WhatsApp"),
     TELEGRAM("Telegram"),
     SIGNAL("Signal"),
-    GOOGLE("Google");
+    GOOGLE("Google"),
+    CLOUDFLARE("Cloudflare");
 
     private final String displayName;
 }

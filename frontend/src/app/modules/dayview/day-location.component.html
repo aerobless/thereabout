@@ -1,0 +1,89 @@
+    <p-card class="dayview-card card-map">
+      <ng-template #header>
+        <button type="button" class="card-header map-expand-button"
+          aria-label="Expand location history" aria-haspopup="dialog" [attr.aria-expanded]="state.locationDialogVisible()"
+          (click)="state.openLocationDialog($event)">
+          <i class="pi pi-map-marker card-header-icon" aria-hidden="true"></i>
+          <span class="card-header-title">Location History</span>
+          <i class="pi pi-expand" aria-hidden="true"></i>
+        </button>
+      </ng-template>
+      <div class="map-content">
+        <div class="map-wrapper">
+          <google-map width="100%" height="100%" [center]="state.center()" [zoom]="state.zoom()">
+            <map-polyline [path]="state.minifyDayViewData(state.dayViewDataFull())"
+              [options]="{strokeColor: '#3B82F6', strokeWeight: 3}">
+            </map-polyline>
+          </google-map>
+        </div>
+        <div class="map-footer">
+          @if (state.locationsLoading()) {
+            <span class="map-footer-text" role="status">Loading locations…</span>
+          } @else if (state.locationsError()) {
+            <span class="map-footer-text" role="alert">Unable to load locations</span>
+          } @else if (state.dayViewDataFull().length > 0) {
+            <span class="map-footer-text">
+              {{ state.dayViewDataFull().length }} location{{ state.dayViewDataFull().length !== 1 ? 's' : '' }} recorded
+            </span>
+          } @else {
+            <span class="map-footer-text muted">
+              No location data for {{ day.selectedDate() | date:'dd.MM.yyyy' }}
+            </span>
+          }
+        </div>
+      </div>
+    </p-card>
+<p-dialog header="Location History" styleClass="messages-dialog location-dialog dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
+  [(visible)]="state.locationDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
+  [closeOnEscape]="!state.locationEditDraft() && !state.locationSaving()" [dismissableMask]="!state.locationEditDraft() && !state.locationSaving()" [closable]="!state.locationSaving()" [focusTrap]="true" [blockScroll]="true"
+  closeAriaLabel="Close location history" (onShow)="state.fitExpandedMap()" (onHide)="state.onLocationDialogHidden()"
+  [style]="{ width: '1200px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '92dvh' }">
+  @if (state.locationDialogVisible()) {
+    <div class="location-editor">
+      <div class="expanded-map">
+        <google-map width="100%" height="100%" [center]="state.center()" [zoom]="state.zoom()"
+          [options]="{fullscreenControl: false}" (mapInitialized)="state.onExpandedMapInitialized($event)">
+          <map-polyline [path]="state.minifyDayViewData(state.dayViewDataFull())" [options]="{strokeColor: '#3B82F6', strokeWeight: 3}" (polylineClick)="state.dayLineClick($event)"></map-polyline>
+          @if (state.dayViewDataFull().length === 1 && state.selectedLocationEntries().length === 0) {
+            <map-marker [position]="{lat: state.dayViewDataFull()[0].latitude, lng: state.dayViewDataFull()[0].longitude}"></map-marker>
+          }
+          @for (entry of state.selectedLocationEntries(); track entry.id) {
+            <map-marker #selectedMarker="mapMarker" [position]="{lat: entry.latitude, lng: entry.longitude}"
+              [options]="{draggable: state.canDragLocations}" (mapDragend)="state.markerDragged(entry, $event, selectedMarker)" />
+          }
+          @if (!state.mobileLocationView()) { @if (state.highlightedLocationEntry(); as highlighted) {
+            <map-marker [position]="{lat: highlighted.latitude, lng: highlighted.longitude}"
+              [options]="{clickable: false}" [icon]="state.blueHighlightMarker" />
+          } }
+        </google-map>
+      </div>
+      @if (!state.mobileLocationView()) {
+        <thereabout-location-sidebar class="location-sidebar" [date]="day.selectedDate()" (dateChange)="dateChange.emit($event)"
+          [entries]="state.dayViewDataFull()" [(selection)]="state.selectedLocationEntries" (highlight)="state.highlightedLocationEntry.set($event)"
+          [draft]="state.locationEditDraft()" [busy]="state.locationEditorBusy" [saving]="state.locationSaving()" [loading]="state.locationsLoading()" [error]="state.locationsError()"
+          (locate)="state.locateLocation()" (create)="state.createLocation()" (edit)="state.editLocation()"
+          (remove)="state.deleteLocations()" (save)="state.saveLocation()" (cancel)="state.locationEditDraft.set(null)">
+          <div location-status class="map-footer">
+            <ng-container [ngTemplateOutlet]="locationStatus" />
+          </div>
+        </thereabout-location-sidebar>
+      }
+    </div>
+    @if (state.mobileLocationView()) {
+      <div class="map-footer">
+        <ng-container [ngTemplateOutlet]="locationStatus" />
+      </div>
+    }
+    <ng-template #locationStatus>
+      @if (state.locationsLoading()) {
+        <span class="map-footer-text" role="status">Loading locations…</span>
+      } @else if (state.locationsError()) {
+        <span class="map-footer-text" role="alert">Unable to load locations. <button type="button" (click)="state.loadDayViewData(true)">Retry</button></span>
+      } @else if (state.dayViewDataFull().length > 0) {
+        <span class="map-footer-text">{{ state.dayViewDataFull().length }} location{{ state.dayViewDataFull().length !== 1 ? 's' : '' }} recorded</span>
+      } @else {
+        <span class="map-footer-text muted">No location data for {{ day.selectedDate() | date:'dd.MM.yyyy' }}</span>
+      }
+    </ng-template>
+  }
+</p-dialog>

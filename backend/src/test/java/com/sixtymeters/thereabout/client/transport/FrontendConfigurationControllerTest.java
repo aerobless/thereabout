@@ -70,7 +70,7 @@ class FrontendConfigurationControllerTest {
                 .isNotNull();
         assertThat(response.getProgress()).isNotNull();
         // Status can be IDLE or IN_PROGRESS depending on import state
-        assertThat(response.getStatus()).isIn(GenFileImportStatus.StatusEnum.IDLE, GenFileImportStatus.StatusEnum.IN_PROGRESS);
+        assertThat(response.getStatus()).isIn((Object[]) GenFileImportStatus.StatusEnum.values());
     }
 
     @Test

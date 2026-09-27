@@ -1,4 +1,8 @@
 <p-toast></p-toast>
+@if (createUserIdentity) {
+  <app-create-user-dialog [identity]="createUserIdentity" (dismissed)="createUserIdentity = null"
+    (created)="createUserIdentity = null; loadIdentities()" />
+}
 <p-confirmdialog></p-confirmdialog>
 
 <div class="identities-container">
@@ -35,7 +39,9 @@
       </ng-template>
       <ng-template #body let-identity>
         <tr>
-          <td><a [routerLink]="['/identities', identity.id]">{{ identity.shortName }}</a></td>
+          <td><a [routerLink]="['/identities', identity.id]">{{ identity.shortName }}</a>
+            @if (identity.isUser) { <p-tag value="User" severity="success" /> }
+          </td>
           <td>{{ identity.relationship }}</td>
           <td style="text-align: center">
             @if (identity.isGroup) {
@@ -51,6 +57,9 @@
                    tooltipPosition="top"></p-tag>
           </td>
           <td style="text-align: center">
+            @if (!identity.isGroup && !identity.isUser) {
+              <p-button label="Create User" icon="pi pi-user-plus" [text]="true" (onClick)="createUserIdentity = identity" />
+            }
             <p-button icon="pi pi-pencil" [rounded]="true" [text]="true"
                       pTooltip="Edit" tooltipPosition="top"
                       (onClick)="showEditIdentityDialog(identity)"></p-button>
@@ -193,7 +202,7 @@
     </p-floatlabel>
 
     <div style="margin-bottom: 10px; display: flex; align-items: flex-start; gap: 8px">
-      <p-checkbox [(ngModel)]="editingIdentity.isGroup" [binary]="true" inputId="isGroup" label="Is a group"></p-checkbox>
+      <p-checkbox [disabled]="!!editingIdentity.isUser" [(ngModel)]="editingIdentity.isGroup" [binary]="true" inputId="isGroup" label="Is a group"></p-checkbox>
       <small style="flex: 1; color: var(--text-color-secondary); line-height: 1.4">
         Use for group chats or other non-person identities.
       </small>
@@ -215,9 +224,11 @@
               <td>{{ appIdentity.application }}</td>
               <td>{{ appIdentity.identifier }}</td>
               <td style="text-align: center">
+                @if (appIdentity.application !== 'Cloudflare') {
                 <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger"
                           pTooltip="Unlink" tooltipPosition="top"
                           (onClick)="unlinkAppIdentity(appIdentity)"></p-button>
+                }
               </td>
             </tr>
           </ng-template>

@@ -1,4 +1,5 @@
-import {Component, ChangeDetectionStrategy} from '@angular/core';
+import {Component, ChangeDetectionStrategy, inject, HostListener} from '@angular/core';
+import {CurrentUserService} from './shared/users/current-user.service';
 import { RouterOutlet } from '@angular/router';
 import {ToastModule} from "primeng/toast";
 import {AppShellComponent} from './shared/app-shell/app-shell.component';
@@ -12,4 +13,7 @@ import {AppShellComponent} from './shared/app-shell/app-shell.component';
 })
 export class AppComponent {
   title = 'thereabout';
+  private readonly currentUser = inject(CurrentUserService);
+  constructor() { this.currentUser.refresh(); }
+  @HostListener('window:focus') refreshUser(): void { this.currentUser.refresh(); }
 }

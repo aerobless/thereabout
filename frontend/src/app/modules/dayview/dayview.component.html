@@ -5,15 +5,15 @@
       pTooltip="Previous Day" tooltipPosition="bottom" showDelay="500"
       severity="secondary" [outlined]="true" styleClass="date-nav-button"></p-button>
     <p-datepicker #dayDatePicker [(ngModel)]="selectedDate"
-      [dateFormat]="mobileLocationView ? 'D, d M yy' : 'D, d MM yy'"
+      [dateFormat]="location.mobileLocationView() ? 'D, d M yy' : 'D, d MM yy'"
       ariaLabel="Selected day" appendTo="body" panelStyleClass="dayview-date-panel"
-      [touchUI]="mobileLocationView" [readonlyInput]="mobileLocationView"
+      [touchUI]="location.mobileLocationView()" [readonlyInput]="location.mobileLocationView()"
       (onSelect)="onDateChange()"
       class="date-selector"></p-datepicker>
     <p-button icon="pi pi-chevron-right" ariaLabel="Next day" (onClick)="goToNextDay()"
       pTooltip="Next Day" tooltipPosition="bottom" showDelay="500"
       severity="secondary" [outlined]="true" styleClass="date-nav-button"></p-button>
-    <p-button [icon]="mobileLocationView ? undefined : 'pi pi-calendar'" [size]="mobileLocationView ? 'small' : undefined"
+    <p-button [icon]="location.mobileLocationView() ? undefined : 'pi pi-calendar'" [size]="location.mobileLocationView() ? 'small' : undefined"
       ariaLabel="Today" label="Today" styleClass="today-btn" (onClick)="goToToday()"
       pTooltip="Jump to Today" tooltipPosition="bottom" showDelay="500"
       severity="secondary" [outlined]="true" class="today-control"></p-button>
@@ -28,41 +28,7 @@
   <div class="column-left">
 
     <!-- Location History Map Card -->
-    <p-card class="dayview-card card-map">
-      <ng-template #header>
-        <button type="button" class="card-header map-expand-button"
-          aria-label="Expand location history" aria-haspopup="dialog" [attr.aria-expanded]="locationDialogVisible"
-          (click)="openLocationDialog($event)">
-          <i class="pi pi-map-marker card-header-icon" aria-hidden="true"></i>
-          <span class="card-header-title">Location History</span>
-          <i class="pi pi-expand" aria-hidden="true"></i>
-        </button>
-      </ng-template>
-      <div class="map-content">
-        <div class="map-wrapper">
-          <google-map width="100%" height="100%" [center]="center" [zoom]="zoom">
-            <map-polyline [path]="minifyDayViewData(dayViewDataFull)"
-              [options]="{strokeColor: '#3B82F6', strokeWeight: 3}">
-            </map-polyline>
-          </google-map>
-        </div>
-        <div class="map-footer">
-          @if (locationsLoading) {
-            <span class="map-footer-text" role="status">Loading locations…</span>
-          } @else if (locationsError) {
-            <span class="map-footer-text" role="alert">Unable to load locations</span>
-          } @else if (dayViewDataFull.length > 0) {
-            <span class="map-footer-text">
-              {{ dayViewDataFull.length }} location{{ dayViewDataFull.length !== 1 ? 's' : '' }} recorded
-            </span>
-          } @else {
-            <span class="map-footer-text muted">
-              No location data for {{ selectedDate | date:'dd.MM.yyyy' }}
-            </span>
-          }
-        </div>
-      </div>
-    </p-card>
+    <app-day-location (dateChange)="setDateAndUpdateUrl($event)" />
 
     <app-calendar-card class="card-calendar" [date]="dateToString(selectedDate)" />
 
@@ -73,63 +39,16 @@
 
     <!-- Daily stats -->
     <div class="daily-stats-grid">
-      <button #stepsCard type="button" class="daily-stat-card steps-summary-card"
-        [attr.data-step-level]="selectedStepProgress?.level"
-        aria-haspopup="dialog" [attr.aria-expanded]="stepsDialogVisible" (click)="stepsDialogVisible = true">
-        <span class="card-header">
-          <i class="fa-solid fa-shoe-prints card-header-icon" aria-hidden="true"></i>
-          <span class="card-header-title">Steps &amp; Distance</span>
-        </span>
-        <span class="daily-stat-content daily-stat-content-two steps-summary-content">
-          @if (stepsLoading) {
-            <span class="daily-stat-value muted">--</span>
-            <span class="daily-stat-unit" role="status">Loading steps…</span>
-          } @else if (stepsError) {
-            <span class="messages-status">Unable to load steps</span>
-          } @else {
-            <span class="daily-stat-line">
-              <span class="daily-stat-value" [class.muted]="selectedDaySteps === null">{{ formatSteps(selectedDaySteps) }}</span>
-              <span class="daily-stat-unit">{{ isSelectedDayToday ? 'steps so far' : 'steps' }}</span>
-            </span>
-            <span class="step-status">
-              @if (selectedStepProgress?.level === 'exceptional') { <i class="fa-solid fa-fire" aria-hidden="true"></i> }
-              @if (selectedStepProgress?.percentage != null) { {{ formatStepPercentage(selectedStepProgress!.percentage) }} · }
-              {{ selectedStepProgress?.label }}
-            </span>
-            <span class="daily-stat-unit">{{ formatDistanceKm(selectedDayDistanceKm) }} km</span>
-          }
-        </span>
-      </button>
-      <app-energy-card [date]="dateToString(selectedDate)" [activeRecords]="activeEnergyRecords" [basalRecords]="basalEnergyRecords"
-        [loading]="stepsLoading" [error]="stepsError" (retry)="loadHealthData()"></app-energy-card>
+      <app-day-steps />
+      <app-energy-card [date]="dateToString(selectedDate)" [activeRecords]="health.activeEnergyRecords()" [basalRecords]="health.basalEnergyRecords()"
+        [loading]="health.stepsLoading()" [error]="health.stepsError()" (retry)="health.loadHealthData()"></app-energy-card>
       <app-choices-card [date]="dateToString(selectedDate)"></app-choices-card>
       <app-weight-card [date]="dateToString(selectedDate)"></app-weight-card>
       <app-heart-rate-card [date]="dateToString(selectedDate)"></app-heart-rate-card>
       <app-hrv-card [date]="dateToString(selectedDate)"></app-hrv-card>
-      <app-duration-card kind="stand" [date]="dateToString(selectedDate)" [records]="standRecords" [loading]="stepsLoading" [error]="stepsError" (retry)="loadHealthData()"></app-duration-card>
-      <app-duration-card kind="sleep" [date]="dateToString(selectedDate)" [records]="sleepRecords" [loading]="stepsLoading" [error]="stepsError" (retry)="loadHealthData()"></app-duration-card>
-      <button #messagesCard type="button" class="daily-stat-card messages-summary-card"
-        aria-haspopup="dialog" [attr.aria-expanded]="messagesDialogVisible"
-        (click)="messagesDialogVisible = true">
-        <span class="card-header">
-          <i class="fa-solid fa-envelope card-header-icon" aria-hidden="true"></i>
-          <span class="card-header-title">Messages</span>
-        </span>
-        <span class="daily-stat-content daily-stat-content-two messages-summary-content" aria-live="polite">
-          @if (messagesError) {
-            <span class="messages-status">Unable to load messages</span>
-          } @else {
-            <span class="daily-stat-line">
-              <span class="daily-stat-value" [class.muted]="messagesLoading">{{ messagesLoading ? '--' : sentMessageCount }}</span>
-              <span class="daily-stat-unit">sent</span>
-            </span>
-            <span class="daily-stat-line">
-              <span class="daily-stat-value" [class.muted]="messagesLoading">{{ messagesLoading ? '--' : receivedMessageCount }}</span>
-              <span class="daily-stat-unit">received</span>
-            </span>
-          }
-        </span>
-      </button>
+      <app-duration-card kind="stand" [date]="dateToString(selectedDate)" [records]="health.standRecords()" [loading]="health.stepsLoading()" [error]="health.stepsError()" (retry)="health.loadHealthData()"></app-duration-card>
+      <app-duration-card kind="sleep" [date]="dateToString(selectedDate)" [records]="health.sleepRecords()" [loading]="health.stepsLoading()" [error]="health.stepsError()" (retry)="health.loadHealthData()"></app-duration-card>
+      <app-day-messages />
       <p-card class="dayview-card daily-stat-card card-day-links">
         <ng-template #header>
           <div class="card-header">
@@ -149,253 +68,10 @@
     </div>
 
     <!-- Workouts Card (hidden when no workouts for the day) -->
-    @if (workouts.length > 0) {
-      <p-card class="dayview-card card-workouts">
-        <ng-template #header>
-          <div class="card-header">
-            <i class="fa-solid fa-dumbbell card-header-icon"></i>
-            <span class="card-header-title">Workouts</span>
-          </div>
-        </ng-template>
-        <div class="workouts-content">
-          <p-table
-            [value]="workouts"
-            styleClass="p-datatable-sm">
-            <ng-template #header>
-              <tr>
-                <th>
-                  <i class="fa-solid fa-clock" pTooltip="Time" tooltipPosition="top"></i>
-                </th>
-                <th>
-                  <i class="fa-solid fa-dumbbell" pTooltip="Activity" tooltipPosition="top"></i>
-                  <span class="th-label">Activity</span>
-                </th>
-                <th>
-                  <i class="fa-solid fa-hourglass-half" pTooltip="Duration" tooltipPosition="top"></i>
-                  <span class="th-label">Duration</span>
-                </th>
-                <th>
-                  <i class="fa-solid fa-fire" pTooltip="Energy" tooltipPosition="top"></i>
-                  <span class="th-label">Energy</span>
-                </th>
-              </tr>
-            </ng-template>
-            <ng-template #body let-workout>
-              <tr>
-                <td>{{ formatWorkoutTime(workout.start) }}</td>
-                <td>{{ workout.name || '--' }}</td>
-                <td>{{ formatDuration(workout.duration) }}</td>
-                <td>{{ formatEnergy(workout.activeEnergyBurnedQty, workout.activeEnergyBurnedUnits) }}</td>
-              </tr>
-            </ng-template>
-          </p-table>
-        </div>
-      </p-card>
-    }
+    @if (health.workouts().length > 0) { <app-day-workouts /> }
 
   </div>
 
 </div>
 
 </div>
-
-<p-dialog [header]="'Messages — ' + (selectedDate | date:'dd.MM.yyyy')" styleClass="messages-dialog dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
-  [(visible)]="messagesDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
-  [closeOnEscape]="true" [dismissableMask]="true" [focusTrap]="true" [blockScroll]="true" closeAriaLabel="Close messages"
-  [style]="{ width: '960px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '85dvh' }"
-  (onHide)="messagesCard.focus()">
-  @if (messagesDialogVisible) {
-    @if (messagesLoading) {
-      <p class="messages-status" role="status">Loading messages…</p>
-    } @else if (messagesError) {
-      <p class="messages-status" role="alert">Unable to load messages. Please try again.</p>
-    } @else {
-      <div class="messages-content">
-        <p-table
-          [value]="messages"
-          styleClass="p-datatable-sm">
-          <ng-template #header>
-            <tr>
-              <th>
-                <i class="fa-solid fa-clock" pTooltip="Time" tooltipPosition="top"></i>
-              </th>
-              <th>
-                <i class="fa-solid fa-mobile-screen" pTooltip="Source" tooltipPosition="top"></i>
-                <span class="th-label">Source</span>
-              </th>
-              <th>
-                <i class="fa-solid fa-user" pTooltip="Sender" tooltipPosition="top"></i>
-                <span class="th-label">Sender</span>
-              </th>
-              <th>
-                <i class="fa-solid fa-comment" pTooltip="Message" tooltipPosition="top"></i>
-                <span class="th-label">Message</span>
-              </th>
-            </tr>
-          </ng-template>
-          <ng-template #body let-message>
-            <tr>
-              <td>{{ formatMessageTime(message.timestamp) }}</td>
-              <td>{{ message.source || '--' }}</td>
-              <td>
-                @if (message.sender?.identityId) {
-                  <a [routerLink]="['/identities', message.sender.identityId]">{{ message.sender.name }}</a>
-                } @else {
-                  {{ message.sender?.name || '--' }}
-                }
-              </td>
-              <td>{{ message.body || message.subject || '--' }}</td>
-            </tr>
-          </ng-template>
-          <ng-template #emptymessage>
-            <tr>
-              <td colspan="4" class="empty-table-message">
-                No messages for {{ selectedDate | date:'dd.MM.yyyy' }}
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </div>
-    }
-  }
-  <ng-template #footer>
-    <a routerLink="/messages">All messages</a>
-  </ng-template>
-</p-dialog>
-
-<p-dialog [header]="'Steps — ' + (selectedDate | date:'dd.MM.yyyy')" styleClass="messages-dialog steps-dialog dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
-  [(visible)]="stepsDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
-  [closeOnEscape]="true" [dismissableMask]="true" [focusTrap]="true" [blockScroll]="true"
-  closeAriaLabel="Close steps" (onHide)="stepsCard.focus()"
-  [style]="{ width: '960px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '85dvh' }">
-  @if (stepsDialogVisible) {
-    @if (stepsLoading) {
-      <p role="status">Loading step history…</p>
-    } @else if (stepsError) {
-      <p role="alert">Unable to load steps. Please try again.</p>
-    } @else if (selectedStepProgress; as progress) {
-      <div class="steps-details">
-        <section class="steps-detail" [attr.data-step-level]="progress.level">
-          <h3>{{ isSelectedDayToday ? 'So far' : 'Daily total' }}</h3>
-          <span class="steps-detail-value">{{ formatSteps(progress.steps) }}</span>
-          <span class="step-status">
-            @if (progress.level === 'exceptional') { <i class="fa-solid fa-fire" aria-hidden="true"></i> }
-            {{ progress.label }}
-          </span>
-          @if (progress.percentage !== null) {
-            <span>{{ formatStepPercentage(progress.percentage) }} · {{ stepDifference(progress) }}</span>
-          }
-        </section>
-        <section class="steps-detail">
-          <h3>Previous 30-day average</h3>
-          <span class="steps-detail-value">{{ formatSteps(progress.baseline) }}</span>
-          <span>{{ progress.coverage }}/30 days recorded</span>
-          @if (progress.baseline === null || progress.baseline === 0) { <span>Baseline unavailable</span> }
-        </section>
-        <section class="steps-detail">
-          <h3>Next level</h3>
-          @if (progress.stepsToNextLevel !== null) {
-            <span class="steps-detail-value">{{ formatSteps(progress.stepsToNextLevel) }}</span>
-            <span>more steps to {{ progress.nextLevel }}</span>
-          } @else if (progress.level === 'exceptional') {
-            <span class="step-status"><i class="fa-solid fa-fire" aria-hidden="true"></i> Exceptional achieved</span>
-          } @else {
-            <span>{{ progress.steps === null ? 'No step data for this day' : 'Baseline unavailable' }}</span>
-          }
-        </section>
-      </div>
-      <div class="steps-chart-heading">
-        <h3>Last 30 days</h3>
-        <span>The outlined bar marks the selected day.</span>
-      </div>
-      @if (!hasStepHistory) {
-        <p class="empty-state">No step data for these 30 days.</p>
-      } @else if (stepsChartData) {
-        <div class="steps-chart">
-          <p-chart type="bar" [data]="stepsChartData" [options]="stepsChartOptions"
-            [style]="{ width: '100%', height: '320px' }"
-            ariaLabel="Daily steps and each day's previous 30-day average. Details are available in the daily values table below."></p-chart>
-        </div>
-      }
-      <p class="steps-explanation">Each day is compared with its previous 30 calendar days, excluding that day.
-        Missing days are excluded from the average; recorded zeroes count. Today's steps are still in progress.</p>
-      <div class="steps-levels" aria-label="Step levels">
-        <span data-step-level="below">Below 90% · Below baseline</span>
-        <span data-step-level="almost">90–100% · Almost there</span>
-        <span data-step-level="reached">100–110% · Baseline reached</span>
-        <span data-step-level="bonus">110–125% · Bonus</span>
-        <span data-step-level="exceptional">125%+ · Exceptional</span>
-      </div>
-      <details class="steps-daily-values">
-        <summary>Daily values</summary>
-        <div class="steps-values-scroll">
-          <table>
-            <caption>Daily steps and preceding baseline</caption>
-            <thead><tr><th scope="col">Date</th><th scope="col">Steps</th><th scope="col">Average</th><th scope="col">Progress</th><th scope="col">Coverage</th></tr></thead>
-            <tbody>
-              @for (day of stepsHistory; track day.date) {
-                <tr><th scope="row">{{ day.date }}</th><td>{{ formatSteps(day.steps) }}</td><td>{{ formatSteps(day.baseline) }}</td>
-                  <td>{{ formatStepPercentage(day.percentage) }} · {{ day.label }}</td><td>{{ day.coverage }}/30</td></tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </details>
-    }
-  }
-</p-dialog>
-
-<p-dialog header="Location History" styleClass="messages-dialog location-dialog dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
-  [(visible)]="locationDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
-  [closeOnEscape]="!locationEditDraft && !locationSaving" [dismissableMask]="!locationEditDraft && !locationSaving" [closable]="!locationSaving" [focusTrap]="true" [blockScroll]="true"
-  closeAriaLabel="Close location history" (onShow)="fitExpandedMap()" (onHide)="onLocationDialogHidden()"
-  [style]="{ width: '1200px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '92dvh' }">
-  @if (locationDialogVisible) {
-    <div class="location-editor">
-      <div class="expanded-map">
-        <google-map width="100%" height="100%" [center]="center" [zoom]="zoom"
-          [options]="{fullscreenControl: false}" (mapInitialized)="onExpandedMapInitialized($event)">
-          <map-polyline [path]="minifyDayViewData(dayViewDataFull)" [options]="{strokeColor: '#3B82F6', strokeWeight: 3}" (polylineClick)="dayLineClick($event)"></map-polyline>
-          @if (dayViewDataFull.length === 1 && selectedLocationEntries.length === 0) {
-            <map-marker [position]="{lat: dayViewDataFull[0].latitude, lng: dayViewDataFull[0].longitude}"></map-marker>
-          }
-          @for (entry of selectedLocationEntries; track entry.id) {
-            <map-marker #selectedMarker="mapMarker" [position]="{lat: entry.latitude, lng: entry.longitude}"
-              [options]="{draggable: canDragLocations}" (mapDragend)="markerDragged(entry, $event, selectedMarker)" />
-          }
-          @if (highlightedLocationEntry && !mobileLocationView) {
-            <map-marker [position]="{lat: highlightedLocationEntry.latitude, lng: highlightedLocationEntry.longitude}"
-              [options]="{clickable: false}" [icon]="blueHighlightMarker" />
-          }
-        </google-map>
-      </div>
-      @if (!mobileLocationView) {
-        <thereabout-location-sidebar class="location-sidebar" [date]="selectedDate" (dateChange)="setDateAndUpdateUrl($event)"
-          [entries]="dayViewDataFull" [(selection)]="selectedLocationEntries" (highlight)="highlightedLocationEntry = $event"
-          [draft]="locationEditDraft" [busy]="locationEditorBusy" [saving]="locationSaving" [loading]="locationsLoading" [error]="locationsError"
-          (locate)="locateLocation()" (create)="createLocation()" (edit)="editLocation()"
-          (remove)="deleteLocations()" (save)="saveLocation()" (cancel)="locationEditDraft = null">
-          <div location-status class="map-footer">
-            <ng-container [ngTemplateOutlet]="locationStatus" />
-          </div>
-        </thereabout-location-sidebar>
-      }
-    </div>
-    @if (mobileLocationView) {
-      <div class="map-footer">
-        <ng-container [ngTemplateOutlet]="locationStatus" />
-      </div>
-    }
-    <ng-template #locationStatus>
-      @if (locationsLoading) {
-        <span class="map-footer-text" role="status">Loading locations…</span>
-      } @else if (locationsError) {
-        <span class="map-footer-text" role="alert">Unable to load locations. <button type="button" (click)="loadDayViewData(true)">Retry</button></span>
-      } @else if (dayViewDataFull.length > 0) {
-        <span class="map-footer-text">{{ dayViewDataFull.length }} location{{ dayViewDataFull.length !== 1 ? 's' : '' }} recorded</span>
-      } @else {
-        <span class="map-footer-text muted">No location data for {{ selectedDate | date:'dd.MM.yyyy' }}</span>
-      }
-    </ng-template>
-  }
-</p-dialog>

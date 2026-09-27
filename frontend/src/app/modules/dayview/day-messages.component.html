@@ -1,0 +1,89 @@
+      <button #messagesCard type="button" class="daily-stat-card messages-summary-card"
+        aria-haspopup="dialog" [attr.aria-expanded]="state.messagesDialogVisible()"
+        (click)="state.messagesDialogVisible.set(true)">
+        <span class="card-header">
+          <i class="fa-solid fa-envelope card-header-icon" aria-hidden="true"></i>
+          <span class="card-header-title">Messages</span>
+        </span>
+        <span class="daily-stat-content daily-stat-content-two messages-summary-content" aria-live="polite">
+          @if (state.messagesError()) {
+            <span class="messages-status">Unable to load messages</span>
+          } @else {
+            @if (state.identityId() !== null) {
+            <span class="daily-stat-line">
+              <span class="daily-stat-value" [class.muted]="state.messagesLoading()">{{ state.messagesLoading() ? '--' : state.sentMessageCount() }}</span>
+              <span class="daily-stat-unit">sent</span>
+            </span>
+            <span class="daily-stat-line">
+              <span class="daily-stat-value" [class.muted]="state.messagesLoading()">{{ state.messagesLoading() ? '--' : state.receivedMessageCount() }}</span>
+              <span class="daily-stat-unit">received</span>
+            </span>
+            } @else {
+              <span class="daily-stat-line"><span class="daily-stat-value">{{ state.messagesLoading() ? '--' : state.messages().length }}</span><span class="daily-stat-unit">total</span></span>
+            }
+          }
+        </span>
+      </button>
+<p-dialog [header]="'Messages — ' + (day.selectedDate() | date:'dd.MM.yyyy')" styleClass="messages-dialog dayview-detail-dialog" maskStyleClass="dayview-dialog-mask"
+  [(visible)]="state.messagesDialogVisible" [modal]="true" [draggable]="false" [resizable]="false"
+  [closeOnEscape]="true" [dismissableMask]="true" [focusTrap]="true" [blockScroll]="true" closeAriaLabel="Close messages"
+  [style]="{ width: '960px', maxWidth: 'calc(100vw - 2rem)', maxHeight: '85dvh' }"
+  (onHide)="messagesCard.focus()">
+  @if (state.messagesDialogVisible()) {
+    @if (state.messagesLoading()) {
+      <p class="messages-status" role="status">Loading messages…</p>
+    } @else if (state.messagesError()) {
+      <p class="messages-status" role="alert">Unable to load messages. Please try again.</p>
+    } @else {
+      <div class="messages-content">
+        <p-table
+          [value]="state.messages()"
+          styleClass="p-datatable-sm">
+          <ng-template #header>
+            <tr>
+              <th>
+                <i class="fa-solid fa-clock" pTooltip="Time" tooltipPosition="top"></i>
+              </th>
+              <th>
+                <i class="fa-solid fa-mobile-screen" pTooltip="Source" tooltipPosition="top"></i>
+                <span class="th-label">Source</span>
+              </th>
+              <th>
+                <i class="fa-solid fa-user" pTooltip="Sender" tooltipPosition="top"></i>
+                <span class="th-label">Sender</span>
+              </th>
+              <th>
+                <i class="fa-solid fa-comment" pTooltip="Message" tooltipPosition="top"></i>
+                <span class="th-label">Message</span>
+              </th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-message>
+            <tr>
+              <td>{{ state.formatMessageTime(message.timestamp) }}</td>
+              <td>{{ message.source || '--' }}</td>
+              <td>
+                @if (message.sender?.identityId) {
+                  <a [routerLink]="['/identities', message.sender.identityId]">{{ message.sender.name }}</a>
+                } @else {
+                  {{ message.sender?.name || '--' }}
+                }
+              </td>
+              <td>{{ message.body || message.subject || '--' }}</td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="4" class="empty-table-message">
+                No messages for {{ day.selectedDate() | date:'dd.MM.yyyy' }}
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    }
+  }
+  <ng-template #footer>
+    <a routerLink="/messages">All messages</a>
+  </ng-template>
+</p-dialog>

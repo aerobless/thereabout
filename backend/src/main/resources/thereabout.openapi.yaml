@@ -159,6 +159,11 @@ paths:
     $ref: 'openapi/communication.yaml#/paths/MessageList'
 
 components:
+  securitySchemes:
+    thereaboutApiKey:
+      type: http
+      scheme: bearer
+      description: Ingestion API key from Configuration, for clients outside Cloudflare Access.
   schemas:
     FinanceAccountKind:
       $ref: 'openapi/finances/accounts.yaml#/components/schemas/FinanceAccountKind'

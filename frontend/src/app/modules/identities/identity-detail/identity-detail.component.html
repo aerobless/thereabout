@@ -54,7 +54,7 @@
         <span class="card-header-title">Actions</span>
       </div></ng-template>
       <div class="identity-actions">
-        @if (!identity.isGroup && !identity.isUser) {
+        @if (canManageUsers() && !identity.isGroup && !identity.isUser) {
           <p-button label="Create User" ariaLabel="Create User" icon="pi pi-user-plus" (onClick)="creatingUser = identity" />
         }
         <p-button label="Edit Identity" ariaLabel="Edit Identity" icon="pi pi-pencil" [outlined]="true" (onClick)="editing = true" />

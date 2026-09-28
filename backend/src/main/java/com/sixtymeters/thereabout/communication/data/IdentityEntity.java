@@ -30,6 +30,10 @@ public class IdentityEntity {
     @Column(nullable = false)
     private boolean isUser = false;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean isAdmin = false;
+
     private String relationship;
 
     @Column(updatable = false)

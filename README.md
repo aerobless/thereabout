@@ -84,7 +84,7 @@ Import progress is shown in Configuration. The same page exposes the ingestion A
 ## Self-hosting
 
 > [!IMPORTANT]
-> Thereabout has no built-in user login. Protect the entire application with a VPN or an authenticating reverse proxy before making it reachable outside your machine. The ingestion API key does **not** protect the dashboard or every API endpoint. Google Maps remains an external service and requires a Maps API key.
+> Thereabout has no login of its own. Without Cloudflare settings it runs in local mode, where only browsers on the same machine can use it. To reach it from elsewhere, put it behind Cloudflare Access and set `thereabout.access.mode=cloudflare` with the Access issuer and audience: Thereabout then verifies the signed Access assertion on every request, see [Cloudflare users](docs/cloudflare-users.md). The ingestion API key only authorizes location and health uploads. Google Maps remains an external service and requires a Maps API key.
 
 You need Docker Compose and a Google Maps API key suitable for your deployment's hostname.
 
@@ -192,7 +192,7 @@ The backend imports more health metric types than the dashboard currently visual
 
 ### Startup configuration
 
-Finance is always available. Cloudflare user recognition automatically uses configured issuer/audience values (falling back to the finance Access settings); partial or invalid settings fail startup. Ordinary local development needs no Cloudflare credentials, and the frontend supports local impersonation. Production still requires the finance Cloudflare access mode, issuer, audience and public origin; see [production access](docs/finances-production.md).
+Finance is always available. Cloudflare user recognition automatically uses configured issuer/audience values (falling back to the finance Access settings); partial or invalid settings fail startup. Ordinary local development needs no Cloudflare credentials, and the frontend supports local impersonation. Production uses `thereabout.access.mode=cloudflare` (the finance access mode is used when it is not set); see [Cloudflare users](docs/cloudflare-users.md) and [production access](docs/finances-production.md).
 
 Only two optional background-task switches remain: `thereabout.calendar.worker-enabled` and `thereabout.launcher.fetch-icons` (both default to `true`). The development profile disables the calendar worker to avoid synchronizing external calendars during local work; explicitly enable it when testing real synchronization. The test profile disables both tasks. Ports, database connections and integration credentials remain configuration, rather than feature switches.
 

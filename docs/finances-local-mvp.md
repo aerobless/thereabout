@@ -20,7 +20,7 @@ npm start -- --host 127.0.0.1
 
 Java 25, Maven and Node 24 are required. The launcher script enables the `development` profile, binds the backend to loopback and uses the database-backed MCP key. At application startup, a cryptographically random 256-bit key is generated if `configuration.FINANCE_MCP_KEY` does not exist. Existing keys survive restarts. Reveal it in **Configuration → Finances MCP** by focusing the masked field; leaving the field clears it from the component. Calendar background synchronization is disabled by the development profile; launcher icons load normally. A Google Maps key is optional for startup, but real map functionality requires one.
 
-Finance endpoints are always registered, locally and in production. The finance filter rejects non-loopback callers/Host names and foreign browser origins. REST uses the local browser boundary; MCP additionally requires the bearer key. Production uses the Cloudflare access mode described in the production operations guide.
+Finance endpoints are always registered, locally and in production. Local access mode admits only loopback callers and Host names, and browser writes require the CSRF token. MCP additionally requires the bearer key. Production uses the Cloudflare access mode described in the production operations guide.
 
 ## MCP and REST
 

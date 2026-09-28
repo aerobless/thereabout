@@ -114,13 +114,8 @@ paths:
         - location
       description: Endpoint for posting geojson location data, e.g. from a client such as Overland
       operationId: addGeoJsonLocation
-      parameters:
-        - in: header
-          name: Authorization
-          required: true
-          schema:
-            type: string
-          description: Bearer token for authorization
+      security:
+        - thereaboutApiKey: []
       requestBody:
         required: true
         content:

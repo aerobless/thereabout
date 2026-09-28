@@ -65,6 +65,8 @@ paths:
                 $ref: '#/components/schemas/Identity'
         400:
           $ref: '../thereabout.openapi.yaml#/components/responses/400'
+        403:
+          description: Only administrators can create users.
         404:
           $ref: '../thereabout.openapi.yaml#/components/responses/404'
         409:
@@ -356,6 +358,9 @@ components:
           format: int64
         displayName:
           type: string
+        isAdmin:
+          type: boolean
+          description: Whether the resolved user may manage users. Absent unless resolved.
     Identity:
       description: A person or contact identity.
       type: object

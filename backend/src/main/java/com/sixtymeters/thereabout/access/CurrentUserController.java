@@ -1,60 +1,39 @@
 package com.sixtymeters.thereabout.access;
 
-import com.sixtymeters.thereabout.communication.data.*;
-import com.sixtymeters.thereabout.communication.service.CloudflareEmail;
 import com.sixtymeters.thereabout.generated.api.CurrentUserApi;
 import com.sixtymeters.thereabout.generated.model.GenCurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.jwt.*;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
 import static com.sixtymeters.thereabout.generated.model.GenCurrentUser.StatusEnum.*;
 
+/** Reports the login that {@link CloudflareAccessFilter} verified; it never decodes tokens itself. */
 @RestController
 public class CurrentUserController implements CurrentUserApi {
-    private final ObjectProvider<JwtDecoder> decoders;
     private final HttpServletRequest request;
-    private final IdentityInApplicationRepository applications;
 
-    public CurrentUserController(@Qualifier("userAccessTokenDecoder") ObjectProvider<JwtDecoder> decoders,
-            HttpServletRequest request, IdentityInApplicationRepository applications) {
-        this.decoders = decoders;
+    public CurrentUserController(HttpServletRequest request) {
         this.request = request;
-        this.applications = applications;
     }
 
     @Override
-    @Transactional(readOnly = true)
     public ResponseEntity<GenCurrentUser> getCurrentUser() {
-        JwtDecoder decoder = decoders.getIfAvailable();
-        if (decoder == null) return result(DISABLED);
-        String token = request.getHeader("Cf-Access-Jwt-Assertion");
-        if (token == null || token.isBlank()) return result(MISSING_TOKEN);
-        Jwt jwt;
-        try {
-            jwt = decoder.decode(token);
-        } catch (BadJwtException | IllegalArgumentException e) {
-            return result(INVALID_TOKEN);
-        } catch (JwtException e) {
-            // Key retrieval/verification infrastructure failed. Never expose exception text or tokens.
-            return result(VERIFICATION_UNAVAILABLE);
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof AccessPrincipal principal && !principal.local()) {
+            if (principal.email() == null) return result(INVALID_TOKEN);
+            if (principal.identityId() == null) return result(UNLINKED);
+            boolean admin = authentication.getAuthorities().stream().anyMatch(role -> AccessPrincipal.ADMIN.equals(role.getAuthority()));
+            return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(GenCurrentUser.builder().status(RESOLVED)
+                    .identityId(principal.identityId()).displayName(principal.displayName()).isAdmin(admin).build());
         }
-        String email;
-        try {
-            email = CloudflareEmail.normalize(jwt.getClaimAsString("email"));
-        } catch (RuntimeException e) {
-            return result(INVALID_TOKEN);
-        }
-        var mapping = applications.findByApplicationAndIdentifier(CommunicationApplication.CLOUDFLARE, email);
-        if (mapping.isEmpty() || mapping.get().getIdentity() == null) return result(UNLINKED);
-        var identity = mapping.get().getIdentity();
-        if (!identity.isUser() || identity.isGroup()) return result(UNLINKED);
-        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(GenCurrentUser.builder()
-                .status(RESOLVED).identityId(identity.getId()).displayName(identity.getShortName()).build());
+        if (!(request.getAttribute(CloudflareAccessFilter.STATUS) instanceof CloudflareAccessFilter.Status status)) return result(DISABLED);
+        return result(switch (status) {
+            case MISSING_TOKEN -> MISSING_TOKEN;
+            case VERIFICATION_UNAVAILABLE -> VERIFICATION_UNAVAILABLE;
+            case INVALID_TOKEN, VERIFIED -> INVALID_TOKEN;
+        });
     }
 
     private ResponseEntity<GenCurrentUser> result(GenCurrentUser.StatusEnum status) {

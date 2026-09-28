@@ -17,6 +17,9 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class FinanceMcpTest {
+  /** Browser writes submit the XSRF cookie value in a header; any value proves same-origin script access. */
+  private static final String CSRF = "finance-test-csrf";
+
   @LocalServerPort int port;
 
   @org.springframework.beans.factory.annotation.Autowired
@@ -92,6 +95,8 @@ class FinanceMcpTest {
             HttpRequest.newBuilder(
                     URI.create("http://127.0.0.1:" + port + "/api/finances/categories"))
                 .header("Content-Type", "application/json")
+                .header("Cookie", "XSRF-TOKEN=" + CSRF)
+                .header("X-XSRF-TOKEN", CSRF)
                 .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(args)))
                 .build(),
             HttpResponse.BodyHandlers.ofString());
@@ -130,6 +135,8 @@ class FinanceMcpTest {
             HttpRequest.newBuilder(
                     URI.create("http://127.0.0.1:" + port + "/api/finances/transactions"))
                 .header("Content-Type", "application/json")
+                .header("Cookie", "XSRF-TOKEN=" + CSRF)
+                .header("X-XSRF-TOKEN", CSRF)
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build(),
             HttpResponse.BodyHandlers.ofString());

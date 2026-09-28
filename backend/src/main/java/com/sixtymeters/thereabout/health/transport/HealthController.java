@@ -1,6 +1,5 @@
 package com.sixtymeters.thereabout.health.transport;
 
-import com.sixtymeters.thereabout.config.AuthorizationService;
 import com.sixtymeters.thereabout.health.service.dto.DailyMetricValue;
 import com.sixtymeters.thereabout.health.service.dto.HealthDataResponse;
 import com.sixtymeters.thereabout.health.service.HealthDataService;
@@ -29,11 +28,9 @@ import java.util.stream.Collectors;
 public class HealthController implements HealthApi {
 
     private final HealthDataService healthDataService;
-    private final AuthorizationService authorizationService;
 
     @Override
-    public ResponseEntity<Void> submitHealthData(String authorization, GenSubmitHealthDataRequest genSubmitHealthDataRequest) {
-        authorizationService.isAuthorised(authorization);
+    public ResponseEntity<Void> submitHealthData(GenSubmitHealthDataRequest genSubmitHealthDataRequest) {
         log.info("Received health data submission");
 
         if (genSubmitHealthDataRequest == null || genSubmitHealthDataRequest.getData() == null) {

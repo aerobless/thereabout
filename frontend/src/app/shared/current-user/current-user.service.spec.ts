@@ -39,6 +39,17 @@ describe('CurrentUserService', () => {
     expect(service.displayName()).toBe('Theo');
     expect(service.impersonatedUser()).toBeNull();
   });
+  it('offers user management to administrators and local development only', () => {
+    const response = new Subject<CurrentUser>();
+    TestBed.configureTestingModule({providers: [{provide: CurrentUserApi, useValue: {getCurrentUser: vi.fn(() => response)}}]});
+    const service = TestBed.inject(CurrentUserService);
+    service.load(); response.next({status: 'disabled'});
+    expect(service.canManageUsers()).toBe(true);
+    service.load(); response.next({status: 'resolved', identityId: 2, displayName: 'Heidi', isAdmin: false});
+    expect(service.canManageUsers()).toBe(false);
+    service.load(); response.next({status: 'resolved', identityId: 1, displayName: 'Admin', isAdmin: true});
+    expect(service.canManageUsers()).toBe(true);
+  });
   it('clears hidden sessions and verifies again on return or back-forward restoration', () => {
     const api = {getCurrentUser: vi.fn(() => new Subject<CurrentUser>())};
     TestBed.configureTestingModule({providers: [{provide: CurrentUserApi, useValue: api}]});

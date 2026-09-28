@@ -34,21 +34,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 /** The security boundary over real HTTP, including the raw paths a servlet container decodes before routing. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "thereabout.access.mode=cloudflare",
-        "thereabout.users.access-issuer=" + AccessSecurityTest.ISSUER,
-        "thereabout.users.access-audience=app",
-        "thereabout.finances.access-mode=cloudflare",
-        "thereabout.finances.access-issuer=" + AccessSecurityTest.ISSUER,
-        "thereabout.finances.access-audience=finance-app"})
+        "thereabout.access.cloudflare.issuer=" + AccessSecurityTest.ISSUER,
+        "thereabout.access.cloudflare.audience=app"})
 @ActiveProfiles("test")
 class AccessSecurityTest {
     static final String ISSUER = "https://team.cloudflareaccess.com";
     static final RSAKey KEY = key();
 
-    @TestBean JwtDecoder userAccessTokenDecoder;
-    @TestBean JwtDecoder financeAccessTokenDecoder;
+    @TestBean AccessConfiguration.CloudflareAccess cloudflareAccess;
 
-    static JwtDecoder userAccessTokenDecoder() { return decoder("app"); }
-    static JwtDecoder financeAccessTokenDecoder() { return decoder("finance-app"); }
+    static AccessConfiguration.CloudflareAccess cloudflareAccess() { return new AccessConfiguration.CloudflareAccess(decoder("app")); }
 
     @LocalServerPort int port;
     @Autowired IdentityRepository identities;
@@ -111,11 +106,12 @@ class AccessSecurityTest {
     }
 
     @Test
-    void financeRequiresItsOwnAudienceEvenForEncodedPaths() throws Exception {
+    void financeRequiresAThereaboutUserEvenForEncodedPaths() throws Exception {
         for (String path : new String[]{"/api/finances/accounts", "/api/%66inances/accounts"}) {
             assertThat(send(get(path)).statusCode()).as(path).isEqualTo(401);
-            assertThat(send(get(path).header(CloudflareAccessFilter.HEADER, token("app", user, false))).statusCode()).as(path).isEqualTo(401);
-            assertThat(send(get(path).header(CloudflareAccessFilter.HEADER, token("finance-app", user, false))).statusCode()).as(path).isEqualTo(200);
+            assertThat(send(get(path).header(CloudflareAccessFilter.HEADER, token("other-app", user, false))).statusCode()).as(path).isEqualTo(401);
+            assertThat(send(get(path).header(CloudflareAccessFilter.HEADER, token("app", UUID.randomUUID() + "@example.test", false))).statusCode()).as(path).isEqualTo(403);
+            assertThat(send(get(path).header(CloudflareAccessFilter.HEADER, token("app", user, false))).statusCode()).as(path).isEqualTo(200);
         }
     }
 
@@ -155,9 +151,9 @@ class AccessSecurityTest {
         var withoutCloudflare = send(mcp.copy().header("Authorization", bearer));
         assertThat(withoutCloudflare.statusCode()).isEqualTo(401);
         assertThat(withoutCloudflare.headers().firstValue("WWW-Authenticate")).contains("Bearer");
-        String serviceToken = token("finance-app", null, false);
+        String serviceToken = token("app", null, false);
         assertThat(send(mcp.copy().header(CloudflareAccessFilter.HEADER, serviceToken)).statusCode()).isEqualTo(401);
-        assertThat(send(mcp.copy().header(CloudflareAccessFilter.HEADER, token("app", user, false)).header("Authorization", bearer)).statusCode()).isEqualTo(401);
+        assertThat(send(mcp.copy().header(CloudflareAccessFilter.HEADER, token("other-app", null, false)).header("Authorization", bearer)).statusCode()).isEqualTo(401);
         assertThat(send(mcp.copy().header(CloudflareAccessFilter.HEADER, serviceToken).header("Authorization", bearer)).statusCode()).isEqualTo(200);
     }
 

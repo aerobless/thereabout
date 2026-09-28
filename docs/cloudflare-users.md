@@ -4,7 +4,21 @@ An existing person identity becomes a user through **Create User**, available in
 
 One email per person is supported in this slice. Repeating the same request is harmless. Conflicting requests return HTTP 409 without a partial user flag or link. Generic identity edits preserve the flag and mapping, including stale payloads. Generic link/unlink cannot modify Cloudflare links; users cannot become groups or be deleted through generic identity deletion. Email changes and deactivation are not provided.
 
-This is a visible end-to-end identity slice. It adds no role model, global application lockout, domain ownership filtering, or location/health/finance migration. A Cloudflare-admitted person with no Thereabout mapping can still access identity management and create the initial mapping. Keep the origin protected by the existing Cloudflare deployment boundary; current-user recognition itself is not authorization for other API routes.
+## Access model
+
+Cloudflare Access decides who may reach Thereabout; Thereabout verifies the signed assertion on every request and decides what that login may use. There is no separate Thereabout login and no session.
+
+- **Users** (a verified email mapped to a person user) can use the application and finance. **Administrators** can additionally create users. Existing users became administrators when roles were introduced.
+- **First login:** while no users exist, the first verified login becomes the administrator `Admin`, linked to its email. Rename it through Edit Identity. Concurrent first logins produce exactly one administrator.
+- **Unlinked logins** are authenticated but can only load the frontend and `current-user`, which reports **No Thereabout user assigned.** An administrator maps them with Create User.
+- **CSRF:** the Access cookie makes browser requests carry the login implicitly, so writes require the `XSRF-TOKEN` cookie value in the `X-XSRF-TOKEN` header. Angular's HTTP client sends it for same-origin requests.
+- **Clients outside Access** use only their own credentials on exact endpoints: location and health uploads (`POST /backend/api/v1/location/geojson`, `POST /backend/api/v1/health`) need the ingestion API key, and the Google Calendar callback is authenticated by its channel token. Give these paths a Cloudflare Access Bypass policy; every other path must stay behind Access.
+- **MCP** still requires both an admitted Access login (for example a service token) with the finance audience and its own bearer key.
+- Static frontend files and `/actuator/health` need no login; they hold no personal data.
+
+Set `thereabout.access.mode=cloudflare` in production. When it is absent, `thereabout.finances.access-mode` applies, then `local`. Cloudflare mode without issuer/audience settings, or an unknown mode, fails startup. Local mode admits only requests from and addressed to the loopback interface, which act as the local administrator. Keep the origin itself unreachable except through Cloudflare (for example `cloudflared` on an internal Docker network) as a second line of defence.
+
+Domain tables are shared between users; ownership filtering is not implemented.
 
 ## Minimum configuration
 

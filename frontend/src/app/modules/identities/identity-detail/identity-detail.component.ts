@@ -3,6 +3,7 @@ import { AppModalComponent } from '../../../shared/modal/app-modal.component';
 import {MessageService} from 'primeng/api';
 import {CreateUserDialogComponent} from '../create-user-dialog/create-user-dialog.component';
 import {registerRefresh} from '../../../shared/refresh/refresh-coordinator';
+import {CurrentUserService} from '../../../shared/current-user/current-user.service';
 import {inject, ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy, signal} from '@angular/core';
 import {ActivatedRoute, Router, RouterModule} from '@angular/router';
 import {ButtonModule} from 'primeng/button';
@@ -27,6 +28,7 @@ import {Identity, IdentityService} from '../../../../../generated/backend-api/th
 })
 export class IdentityDetailComponent implements OnInit {
   private readonly changeDetector = inject(ChangeDetectorRef);
+  readonly canManageUsers = inject(CurrentUserService).canManageUsers;
   private readonly refresh = registerRefresh(() => this.loadIdentity(), () => !!this.creatingUser || this.editing || this.deleteVisible());
 
     editing = false;

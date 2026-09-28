@@ -5,13 +5,8 @@ paths:
       tags:
         - health
       operationId: submitHealthData
-      parameters:
-        - in: header
-          name: Authorization
-          required: true
-          schema:
-            type: string
-          description: Bearer token for authorization
+      security:
+        - thereaboutApiKey: []
       requestBody:
         description: Health data containing metrics and workouts
         required: true

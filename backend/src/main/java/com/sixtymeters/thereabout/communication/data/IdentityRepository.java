@@ -13,4 +13,7 @@ public interface IdentityRepository extends JpaRepository<IdentityEntity, Long> 
     Optional<IdentityEntity> findForUpdateById(Long id);
 
     Optional<IdentityEntity> findByShortName(String shortName);
+
+    @org.springframework.data.jpa.repository.Query("select count(i) > 0 from IdentityEntity i where i.isUser = true")
+    boolean anyUserExists();
 }

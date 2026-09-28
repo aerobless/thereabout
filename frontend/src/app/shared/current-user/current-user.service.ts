@@ -28,6 +28,11 @@ export class CurrentUserService {
     this.simulatedUser.set(null);
     this.load();
   }
+  /** Only resolved non-admins are refused; local development acts as the local administrator. */
+  readonly canManageUsers = computed(() => {
+    const user = this.verifiedState();
+    return user.status !== 'resolved' || user.isAdmin === true;
+  });
   readonly displayName = computed(() => {
     const user = this.state();
     return user.status === 'resolved' ? user.displayName : undefined;

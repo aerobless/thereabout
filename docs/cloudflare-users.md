@@ -16,22 +16,22 @@ Cloudflare Access decides who may reach Thereabout; Thereabout verifies the sign
 - **MCP** still requires both an admitted Access login (for example a service token) with the finance audience and its own bearer key.
 - Static frontend files and `/actuator/health` need no login; they hold no personal data.
 
-Set `thereabout.access.mode=cloudflare` in production. When it is absent, `thereabout.finances.access-mode` applies, then `local`. Cloudflare mode without issuer/audience settings, or an unknown mode, fails startup. Local mode admits only requests from and addressed to the loopback interface, which act as the local administrator. Keep the origin itself unreachable except through Cloudflare (for example `cloudflared` on an internal Docker network) as a second line of defence.
+Set `THEREABOUT_ACCESS_MODE=cloudflare` in production; the default is `local`. Cloudflare mode without issuer and audience, incomplete settings, or an unknown mode fail startup. Local mode admits only requests from and addressed to the loopback interface, which act as the local administrator. Keep the origin itself unreachable except through Cloudflare (for example `cloudflared` on an internal Docker network) as a second line of defence.
 
 Domain tables are shared between users; ownership filtering is not implemented.
 
 ## Minimum configuration
 
-Recognition starts automatically when Cloudflare issuer/audience settings are present. Configure a separate Access application only if needed:
+Set these environment variables on the application (they map to `thereabout.access.*` and `thereabout.public-origin` in `application.yml`):
 
-```properties
-thereabout.users.access-issuer=https://your-team.cloudflareaccess.com
-thereabout.users.access-audience=YOUR_ACCESS_APPLICATION_AUDIENCE
-```
+| Variable | Purpose |
+| --- | --- |
+| `THEREABOUT_ACCESS_MODE` | `local` (default) admits only this machine; `cloudflare` requires the Access assertion. |
+| `THEREABOUT_CLOUDFLARE_ISSUER` | Your Access team domain, e.g. `https://your-team.cloudflareaccess.com`. |
+| `THEREABOUT_CLOUDFLARE_AUDIENCE` | The Application Audience (AUD) tag of the one Access application. |
+| `THEREABOUT_PUBLIC_ORIGIN` | Public HTTPS origin, e.g. `https://thereabout.example.com`; fixes the Google Calendar callback. Optional. |
 
-Use the Access application audience for the browser application and backend path, not a service-token identifier. Set these through the normal Spring environment (`THEREABOUT_USERS_ACCESS_ISSUER`, `THEREABOUT_USERS_ACCESS_AUDIENCE`) or the existing optional `/data/finances.properties` import. No new file import is required. Do not put real mappings, credentials, JWTs, or private deployment configuration in source control.
-
-For compatibility, when the user issuer/audience properties are absent they fall back individually to `thereabout.finances.access-issuer` and `thereabout.finances.access-audience`. This only works if that existing Access application also covers the user endpoint. No enable flag is required. Finance access-mode/public-origin settings retain their existing meaning; finance and MCP protections remain in place. The two JWT decoder beans have explicit qualifiers, so simultaneous enablement does not create ambiguous injection. If any issuer/audience setting is supplied, incomplete or invalid settings fail startup rather than assigning a fallback user. With no Access settings, local startup needs no Cloudflare credentials.
+Issuer and audience are never taken from a token: they decide which team and which Access application Thereabout trusts. Use the application audience, not a service-token identifier. With no Cloudflare settings, local startup needs no credentials. Do not put real mappings, credentials, JWTs, or private deployment configuration in source control.
 
 Only `Cf-Access-Jwt-Assertion` is used. Signature, issuer, audience, expiration (required), and not-before are validated before reading email. Plain email headers and client-supplied person IDs do not authenticate anyone. Shared verification uses Nimbus and the Cloudflare signing-key endpoint, following [Cloudflare's JWT validation documentation](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/). Tokens are neither logged nor returned by this flow.
 

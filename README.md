@@ -84,7 +84,7 @@ Import progress is shown in Configuration. The same page exposes the ingestion A
 ## Self-hosting
 
 > [!IMPORTANT]
-> Thereabout has no login of its own. Without Cloudflare settings it runs in local mode, where only browsers on the same machine can use it. To reach it from elsewhere, put it behind Cloudflare Access and set `thereabout.access.mode=cloudflare` with the Access issuer and audience: Thereabout then verifies the signed Access assertion on every request, see [Cloudflare users](docs/cloudflare-users.md). The ingestion API key only authorizes location and health uploads. Google Maps remains an external service and requires a Maps API key.
+> Thereabout has no login of its own. Without Cloudflare settings it runs in local mode, where only browsers on the same machine can use it. To reach it from elsewhere, put it behind Cloudflare Access and set `THEREABOUT_ACCESS_MODE=cloudflare` with the Access issuer and audience: Thereabout then verifies the signed Access assertion on every request, see [Cloudflare users](docs/cloudflare-users.md). The ingestion API key only authorizes location and health uploads. Google Maps remains an external service and requires a Maps API key.
 
 You need Docker Compose and a Google Maps API key suitable for your deployment's hostname.
 
@@ -97,6 +97,11 @@ You need Docker Compose and a Google Maps API key suitable for your deployment's
    THEREABOUT_DB_USER=thereabout
    THEREABOUT_DB_PASSWORD=replace-with-a-strong-password
    THEREABOUT_DB_ROOT_PASSWORD=replace-with-a-different-strong-password
+   # Behind Cloudflare Access, see docs/cloudflare-users.md:
+   # THEREABOUT_ACCESS_MODE=cloudflare
+   # THEREABOUT_CLOUDFLARE_ISSUER=https://your-team.cloudflareaccess.com
+   # THEREABOUT_CLOUDFLARE_AUDIENCE=your-access-application-aud-tag
+   # THEREABOUT_PUBLIC_ORIGIN=https://thereabout.example.com
    ```
 
 3. Choose an image tag in the Compose file. `latest` is the manually published release channel. `development` receives successful builds from `main` and includes the newest features described here.
@@ -192,7 +197,7 @@ The backend imports more health metric types than the dashboard currently visual
 
 ### Startup configuration
 
-Finance is always available. Cloudflare user recognition automatically uses configured issuer/audience values (falling back to the finance Access settings); partial or invalid settings fail startup. Ordinary local development needs no Cloudflare credentials, and the frontend supports local impersonation. Production uses `thereabout.access.mode=cloudflare` (the finance access mode is used when it is not set); see [Cloudflare users](docs/cloudflare-users.md) and [production access](docs/finances-production.md).
+Finance is always available. Access is configured with `THEREABOUT_ACCESS_MODE` (`local` by default), `THEREABOUT_CLOUDFLARE_ISSUER` and `THEREABOUT_CLOUDFLARE_AUDIENCE`; partial or invalid settings fail startup. `THEREABOUT_PUBLIC_ORIGIN` enables Google Calendar push. Ordinary local development needs no Cloudflare credentials, and the frontend supports local impersonation. See [Cloudflare users](docs/cloudflare-users.md). The former `thereabout.finances.access-*`, `thereabout.finances.public-origin` and `thereabout.users.access-*` properties and `/data/finances.properties` are no longer read.
 
 Only two optional background-task switches remain: `thereabout.calendar.worker-enabled` and `thereabout.launcher.fetch-icons` (both default to `true`). The development profile disables the calendar worker to avoid synchronizing external calendars during local work; explicitly enable it when testing real synchronization. The test profile disables both tasks. Ports, database connections and integration credentials remain configuration, rather than feature switches.
 

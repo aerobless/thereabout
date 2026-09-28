@@ -10,8 +10,6 @@ server:
   port : 9050
 
 spring:
-  config:
-    import: optional:file:/data/finances.properties
   servlet:
     multipart:
       max-file-size: 5GB
@@ -28,6 +26,14 @@ spring:
       static-locations: classpath:/frontend/
 
 thereabout:
+  # Public HTTPS origin behind Cloudflare, e.g. https://thereabout.example.com; enables Google push.
+  public-origin: ${THEREABOUT_PUBLIC_ORIGIN:}
+  access:
+    # local admits only this machine; cloudflare requires the Access assertion of one application.
+    mode: ${THEREABOUT_ACCESS_MODE:local}
+    cloudflare:
+      issuer: ${THEREABOUT_CLOUDFLARE_ISSUER:}
+      audience: ${THEREABOUT_CLOUDFLARE_AUDIENCE:}
   apiKeys:
     googleMaps: ${GOOGLE_MAPS_API_KEY}
   config:

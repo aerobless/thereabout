@@ -33,7 +33,7 @@ public class CalendarSyncService {
     private final GoogleCalendarGateway google;
     @Value("${thereabout.calendar.worker-enabled:true}") private boolean workerEnabled;
     /** The public HTTPS origin behind Cloudflare; without it Google push is disabled and Sync now still works. */
-    @Value("${thereabout.public-origin:${thereabout.finances.public-origin:}}") private String publicOrigin;
+    @Value("${thereabout.public-origin:}") private String publicOrigin;
     private static final Map<String,String> SECRET_KEYS = Map.of("clientId", "GOOGLE_CLIENT_ID", "clientSecret", "GOOGLE_CLIENT_SECRET", "refreshToken", "GOOGLE_REFRESH_TOKEN");
     private static final SecureRandom RANDOM = new SecureRandom();
     public static final String CALLBACK_PATH = com.sixtymeters.thereabout.generated.api.CalendarApi.PATH_RECEIVE_GOOGLE_CALENDAR_NOTIFICATION;

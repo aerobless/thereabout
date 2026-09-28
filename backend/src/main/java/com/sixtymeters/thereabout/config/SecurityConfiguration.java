@@ -1,5 +1,8 @@
 package com.sixtymeters.thereabout.config;
 
+import com.sixtymeters.thereabout.access.AccessConfiguration.CloudflareAccess;
+import com.sixtymeters.thereabout.access.AccessProperties;
+import com.sixtymeters.thereabout.access.AccessProperties.Mode;
 import com.sixtymeters.thereabout.access.BearerKeyFilter;
 import com.sixtymeters.thereabout.access.CloudflareAccessFilter;
 import com.sixtymeters.thereabout.access.CloudflareUsers;
@@ -10,9 +13,6 @@ import com.sixtymeters.thereabout.finance.service.FinanceMcpKeyService;
 import com.sixtymeters.thereabout.generated.api.CalendarApi;
 import com.sixtymeters.thereabout.generated.api.HealthApi;
 import com.sixtymeters.thereabout.generated.api.LocationApi;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -47,27 +47,13 @@ public class SecurityConfiguration {
     private static final RequestMatcher API_KEY_INGESTION = new OrRequestMatcher(
             PATHS.matcher(POST, LocationApi.PATH_ADD_GEO_JSON_LOCATION), PATHS.matcher(POST, HealthApi.PATH_SUBMIT_HEALTH_DATA));
 
-    enum Mode { LOCAL, CLOUDFLARE }
-
     private final Mode mode;
-    private final JwtDecoder userDecoder;
-    private final JwtDecoder financeDecoder;
+    private final JwtDecoder decoder;
     private final CloudflareUsers users;
 
-    SecurityConfiguration(@Value("${thereabout.access.mode:${thereabout.finances.access-mode:local}}") String mode,
-                          @Qualifier("userAccessTokenDecoder") ObjectProvider<JwtDecoder> userDecoder,
-                          @Qualifier("financeAccessTokenDecoder") ObjectProvider<JwtDecoder> financeDecoder,
-                          CloudflareUsers users) {
-        this.mode = switch (mode) {
-            case "local" -> Mode.LOCAL;
-            case "cloudflare" -> Mode.CLOUDFLARE;
-            default -> throw new IllegalStateException("thereabout.access.mode must be local or cloudflare");
-        };
-        this.userDecoder = userDecoder.getIfAvailable();
-        if (this.mode == Mode.CLOUDFLARE && this.userDecoder == null) {
-            throw new IllegalStateException("Cloudflare access requires thereabout.users.access-issuer and access-audience");
-        }
-        this.financeDecoder = financeDecoder.getIfAvailable(() -> this.userDecoder);
+    SecurityConfiguration(AccessProperties properties, CloudflareAccess cloudflare, CloudflareUsers users) {
+        this.mode = properties.mode();
+        this.decoder = cloudflare.decoder();
         this.users = users;
     }
 
@@ -92,7 +78,7 @@ public class SecurityConfiguration {
     @Bean
     @Order(2)
     SecurityFilterChain financeMcp(HttpSecurity http, FinanceMcpKeyService mcpKeys) throws Exception {
-        identify(machine(http.securityMatcher(new OrRequestMatcher(PATHS.matcher("/mcp/finances"), PATHS.matcher("/mcp/finances/**")))), financeDecoder)
+        identify(machine(http.securityMatcher(new OrRequestMatcher(PATHS.matcher("/mcp/finances"), PATHS.matcher("/mcp/finances/**")))))
                 .addFilterBefore(new BearerKeyFilter(mcpKeys::matchesAuthorization, "ROLE_MCP", true),
                         AnonymousAuthenticationFilter.class)
                 .authorizeHttpRequests(rules -> rules.anyRequest().hasRole("MCP"))
@@ -104,7 +90,7 @@ public class SecurityConfiguration {
     @Bean
     @Order(3)
     SecurityFilterChain finance(HttpSecurity http) throws Exception {
-        browser(http.securityMatcher(PATHS.matcher("/api/finances/**")), financeDecoder)
+        browser(http.securityMatcher(PATHS.matcher("/api/finances/**")))
                 .authorizeHttpRequests(rules -> rules.anyRequest().hasAuthority(USER));
         return http.build();
     }
@@ -113,7 +99,7 @@ public class SecurityConfiguration {
     @Bean
     @Order(4)
     SecurityFilterChain application(HttpSecurity http) throws Exception {
-        browser(http, userDecoder).authorizeHttpRequests(rules -> rules
+        browser(http).authorizeHttpRequests(rules -> rules
                 .requestMatchers(PATHS.matcher(GET, "/backend/api/v1/current-user")).permitAll()
                 .requestMatchers(PATHS.matcher(POST, "/backend/api/v1/identity/{id}/user")).hasAuthority(ADMIN)
                 .requestMatchers(PATHS.matcher("/actuator/health"), PATHS.matcher("/actuator/health/**")).permitAll()
@@ -125,10 +111,10 @@ public class SecurityConfiguration {
         return http.build();
     }
 
-    private HttpSecurity browser(HttpSecurity http, JwtDecoder decoder) throws Exception {
+    private HttpSecurity browser(HttpSecurity http) throws Exception {
         var tokens = CookieCsrfTokenRepository.withHttpOnlyFalse();
         tokens.setCookieCustomizer(cookie -> cookie.secure(mode == Mode.CLOUDFLARE).sameSite("Lax"));
-        return identify(stateless(http), decoder)
+        return identify(stateless(http))
                 .csrf(csrf -> csrf.spa().csrfTokenRepository(tokens))
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
                 .headers(headers -> headers
@@ -138,7 +124,7 @@ public class SecurityConfiguration {
                 .exceptionHandling(errors -> errors.authenticationEntryPoint(unauthorized(false)));
     }
 
-    private HttpSecurity identify(HttpSecurity http, JwtDecoder decoder) {
+    private HttpSecurity identify(HttpSecurity http) {
         if (decoder != null) http.addFilterBefore(new CloudflareAccessFilter(decoder, users), AnonymousAuthenticationFilter.class);
         if (mode == Mode.LOCAL) http.addFilterBefore(new LocalAccessFilter(), AnonymousAuthenticationFilter.class);
         return http;

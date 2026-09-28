@@ -1,16 +1,8 @@
 # Finances in production
 
-Finance endpoints are always registered. Local development uses the single `development` profile. Production uses Cloudflare Access JWT validation in addition to the existing edge policy, for the whole application (see [Cloudflare users](cloudflare-users.md)). Finance and MCP require the finance application's audience; direct requests to the origin without a valid signed token are rejected. Finance additionally requires a Thereabout user, and browser writes require the CSRF token. MCP additionally requires its own bearer key.
+Finance endpoints are always registered. Local development uses the single `development` profile. Production uses Cloudflare Access JWT validation in addition to the existing edge policy, for the whole application (see [Cloudflare users](cloudflare-users.md)). Direct requests to the origin without a valid signed token are rejected. Finance additionally requires a Thereabout user, and browser writes require the CSRF token. MCP additionally requires its own bearer key.
 
-The application optionally loads `/data/finances.properties` from its persistent volume. Create it with mode 0600, accessible only to the application and administrator:
-
-```properties
-thereabout.finances.access-mode=cloudflare
-thereabout.finances.access-issuer=https://your-team.cloudflareaccess.com
-thereabout.finances.access-audience=YOUR_ACCESS_APPLICATION_AUDIENCE
-```
-
-Use the Access application's audience, not a service-token ID. The backend fetches and caches the team's signing keys and validates signature, issuer, audience, expiration and not-before. Cross-site browser writes are rejected by the CSRF token check. `thereabout.finances.public-origin` is no longer an access check; it remains the fallback for `thereabout.public-origin`, which fixes the Google Calendar callback URL. Unknown access modes fail closed. Keep this file out of Git. The MCP credential is stored in the existing `configuration` table under `FINANCE_MCP_KEY`, not in this properties file. Do not enable the local profile on the server.
+Access is configured with the `THEREABOUT_ACCESS_MODE`, `THEREABOUT_CLOUDFLARE_ISSUER` and `THEREABOUT_CLOUDFLARE_AUDIENCE` environment variables described in [Cloudflare users](cloudflare-users.md); `/data/finances.properties` is no longer read. The backend fetches and caches the team's signing keys and validates signature, issuer, audience, expiration and not-before. Cross-site browser writes are rejected by the CSRF token check. Unknown access modes fail closed. The MCP credential is stored in the existing `configuration` table under `FINANCE_MCP_KEY`. Do not enable the local profile on the server.
 
 For MCP, authenticate through Cloudflare Access and supply the bearer key to `/mcp/finances`. No agent integration or Cloudflare policy changes are performed by the application.
 

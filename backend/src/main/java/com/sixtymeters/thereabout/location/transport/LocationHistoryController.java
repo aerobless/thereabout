@@ -28,14 +28,6 @@ public class LocationHistoryController implements LocationApi {
     private static final LocationHistoryMapper LOCATION_HISTORY_MAPPER = LocationHistoryMapper.INSTANCE;
 
     @Transactional
-    /** Former path, kept while clients move to /backend/api/v1/ingest. */
-    @Deprecated
-    @Override
-    public ResponseEntity<GenAddGeoJsonLocation200Response> addGeoJsonLocationLegacy(GenAddGeoJsonLocationRequest genAddGeoJsonLocationRequest) {
-        return addGeoJsonLocation(genAddGeoJsonLocationRequest);
-    }
-
-    @Transactional
     @Override
     public ResponseEntity<GenAddGeoJsonLocation200Response> addGeoJsonLocation(GenAddGeoJsonLocationRequest genAddGeoJsonLocationRequest) {
         log.info("Received GeoJson location data");

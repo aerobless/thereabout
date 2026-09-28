@@ -54,12 +54,6 @@ public class CalendarController implements CalendarApi {
     public ResponseEntity<Void> receiveGoogleCalendarNotification(String id,String token,String resource,String state) {
         sync.notification(id,token,resource,state); return ResponseEntity.noContent().build();
     }
-    /** Former path, kept while clients move to /backend/api/v1/ingest. */
-    @Deprecated
-    @Override
-    public ResponseEntity<Void> receiveGoogleCalendarNotificationLegacy(String id,String token,String resource,String state) {
-        return receiveGoogleCalendarNotification(id,token,resource,state);
-    }
     @Override
     public ResponseEntity<List<GenCalendarOccurrence>> getCalendarDay(LocalDate date,String timeZone) {
         try { return ResponseEntity.ok(occurrences.day(date,ZoneId.of(timeZone)).stream().map(CalendarApiMapper.INSTANCE::occurrence).toList()); }

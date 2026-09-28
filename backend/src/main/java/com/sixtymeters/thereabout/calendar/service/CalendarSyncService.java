@@ -5,6 +5,7 @@ import com.sixtymeters.thereabout.calendar.data.CalendarStore;
 import com.sixtymeters.thereabout.calendar.data.CalendarStore.*;
 import com.sixtymeters.thereabout.calendar.google.GoogleCalendarGateway;
 import com.sixtymeters.thereabout.config.ThereaboutException;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -31,13 +32,31 @@ public class CalendarSyncService {
     private final CalendarStore store;
     private final GoogleCalendarGateway google;
     @Value("${thereabout.calendar.worker-enabled:true}") private boolean workerEnabled;
+    /** The public HTTPS origin behind Cloudflare; without it Google push is disabled and Sync now still works. */
+    @Value("${thereabout.public-origin:${thereabout.finances.public-origin:}}") private String publicOrigin;
     private static final Map<String,String> SECRET_KEYS = Map.of("clientId", "GOOGLE_CLIENT_ID", "clientSecret", "GOOGLE_CLIENT_SECRET", "refreshToken", "GOOGLE_REFRESH_TOKEN");
     private static final SecureRandom RANDOM = new SecureRandom();
-    public static final String CALLBACK_PATH = "/backend/api/v1/calendar/google/notifications";
+    public static final String CALLBACK_PATH = com.sixtymeters.thereabout.generated.api.CalendarApi.PATH_RECEIVE_GOOGLE_CALENDAR_NOTIFICATION;
+
+    @PostConstruct
+    void validatePublicOrigin() { callbackUrl(); }
+
+    /** Fixed callback derived from the public origin; null when push notifications are disabled. */
+    public String callbackUrl() {
+        String origin = publicOrigin == null ? "" : publicOrigin.trim().replaceAll("/+$", "");
+        if (origin.isEmpty()) return null;
+        URI uri = URI.create(origin);
+        if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null
+                || !uri.getRawPath().isEmpty() || uri.getRawQuery() != null || uri.getRawFragment() != null)
+            throw new IllegalStateException("thereabout.public-origin must be an HTTPS origin without a path");
+        return origin + CALLBACK_PATH;
+    }
 
     @EventListener(ApplicationReadyEvent.class)
     public synchronized void resume() {
         if (!workerEnabled) return;
+        // Channels registered for a former callback URL are replaced.
+        webhookUrl(callbackUrl());
         configure();
         store.update("UPDATE calendar_calendar SET pending_version=pending_version+1 WHERE selected=TRUE");
         store.pending(null);
@@ -76,6 +95,7 @@ public class CalendarSyncService {
             store.update("UPDATE calendar_connection SET state='ERROR',error=? WHERE id=1", GoogleCalendarGateway.safeError(e));
         }
     }
+    /** Uses {@code url} for push channels, retiring channels registered for any other URL. */
     public synchronized void webhookUrl(String url) {
         String normalized = url == null ? "" : url.trim();
         if (!normalized.isEmpty()) {

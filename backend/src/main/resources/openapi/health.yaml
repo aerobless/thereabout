@@ -2,6 +2,7 @@ paths:
   Health:
     post:
       summary: Submit health data
+      description: For ingestion clients outside Cloudflare Access; authorized only by the ingestion API key.
       tags:
         - health
       operationId: submitHealthData
@@ -13,10 +14,32 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                data:
-                  $ref: "#/components/schemas/HealthData"
+              $ref: "#/components/schemas/SubmitHealthDataRequest"
+      responses:
+        201:
+          description: Successful submission of health data
+        400:
+          $ref: '../thereabout.openapi.yaml#/components/responses/400'
+        401:
+          $ref: '../thereabout.openapi.yaml#/components/responses/401'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  HealthLegacy:
+    post:
+      summary: Submit health data (former path)
+      description: Kept while clients move to /backend/api/v1/ingest/health.
+      deprecated: true
+      tags:
+        - health
+      operationId: submitHealthDataLegacy
+      security:
+        - thereaboutApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitHealthDataRequest"
       responses:
         201:
           description: Successful submission of health data
@@ -61,6 +84,11 @@ paths:
 
 components:
   schemas:
+    SubmitHealthDataRequest:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/HealthData"
     HealthData:
       type: object
       properties:

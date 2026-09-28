@@ -112,7 +112,7 @@ paths:
       summary: Post GeoJson location data
       tags:
         - location
-      description: Endpoint for posting geojson location data, e.g. from a client such as Overland
+      description: Endpoint for posting geojson location data, e.g. from a client such as Overland, outside Cloudflare Access; authorized only by the ingestion API key.
       operationId: addGeoJsonLocation
       security:
         - thereaboutApiKey: []
@@ -121,23 +121,43 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                locations:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/GeoJsonLocation'
+              $ref: '#/components/schemas/AddGeoJsonLocationRequest'
       responses:
         200:
           description: Successful response
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  result:
-                    type: string
-                    example: "ok"
+                $ref: '#/components/schemas/AddGeoJsonLocation200Response'
+        401:
+          $ref: '../thereabout.openapi.yaml#/components/responses/401'
+        500:
+          $ref: '../thereabout.openapi.yaml#/components/responses/500'
+  LocationGeojsonLegacy:
+    post:
+      summary: Post GeoJson location data (former path)
+      tags:
+        - location
+      description: Kept while clients move to /backend/api/v1/ingest/location/geojson.
+      operationId: addGeoJsonLocationLegacy
+      deprecated: true
+      security:
+        - thereaboutApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddGeoJsonLocationRequest'
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddGeoJsonLocation200Response'
+        401:
+          $ref: '../thereabout.openapi.yaml#/components/responses/401'
         500:
           $ref: '../thereabout.openapi.yaml#/components/responses/500'
   LocationById:
@@ -187,6 +207,19 @@ paths:
           $ref: '../thereabout.openapi.yaml#/components/responses/500'
 components:
   schemas:
+    AddGeoJsonLocationRequest:
+      type: object
+      properties:
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeoJsonLocation'
+    AddGeoJsonLocation200Response:
+      type: object
+      properties:
+        result:
+          type: string
+          example: "ok"
     UserStatistics:
       description: The status of the file import process.
       type: object

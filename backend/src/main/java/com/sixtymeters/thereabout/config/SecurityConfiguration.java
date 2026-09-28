@@ -7,6 +7,9 @@ import com.sixtymeters.thereabout.access.CsrfCookieFilter;
 import com.sixtymeters.thereabout.access.LocalAccessFilter;
 import com.sixtymeters.thereabout.client.service.ConfigurationService;
 import com.sixtymeters.thereabout.finance.service.FinanceMcpKeyService;
+import com.sixtymeters.thereabout.generated.api.CalendarApi;
+import com.sixtymeters.thereabout.generated.api.HealthApi;
+import com.sixtymeters.thereabout.generated.api.LocationApi;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,9 +43,12 @@ import static org.springframework.http.HttpMethod.POST;
 @Configuration
 public class SecurityConfiguration {
     private static final PathPatternRequestMatcher.Builder PATHS = PathPatternRequestMatcher.withDefaults();
-    private static final RequestMatcher GOOGLE_NOTIFICATIONS = PATHS.matcher(POST, "/backend/api/v1/calendar/google/notifications");
-    private static final RequestMatcher LOCATION_INGESTION = PATHS.matcher(POST, "/backend/api/v1/location/geojson");
-    private static final RequestMatcher HEALTH_INGESTION = PATHS.matcher(POST, "/backend/api/v1/health");
+    private static final RequestMatcher GOOGLE_NOTIFICATIONS = new OrRequestMatcher(
+            PATHS.matcher(POST, CalendarApi.PATH_RECEIVE_GOOGLE_CALENDAR_NOTIFICATION),
+            PATHS.matcher(POST, CalendarApi.PATH_RECEIVE_GOOGLE_CALENDAR_NOTIFICATION_LEGACY));
+    private static final RequestMatcher API_KEY_INGESTION = new OrRequestMatcher(
+            PATHS.matcher(POST, LocationApi.PATH_ADD_GEO_JSON_LOCATION), PATHS.matcher(POST, LocationApi.PATH_ADD_GEO_JSON_LOCATION_LEGACY),
+            PATHS.matcher(POST, HealthApi.PATH_SUBMIT_HEALTH_DATA), PATHS.matcher(POST, HealthApi.PATH_SUBMIT_HEALTH_DATA_LEGACY));
 
     enum Mode { LOCAL, CLOUDFLARE }
 
@@ -68,11 +74,14 @@ public class SecurityConfiguration {
         this.users = users;
     }
 
-    /** Google authenticates its callback with the channel token checked by the calendar service. */
+    /**
+     * Cloudflare bypasses /backend/api/v1/ingest (and, until clients have moved, the former paths).
+     * Google authenticates its callback with the channel token checked by the calendar service.
+     */
     @Bean
     @Order(1)
     SecurityFilterChain ingestion(HttpSecurity http, ConfigurationService configuration) throws Exception {
-        machine(http.securityMatcher(new OrRequestMatcher(LOCATION_INGESTION, HEALTH_INGESTION, GOOGLE_NOTIFICATIONS)))
+        machine(http.securityMatcher(new OrRequestMatcher(API_KEY_INGESTION, GOOGLE_NOTIFICATIONS)))
                 .addFilterBefore(new BearerKeyFilter(configuration::acceptsThereaboutApiKey, "ROLE_INGEST", false),
                         AnonymousAuthenticationFilter.class)
                 .authorizeHttpRequests(rules -> rules
@@ -111,6 +120,7 @@ public class SecurityConfiguration {
                 .requestMatchers(PATHS.matcher(GET, "/backend/api/v1/current-user")).permitAll()
                 .requestMatchers(PATHS.matcher(POST, "/backend/api/v1/identity/{id}/user")).hasAuthority(ADMIN)
                 .requestMatchers(PATHS.matcher("/actuator/health"), PATHS.matcher("/actuator/health/**")).permitAll()
+                .requestMatchers(PATHS.matcher("/backend/api/v1/ingest/**")).denyAll()
                 .requestMatchers(PATHS.matcher("/backend/**"), PATHS.matcher("/api/**"), PATHS.matcher("/mcp/**"),
                         PATHS.matcher("/actuator/**"), PATHS.matcher("/v3/api-docs/**"), PATHS.matcher("/swagger-ui/**"),
                         PATHS.matcher("/swagger-ui.html")).hasAuthority(USER)

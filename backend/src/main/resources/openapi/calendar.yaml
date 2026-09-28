@@ -52,20 +52,6 @@ paths:
           - clientId
           - clientSecret
           - refreshToken
-  Webhook:
-    put:
-      tags:
-      - Calendar
-      operationId: saveCalendarWebhook
-      responses:
-        '204':
-          description: Success
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/CalendarWebhookSettings"
   Calendars:
     get:
       tags:
@@ -107,30 +93,30 @@ paths:
       tags:
       - Calendar
       operationId: receiveGoogleCalendarNotification
+      description: Google push callback outside Cloudflare Access; authenticated by the channel ID, token and resource.
       responses:
         '204':
           description: Success
       parameters:
-      - name: X-Goog-Channel-ID
-        in: header
-        required: true
-        schema:
-          type: string
-      - name: X-Goog-Channel-Token
-        in: header
-        required: true
-        schema:
-          type: string
-      - name: X-Goog-Resource-ID
-        in: header
-        required: true
-        schema:
-          type: string
-      - name: X-Goog-Resource-State
-        in: header
-        required: true
-        schema:
-          type: string
+      - $ref: '#/components/parameters/GoogleChannelId'
+      - $ref: '#/components/parameters/GoogleChannelToken'
+      - $ref: '#/components/parameters/GoogleResourceId'
+      - $ref: '#/components/parameters/GoogleResourceState'
+  NotificationsLegacy:
+    post:
+      tags:
+      - Calendar
+      operationId: receiveGoogleCalendarNotificationLegacy
+      description: Former callback path, kept until channels registered for it have expired.
+      deprecated: true
+      responses:
+        '204':
+          description: Success
+      parameters:
+      - $ref: '#/components/parameters/GoogleChannelId'
+      - $ref: '#/components/parameters/GoogleChannelToken'
+      - $ref: '#/components/parameters/GoogleResourceId'
+      - $ref: '#/components/parameters/GoogleResourceState'
   Upcoming:
     get:
       tags: [Calendar]
@@ -205,6 +191,31 @@ paths:
         schema:
           type: string
 components:
+  parameters:
+    GoogleChannelId:
+      name: X-Goog-Channel-ID
+      in: header
+      required: true
+      schema:
+        type: string
+    GoogleChannelToken:
+      name: X-Goog-Channel-Token
+      in: header
+      required: true
+      schema:
+        type: string
+    GoogleResourceId:
+      name: X-Goog-Resource-ID
+      in: header
+      required: true
+      schema:
+        type: string
+    GoogleResourceState:
+      name: X-Goog-Resource-State
+      in: header
+      required: true
+      schema:
+        type: string
   schemas:
     GoogleSecretStatus:
       type: object
@@ -236,13 +247,6 @@ components:
           type: string
       required:
       - value
-    CalendarWebhookSettings:
-      type: object
-      properties:
-        url:
-          type: string
-      required:
-      - url
     CalendarSelection:
       type: object
       properties:
@@ -320,6 +324,7 @@ components:
         webhookUrl:
           type: string
           nullable: true
+          description: Fixed push callback derived from the public origin, for copying into the proxy configuration; null when push is disabled.
           x-field-extra-annotation: "@lombok.Builder.Default"
         webhookHealth:
           type: string

@@ -112,7 +112,7 @@ class HealthControllerTest {
     void testSubmitHealthData() throws Exception {
         GenSubmitHealthDataRequest request = GenSubmitHealthDataRequest.builder().build();
 
-        mockMvc.perform(post("/backend/api/v1/health")
+        mockMvc.perform(post("/backend/api/v1/ingest/health")
                         .header("Authorization", "Bearer " + testApiKey)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -123,7 +123,7 @@ class HealthControllerTest {
     void testSubmitHealthDataUnauthorized() throws Exception {
         GenSubmitHealthDataRequest request = GenSubmitHealthDataRequest.builder().build();
 
-        mockMvc.perform(post("/backend/api/v1/health")
+        mockMvc.perform(post("/backend/api/v1/ingest/health")
                         .header("Authorization", "Bearer wrong-api-key")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -178,7 +178,7 @@ class HealthControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/backend/api/v1/health")
+        mockMvc.perform(post("/backend/api/v1/ingest/health")
                         .header("Authorization", "Bearer " + testApiKey)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(exampleJson))
@@ -224,7 +224,7 @@ class HealthControllerTest {
                 """;
 
         // Submit initial data
-        mockMvc.perform(post("/backend/api/v1/health")
+        mockMvc.perform(post("/backend/api/v1/ingest/health")
                         .header("Authorization", "Bearer " + testApiKey)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(initialJson))
@@ -293,7 +293,7 @@ class HealthControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/backend/api/v1/health")
+        mockMvc.perform(post("/backend/api/v1/ingest/health")
                         .header("Authorization", "Bearer " + testApiKey)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatedJson))

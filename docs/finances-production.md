@@ -10,7 +10,7 @@ thereabout.finances.access-issuer=https://your-team.cloudflareaccess.com
 thereabout.finances.access-audience=YOUR_ACCESS_APPLICATION_AUDIENCE
 ```
 
-Use the Access application's audience, not a service-token ID. The backend fetches and caches the team's signing keys and validates signature, issuer, audience, expiration and not-before. Cross-site browser writes are rejected by the CSRF token check; the former `public-origin` setting is no longer needed. Unknown access modes fail closed. Keep this file out of Git. The MCP credential is stored in the existing `configuration` table under `FINANCE_MCP_KEY`, not in this properties file. Do not enable the local profile on the server.
+Use the Access application's audience, not a service-token ID. The backend fetches and caches the team's signing keys and validates signature, issuer, audience, expiration and not-before. Cross-site browser writes are rejected by the CSRF token check. `thereabout.finances.public-origin` is no longer an access check; it remains the fallback for `thereabout.public-origin`, which fixes the Google Calendar callback URL. Unknown access modes fail closed. Keep this file out of Git. The MCP credential is stored in the existing `configuration` table under `FINANCE_MCP_KEY`, not in this properties file. Do not enable the local profile on the server.
 
 For MCP, authenticate through Cloudflare Access and supply the bearer key to `/mcp/finances`. No agent integration or Cloudflare policy changes are performed by the application.
 

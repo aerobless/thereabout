@@ -3,6 +3,7 @@ import {TestBed} from '@angular/core/testing';
 import {Subject} from 'rxjs';
 import {CalendarService, GoogleCalendarStatus} from '../../../../generated/backend-api/thereabout';
 import {GoogleCalendarSettingsComponent} from './google-calendar-settings.component';
+import {MessageService} from 'primeng/api';
 
 const storedStatus: GoogleCalendarStatus = {
   account: 'test@example.com', state: 'READY', error: null, webhookUrl: null,
@@ -19,6 +20,7 @@ async function setup() {
     saveGoogleCalendarCredentials: vi.fn(() => save)
   };
   await TestBed.configureTestingModule({imports: [GoogleCalendarSettingsComponent], providers: [
+    MessageService,
     provideZonelessChangeDetection(), {provide: CalendarService, useValue: api}
   ]}).compileComponents();
   const fixture = TestBed.createComponent(GoogleCalendarSettingsComponent);

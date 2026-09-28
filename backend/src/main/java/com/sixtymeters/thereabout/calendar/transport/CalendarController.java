@@ -28,7 +28,7 @@ public class CalendarController implements CalendarApi {
         var c=store.connection();
         var configured=sync.secrets();
         return noCache(GenGoogleCalendarStatus.builder().account(c.account()).state(c.state()).error(c.error())
-                .webhookUrl(c.webhookUrl()).webhookHealth(sync.channelHealth(null))
+                .webhookUrl(sync.callbackUrl()).webhookHealth(sync.channelHealth(null))
                 .secrets(GenGoogleSecretStatus.builder().clientId(configured.get("clientId")).clientSecret(configured.get("clientSecret")).refreshToken(configured.get("refreshToken")).build())
                 .calendars(store.calendars().stream().map(this::info).toList()).build());
     }
@@ -43,8 +43,6 @@ public class CalendarController implements CalendarApi {
         sync.credentials(changes); return getGoogleCalendarStatus();
     }
     @Override
-    public ResponseEntity<Void> saveCalendarWebhook(GenCalendarWebhookSettings settings) { sync.webhookUrl(settings.getUrl()); return ResponseEntity.noContent().build(); }
-    @Override
     public ResponseEntity<List<GenCalendarInfo>> getAvailableGoogleCalendars() { return noCache(sync.available().stream().map(this::info).toList()); }
     @Override
     public ResponseEntity<Void> importGoogleCalendars(GenCalendarSelection selection) {
@@ -55,6 +53,12 @@ public class CalendarController implements CalendarApi {
     @Override
     public ResponseEntity<Void> receiveGoogleCalendarNotification(String id,String token,String resource,String state) {
         sync.notification(id,token,resource,state); return ResponseEntity.noContent().build();
+    }
+    /** Former path, kept while clients move to /backend/api/v1/ingest. */
+    @Deprecated
+    @Override
+    public ResponseEntity<Void> receiveGoogleCalendarNotificationLegacy(String id,String token,String resource,String state) {
+        return receiveGoogleCalendarNotification(id,token,resource,state);
     }
     @Override
     public ResponseEntity<List<GenCalendarOccurrence>> getCalendarDay(LocalDate date,String timeZone) {

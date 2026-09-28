@@ -47,6 +47,7 @@ class CalendarSyncTest {
     @BeforeEach void setup() throws Exception {
         sync=new CalendarSyncService(store,google);
         ReflectionTestUtils.setField(sync,"workerEnabled",true);
+        ReflectionTestUtils.setField(sync,"publicOrigin","https://example.com");
         store.update("UPDATE calendar_connection SET account='me@example.com',state='READY',webhook_url=?,pending_version=0,processed_version=0,next_safety_at=?,retry_at=NULL WHERE id=1",
                 "https://example.com"+CalendarSyncService.CALLBACK_PATH,timestamp(Instant.now().plusSeconds(86400)));
         store.metadata("me@example.com", new CalendarListEntry().setId("primary-test").setSummary("Personal").setTimeZone("Europe/Zurich").setAccessRole("owner"));
@@ -136,6 +137,22 @@ class CalendarSyncTest {
         clearInvocations(google); sync.work(); verifyNoInteractions(google);
         sync.resume();
         assertThat(store.calendar(id).pending()).isGreaterThan(store.calendar(id).processed());
+    }
+    @Test void callbackIsFixedByThePublicOriginAndStartupReplacesChannelsForFormerUrls() throws Exception {
+        channel("former",id,"token","resource",Instant.now().plusSeconds(60000));
+        store.update("UPDATE calendar_connection SET webhook_url=? WHERE id=1","https://example.com/backend/api/v1/calendar/google/notifications");
+        ReflectionTestUtils.setField(sync,"publicOrigin","https://example.com/");
+        assertThat(sync.callbackUrl()).isEqualTo("https://example.com/backend/api/v1/ingest/calendar/google/notifications");
+        sync.resume();
+        assertThat(store.connection().webhookUrl()).isEqualTo(sync.callbackUrl());
+        assertThat(store.channels()).filteredOn(c -> c.id().equals("former")).singleElement().satisfies(c -> assertThat(c.state()).isEqualTo("RETIRED"));
+        verify(google).stop("former","resource");
+        for (String invalid : List.of("http://example.com","https://example.com/app","https://example.com?next=1")) {
+            ReflectionTestUtils.setField(sync,"publicOrigin",invalid);
+            assertThatThrownBy(sync::callbackUrl).as(invalid).isInstanceOf(IllegalStateException.class);
+        }
+        ReflectionTestUtils.setField(sync,"publicOrigin","");
+        assertThat(sync.callbackUrl()).isNull();
     }
     @Test void renewalCreatesReplacementAndRetiresOldChannel() throws Exception {
         channel("old-channel",id,"old-token","old-resource",Instant.now().plusSeconds(30));
@@ -313,7 +330,7 @@ class CalendarSyncTest {
         assertThat(reveal.getContentAsString()).contains("sensitive-refresh");
         assertThat(reveal.getHeader("Cache-Control")).isEqualTo("no-store");
         channel("callback",id,"token","resource",Instant.now().plusSeconds(5000));
-        var callback=mvc.perform(post("/backend/api/v1/calendar/google/notifications").header("X-Goog-Channel-ID","callback").header("X-Goog-Channel-Token","token")
+        var callback=mvc.perform(post("/backend/api/v1/ingest/calendar/google/notifications").header("X-Goog-Channel-ID","callback").header("X-Goog-Channel-Token","token")
                 .header("X-Goog-Resource-ID","resource").header("X-Goog-Resource-State","exists").contentType(MediaType.APPLICATION_JSON)).andReturn().getResponse();
         assertThat(callback.getStatus()).isEqualTo(204);
     }

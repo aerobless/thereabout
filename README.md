@@ -73,8 +73,8 @@ A collapsible desktop sidebar, mobile bottom navigation, compact cards and full-
 | --- | --- |
 | **Google Location History** | Upload an existing `Records.json` export in **Configuration → Data Import**. The importer expects that format; it is not a universal importer for every newer Timeline export. |
 | **Overland** | Use **Configure Overland** in Configuration to set up location reporting. |
-| **Other location clients** | Submit GeoJSON to `/backend/api/v1/location/geojson`. |
-| **Health Auto Export** | Upload its JSON export in Configuration, or submit metrics and workouts to `/backend/api/v1/health`. |
+| **Other location clients** | Submit GeoJSON to `/backend/api/v1/ingest/location/geojson`. |
+| **Health Auto Export** | Upload its JSON export in Configuration, or submit metrics and workouts to `/backend/api/v1/ingest/health`. |
 | **WhatsApp** | Upload a chat export as a `.txt` file and select its receiver. |
 | **Google Calendar** | Save OAuth credentials in Secrets, then choose calendars in Full import. Add an HTTPS callback for automatic updates, or use manual sync locally. |
 | **Telegram** | Configure your Telegram API credentials on the server, then connect your account from Configuration. |

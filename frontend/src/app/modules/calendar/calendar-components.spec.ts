@@ -7,7 +7,7 @@ import {CalendarCardComponent} from './calendar-card.component';
 import {MessageService} from 'primeng/api';
 import {RefreshCoordinator} from '../../shared/refresh/refresh-coordinator';
 
-const status: GoogleCalendarStatus = {account:'me@example.com',state:'READY',error:null,webhookUrl:'https://example.com/backend/api/v1/calendar/google/notifications',webhookHealth:'HEALTHY',secrets:{clientId:true,clientSecret:true,refreshToken:true},calendars:[]};
+const status: GoogleCalendarStatus = {account:'me@example.com',state:'READY',error:null,webhookUrl:'https://example.com/backend/api/v1/ingest/calendar/google/notifications',webhookHealth:'HEALTHY',secrets:{clientId:true,clientSecret:true,refreshToken:true},calendars:[]};
 const sample: CalendarOccurrence = {key:'one',calendarId:1,calendarName:'Personal',color:null,syncing:true,eventId:'event',originalStart:null,recurring:false,title:'Meeting',location:'Zurich',description:null,start:'2026-09-24T07:00:00Z',end:'2026-09-24T08:00:00Z',allDay:false,startDate:null,endDate:null,timeZone:'Europe/Zurich',canDelete:true,guests:[]};
 describe('calendar settings and day state', () => {
   let api: any;
@@ -39,10 +39,22 @@ describe('calendar settings and day state', () => {
     expect(api.saveGoogleCalendarCredentials).toHaveBeenCalledWith({refreshToken:''});
     expect(page.values).toEqual({});
   });
+  it('offers the fixed webhook URL for copying only', async () => {
+    const writeText=vi.fn(() => Promise.resolve());
+    vi.stubGlobal('navigator', {clipboard: {writeText}});
+    const fixture=TestBed.createComponent(GoogleCalendarSettingsComponent);
+    fixture.componentInstance.load(); fixture.detectChanges();
+    const input=fixture.nativeElement.querySelector('#google-webhook') as HTMLInputElement;
+    expect(input.value).toBe(status.webhookUrl); expect(input.readOnly).toBe(true);
+    await fixture.componentInstance.copyWebhookUrl(input.value);
+    expect(writeText).toHaveBeenCalledWith(status.webhookUrl);
+    expect(toast.add).toHaveBeenCalledWith(expect.objectContaining({severity:'success'}));
+    vi.unstubAllGlobals();
+  });
   it('preserves settings drafts while refreshing status', () => {
     const page=TestBed.createComponent(GoogleCalendarSettingsComponent).componentInstance;
-    page.load(); page.webhookDirty=true; page.webhookUrl='draft'; page.change('clientSecret','draft-secret'); page.load();
-    expect(page.webhookUrl).toBe('draft'); expect(page.values.clientSecret).toBe('draft-secret');
+    page.load(); page.change('clientSecret','draft-secret'); page.load();
+    expect(page.values.clientSecret).toBe('draft-secret');
   });
   it('enables manual import without a webhook but still requires valid credentials', () => {
     const page=TestBed.createComponent(GoogleCalendarSettingsComponent).componentInstance;

@@ -17,20 +17,25 @@
 </p-card>
 <p-card>
   <ng-template #header><div class="card-header"><i class="pi pi-calendar card-header-icon" aria-hidden="true"></i><span class="card-header-title">Google Calendar sync</span></div></ng-template>
-  <p>Import selected calendars or use Sync now to fetch changes. Add a public webhook URL to receive automatic updates, with a daily safety check for missed notifications.</p>
+  <p>Import selected calendars or use Sync now to fetch changes. With a public origin configured, Google sends automatic updates, with a daily safety check for missed notifications.</p>
   @if (status?.state === 'READY' && !status?.webhookUrl) {
-    <p class="muted" role="status">Manual sync mode: Full import and Sync now work without a public URL. Webhook updates are disabled.</p>
+    <p class="muted" role="status">Manual sync mode: Full import and Sync now work without a public origin. Webhook updates are disabled.</p>
   }
   <p role="status">{{ status?.state || 'Loading…' }} @if (status?.account) { · {{ status?.account }} }</p>
   @if (status?.error) { <p role="alert" class="error">{{ status?.error }}</p> }
   <div class="secret-field">
-    <label for="google-webhook">Public HTTPS webhook URL (optional)</label>
-    <input id="google-webhook" pInputText type="url" [(ngModel)]="webhookUrl" (ngModelChange)="webhookDirty = true" [disabled]="busy"
-      placeholder="https://your-domain/backend/api/v1/calendar/google/notifications" />
-    <small>For automatic updates, allow Google to reach this exact endpoint without an interactive login challenge. Leave blank for manual sync.</small>
+    <label for="google-webhook">Webhook URL</label>
+    @if (status?.webhookUrl; as url) {
+      <div class="copy-field">
+        <input #webhookInput id="google-webhook" pInputText type="text" [value]="url" readonly (focus)="webhookInput.select()" />
+        <p-button icon="pi pi-copy" ariaLabel="Copy webhook URL" severity="secondary" [outlined]="true" (onClick)="copyWebhookUrl(url)" />
+      </div>
+      <small>Fixed by the server's public origin. Google must reach it without a login challenge, so /backend/api/v1/ingest is exempt from Cloudflare Access.</small>
+    } @else {
+      <small id="google-webhook">Not available: set thereabout.public-origin on the server to receive automatic updates.</small>
+    }
   </div>
   <div class="actions">
-    <p-button label="Save webhook URL" severity="secondary" [disabled]="busy || !webhookDirty" (onClick)="saveWebhook()" />
     <p-button label="Full import" [disabled]="!canSync" (onClick)="chooseCalendars()" />
     <p-button label="Sync now" severity="secondary" [disabled]="!canSync" (onClick)="syncNow()" />
   </div>
@@ -53,7 +58,7 @@
 @if (error || loadError) { <p role="alert" class="error">{{ error || loadError }}</p> }
 @if (notice) { <p role="status">{{ notice }}</p> }
 <app-modal header="Choose Google calendars" [dismissible]="!busy" [(visible)]="selectionVisible" [dialogStyle]="{width: '36rem', maxWidth: '95vw'}">
-  <p>Selected calendars are fully imported. Automatic updates require a public webhook URL; otherwise use Sync now. Unchecked calendars retain their local history.</p>
+  <p>Selected calendars are fully imported. Automatic updates require a public origin; otherwise use Sync now. Unchecked calendars retain their local history.</p>
   @for (calendar of available; track calendar.id) {
     <label class="calendar-option">
       <input type="checkbox" [checked]="selected.has(calendar.id)" [disabled]="busy || !selectable(calendar)" (change)="toggle(calendar.id, $any($event.target).checked)" />

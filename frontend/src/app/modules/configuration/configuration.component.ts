@@ -30,7 +30,7 @@ export class ConfigurationComponent {
     });
   }
   configureOverland(): void {
-    const url = `${window.location.origin}/backend/api/v1/location/geojson`;
+    const url = `${window.location.origin}/backend/api/v1/ingest/location/geojson`;
     const query = new URLSearchParams({url, token: this.thereaboutConfig()?.thereaboutApiKey ?? '', device_id: 'iPhone'});
     window.location.href = `overland://setup?${query}`;
   }

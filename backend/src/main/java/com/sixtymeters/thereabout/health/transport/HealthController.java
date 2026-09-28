@@ -29,6 +29,13 @@ public class HealthController implements HealthApi {
 
     private final HealthDataService healthDataService;
 
+    /** Former path, kept while clients move to /backend/api/v1/ingest. */
+    @Deprecated
+    @Override
+    public ResponseEntity<Void> submitHealthDataLegacy(GenSubmitHealthDataRequest genSubmitHealthDataRequest) {
+        return submitHealthData(genSubmitHealthDataRequest);
+    }
+
     @Override
     public ResponseEntity<Void> submitHealthData(GenSubmitHealthDataRequest genSubmitHealthDataRequest) {
         log.info("Received health data submission");

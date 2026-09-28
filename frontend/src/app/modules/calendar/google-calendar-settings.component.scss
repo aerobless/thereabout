@@ -1,6 +1,7 @@
 :host { display: grid; gap: 1.5rem; margin: 0; width: 100%; max-width: 1100px; }
 .secret-field { display: grid; gap: .4rem; margin: 1.2rem 0; max-width: 52rem; }
 .secret-field input { width: 100%; }
+.copy-field { display: flex; gap: .5rem; }
 .secret-field label { font-weight: 600; }
 .muted, small { color: var(--p-text-muted-color); font-weight: 400; }
 .secret-field label span { margin-left: .8rem; font-size: .85rem; }

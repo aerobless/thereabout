@@ -103,7 +103,7 @@ class LocationHistoryControllerTest {
                 .locations(List.of(geoJsonLocation))
                 .build();
 
-        String responseContent = mockMvc.perform(post("/backend/api/v1/location/geojson")
+        String responseContent = mockMvc.perform(post("/backend/api/v1/ingest/location/geojson")
                         .header("Authorization", "Bearer " + testApiKey)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

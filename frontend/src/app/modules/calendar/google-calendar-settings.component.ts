@@ -9,6 +9,7 @@ import { AppModalComponent } from '../../shared/modal/app-modal.component';
 import {InputTextModule} from 'primeng/inputtext';
 import {CalendarService, CalendarInfo, GoogleCalendarStatus, GoogleCredentials} from '../../../../generated/backend-api/thereabout';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
+import {MessageService} from 'primeng/api';
 
 type SecretKey = 'clientId' | 'clientSecret' | 'refreshToken';
 @Component({
@@ -22,7 +23,8 @@ export class GoogleCalendarSettingsComponent implements OnInit {
   private readonly api = inject(CalendarService);
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly refresh = registerRefresh(() => this.load(), () => this.busy || Object.keys(this.dirty).length > 0 || this.webhookDirty);
+  private readonly toast = inject(MessageService);
+  private readonly refresh = registerRefresh(() => this.load(), () => this.busy || Object.keys(this.dirty).length > 0);
   readonly fields: {key: SecretKey; label: string; help: string}[] = [
     {key: 'clientId', label: 'Google client ID', help: 'Identifies your Google OAuth application.'},
     {key: 'clientSecret', label: 'Google client secret', help: 'Authenticates your Google OAuth application.'},
@@ -33,8 +35,6 @@ export class GoogleCalendarSettingsComponent implements OnInit {
   dirty: Partial<Record<SecretKey, boolean>> = {};
   revealing: Partial<Record<SecretKey, boolean>> = {};
   focused: SecretKey | null = null;
-  webhookUrl = '';
-  webhookDirty = false;
   busy = false;
   error = '';
   loadError = '';
@@ -63,7 +63,6 @@ export class GoogleCalendarSettingsComponent implements OnInit {
   }
   private accept(status: GoogleCalendarStatus) {
     this.status = status;
-    if (!this.webhookDirty) this.webhookUrl = status.webhookUrl ?? '';
     // HTTP and polling callbacks must notify Angular even without a user interaction.
     this.changeDetector.markForCheck();
   }
@@ -97,10 +96,13 @@ export class GoogleCalendarSettingsComponent implements OnInit {
       this.notice = status.state === 'READY' ? 'Google credentials saved and validated.' : 'Credentials saved. Complete or correct them to enable sync.';
     });
   }
-  saveWebhook() {
-    this.run(this.api.saveCalendarWebhook({url: this.webhookUrl.trim()}), () => {
-      this.webhookDirty = false; this.notice = 'Webhook URL saved.'; this.load();
-    });
+  async copyWebhookUrl(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      this.toast.add({severity: 'success', summary: 'Webhook URL copied'});
+    } catch {
+      this.toast.add({severity: 'error', summary: 'Copy failed', detail: 'Select the URL and copy it manually.'});
+    }
   }
   chooseCalendars() {
     this.run(this.api.getAvailableGoogleCalendars(), calendars => {

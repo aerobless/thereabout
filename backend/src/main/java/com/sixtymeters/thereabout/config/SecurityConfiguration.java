@@ -43,12 +43,9 @@ import static org.springframework.http.HttpMethod.POST;
 @Configuration
 public class SecurityConfiguration {
     private static final PathPatternRequestMatcher.Builder PATHS = PathPatternRequestMatcher.withDefaults();
-    private static final RequestMatcher GOOGLE_NOTIFICATIONS = new OrRequestMatcher(
-            PATHS.matcher(POST, CalendarApi.PATH_RECEIVE_GOOGLE_CALENDAR_NOTIFICATION),
-            PATHS.matcher(POST, CalendarApi.PATH_RECEIVE_GOOGLE_CALENDAR_NOTIFICATION_LEGACY));
+    private static final RequestMatcher GOOGLE_NOTIFICATIONS = PATHS.matcher(POST, CalendarApi.PATH_RECEIVE_GOOGLE_CALENDAR_NOTIFICATION);
     private static final RequestMatcher API_KEY_INGESTION = new OrRequestMatcher(
-            PATHS.matcher(POST, LocationApi.PATH_ADD_GEO_JSON_LOCATION), PATHS.matcher(POST, LocationApi.PATH_ADD_GEO_JSON_LOCATION_LEGACY),
-            PATHS.matcher(POST, HealthApi.PATH_SUBMIT_HEALTH_DATA), PATHS.matcher(POST, HealthApi.PATH_SUBMIT_HEALTH_DATA_LEGACY));
+            PATHS.matcher(POST, LocationApi.PATH_ADD_GEO_JSON_LOCATION), PATHS.matcher(POST, HealthApi.PATH_SUBMIT_HEALTH_DATA));
 
     enum Mode { LOCAL, CLOUDFLARE }
 
@@ -75,7 +72,7 @@ public class SecurityConfiguration {
     }
 
     /**
-     * Cloudflare bypasses /backend/api/v1/ingest (and, until clients have moved, the former paths).
+     * Cloudflare bypasses /backend/api/v1/ingest; nothing else is served there.
      * Google authenticates its callback with the channel token checked by the calendar service.
      */
     @Bean

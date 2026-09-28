@@ -83,8 +83,6 @@ paths:
     $ref: 'openapi/calendar.yaml#/paths/Import'
   /backend/api/v1/calendar/google/sync:
     $ref: 'openapi/calendar.yaml#/paths/Sync'
-  /backend/api/v1/calendar/google/notifications:
-    $ref: 'openapi/calendar.yaml#/paths/NotificationsLegacy'
   /backend/api/v1/calendar/upcoming:
     $ref: 'openapi/calendar.yaml#/paths/Upcoming'
   /backend/api/v1/calendar/day:
@@ -100,8 +98,6 @@ paths:
     $ref: 'openapi/location.yaml#/paths/LocationSparse'
   /backend/api/v1/location:
     $ref: 'openapi/location.yaml#/paths/Location'
-  /backend/api/v1/location/geojson:
-    $ref: 'openapi/location.yaml#/paths/LocationGeojsonLegacy'
   /backend/api/v1/location/{id}:
     $ref: 'openapi/location.yaml#/paths/LocationById'
   /backend/api/v1/statistics:
@@ -136,8 +132,6 @@ paths:
     $ref: 'openapi/heart.yaml#/paths/HeartRateHistory'
   /backend/api/v1/health/hrv:
     $ref: 'openapi/heart.yaml#/paths/HrvHistory'
-  /backend/api/v1/health:
-    $ref: 'openapi/health.yaml#/paths/HealthLegacy'
   /backend/api/v1/health/data:
     $ref: 'openapi/health.yaml#/paths/HealthData'
 

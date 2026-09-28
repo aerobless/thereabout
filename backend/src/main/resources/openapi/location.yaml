@@ -133,33 +133,6 @@ paths:
           $ref: '../thereabout.openapi.yaml#/components/responses/401'
         500:
           $ref: '../thereabout.openapi.yaml#/components/responses/500'
-  LocationGeojsonLegacy:
-    post:
-      summary: Post GeoJson location data (former path)
-      tags:
-        - location
-      description: Kept while clients move to /backend/api/v1/ingest/location/geojson.
-      operationId: addGeoJsonLocationLegacy
-      deprecated: true
-      security:
-        - thereaboutApiKey: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AddGeoJsonLocationRequest'
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AddGeoJsonLocation200Response'
-        401:
-          $ref: '../thereabout.openapi.yaml#/components/responses/401'
-        500:
-          $ref: '../thereabout.openapi.yaml#/components/responses/500'
   LocationById:
     put:
       summary: Update a specific location history entry.

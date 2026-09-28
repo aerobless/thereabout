@@ -102,21 +102,6 @@ paths:
       - $ref: '#/components/parameters/GoogleChannelToken'
       - $ref: '#/components/parameters/GoogleResourceId'
       - $ref: '#/components/parameters/GoogleResourceState'
-  NotificationsLegacy:
-    post:
-      tags:
-      - Calendar
-      operationId: receiveGoogleCalendarNotificationLegacy
-      description: Former callback path, kept until channels registered for it have expired.
-      deprecated: true
-      responses:
-        '204':
-          description: Success
-      parameters:
-      - $ref: '#/components/parameters/GoogleChannelId'
-      - $ref: '#/components/parameters/GoogleChannelToken'
-      - $ref: '#/components/parameters/GoogleResourceId'
-      - $ref: '#/components/parameters/GoogleResourceState'
   Upcoming:
     get:
       tags: [Calendar]

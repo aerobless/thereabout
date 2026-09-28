@@ -122,23 +122,26 @@ class AccessSecurityTest {
     @Test
     void ingestionUsesTheApiKeyInsteadOfCloudflare() throws Exception {
         String key = configuration.getThereaboutApiKey();
-        for (String path : new String[]{"/backend/api/v1/ingest/location/geojson", "/backend/api/v1/location/geojson"}) {
+        for (String path : new String[]{"/backend/api/v1/ingest/location/geojson"}) {
             var location = json(path, "{\"locations\":[]}");
             assertThat(send(location.copy()).statusCode()).as(path).isEqualTo(401);
             assertThat(send(location.copy().header("Authorization", "Bearer wrong")).statusCode()).as(path).isEqualTo(401);
             assertThat(send(location.copy().header("Authorization", "Bearer " + key)).statusCode()).as(path).isEqualTo(200);
             assertThat(send(location.copy().header("Authorization", key)).statusCode()).as(path).isEqualTo(200);
         }
-        for (String path : new String[]{"/backend/api/v1/ingest/health", "/backend/api/v1/health"}) {
+        for (String path : new String[]{"/backend/api/v1/ingest/health"}) {
             assertThat(send(json(path, "{}")).statusCode()).as(path).isEqualTo(401);
             assertThat(send(json(path, "{}").header("Authorization", "Bearer " + key)).statusCode()).as(path).isEqualTo(400);
         }
         // The key is limited to ingestion: reads still need a Cloudflare user.
         assertThat(send(get("/backend/api/v1/location").header("Authorization", "Bearer " + key)).statusCode()).isEqualTo(401);
         assertThat(send(get("/backend/api/v1/health/data").header("Authorization", "Bearer " + key)).statusCode()).isEqualTo(401);
-        for (String path : new String[]{"/backend/api/v1/ingest/calendar/google/notifications", "/backend/api/v1/calendar/google/notifications"}) {
+        for (String path : new String[]{"/backend/api/v1/ingest/calendar/google/notifications"}) {
             assertThat(send(json(path, "")).statusCode()).as(path).isNotIn(401, 403);
         }
+        // The former paths are ordinary browser routes again: the key alone is refused (CSRF before login).
+        assertThat(send(json("/backend/api/v1/health", "{}").header("Authorization", "Bearer " + key)).statusCode()).isIn(401, 403);
+        assertThat(send(json("/backend/api/v1/location/geojson", "{\"locations\":[]}").header("Authorization", "Bearer " + key)).statusCode()).isIn(401, 403);
         // Nothing else is reachable under the bypassed prefix, not even for users.
         assertThat(send(get("/backend/api/v1/ingest/health").header(CloudflareAccessFilter.HEADER, token("app", user, false))).statusCode()).isEqualTo(403);
     }

@@ -28,12 +28,19 @@ public class IdentityController implements IdentityApi {
     public ResponseEntity<GenIdentity> createIdentityUser(BigDecimal id,
             com.sixtymeters.thereabout.generated.model.GenCreateUserRequest request) {
         try {
-            return ResponseEntity.ok(IDENTITY_MAPPER.mapToGenIdentity(identityUserService.createUser(id.longValueExact(), request.getEmail())));
+            return ResponseEntity.ok(IDENTITY_MAPPER.mapToGenIdentity(identityUserService.createUser(id.longValueExact(), request.getEmail(), com.sixtymeters.thereabout.communication.data.UserRole.valueOf(request.getRole().name()))));
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             // The transactional service has already rolled back. Do not expose SQL or identifiers.
             throw new com.sixtymeters.thereabout.config.ThereaboutException(org.springframework.http.HttpStatus.CONFLICT,
                     "This Cloudflare email is already assigned to another person.");
         }
+    }
+
+    @Override
+    public ResponseEntity<GenIdentity> updateIdentityUserRole(BigDecimal id,
+            com.sixtymeters.thereabout.generated.model.GenUpdateUserRoleRequest request) {
+        return ResponseEntity.ok(IDENTITY_MAPPER.mapToGenIdentity(identityUserService.changeRole(id.longValueExact(),
+                com.sixtymeters.thereabout.communication.data.UserRole.valueOf(request.getRole().name()))));
     }
 
     @Override

@@ -32,6 +32,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @Transactional
 class FrontendConfigurationControllerTest {
+    @Autowired org.springframework.jdbc.core.JdbcTemplate ownerDb;
+    @BeforeEach void ensureOwner() { com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb); }
+
 
     @Autowired
     private MockMvc mockMvc;
@@ -84,8 +87,12 @@ class FrontendConfigurationControllerTest {
         GenFrontendConfigurationResponse response = objectMapper.readValue(responseContent, GenFrontendConfigurationResponse.class);
 
         assertThat(response)
-                .extracting("googleMapsApiKey", "thereaboutApiKey")
-                .containsExactly("NO_KEY_NEEDED_FOR_TESTS", testApiKey);
+                .extracting("googleMapsApiKey")
+                .isEqualTo("NO_KEY_NEEDED_FOR_TESTS");
+        assertThat(responseContent).doesNotContain("thereaboutApiKey");
+        var secret = mockMvc.perform(get("/backend/api/v1/config/ingestion-key")).andReturn().getResponse();
+        assertThat(secret.getHeader("Cache-Control")).isEqualTo("no-store");
+        assertThat(secret.getContentAsString()).contains(testApiKey);
 
         assertThat(response.getVersionDetails())
                 .extracting("version", "branch", "commitRef")

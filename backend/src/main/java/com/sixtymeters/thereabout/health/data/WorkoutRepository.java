@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface WorkoutRepository extends JpaRepository<WorkoutEntity, String> {
-    List<WorkoutEntity> findByStartBetween(LocalDateTime from, LocalDateTime to);
+public interface WorkoutRepository extends JpaRepository<WorkoutEntity, Long> {
+    List<WorkoutEntity> findByUserIdAndStartBetween(long userId, LocalDateTime from, LocalDateTime to);
+    java.util.Optional<WorkoutEntity> findByUserIdAndSourceId(long userId, String sourceId);
 }

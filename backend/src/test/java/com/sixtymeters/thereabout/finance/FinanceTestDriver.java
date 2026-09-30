@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.finance;
 
+import com.sixtymeters.thereabout.access.UserId;
 import com.sixtymeters.thereabout.finance.data.*;
 import com.sixtymeters.thereabout.finance.service.*;
 import com.sixtymeters.thereabout.generated.model.*;
@@ -26,47 +27,47 @@ class FinanceTestDriver {
         switch (op) {
           case "accounts.list" -> {
             var p = json.convertValue(input, GenFinanceAccountQuery.class);
-            yield reads.accounts(p);
+            yield reads.accounts(new UserId(1), p);
           }
           case "accounts.save" -> {
             var p = json.convertValue(input, GenFinanceAccountInput.class);
-            yield accounts.save(p);
+            yield accounts.save(new UserId(1), p);
           }
           case "categories.save" -> {
             var p = json.convertValue(input, GenFinanceCategoryInput.class);
-            yield categories.save(p);
+            yield categories.save(new UserId(1), p);
           }
           case "transactions.list" -> {
             var p = json.convertValue(input, GenFinanceTransactionQuery.class);
-            yield reads.transactions(p);
+            yield reads.transactions(new UserId(1), p);
           }
           case "transactions.save" -> {
             var p = json.convertValue(input, GenFinanceTransactionInput.class);
-            yield transactions.save(p);
+            yield transactions.save(new UserId(1), p);
           }
           case "transactions.delete" -> {
             var p = json.convertValue(input, GenFinanceVersionedInput.class);
-            yield transactions.setDeleted(p, true);
+            yield transactions.setDeleted(new UserId(1), p, true);
           }
           case "transactions.restore" -> {
             var p = json.convertValue(input, GenFinanceVersionedInput.class);
-            yield transactions.setDeleted(p, false);
+            yield transactions.setDeleted(new UserId(1), p, false);
           }
           case "transactions.categorize" -> {
             var p = json.convertValue(input, GenFinanceBulkCategoryInput.class);
-            yield transactions.categorize(p);
+            yield transactions.categorize(new UserId(1), p);
           }
           case "valuations.preview" -> {
             var p = json.convertValue(input, GenFinanceValuationPreviewInput.class);
-            yield valuations.preview(p);
+            yield valuations.preview(new UserId(1), p);
           }
           case "valuations.save" -> {
             var p = json.convertValue(input, GenFinanceValuationInput.class);
-            yield valuations.save(p);
+            yield valuations.save(new UserId(1), p);
           }
           case "valuations.list" -> {
             var p = json.convertValue(input, GenFinanceValuationQuery.class);
-            yield reads.valuations(p.getAccountId());
+            yield reads.valuations(new UserId(1), p.getAccountId());
           }
           case "rates.list" -> {
             var p = json.convertValue(input, GenFinanceRateQuery.class);
@@ -74,20 +75,20 @@ class FinanceTestDriver {
           }
           case "rates.save" -> {
             var p = json.convertValue(input, GenFinanceRateInput.class);
-            yield rates.save(p);
+            yield rates.save(new UserId(1), p);
           }
           case "overview" -> {
             var p = json.convertValue(input, GenFinancePeriodQuery.class);
-            yield reports.overview(p);
+            yield reports.overview(new UserId(1), p);
           }
           case "reports" -> {
             var p = json.convertValue(input, GenFinancePeriodQuery.class);
-            yield reports.report(p);
+            yield reports.report(new UserId(1), p);
           }
           case "transactions.get" ->
               new GenFinanceTransactionDetail()
-                  .transaction(reads.transaction(((Number) input.get("id")).longValue()))
-                  .history(reads.history(((Number) input.get("id")).longValue()));
+                  .transaction(reads.transaction(new UserId(1), ((Number) input.get("id")).longValue()))
+                  .history(reads.history(new UserId(1), ((Number) input.get("id")).longValue()));
           default -> throw new IllegalArgumentException(op);
         };
     return legacy(json.convertValue(result, Map.class));

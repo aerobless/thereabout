@@ -10,8 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uk.recurse.geocoding.reverse.Country;
-import uk.recurse.geocoding.reverse.ReverseGeocoder;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -26,24 +24,23 @@ public class LocationHistoryService {
     private final LocationHistoryRepository locationHistoryRepository;
     private final ImportProgressService importProgressService;
 
-    private final ReverseGeocoder reverseGeocoder = new ReverseGeocoder();
 
     private final static int CHUNK_SIZE = 10000;
 
     private final int MANUAL_ACCURACY = 0;
 
-    public List<LocationHistoryEntity> getLocationHistory(LocalDate from, LocalDate to) {
-        return locationHistoryRepository.findAllByTimestampBetween(from.atStartOfDay(), to.atStartOfDay().plusDays(1));
+    public List<LocationHistoryEntity> getLocationHistory(com.sixtymeters.thereabout.access.UserId user, LocalDate from, LocalDate to) {
+        return locationHistoryRepository.findAllByUserIdAndTimestampBetween(user.value(), from.atStartOfDay(), to.atStartOfDay().plusDays(1));
     }
 
-    public List<LocationHistoryEntity> getSparseLocationHistory(LocalDate from, LocalDate to) {
-        final var allTimestamps = locationHistoryRepository.findAllByTimestampBetweenSparseSample(from.atStartOfDay(), to.atStartOfDay().plusDays(1), 0.1);
+    public List<LocationHistoryEntity> getSparseLocationHistory(com.sixtymeters.thereabout.access.UserId user, LocalDate from, LocalDate to) {
+        final var allTimestamps = locationHistoryRepository.findAllByUserIdAndTimestampBetweenSparseSample(user.value(), from.atStartOfDay(), to.atStartOfDay().plusDays(1), 0.1);
         return allTimestamps;
     }
 
-    public void importGoogleLocationHistory(File file) {
+    public void importGoogleLocationHistory(com.sixtymeters.thereabout.access.UserId user, File file) {
         final var locationHistory = locationHistoryImporter.importLocationHistory(file);
-        computeAdditionalFields(locationHistory);
+        locationHistory.forEach(entry -> entry.setUserId(user.value()));
 
         AtomicLong importedCount = new AtomicLong();
         Lists.partition(locationHistory, CHUNK_SIZE).forEach(chunk -> {
@@ -62,37 +59,25 @@ public class LocationHistoryService {
         return Math.max(percentage, 1);
     }
 
-    public LocationHistoryEntity createLocationHistoryEntry(LocationHistoryEntity locationHistoryEntity) {
-        computeAdditionalFields(locationHistoryEntity);
+    public LocationHistoryEntity createLocationHistoryEntry(com.sixtymeters.thereabout.access.UserId user, LocationHistoryEntity locationHistoryEntity) {
+        locationHistoryEntity.setUserId(user.value());
         final var createdLocationHistory = locationHistoryRepository.save(locationHistoryEntity);
         log.info("Created location history entry with id %d.".formatted(createdLocationHistory.getId()));
         return createdLocationHistory;
     }
 
-    private void computeAdditionalFields(List<LocationHistoryEntity> entries) {
-        log.info("Computing additional fields for %d location history entries.".formatted(entries.size()));
-        entries.forEach(this::computeAdditionalFields);
-        log.info("Finished computing additional fields for %d location history entries.".formatted(entries.size()));
-    }
-
-    private void computeAdditionalFields(LocationHistoryEntity entry) {
-        entry.setEstimatedIsoCountryCode(estimateCountryForCoordinates(entry));
-    }
-
-    private String estimateCountryForCoordinates(LocationHistoryEntity entry) {
-        return reverseGeocoder.getCountry(entry.getLatitude(), entry.getLongitude())
-                .map(Country::iso)
-                .orElse(null);
-    }
-
-    public void deleteLocationHistoryEntries(List<Long> locationHistoryEntryIds) {
-        locationHistoryRepository.deleteAllById(locationHistoryEntryIds);
+    @Transactional
+    public void deleteLocationHistoryEntries(com.sixtymeters.thereabout.access.UserId user, List<Long> locationHistoryEntryIds) {
+        var ids = locationHistoryEntryIds.stream().distinct().toList();
+        var entries = locationHistoryRepository.findByIdInAndUserId(ids, user.value());
+        if (entries.size() != ids.size()) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Location not found");
+        locationHistoryRepository.deleteAll(entries);
         log.info("Deleted %d location history entries.".formatted(locationHistoryEntryIds.size()));
     }
 
     @Transactional
-    public LocationHistoryEntity updateLocationHistoryEntry(long entryId, LocationHistoryEntity updateEntry) {
-        final var existingEntry = locationHistoryRepository.findById(entryId).orElseThrow();
+    public LocationHistoryEntity updateLocationHistoryEntry(com.sixtymeters.thereabout.access.UserId user, long entryId, LocationHistoryEntity updateEntry) {
+        final var existingEntry = locationHistoryRepository.findByIdAndUserId(entryId, user.value()).orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Location not found"));
 
         existingEntry.setTimestamp(updateEntry.getTimestamp());
         existingEntry.setAltitude(updateEntry.getAltitude());
@@ -101,7 +86,6 @@ public class LocationHistoryService {
         existingEntry.setHorizontalAccuracy(MANUAL_ACCURACY);
         existingEntry.setVerticalAccuracy(MANUAL_ACCURACY);
         existingEntry.setSource(LocationHistorySource.THEREABOUT_API_UPDATE);
-        existingEntry.setEstimatedIsoCountryCode(estimateCountryForCoordinates(updateEntry));
         existingEntry.setNote(updateEntry.getNote());
         return locationHistoryRepository.save(existingEntry);
     }

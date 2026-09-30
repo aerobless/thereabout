@@ -11,6 +11,6 @@ import java.util.List;
 @Repository
 public interface HealthMetricHeartRateRepository extends JpaRepository<HealthMetricHeartRateEntity, Long> {
     @Query("SELECT h FROM HealthMetricHeartRateEntity h JOIN FETCH h.healthMetric m "
-            + "WHERE m.metricName = 'heart_rate' AND m.metricDate BETWEEN :fromDate AND :toDate")
-    List<HealthMetricHeartRateEntity> findHistory(@Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
+            + "WHERE m.userId = :userId AND m.metricName = 'heart_rate' AND m.metricDate BETWEEN :fromDate AND :toDate")
+    List<HealthMetricHeartRateEntity> findHistory(@Param("userId") long userId, @Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
 }

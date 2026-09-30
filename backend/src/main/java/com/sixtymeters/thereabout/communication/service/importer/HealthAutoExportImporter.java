@@ -43,7 +43,7 @@ public class HealthAutoExportImporter implements FileImporter {
     }
 
     @Override
-    public void importFile(File file, String receiver) {
+    public void importFile(File file, String receiver, com.sixtymeters.thereabout.access.UserId user) {
         log.info("Starting Health Auto Export import from file: {}", file.getName());
 
         try {
@@ -66,13 +66,13 @@ public class HealthAutoExportImporter implements FileImporter {
 
             GenHealthData healthData = request.getData();
             if (healthData.getMetrics() != null && !healthData.getMetrics().isEmpty()) {
-                healthDataService.saveHealthMetrics(healthData.getMetrics());
+                healthDataService.saveHealthMetrics(user, healthData.getMetrics());
                 log.info("Saved {} health metrics from file", healthData.getMetrics().size());
                 importProgressService.setProgress(50);
             }
 
             if (healthData.getWorkouts() != null && !healthData.getWorkouts().isEmpty()) {
-                healthDataService.saveWorkouts(healthData.getWorkouts());
+                healthDataService.saveWorkouts(user, healthData.getWorkouts());
                 log.info("Saved {} workouts from file", healthData.getWorkouts().size());
                 importProgressService.setProgress(100);
             }

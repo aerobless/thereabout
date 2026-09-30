@@ -15,7 +15,7 @@ public interface FileImporter {
      * @param file the file to import
      * @param receiver the receiver identifier (e.g. contact name or group name)
      */
-    void importFile(File file, String receiver);
+    void importFile(File file, String receiver, com.sixtymeters.thereabout.access.UserId user);
 
     /**
      * @return the import type this importer supports

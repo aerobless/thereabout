@@ -9,14 +9,17 @@ describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
-      providers: [{provide: CurrentUserService, useValue: {impersonatedUser: signal(null), stopImpersonation: vi.fn()}}, MessageService, provideRouter([])],
+      providers: [{provide: CurrentUserService, useValue: {canManageUsers: signal(true), viewKeys: signal(['1']), impersonatedUser: signal(null), stopImpersonation: vi.fn()}}, MessageService, provideRouter([])],
     }).compileComponents();
   });
 
   it('shows the simulated user globally and the close action ends simulation', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const currentUser = TestBed.inject(CurrentUserService);
-    (currentUser.impersonatedUser as any).set({id: 2, shortName: 'Heidi', isUser: true});
+    const mock = TestBed.inject(CurrentUserService);
+    // The fixture receives a writable signal through its mock provider.
+    const target = mock.impersonatedUser;
+    (target as import('@angular/core').WritableSignal<{id: number; shortName: string} | null>).set({id: 2, shortName: 'Heidi'});
     fixture.detectChanges();
     const banner = fixture.nativeElement.querySelector('.impersonation-banner');
     expect(banner.textContent).toContain('Heidi');

@@ -21,9 +21,13 @@ import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 export class ConfigurationComponent {
   private readonly api = inject(FrontendService);
   private readonly destroyRef = inject(DestroyRef);
+  readonly ingestionKey = signal('');
   readonly thereaboutConfig = signal<FrontendConfigurationResponse | undefined>(undefined);
   private readonly refresh = registerRefresh(() => this.loadConfiguration());
-  constructor() { this.loadConfiguration(); }
+  constructor() {
+    this.loadConfiguration();
+    this.api.getIngestionKey().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next: response => this.ingestionKey.set(response.value), error: () => {}});
+  }
   private loadConfiguration(): void {
     this.api.getFrontendConfiguration().pipe(this.refresh.track('configuration'), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: config => this.thereaboutConfig.set(config), error: () => {}
@@ -31,7 +35,7 @@ export class ConfigurationComponent {
   }
   configureOverland(): void {
     const url = `${window.location.origin}/backend/api/v1/ingest/location/geojson`;
-    const query = new URLSearchParams({url, token: this.thereaboutConfig()?.thereaboutApiKey ?? '', device_id: 'iPhone'});
+    const query = new URLSearchParams({url, token: this.ingestionKey(), device_id: 'iPhone'});
     window.location.href = `overland://setup?${query}`;
   }
 }

@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.client.service;
 
+import com.sixtymeters.thereabout.access.UserId;
 import com.sixtymeters.thereabout.communication.service.importer.FileImporter;
 import com.sixtymeters.thereabout.generated.model.GenImportType;
 import com.sixtymeters.thereabout.config.ThereaboutException;
@@ -18,7 +19,9 @@ import static org.mockito.Mockito.*;
 class FileImportServiceTest {
     private final ImportProgressService progress = new ImportProgressService();
     private final FileImporter importer = mock(FileImporter.class);
-    private final FileImportService service = new FileImportService(List.of(importer), progress);
+    private final com.sixtymeters.thereabout.access.UserContext users = mock(com.sixtymeters.thereabout.access.UserContext.class);
+    private final FileImportService service = new FileImportService(List.of(importer), progress, users);
+    { when(users.integration()).thenReturn(new UserId(1)); }
     private final MockMultipartFile file = new MockMultipartFile("file", "../../outside.json", "application/json", "{}".getBytes());
 
     @Test void ownsFilesAndRejectsConcurrentImports() throws Exception {
@@ -31,7 +34,7 @@ class FileImportServiceTest {
             started.countDown();
             assertThat(finish.await(5, TimeUnit.SECONDS)).isTrue();
             return null;
-        }).when(importer).importFile(any(), isNull());
+        }).when(importer).importFile(any(), isNull(), eq(new UserId(1)));
         try {
             service.start(file, GenImportType.HEALTH_AUTO_EXPORT_JSON, Optional.empty());
             assertThat(started.await(5, TimeUnit.SECONDS)).isTrue();
@@ -55,7 +58,7 @@ class FileImportServiceTest {
             path.set(call.<File>getArgument(0).toPath());
             progress.setProgress(50);
             throw new IllegalArgumentException("private source contents");
-        }).when(importer).importFile(any(), isNull());
+        }).when(importer).importFile(any(), isNull(), eq(new UserId(1)));
         service.start(file, GenImportType.HEALTH_AUTO_EXPORT_JSON, Optional.empty());
         service.close();
         assertThat(progress.snapshot().status()).isEqualTo(ImportProgressService.State.FAILED);

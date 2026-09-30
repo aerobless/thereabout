@@ -17,6 +17,8 @@ public class FinanceAuditEntity {
 
   private String operation;
   private Long entityId;
+  private Long actorId;
+  private Long userId;
   private LocalDateTime createdAt;
 
   @Column(columnDefinition = "LONGTEXT")

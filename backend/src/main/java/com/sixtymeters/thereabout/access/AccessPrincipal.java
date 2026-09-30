@@ -12,7 +12,10 @@ import java.util.List;
  * Who a request acts for. A verified Cloudflare login without a Thereabout user (an unknown email or a
  * service token without email) is authenticated but has no role, so it can only report its own status.
  */
-public record AccessPrincipal(String email, Long identityId, String displayName, boolean local) {
+public record AccessPrincipal(String email, Long identityId, String displayName, boolean local, com.sixtymeters.thereabout.communication.data.UserRole role, AccessPrincipal actor) {
+    public AccessPrincipal(String email, Long identityId, String displayName, boolean local) {
+        this(email, identityId, displayName, local, identityId == null ? null : com.sixtymeters.thereabout.communication.data.UserRole.USER, null);
+    }
     public static final String USER = "ROLE_USER";
     public static final String ADMIN = "ROLE_ADMIN";
 

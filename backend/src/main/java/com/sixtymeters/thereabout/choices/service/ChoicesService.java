@@ -17,11 +17,11 @@ public class ChoicesService {
     private static final ZoneId ZONE = ZoneId.of("Europe/Zurich");
 
     @Transactional(readOnly = true)
-    public GenChoicesHistory history(LocalDate date, Integer days) {
+    public GenChoicesHistory history(com.sixtymeters.thereabout.access.UserId user, LocalDate date, Integer days) {
         if (date == null || days == null || (days != 7 && days != 30))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Use a date and 7 or 30 days");
         var from = date.minusDays(days - 1);
-        var scores = repository.findByScoreDateBetweenOrderByScoreDate(from, date).stream()
+        var scores = repository.findByUserIdAndScoreDateBetweenOrderByScoreDate(user.value(), from, date).stream()
                 .collect(Collectors.toMap(ChoicesScore::getScoreDate, ChoicesScore::getScore));
         var series = from.datesUntil(date.plusDays(1)).map(day -> GenChoicesDay.builder()
                 .date(day).score(scores.getOrDefault(day, 0)).build()).toList();
@@ -30,10 +30,10 @@ public class ChoicesService {
     }
 
     @Transactional
-    public GenChoicesDay adjust(LocalDate date, Integer delta) {
+    public GenChoicesDay adjust(com.sixtymeters.thereabout.access.UserId user, LocalDate date, Integer delta) {
         if (date == null || date.isAfter(LocalDate.now(ZONE)) || delta == null || (delta != -1 && delta != 1))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Use today or a past date and a delta of -1 or 1");
-        repository.adjust(date, delta);
-        return GenChoicesDay.builder().date(date).score(repository.findById(date).orElseThrow().getScore()).build();
+        repository.adjust(user.value(), date, delta);
+        return GenChoicesDay.builder().date(date).score(repository.findById(new ChoicesId(user.value(), date)).orElseThrow().getScore()).build();
     }
 }

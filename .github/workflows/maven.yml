@@ -62,6 +62,8 @@ jobs:
           THEREABOUT_TEST_DB_URL: jdbc:mariadb://127.0.0.1:3306/thereabout_test
           THEREABOUT_TEST_DB_USER: thereabout_test
           THEREABOUT_TEST_DB_PASSWORD: secret
+          THEREABOUT_TEST_DB_ROOT_USER: root
+          THEREABOUT_TEST_DB_ROOT_PASSWORD: verysecret
         run: mvn -B clean install
 
       # FRONTEND BUILD

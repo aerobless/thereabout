@@ -46,6 +46,11 @@
         <li>
           <strong>{{ calendar.name }}</strong> · {{ calendar.selected ? calendar.state : 'Not syncing' }}
           @if (calendar.selected) {
+            <label [for]="'calendar-users-' + calendar.id">Visible to</label>
+            <p-multiselect [inputId]="'calendar-users-' + calendar.id" [options]="users()"
+              optionLabel="shortName" optionValue="id" [ngModel]="calendar.userIds ?? []"
+              (ngModelChange)="saveUsers(calendar, $event)" [disabled]="busy" [filter]="true"
+              appendTo="body" placeholder="No users" [style]="{width: '100%'}" />
             <span>Webhook: {{ calendar.webhookHealth }} · {{ calendar.importedCount }} events processed in last/current pass</span>
             <span>Last sync: {{ calendar.lastSyncAt ? (calendar.lastSyncAt | date:'short') : 'Not yet' }} · Channel expires: {{ calendar.channelExpiresAt ? (calendar.channelExpiresAt | date:'short') : 'Not registered' }}</span>
           }

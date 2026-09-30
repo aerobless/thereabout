@@ -16,6 +16,7 @@ public class FinanceAccountEntity {
   private Long id;
 
   private Long sourceId;
+  private Long userId;
 
   @Column(length = 1024)
   private String name;

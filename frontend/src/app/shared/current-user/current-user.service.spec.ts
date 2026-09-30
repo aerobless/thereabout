@@ -1,37 +1,22 @@
 import {TestBed} from '@angular/core/testing';
 import {Subject} from 'rxjs';
 import {CurrentUser, CurrentUserService as CurrentUserApi} from '../../../../generated/backend-api/thereabout';
-import {canImpersonateLocally, CurrentUserService} from './current-user.service';
+import {CurrentUserService} from './current-user.service';
 
 describe('CurrentUserService', () => {
   afterEach(() => vi.unstubAllGlobals());
-  it('allows simulation only for development builds on loopback', () => {
-    for (const host of ['localhost', '127.0.0.1', '[::1]']) {
-      expect(canImpersonateLocally(true, host)).toBe(true);
-      expect(canImpersonateLocally(false, host)).toBe(false);
-    }
-    for (const host of ['thereabout.example.com', 'localhost.example.com', '192.168.1.10']) {
-      expect(canImpersonateLocally(true, host)).toBe(false);
-    }
-  });
-  it('rejects simulation outside localhost even when invoked directly', () => {
-    vi.stubGlobal('location', {hostname: 'thereabout.example.com'});
-    TestBed.configureTestingModule({providers: [{provide: CurrentUserApi, useValue: {getCurrentUser: vi.fn()}}]});
-    const service = TestBed.inject(CurrentUserService);
-    service.impersonate({id: 2, shortName: 'Heidi', isUser: true});
-    expect(service.impersonatedUser()).toBeNull();
-  });
-  it('simulates eligible users across refreshes and restores verified identity when stopped', () => {
+  it('uses the verified target context and restores the actor on exit', () => {
     vi.stubGlobal('location', {hostname: 'localhost'});
     const response = new Subject<CurrentUser>();
     const api = {getCurrentUser: vi.fn(() => response)};
     TestBed.configureTestingModule({providers: [{provide: CurrentUserApi, useValue: api}]});
     const service = TestBed.inject(CurrentUserService);
-    service.impersonate({id: 3, shortName: 'Group', isUser: true, isGroup: true});
-    service.impersonate({id: 4, shortName: 'Contact', isUser: false});
+    service.load(); response.next({status: 'resolved', identityId: 1, role: 'ADMIN', actorRole: 'ADMIN'});
+    service.impersonate({id: 3, shortName: 'Group', role: 'USER' as const, isGroup: true});
+    service.impersonate({id: 4, shortName: 'Contact', role: null});
     expect(service.impersonatedUser()).toBeNull();
-    service.impersonate({id: 2, shortName: 'Heidi', isUser: true});
-    service.load(); response.next({status: 'unlinked'});
+    service.impersonate({id: 2, shortName: 'Heidi', role: 'USER' as const});
+    response.next({status: 'resolved', identityId: 2, displayName: 'Heidi', role: 'USER', actorRole: 'ADMIN', impersonating: true});
     expect(service.state()).toMatchObject({status: 'resolved', identityId: 2, displayName: 'Heidi'});
     service.stopImpersonation();
     expect(service.displayName()).toBeUndefined();
@@ -43,18 +28,18 @@ describe('CurrentUserService', () => {
     const response = new Subject<CurrentUser>();
     TestBed.configureTestingModule({providers: [{provide: CurrentUserApi, useValue: {getCurrentUser: vi.fn(() => response)}}]});
     const service = TestBed.inject(CurrentUserService);
-    service.load(); response.next({status: 'disabled'});
+    service.load(); response.next({status: 'disabled', role: 'ADMIN', actorRole: 'ADMIN'});
     expect(service.canManageUsers()).toBe(true);
-    service.load(); response.next({status: 'resolved', identityId: 2, displayName: 'Heidi', isAdmin: false});
+    service.load(); response.next({status: 'resolved', identityId: 2, displayName: 'Heidi', role: 'USER'});
     expect(service.canManageUsers()).toBe(false);
-    service.load(); response.next({status: 'resolved', identityId: 1, displayName: 'Admin', isAdmin: true});
+    service.load(); response.next({status: 'resolved', identityId: 1, displayName: 'Admin', role: 'ADMIN'});
     expect(service.canManageUsers()).toBe(true);
   });
   it('clears hidden sessions and verifies again on return or back-forward restoration', () => {
     const api = {getCurrentUser: vi.fn(() => new Subject<CurrentUser>())};
     TestBed.configureTestingModule({providers: [{provide: CurrentUserApi, useValue: api}]});
     const service = TestBed.inject(CurrentUserService);
-    service.start();
+    void service.start();
     service.verifiedState.set({status: 'resolved', identityId: 1, displayName: 'Theo'});
     const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
     document.dispatchEvent(new Event('visibilitychange'));

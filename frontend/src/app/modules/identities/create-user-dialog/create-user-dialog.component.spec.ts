@@ -6,7 +6,7 @@ import {CurrentUserService} from '../../../shared/current-user/current-user.serv
 import {CreateUserDialogComponent, normalizeCloudflareEmail, validCloudflareEmail} from './create-user-dialog.component';
 
 describe('CreateUserDialogComponent', () => {
-  const identity: Identity = {id: 42, shortName: 'Heidi', isGroup: false, isUser: false};
+  const identity: Identity = {id: 42, shortName: 'Heidi', isGroup: false, role: null};
   async function setup() {
     const response = new Subject<Identity>();
     const api = {createIdentityUser: vi.fn(() => response)};
@@ -38,9 +38,9 @@ describe('CreateUserDialogComponent', () => {
     const {fixture, page, api, response, messages, currentUser} = await setup();
     const closed = vi.fn(), created = vi.fn(); page.closed.subscribe(closed); page.created.subscribe(created);
     page.email = ' Heidi@Example.test '; page.create(); page.create(); page.close();
-    expect(api.createIdentityUser).toHaveBeenCalledExactlyOnceWith(42, {email: 'heidi@example.test'});
+    expect(api.createIdentityUser).toHaveBeenCalledExactlyOnceWith(42, {email: 'heidi@example.test', role: 'USER'});
     expect(page.busy()).toBe(true); expect(closed).not.toHaveBeenCalled();
-    const updated = {...identity, isUser: true}; response.next(updated);
+    const updated = {...identity, role: 'USER' as const}; response.next(updated);
     expect(created).toHaveBeenCalledWith(updated); expect(closed).toHaveBeenCalledOnce();
     expect(messages.add).toHaveBeenCalledOnce(); expect(currentUser.load).toHaveBeenCalledOnce();
     fixture.destroy();

@@ -17,13 +17,14 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class WeightController implements WeightApi {
     private final HealthMetricRepository repository;
+    private final com.sixtymeters.thereabout.access.UserContext users;
     private final PreferencesService preferences;
 
     @Override
     @Transactional(readOnly = true)
     public ResponseEntity<GenWeightProgress> getWeightProgress(LocalDate date, Integer days) {
         if (date == null || days == null || (days != 7 && days != 30)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Use a date and a 7 or 30 day range");
-        var readings = repository.findByMetricNameInAndMetricDateLessThanEqual(WeightProgressCalculator.METRICS, date);
-        return ResponseEntity.ok(WeightProgressCalculator.calculate(readings, preferences.getPreferences(), date, days));
+        var readings = repository.findByUserIdAndMetricNameInAndMetricDateLessThanEqual(users.current().value(), WeightProgressCalculator.METRICS, date);
+        return ResponseEntity.ok(WeightProgressCalculator.calculate(readings, preferences.getPreferences(users.current()), date, days));
     }
 }

@@ -60,7 +60,7 @@ class CloudflareAccessFilterTest {
         if (body.getStatus() != RESOLVED) {
             assertThat(body.getIdentityId()).isNull();
             assertThat(body.getDisplayName()).isNull();
-            assertThat(body.getIsAdmin()).isNull();
+            assertThat(body.getRole()).isNull();
         }
         return body;
     }
@@ -76,9 +76,9 @@ class CloudflareAccessFilterTest {
         assertThat(user.getStatus()).isEqualTo(RESOLVED);
         assertThat(user.getIdentityId()).isEqualTo(42L);
         assertThat(user.getDisplayName()).isEqualTo("Heidi");
-        assertThat(user.getIsAdmin()).isFalse();
+        assertThat(user.getRole()).isEqualTo(com.sixtymeters.thereabout.generated.model.GenUserRole.USER);
         when(users.resolve("theo@example.test")).thenReturn(Optional.of(new CloudflareUsers.User(7L, "Theo", true)));
-        assertThat(currentUser(valid("theo@example.test")).getIsAdmin()).isTrue();
+        assertThat(currentUser(valid("theo@example.test")).getRole()).isEqualTo(com.sixtymeters.thereabout.generated.model.GenUserRole.ADMIN);
     }
     @Test void validUnknownLoginIsUnlinkedAndHasNoRole() throws Exception {
         var request = new MockHttpServletRequest("GET", "/backend/api/v1/identity");

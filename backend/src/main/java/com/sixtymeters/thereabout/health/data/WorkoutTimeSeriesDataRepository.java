@@ -11,5 +11,5 @@ public interface WorkoutTimeSeriesDataRepository extends JpaRepository<WorkoutTi
 
     @Modifying
     @Query("DELETE FROM WorkoutTimeSeriesDataEntity w WHERE w.workout.id = :workoutId")
-    void deleteByWorkoutId(@Param("workoutId") String workoutId);
+    void deleteByWorkoutId(@Param("workoutId") Long workoutId);
 }

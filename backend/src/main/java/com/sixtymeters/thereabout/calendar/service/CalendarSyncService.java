@@ -31,6 +31,7 @@ import static com.sixtymeters.thereabout.calendar.data.CalendarStore.timestamp;
 public class CalendarSyncService {
     private final CalendarStore store;
     private final GoogleCalendarGateway google;
+    private final com.sixtymeters.thereabout.access.UserContext users;
     @Value("${thereabout.calendar.worker-enabled:true}") private boolean workerEnabled;
     /** The public HTTPS origin behind Cloudflare; without it Google push is disabled and Sync now still works. */
     @Value("${thereabout.public-origin:}") private String publicOrigin;
@@ -124,7 +125,13 @@ public class CalendarSyncService {
             if (!selected.contains(calendar.id())) {
                 retire(calendar.id());
                 store.update("UPDATE calendar_calendar SET selected=FALSE,state='INACTIVE' WHERE id=?", calendar.id());
-            } else store.update("UPDATE calendar_calendar SET selected=TRUE,full_sync=TRUE,pending_version=pending_version+1,state='QUEUED',error=NULL,retry_at=NULL WHERE id=?", calendar.id());
+            } else {
+                if (!calendar.selected() && store.userIds(calendar.id()).isEmpty()) {
+                    users.integration();
+                    store.replaceUserIds(calendar.id(), List.of(1L));
+                }
+                store.update("UPDATE calendar_calendar SET selected=TRUE,full_sync=TRUE,pending_version=pending_version+1,state='QUEUED',error=NULL,retry_at=NULL WHERE id=?", calendar.id());
+            }
         }
         if (selected.isEmpty()) retire(null);
     }
@@ -278,7 +285,8 @@ public class CalendarSyncService {
         else store.update("UPDATE calendar_calendar SET state='ERROR',error=?,failures=failures+1,retry_at=? WHERE id=?", GoogleCalendarGateway.safeError(e), timestamp(retry), calendarId);
     }
     /** Local markers survive snapshot replacement; this action never contacts Google or queues sync. */
-    public synchronized void delete(long calendarId, String eventId, String originalStart) {
+    public synchronized void delete(com.sixtymeters.thereabout.access.UserId user, long calendarId, String eventId, String originalStart) {
+        store.requireAssigned(user, calendarId);
         String original;
         try { original = Objects.requireNonNullElse(CalendarOccurrences.canonical(originalStart), ""); }
         catch (DateTimeException e) { throw bad("Invalid occurrence start"); }

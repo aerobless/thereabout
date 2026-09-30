@@ -15,7 +15,7 @@ public class WorkoutMapper {
         OffsetDateTime end = workout.getEnd();
         
         WorkoutEntity.WorkoutEntityBuilder builder = WorkoutEntity.builder()
-                .id(workout.getId())
+                .sourceId(workout.getId())
                 .name(workout.getName())
                 .start(start != null ? start.toLocalDateTime() : null)
                 .end(end != null ? end.toLocalDateTime() : null)

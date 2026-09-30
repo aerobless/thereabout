@@ -28,22 +28,22 @@ public class CalendarOccurrences {
     public record Span(Instant start, Instant end, String originalStart, LocalDate startDate, LocalDate endDate) {}
 
     @Transactional(readOnly = true)
-    public List<Occurrence> day(LocalDate day, ZoneId viewZone) {
-        return between(day,day.plusDays(1),viewZone);
+    public List<Occurrence> day(com.sixtymeters.thereabout.access.UserId user, LocalDate day, ZoneId viewZone) {
+        return between(user,day,day.plusDays(1),viewZone);
     }
 
     @Transactional(readOnly = true)
-    public List<Occurrence> upcoming(Instant now, ZoneId viewZone) {
+    public List<Occurrence> upcoming(com.sixtymeters.thereabout.access.UserId user, Instant now, ZoneId viewZone) {
         LocalDate day=now.atZone(viewZone).toLocalDate();
-        return between(day,day.plusDays(31),viewZone).stream()
+        return between(user,day,day.plusDays(31),viewZone).stream()
                 .filter(event -> !event.allDay() && !Instant.parse(event.start()).isBefore(now)
                         && Instant.parse(event.start()).isBefore(now.atZone(viewZone).plusDays(30).toInstant()))
                 .limit(1).toList();
     }
 
-    private List<Occurrence> between(LocalDate day, LocalDate endExclusive, ZoneId viewZone) {
+    private List<Occurrence> between(com.sixtymeters.thereabout.access.UserId user, LocalDate day, LocalDate endExclusive, ZoneId viewZone) {
         List<Occurrence> result = new ArrayList<>();
-        for (CalendarRow calendar : store.calendars()) {
+        for (CalendarRow calendar : store.calendars(user)) {
             List<StoredEvent> events = store.events(calendar);
             Set<LocalDeletion> deleted = store.localDeletions(calendar.id());
             Set<String> exceptions = new HashSet<>();

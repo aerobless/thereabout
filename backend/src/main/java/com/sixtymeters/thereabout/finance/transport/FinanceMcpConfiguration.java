@@ -25,6 +25,10 @@ public class FinanceMcpConfiguration {
     return HttpServletStreamableServerTransportProvider.builder()
         .jsonMapper(McpJsonDefaults.getMapper())
         .mcpEndpoint("/mcp/finances")
+        .contextExtractor(request -> {
+          var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+          return io.modelcontextprotocol.common.McpTransportContext.create(auth == null ? Map.of() : Map.of("thereabout.actor", auth));
+        })
         .build();
   }
 
@@ -39,6 +43,7 @@ public class FinanceMcpConfiguration {
   @Bean(destroyMethod = "close")
   public McpSyncServer financeMcpServer(
       HttpServletStreamableServerTransportProvider transport,
+      com.sixtymeters.thereabout.access.UserContext users,
       FinanceReadRepository reads,
       AccountService accounts,
       CategoryService categories,
@@ -56,51 +61,51 @@ public class FinanceMcpConfiguration {
             .serverInfo("thereabout-finances", "2.0.0")
             .capabilities(McpSchema.ServerCapabilities.builder().tools(false).build());
     builder.tools(
-        tools.tool("overview", true, GenFinancePeriodQuery.class, reports::overview),
-        tools.tool("accounts.list", true, GenFinanceAccountQuery.class, reads::accounts),
-        tools.tool("accounts.save", false, GenFinanceAccountInput.class, accounts::save),
+        tools.tool("overview", true, GenFinancePeriodQuery.class, input -> reports.overview(users.integration(), input)),
+        tools.tool("accounts.list", true, GenFinanceAccountQuery.class, input -> reads.accounts(users.integration(), input)),
+        tools.tool("accounts.save", false, GenFinanceAccountInput.class, input -> accounts.save(users.integration(), input)),
         tools.tool("categories.list", true, EmptyInput.class, ignored -> reads.categories()),
-        tools.tool("categories.save", false, GenFinanceCategoryInput.class, categories::save),
+        tools.tool("categories.save", false, GenFinanceCategoryInput.class, input -> categories.save(users.integration(), input)),
         tools.tool("currencies.list", true, EmptyInput.class, ignored -> reads.currencies()),
         tools.tool(
-            "transactions.list", true, GenFinanceTransactionQuery.class, reads::transactions),
+            "transactions.list", true, GenFinanceTransactionQuery.class, input -> reads.transactions(users.integration(), input)),
         tools.tool(
             "transactions.get",
             true,
             GenFinanceIdQuery.class,
             input ->
                 new GenFinanceTransactionDetail()
-                    .transaction(reads.transaction(input.getId()))
-                    .history(reads.history(input.getId()))),
+                    .transaction(reads.transaction(users.integration(), input.getId()))
+                    .history(reads.history(users.integration(), input.getId()))),
         tools.tool(
-            "transactions.save", false, GenFinanceTransactionInput.class, transactions::save),
+            "transactions.save", false, GenFinanceTransactionInput.class, input -> transactions.save(users.integration(), input)),
         tools.tool(
             "transactions.delete",
             false,
             GenFinanceVersionedInput.class,
-            input -> transactions.setDeleted(input, true)),
+            input -> transactions.setDeleted(users.integration(), input, true)),
         tools.tool(
             "transactions.restore",
             false,
             GenFinanceVersionedInput.class,
-            input -> transactions.setDeleted(input, false)),
+            input -> transactions.setDeleted(users.integration(), input, false)),
         tools.tool(
             "transactions.categorize",
             false,
             GenFinanceBulkCategoryInput.class,
-            transactions::categorize),
+            input -> transactions.categorize(users.integration(), input)),
         tools.tool(
-            "valuations.preview", true, GenFinanceValuationPreviewInput.class, valuations::preview),
-        tools.tool("valuations.save", false, GenFinanceValuationInput.class, valuations::save),
+            "valuations.preview", true, GenFinanceValuationPreviewInput.class, input -> valuations.preview(users.integration(), input)),
+        tools.tool("valuations.save", false, GenFinanceValuationInput.class, input -> valuations.save(users.integration(), input)),
         tools.tool(
             "valuations.list",
             true,
             GenFinanceValuationQuery.class,
-            input -> reads.valuations(input.getAccountId())),
-        tools.tool("reports", true, GenFinancePeriodQuery.class, reports::report),
+            input -> reads.valuations(users.integration(), input.getAccountId())),
+        tools.tool("reports", true, GenFinancePeriodQuery.class, input -> reports.report(users.integration(), input)),
         tools.tool("rates.list", true, GenFinanceRateQuery.class, reads::rates),
-        tools.tool("rates.save", false, GenFinanceRateInput.class, rates::save),
-        tools.tool("rates.refresh", false, GenFinanceRefreshInput.class, rates::refresh));
+        tools.tool("rates.save", false, GenFinanceRateInput.class, input -> rates.save(users.integration(), input)),
+        tools.tool("rates.refresh", false, GenFinanceRefreshInput.class, input -> rates.refresh(users.integration(), input)));
     return builder.build();
   }
 
@@ -129,6 +134,11 @@ public class FinanceMcpConfiguration {
           .tool(tool)
           .callHandler(
               (exchange, request) -> {
+                // SDK handlers run on worker threads; carry the verified request actor for auditing.
+                var previous = org.springframework.security.core.context.SecurityContextHolder.getContext();
+                var context = org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
+                if (exchange.transportContext().get("thereabout.actor") instanceof org.springframework.security.core.Authentication actor) context.setAuthentication(actor);
+                org.springframework.security.core.context.SecurityContextHolder.setContext(context);
                 try {
                   I input = json.convertValue(request.arguments(), inputType);
                   var violations = validator.validate(input);
@@ -152,6 +162,8 @@ public class FinanceMcpConfiguration {
                   return error("400: Invalid request values");
                 } catch (IllegalStateException e) {
                   return error("503: Operation unavailable; no changes were committed");
+                } finally {
+                  org.springframework.security.core.context.SecurityContextHolder.setContext(previous);
                 }
               })
           .build();

@@ -1,5 +1,7 @@
 import {Subject} from 'rxjs';
 import {RefreshCoordinator, RefreshHandle} from '../refresh/refresh-coordinator';
+import {CurrentUserService} from '../current-user/current-user.service';
+import {signal} from '@angular/core';
 import {Component} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {provideRouter, Router, RouterOutlet} from '@angular/router';
@@ -20,12 +22,11 @@ describe('AppShellComponent', () => {
     localStorage.removeItem('thereabout.sidebarCollapsed');
     await TestBed.configureTestingModule({
       imports: [TestHost],
-      providers: [provideRouter([
+      providers: [{provide: CurrentUserService, useValue: {canManageUsers: signal(true)}}, provideRouter([
         {path: '', component: PageStub},
         {path: 'dayview', component: PageStub},
         {path: 'locationhistory', component: PageStub},
-        {path: 'statistics', component: PageStub},
-        {path: 'identities', component: PageStub},
+                {path: 'identities', component: PageStub},
         {path: 'identities/:id', component: PageStub},
         {path: 'configuration', component: PageStub},
         {path: 'messages', component: PageStub}
@@ -66,8 +67,8 @@ describe('AppShellComponent', () => {
     expect(root().querySelector('.mobile-nav [aria-current="page"]')?.textContent).toContain('Launcher');
     expect(Array.from(root().querySelectorAll('.sidebar-nav a')).slice(0,2).map(a=>a.getAttribute('aria-label'))).toEqual(['Launcher','Today']);
     expect(Array.from(root().querySelectorAll('.mobile-nav a')).slice(0,2).map(a=>a.textContent?.trim())).toEqual(['Launcher','Today']);
-    await navigate('/statistics');
-    expect(root().querySelector('.sidebar-nav [aria-current="page"]')?.textContent).toContain('Statistics');
+    await navigate('/identities');
+    expect(root().querySelector('.sidebar-nav [aria-current="page"]')?.textContent).toContain('Identities');
     expect(root().querySelectorAll('.sidebar-nav .active')).toHaveLength(1);
   });
 

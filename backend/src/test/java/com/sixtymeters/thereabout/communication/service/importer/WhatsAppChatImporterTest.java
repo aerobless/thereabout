@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.communication.service.importer;
 
+import com.sixtymeters.thereabout.access.UserId;
 import com.sixtymeters.thereabout.communication.data.CommunicationApplication;
 import com.sixtymeters.thereabout.communication.data.IdentityEntity;
 import com.sixtymeters.thereabout.communication.data.IdentityInApplicationRepository;
@@ -43,7 +44,6 @@ class WhatsAppChatImporterTest {
     void setUp() {
         messageRepository.deleteAll();
         identityInApplicationRepository.deleteAll();
-        identityRepository.deleteAll();
     }
 
     private File copyTestFileToTemp() throws IOException {
@@ -60,7 +60,7 @@ class WhatsAppChatImporterTest {
         File testFile = copyTestFileToTemp();
 
         // When
-        whatsAppChatImporter.importFile(testFile, "Bob Smith");
+        whatsAppChatImporter.importFile(testFile, "Bob Smith", new UserId(1));
 
         // Then
         List<MessageEntity> messages = messageRepository.findAll();
@@ -162,7 +162,7 @@ class WhatsAppChatImporterTest {
         File testFile = copyTestFileToTemp();
 
         // When - import with receiver name matching the group identity
-        whatsAppChatImporter.importFile(testFile, "Family Group");
+        whatsAppChatImporter.importFile(testFile, "Family Group", new UserId(1));
 
         // Then
         List<MessageEntity> messages = messageRepository.findAll();
@@ -192,8 +192,8 @@ class WhatsAppChatImporterTest {
     @Test
     void testImportDoesNotDuplicateMessages() throws IOException {
         // Given & When - import the same file twice
-        whatsAppChatImporter.importFile(copyTestFileToTemp(), "Bob Smith");
-        whatsAppChatImporter.importFile(copyTestFileToTemp(), "Bob Smith");
+        whatsAppChatImporter.importFile(copyTestFileToTemp(), "Bob Smith", new UserId(1));
+        whatsAppChatImporter.importFile(copyTestFileToTemp(), "Bob Smith", new UserId(1));
 
         // Then - identities should not be duplicated
         var aliceIdentities = identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.WHATSAPP, "Alice Miller");

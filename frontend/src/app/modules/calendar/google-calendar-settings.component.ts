@@ -1,4 +1,6 @@
 import {Component, ChangeDetectionStrategy, ChangeDetectorRef, DestroyRef, inject, OnInit} from '@angular/core';
+import {signal} from '@angular/core';
+import {MultiSelectModule} from 'primeng/multiselect';
 import {FormsModule} from '@angular/forms';
 import {DatePipe} from '@angular/common';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
@@ -7,19 +9,21 @@ import {CardModule} from 'primeng/card';
 import {ButtonModule} from 'primeng/button';
 import { AppModalComponent } from '../../shared/modal/app-modal.component';
 import {InputTextModule} from 'primeng/inputtext';
-import {CalendarService, CalendarInfo, GoogleCalendarStatus, GoogleCredentials} from '../../../../generated/backend-api/thereabout';
+import {Identity, IdentityService, CalendarService, CalendarInfo, GoogleCalendarStatus, GoogleCredentials} from '../../../../generated/backend-api/thereabout';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 import {MessageService} from 'primeng/api';
 
 type SecretKey = 'clientId' | 'clientSecret' | 'refreshToken';
 @Component({
   selector: 'app-google-calendar-settings',
-  imports: [FormsModule, DatePipe, CardModule, ButtonModule, AppModalComponent, InputTextModule],
+  imports: [MultiSelectModule, FormsModule, DatePipe, CardModule, ButtonModule, AppModalComponent, InputTextModule],
   templateUrl: './google-calendar-settings.component.html',
   styleUrl: './google-calendar-settings.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GoogleCalendarSettingsComponent implements OnInit {
+  readonly users = signal<Identity[]>([]);
+  private readonly identities = inject(IdentityService);
   private readonly api = inject(CalendarService);
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
@@ -45,6 +49,10 @@ export class GoogleCalendarSettingsComponent implements OnInit {
   private revision = 0;
 
   ngOnInit() {
+    this.identities.getIdentities().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: identities => this.users.set(identities.filter(i => !!i.role && !i.isGroup)),
+      error: () => { this.error='Unable to load users.'; this.changeDetector.markForCheck(); }
+    });
     this.load();
     interval(5000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (!document.hidden && !this.busy) this.load();
@@ -115,6 +123,13 @@ export class GoogleCalendarSettingsComponent implements OnInit {
   import() {
     this.run(this.api.importGoogleCalendars({calendarIds: [...this.selected]}), () => {
       this.selectionVisible = false; this.notice = 'Calendar selection saved. Selected calendars are queued for full import.'; this.load();
+    });
+  }
+  saveUsers(calendar: CalendarInfo, userIds: number[]) {
+    this.run(this.api.assignGoogleCalendarUsers(calendar.id, {userIds}), () => {
+      calendar.userIds=[...userIds];
+      this.toast.add({severity: 'success', summary: 'Calendar users saved'});
+      this.load();
     });
   }
   syncNow() { this.run(this.api.syncGoogleCalendars(), () => { this.notice = 'Incremental synchronization queued.'; this.load(); }); }

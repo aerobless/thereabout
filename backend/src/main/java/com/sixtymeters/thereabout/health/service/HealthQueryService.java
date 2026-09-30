@@ -23,7 +23,7 @@ public class HealthQueryService {
     private final HealthMetricSleepRepository sleepRepository;
     private final WorkoutRepository workoutRepository;
 
-    public HealthDataResponse getHealthData(LocalDate fromDate, LocalDate toDate) {
+    public HealthDataResponse getHealthData(com.sixtymeters.thereabout.access.UserId user, LocalDate fromDate, LocalDate toDate) {
         if (fromDate == null) {
             throw new IllegalArgumentException("fromDate cannot be null");
         }
@@ -35,7 +35,7 @@ public class HealthQueryService {
         }
 
         // Retrieve all health metrics for the date range
-        List<HealthMetricEntity> metrics = healthMetricRepository.findByMetricDateBetween(fromDate, toDate);
+        List<HealthMetricEntity> metrics = healthMetricRepository.findByUserIdAndMetricDateBetween(user.value(), fromDate, toDate);
 
         // Expose stored sleep stages and use totalSleep when the base quantity is absent.
         List<HealthMetricEntity> sleepMetrics = metrics.stream()
@@ -75,12 +75,12 @@ public class HealthQueryService {
         // Retrieve workouts for the date range (convert LocalDate to LocalDateTime range)
         LocalDateTime fromDateTime = fromDate.atStartOfDay();
         LocalDateTime toDateTime = toDate.atTime(23, 59, 59, 999999999);
-        List<WorkoutEntity> workouts = workoutRepository.findByStartBetween(fromDateTime, toDateTime);
+        List<WorkoutEntity> workouts = workoutRepository.findByUserIdAndStartBetween(user.value(), fromDateTime, toDateTime);
 
         // Convert workouts to WorkoutSummary
         List<WorkoutSummary> workoutSummaries = workouts.stream()
                 .map(workout -> WorkoutSummary.builder()
-                        .id(workout.getId())
+                        .id(workout.getSourceId())
                         .name(workout.getName())
                         .start(workout.getStart())
                         .end(workout.getEnd())

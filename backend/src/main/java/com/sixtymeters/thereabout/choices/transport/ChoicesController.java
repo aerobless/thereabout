@@ -14,15 +14,16 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class ChoicesController implements ChoicesApi {
     private final ChoicesService service;
+    private final com.sixtymeters.thereabout.access.UserContext users;
     @Override
     public ResponseEntity<GenChoicesHistory> getChoicesHistory(LocalDate date, Integer days) {
-        return ResponseEntity.ok(service.history(date, days));
+        return ResponseEntity.ok(service.history(users.current(), date, days));
     }
     @Override
     public ResponseEntity<GenChoicesDay> adjustChoices(LocalDate date, GenChoicesAdjustment request) {
         try {
             Integer delta = request == null || request.getDelta() == null ? null : request.getDelta().intValueExact();
-            return ResponseEntity.ok(service.adjust(date, delta));
+            return ResponseEntity.ok(service.adjust(users.current(), date, delta));
         } catch (ArithmeticException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Delta must be exactly -1 or 1");
         }

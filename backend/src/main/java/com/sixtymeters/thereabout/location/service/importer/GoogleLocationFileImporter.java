@@ -12,5 +12,5 @@ import java.io.File;
 public class GoogleLocationFileImporter implements FileImporter {
     private final LocationHistoryService locations;
     @Override public GenImportType getSupportedImportType() { return GenImportType.GOOGLE_MAPS_RECORDS; }
-    @Override public void importFile(File file, String receiver) { locations.importGoogleLocationHistory(file); }
+    @Override public void importFile(File file, String receiver, com.sixtymeters.thereabout.access.UserId user) { locations.importGoogleLocationHistory(user, file); }
 }

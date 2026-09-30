@@ -1,9 +1,17 @@
 import {inject} from '@angular/core';
+import {CurrentUserService} from './shared/current-user/current-user.service';
 import {CanActivateFn, Router, Routes} from '@angular/router';
 
 const legacyDayLink: CanActivateFn = route => route.queryParamMap.has('date')
     ? inject(Router).createUrlTree(['/dayview'], {queryParams: route.queryParams, fragment: route.fragment ?? undefined})
     : true;
+
+export const adminOnly: CanActivateFn = async () => {
+    const user = inject(CurrentUserService);
+    const router = inject(Router);
+    await user.ready();
+    return user.canManageUsers() || router.createUrlTree(['/']);
+};
 
 export const routes: Routes = [
     {path:'finances',loadComponent:()=>import('./modules/finances/finances.component').then(m=>m.FinancesComponent),children:[
@@ -37,18 +45,17 @@ export const routes: Routes = [
     },
     {
         path: 'configuration',
+        canActivate: [adminOnly],
         loadComponent: () => import('./modules/configuration/configuration.component').then(m => m.ConfigurationComponent)
     },
     {
-        path: 'statistics',
-        loadComponent: () => import('./modules/statistics/statistics.component').then(m => m.StatisticsComponent)
-    },
-    {
         path: 'identities',
+        canActivate: [adminOnly],
         loadComponent: () => import('./modules/identities/identities.component').then(m => m.IdentitiesComponent)
     },
     {
         path: 'identities/:id',
+        canActivate: [adminOnly],
         loadComponent: () => import('./modules/identities/identity-detail/identity-detail.component').then(m => m.IdentityDetailComponent)
     },
     {

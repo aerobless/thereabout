@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.shared.icons;
 
+import com.sixtymeters.thereabout.access.UserId;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -32,8 +33,10 @@ class WebsiteIconServiceTest {
     var accounts = mock(AccountService.class);
     var account = new FinanceAccountEntity();
     account.setWebsiteUrl(WEBSITE);
-    when(accounts.requireAccount(1)).thenReturn(account);
-    var controller = new FinanceAccountIconController(accounts, icons);
+    when(accounts.requireAccount(new UserId(1), 1)).thenReturn(account);
+    var users = mock(com.sixtymeters.thereabout.access.UserContext.class);
+    when(users.current()).thenReturn(new UserId(1));
+    var controller = new FinanceAccountIconController(accounts, users, icons);
     var response = controller.icon(1);
     assertThat(response.getBody()).containsExactly(PNG);
     assertThat(response.getHeaders().getContentType().toString()).isEqualTo("image/png");

@@ -37,7 +37,7 @@
       <ng-template #body let-identity>
         <tr>
           <td><a [routerLink]="['/identities', identity.id]">{{ identity.shortName }}</a>
-            @if (identity.isUser) { <p-tag value="User" severity="success" /> }
+            @if (identity.role) { <p-tag [value]="identity.role === 'ADMIN' ? 'Admin' : 'User'" severity="success" /> }
             @if (cloudflareEmail(identity); as email) { <small class="cloudflare-identity">Cloudflare: {{ email }}</small> }</td>
           <td data-label="Relationship">{{ identity.relationship || '—' }}</td>
           <td data-label="Group" style="text-align: center">

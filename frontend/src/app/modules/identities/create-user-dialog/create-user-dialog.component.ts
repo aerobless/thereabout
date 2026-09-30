@@ -1,4 +1,5 @@
 import {ChangeDetectionStrategy, Component, inject, input, output, signal} from '@angular/core';
+import {SelectModule} from 'primeng/select';
 import {FormsModule} from '@angular/forms';
 import { AppModalComponent } from '../../../shared/modal/app-modal.component';
 import {ButtonModule} from 'primeng/button';
@@ -16,7 +17,7 @@ export function validCloudflareEmail(email: string): boolean {
 
 @Component({
   selector: 'app-create-user-dialog',
-  imports: [FormsModule, AppModalComponent, ButtonModule, InputTextModule],
+  imports: [SelectModule, FormsModule, AppModalComponent, ButtonModule, InputTextModule],
   templateUrl: './create-user-dialog.component.html',
   styles: [`.dialog-form {display: flex; flex-direction: column; gap: .75rem; padding-top: .5rem;}
     input {width: 100%;} .field-error {color: var(--p-red-600);} p {margin: 0 0 .5rem; overflow-wrap: anywhere;}`],
@@ -32,6 +33,8 @@ export class CreateUserDialogComponent {
   readonly busy = signal(false);
   readonly error = signal('');
   email = '';
+  role: 'ADMIN' | 'USER' = 'USER';
+  readonly roles = [{label: 'User', value: 'USER'}, {label: 'Admin', value: 'ADMIN'}];
 
   close(): void { if (!this.busy()) this.closed.emit(); }
   create(): void {
@@ -43,7 +46,7 @@ export class CreateUserDialogComponent {
     }
     this.error.set('');
     this.busy.set(true);
-    this.api.createIdentityUser(this.identity().id, {email: this.email}).subscribe({
+    this.api.createIdentityUser(this.identity().id, {email: this.email, role: this.role}).subscribe({
       next: identity => {
         this.busy.set(false);
         this.messages.add({severity: 'success', summary: 'User created', detail: `${identity.shortName} is now a Thereabout user.`});

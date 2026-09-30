@@ -2,6 +2,7 @@ package com.sixtymeters.thereabout.finance.service;
 
 import static com.sixtymeters.thereabout.finance.domain.FinanceRules.*;
 
+import com.sixtymeters.thereabout.access.UserId;
 import com.sixtymeters.thereabout.finance.data.*;
 import com.sixtymeters.thereabout.generated.model.*;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +18,8 @@ public class ExchangeRateService {
   private final AccountService accounts;
   private final EcbRateClient ecb;
 
-  public GenFinanceRateResult save(GenFinanceRateInput input) {
-    return writes.write(
+  public GenFinanceRateResult save(UserId user, GenFinanceRateInput input) {
+    return writes.write(user,
         "rates.save",
         input.getRequestKey(),
         input,
@@ -46,21 +47,21 @@ public class ExchangeRateService {
           rate.setSource("MANUAL");
           rates.saveAndFlush(rate);
           var after = reads.rate(rate.getId());
-          writes.audit("rates.save", rate.getId(), before, after);
+          writes.audit(user, "rates.save", rate.getId(), before, after);
           return new GenFinanceRateResult().rate(after);
         });
   }
 
   @org.springframework.transaction.annotation.Transactional(
       propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
-  public GenFinanceRateRefreshResult refresh(GenFinanceRefreshInput input) {
+  public GenFinanceRateRefreshResult refresh(UserId user, GenFinanceRefreshInput input) {
     var previous =
-        writes.replay(
+        writes.replay(user,
             "rates.refresh", input.getRequestKey(), input, GenFinanceRateRefreshResult.class);
     if (previous.isPresent()) return previous.get();
     // Do not hold a ledger lock or database transaction while waiting for ECB.
     var download = ecb.download();
-    return writes.write(
+    return writes.write(user,
         "rates.refresh",
         input.getRequestKey(),
         input,

@@ -1,3 +1,4 @@
+import {CurrentUserService} from '../current-user/current-user.service';
 import {PullToRefreshDirective} from '../refresh/pull-to-refresh.directive';
 import {ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal, viewChild} from '@angular/core';
 import {toSignal} from '@angular/core/rxjs-interop';
@@ -15,6 +16,7 @@ import {MenuItem} from 'primeng/api';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppShellComponent {
+  readonly currentUser = inject(CurrentUserService);
   readonly sidebarCollapsed = signal(this.readSidebarPreference());
   private readonly router = inject(Router);
   readonly moreMenu = viewChild<Menu>('moreMenu');
@@ -26,23 +28,23 @@ export class AppShellComponent {
   private readonly urlTree = computed(() => this.router.parseUrl(this.url()));
   private readonly path = computed(() => this.urlTree().root.children[PRIMARY_OUTLET]?.segments.map(segment => segment.path).join('/') ?? '');
   readonly embedded = computed(() => this.path() === 'locationhistory' && this.urlTree().queryParams['embed'] === 'true');
-  readonly moreActive = computed(() => this.path().startsWith('finances') || this.path() === 'statistics' || this.path() === 'configuration' || this.path() === 'identities' || this.path().startsWith('identities/'));
+  readonly moreActive = computed(() => this.path().startsWith('finances') || this.path() === 'configuration' || this.path() === 'identities' || this.path().startsWith('identities/'));
   readonly exactMatch: IsActiveMatchOptions = {paths: 'exact', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'};
   readonly sectionMatch: IsActiveMatchOptions = {...this.exactMatch, paths: 'subset'};
-  readonly links = [
+  readonly links = computed(() => [
     {label: 'Launcher', mobileLabel: 'Launcher', path: '/', icon: 'pi pi-search', match: this.exactMatch},
     {label: 'Today', mobileLabel: 'Today', path: '/dayview', icon: 'pi pi-home', match: this.exactMatch},
     {label: 'Location History', mobileLabel: 'Locations', path: '/locationhistory', icon: 'pi pi-map-marker', match: this.exactMatch},
     {label: 'Finances', mobileLabel: 'Finances', path: '/finances', icon: 'pi pi-wallet', match: this.sectionMatch},
-    {label: 'Statistics', mobileLabel: 'Statistics', path: '/statistics', icon: 'pi pi-chart-bar', match: this.exactMatch},
-    {label: 'Identities', mobileLabel: 'Identities', path: '/identities', icon: 'pi pi-users', match: this.sectionMatch}
-  ];
-  readonly moreItems: MenuItem[] = [
+    ...(this.currentUser.canManageUsers() ? [{label: 'Identities', mobileLabel: 'Identities', path: '/identities', icon: 'pi pi-users', match: this.sectionMatch}] : [])
+  ]);
+  readonly moreItems = computed<MenuItem[]>(() => [
     {label: 'Finances', icon: 'pi pi-wallet', routerLink: '/finances'},
-    {label: 'Statistics', icon: 'pi pi-chart-bar', routerLink: '/statistics'},
-    {label: 'Identities', icon: 'pi pi-users', routerLink: '/identities'},
-    {label: 'Configuration', icon: 'pi pi-cog', routerLink: '/configuration'}
-  ];
+    ...(this.currentUser.canManageUsers() ? [
+      {label: 'Identities', icon: 'pi pi-users', routerLink: '/identities'},
+      {label: 'Configuration', icon: 'pi pi-cog', routerLink: '/configuration'}
+    ] : [])
+  ]);
 
   constructor() {
     const mobile = window.matchMedia?.('(max-width: 768px)');

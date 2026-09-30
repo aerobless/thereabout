@@ -11,6 +11,8 @@ public class TestDatabaseGuard implements ApplicationContextInitializer<Configur
     @Override
     public void initialize(ConfigurableApplicationContext context) {
         validate(context.getEnvironment().getProperty("spring.datasource.url"));
+        // Test SQL is copied to a filesystem location to remove the legacy schema qualifier.
+        context.getBeanFactory().registerSingleton("legacyOwnerValidation", new db.migration.V27__Validate_legacy_owner());
     }
 
     static void validate(String url) {

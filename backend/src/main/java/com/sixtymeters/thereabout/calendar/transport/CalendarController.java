@@ -20,8 +20,10 @@ public class CalendarController implements CalendarApi {
     private final CalendarStore store;
     private final CalendarSyncService sync;
     private final CalendarOccurrences occurrences;
+    private final com.sixtymeters.thereabout.access.UserContext users;
+    private final com.sixtymeters.thereabout.calendar.service.CalendarUserService assignments;
     public record CalendarInfo(long id, String name, String color, String timeZone, String accessRole, boolean selected,
-                               String state, String error, int importedCount, Instant lastSyncAt, String webhookHealth, Instant channelExpiresAt) {}
+                               String state, String error, int importedCount, Instant lastSyncAt, String webhookHealth, Instant channelExpiresAt, List<Long> userIds) {}
 
     @Override
     public ResponseEntity<GenGoogleCalendarStatus> getGoogleCalendarStatus() {
@@ -49,6 +51,11 @@ public class CalendarController implements CalendarApi {
         sync.select(selection.getCalendarIds()); return ResponseEntity.accepted().build();
     }
     @Override
+    public ResponseEntity<Void> assignGoogleCalendarUsers(Long calendarId, GenCalendarUserAssignment input) {
+        assignments.assign(calendarId,input.getUserIds());
+        return ResponseEntity.noContent().build();
+    }
+    @Override
     public ResponseEntity<Void> syncGoogleCalendars() { sync.syncNow(); return ResponseEntity.accepted().build(); }
     @Override
     public ResponseEntity<Void> receiveGoogleCalendarNotification(String id,String token,String resource,String state) {
@@ -56,23 +63,23 @@ public class CalendarController implements CalendarApi {
     }
     @Override
     public ResponseEntity<List<GenCalendarOccurrence>> getCalendarDay(LocalDate date,String timeZone) {
-        try { return ResponseEntity.ok(occurrences.day(date,ZoneId.of(timeZone)).stream().map(CalendarApiMapper.INSTANCE::occurrence).toList()); }
+        try { return ResponseEntity.ok(occurrences.day(users.current(),date,ZoneId.of(timeZone)).stream().map(CalendarApiMapper.INSTANCE::occurrence).toList()); }
         catch (DateTimeException e) { throw new ThereaboutException(HttpStatus.BAD_REQUEST,"Invalid IANA timezone"); }
     }
     @Override
     public ResponseEntity<List<GenCalendarOccurrence>> getUpcomingCalendarEvent(String timeZone) {
-        try { return noCache(occurrences.upcoming(Instant.now(),ZoneId.of(timeZone)).stream().map(CalendarApiMapper.INSTANCE::occurrence).toList()); }
+        try { return noCache(occurrences.upcoming(users.current(),Instant.now(),ZoneId.of(timeZone)).stream().map(CalendarApiMapper.INSTANCE::occurrence).toList()); }
         catch (DateTimeException e) { throw new ThereaboutException(HttpStatus.BAD_REQUEST,"Invalid IANA timezone"); }
     }
     @Override
     public ResponseEntity<Void> deleteCalendarEvent(Long calendarId,String eventId,Optional<String> originalStart) {
-        sync.delete(calendarId,eventId,originalStart.orElse(null)); return ResponseEntity.noContent().build();
+        sync.delete(users.current(),calendarId,eventId,originalStart.orElse(null)); return ResponseEntity.noContent().build();
     }
     private GenCalendarInfo info(CalendarRow calendar) {
         Instant expiry=store.channels().stream().filter(c -> Objects.equals(c.calendarId(),calendar.id()) && "ACTIVE".equals(c.state()))
                 .map(CalendarStore.ChannelRow::expiresAt).filter(Objects::nonNull).max(Comparator.naturalOrder()).orElse(null);
         return CalendarApiMapper.INSTANCE.calendar(new CalendarInfo(calendar.id(),calendar.name(),calendar.color(),calendar.timeZone(),calendar.accessRole(),calendar.selected(),
-                calendar.state(),calendar.error(),calendar.importedCount(),calendar.lastSyncAt(),calendar.selected()?sync.channelHealth(calendar.id()):"INACTIVE",expiry));
+                calendar.state(),calendar.error(),calendar.importedCount(),calendar.lastSyncAt(),calendar.selected()?sync.channelHealth(calendar.id()):"INACTIVE",expiry,store.userIds(calendar.id())));
     }
     private static <T> ResponseEntity<T> noCache(T body) { return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(body); }
 }

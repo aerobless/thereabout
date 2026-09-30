@@ -51,7 +51,6 @@ class IdentityInApplicationControllerTest {
     void setUp() {
         messageRepository.deleteAll();
         identityInApplicationRepository.deleteAll();
-        identityRepository.deleteAll();
 
         identity = IdentityEntity.builder()
                 .shortName("johndoe")

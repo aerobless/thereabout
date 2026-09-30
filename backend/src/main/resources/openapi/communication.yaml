@@ -71,6 +71,28 @@ paths:
           $ref: '../thereabout.openapi.yaml#/components/responses/404'
         409:
           description: Email already assigned, or person already has a different email.
+    put:
+      summary: Change an existing user's role; the last administrator cannot be demoted.
+      tags: [identity]
+      operationId: updateIdentityUserRole
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: {type: number}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateUserRoleRequest'}
+      responses:
+        '200':
+          description: Updated user.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Identity'}
+        '403': {description: Administrator required.}
+        '409': {description: The last administrator cannot be demoted.}
   CurrentUser:
     get:
       summary: Resolve only the cryptographically verified Cloudflare login; never cached.
@@ -339,13 +361,22 @@ paths:
 
 components:
   schemas:
+    UserRole:
+      type: string
+      enum: [ADMIN, USER]
+    UpdateUserRoleRequest:
+      type: object
+      required: [role]
+      properties:
+        role: {$ref: '#/components/schemas/UserRole'}
     CreateUserRequest:
       type: object
-      required: [email]
+      required: [email, role]
       properties:
         email:
           type: string
           description: Trimmed and lowercased before email validation and storage.
+        role: {$ref: '#/components/schemas/UserRole'}
     CurrentUser:
       type: object
       required: [status]
@@ -358,9 +389,11 @@ components:
           format: int64
         displayName:
           type: string
-        isAdmin:
-          type: boolean
-          description: Whether the resolved user may manage users. Absent unless resolved.
+        role: {$ref: '#/components/schemas/UserRole'}
+        actorIdentityId: {type: integer, format: int64}
+        actorDisplayName: {type: string}
+        actorRole: {$ref: '#/components/schemas/UserRole'}
+        impersonating: {type: boolean}
     Identity:
       description: A person or contact identity.
       type: object
@@ -376,10 +409,13 @@ components:
           type: string
           description: A short name or alias for the identity
           example: "johndoe"
-        isUser:
-          type: boolean
+        role:
+          allOf:
+            - $ref: '#/components/schemas/UserRole'
+          nullable: true
+          x-field-extra-annotation: "@lombok.Builder.Default"
           readOnly: true
-          description: Managed only by Create User; generic edits preserve this flag.
+          description: Null for contacts; managed only by the user endpoints.
         isGroup:
           type: boolean
           description: Whether this identity represents a group (e.g. a group chat)

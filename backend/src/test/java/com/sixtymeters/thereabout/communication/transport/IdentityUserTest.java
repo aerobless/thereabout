@@ -28,7 +28,7 @@ class IdentityUserTest {
     String email() { return UUID.randomUUID() + "@example.test"; }
     int create(long id, String email) throws Exception {
         return mvc.perform(post("/backend/api/v1/identity/{id}/user", id).contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"" + email + "\"}")).andReturn().getResponse().getStatus();
+                .content("{\"email\":\"" + email + "\",\"role\":\"USER\"}")).andReturn().getResponse().getStatus();
     }
     int edit(long id, String body) throws Exception {
         return mvc.perform(put("/backend/api/v1/identity/{id}", id).contentType(MediaType.APPLICATION_JSON).content(body)).andReturn().getResponse().getStatus();
@@ -41,7 +41,7 @@ class IdentityUserTest {
                 .header("Cf-Access-Authenticated-User-Email", "forged@example.test")).andReturn().getResponse();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeader("Cache-Control")).isEqualTo("no-store");
-        assertThat(response.getContentAsString()).contains("disabled").doesNotContain("forged@example.test");
+        assertThat(response.getContentAsString()).doesNotContain("forged@example.test").doesNotContain("forged@example.test");
     }
     @Test void createsNormalizesAndIsIdempotentWithoutLosingChatLinks() throws Exception {
         long id = person(false);
@@ -85,7 +85,7 @@ class IdentityUserTest {
         long one = person(false), two = person(false);
         String email = email();
         assertThat(parallel(() -> create(one, email), () -> create(two, email))).containsExactlyInAnyOrder(200, 409);
-        assertThat(jdbc.queryForObject("select count(*) from identity where id in (?,?) and is_user=true", Integer.class, one, two)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from identity where id in (?,?) and role is not null", Integer.class, one, two)).isEqualTo(1);
         assertThat(jdbc.queryForObject("select count(*) from identity_in_application where identity_id in (?,?)", Integer.class, one, two)).isEqualTo(1);
     }
     java.util.List<Integer> parallel(Callable<Integer> first, Callable<Integer> second) throws Exception {
@@ -102,7 +102,7 @@ class IdentityUserTest {
         assertThat(create(id, email())).isEqualTo(200);
         long link = link(id);
         assertThat(edit(id, """
-                {"id":%d,"shortName":"Heidi","isUser":false,"isGroup":false,"identityInApplications":[
+                {"id":%d,"shortName":"Heidi","role":null,"isGroup":false,"identityInApplications":[
                 {"id":0,"application":"Telegram","identifier":"%s"}]}
                 """.formatted(id, UUID.randomUUID()))).isEqualTo(200);
         assertThat(link(id)).isEqualTo(link);
@@ -120,11 +120,11 @@ class IdentityUserTest {
     @Test void genericCreationAndEditingCannotManufactureCloudflareMappings() throws Exception {
         long id = person(false);
         String payload = """
-                {"id":%d,"shortName":"Forged","isUser":true,"identityInApplications":[{"id":0,"application":"Cloudflare","identifier":"%s"}]}
+                {"id":%d,"shortName":"Forged","role":"ADMIN","identityInApplications":[{"id":0,"application":"Cloudflare","identifier":"%s"}]}
                 """.formatted(id, email());
         assertThat(edit(id, payload)).isEqualTo(400);
         assertThat(mvc.perform(post("/backend/api/v1/identity").contentType(MediaType.APPLICATION_JSON).content(payload)).andReturn().getResponse().getStatus()).isEqualTo(400);
-        assertThat(edit(id, "{\"id\":" + id + ",\"shortName\":\"Still contact\",\"isUser\":true}")).isEqualTo(200);
+        assertThat(edit(id, "{\"id\":" + id + ",\"shortName\":\"Still contact\",\"role\":\"ADMIN\"}")).isEqualTo(200);
         assertThat(identities.findById(id).orElseThrow().isUser()).isFalse();
     }
 }

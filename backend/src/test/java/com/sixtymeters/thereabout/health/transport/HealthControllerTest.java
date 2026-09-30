@@ -34,6 +34,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Transactional
 class HealthControllerTest {
+    @org.springframework.beans.factory.annotation.Autowired org.springframework.jdbc.core.JdbcTemplate ownerDb;
+    @org.junit.jupiter.api.BeforeEach void ensureOwner() { com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb); }
+
 
     @Autowired
     private MockMvc mockMvc;
@@ -60,7 +63,7 @@ class HealthControllerTest {
     void exposesStoredSleepStagesIncludingPartialAndTotalOnlyRecords() throws Exception {
         LocalDate date = LocalDate.of(1903, 1, 1);
         for (int i = 0; i < 3; i++) {
-            var base = healthMetricRepository.save(HealthMetricEntity.builder()
+            var base = healthMetricRepository.save(HealthMetricEntity.builder().userId(1L)
                     .metricName("sleep_analysis").metricDate(date.plusDays(i)).units("hr").build());
             sleepRepository.save(com.sixtymeters.thereabout.health.data.HealthMetricSleepEntity.builder()
                     .healthMetric(base).totalSleep(i == 1 ? null : new BigDecimal("8"))
@@ -234,24 +237,24 @@ class HealthControllerTest {
         LocalDate testDate = LocalDate.of(2026, 1, 18);
         List<HealthMetricEntity> initialMetrics = healthMetricRepository.findAll();
         assertThat(initialMetrics).isNotEmpty();
-        
+
         HealthMetricEntity heartRateMetric = initialMetrics.stream()
                 .filter(m -> "heart_rate".equals(m.getMetricName()) && testDate.equals(m.getMetricDate()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Heart rate metric not found"));
-        
+
         // Find heart rate detail by querying all and filtering
         List<HealthMetricHeartRateEntity> allHeartRates = healthMetricHeartRateRepository.findAll();
         HealthMetricHeartRateEntity heartRateDetail = allHeartRates.stream()
                 .filter(hr -> hr.getHealthMetric().getId().equals(heartRateMetric.getId()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Heart rate detail not found"));
-        
+
         assertThat(heartRateDetail.getMinValue()).isEqualByComparingTo(new BigDecimal("50"));
         assertThat(heartRateDetail.getAvgValue()).isEqualByComparingTo(new BigDecimal("70"));
         assertThat(heartRateDetail.getMaxValue()).isEqualByComparingTo(new BigDecimal("150"));
-        
-        WorkoutEntity initialWorkout = workoutRepository.findById("TEST-WORKOUT-001")
+
+        WorkoutEntity initialWorkout = workoutRepository.findByUserIdAndSourceId(1L,"TEST-WORKOUT-001")
                 .orElseThrow(() -> new AssertionError("Initial workout not found"));
         assertThat(initialWorkout.getActiveEnergyBurnedQty()).isEqualByComparingTo(new BigDecimal("100.0"));
         assertThat(initialWorkout.getName()).isEqualTo("Test Run");
@@ -325,7 +328,7 @@ class HealthControllerTest {
         // Note: Source is only set for quantity metrics, not for heart rate metrics
 
         // Assert workout was updated
-        WorkoutEntity updatedWorkout = workoutRepository.findById("TEST-WORKOUT-001")
+        WorkoutEntity updatedWorkout = workoutRepository.findByUserIdAndSourceId(1L,"TEST-WORKOUT-001")
                 .orElseThrow(() -> new AssertionError("Updated workout not found"));
         assertThat(updatedWorkout.getActiveEnergyBurnedQty()).isEqualByComparingTo(new BigDecimal("150.0"));
         assertThat(updatedWorkout.getName()).isEqualTo("Updated Test Run");

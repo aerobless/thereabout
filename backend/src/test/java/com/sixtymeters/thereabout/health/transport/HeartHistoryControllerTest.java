@@ -20,13 +20,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @ActiveProfiles("test")
 @Transactional
 class HeartHistoryControllerTest {
+    @org.springframework.beans.factory.annotation.Autowired org.springframework.jdbc.core.JdbcTemplate ownerDb;
+    @org.junit.jupiter.api.BeforeEach void ensureOwner() { com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb); }
+
     private static final LocalDate DAY = LocalDate.of(1902, 3, 1);
     @Autowired MockMvc mvc;
     @Autowired JsonMapper mapper;
     @Autowired HealthMetricRepository metrics;
     @Autowired HealthMetricHeartRateRepository hearts;
     private HealthMetricEntity save(String name, LocalDate date, String value, String units) {
-        return metrics.saveAndFlush(HealthMetricEntity.builder().metricName(name).metricDate(date).timestamp(date.atStartOfDay())
+        return metrics.saveAndFlush(HealthMetricEntity.builder().userId(1L).metricName(name).metricDate(date).timestamp(date.atStartOfDay())
                 .qty(value == null ? null : new BigDecimal(value)).units(units).build());
     }
     private JsonNode request(String endpoint, String date, String days) throws Exception {

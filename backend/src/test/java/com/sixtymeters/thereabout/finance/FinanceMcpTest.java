@@ -21,6 +21,9 @@ class FinanceMcpTest {
   private static final String CSRF = "finance-test-csrf";
 
   @LocalServerPort int port;
+  @org.springframework.beans.factory.annotation.Autowired org.springframework.jdbc.core.JdbcTemplate db;
+  @org.junit.jupiter.api.BeforeEach void owner() { com.sixtymeters.thereabout.testing.TestUsers.owner(db); }
+
 
   @org.springframework.beans.factory.annotation.Autowired
   com.sixtymeters.thereabout.finance.service.FinanceMcpKeyService keys;
@@ -82,6 +85,24 @@ class FinanceMcpTest {
                   .arguments(Map.of("name", "Missing key"))
                   .build());
       assertThat(invalid.isError()).isTrue();
+    }
+  }
+
+  @Test
+  void browserImpersonationCannotChangeMcpOwnerAndAuditRetainsRequestActor() {
+    db.update("INSERT IGNORE INTO finance_currency(code,name,decimal_places) VALUES('CHF','Franc',2)");
+    db.update("INSERT INTO identity(id,short_name,role) VALUES(100031,'MCP target','USER') ON DUPLICATE KEY UPDATE role='USER'");
+    var transport=HttpClientStreamableHttpTransport.builder("http://127.0.0.1:"+port).endpoint("/mcp/finances")
+      .requestBuilder(HttpRequest.newBuilder().header("Authorization","Bearer "+keys.getKey()).header("X-Thereabout-Impersonate-User","100031")).build();
+    try(var client=McpClient.sync(transport).requestTimeout(Duration.ofSeconds(15)).build()) {
+      client.initialize();
+      var result=client.callTool(McpSchema.CallToolRequest.builder("finance_accounts_save").arguments(Map.of("name","MCP owner fixture","kind","CASH","currency","CHF","requestKey",UUID.randomUUID().toString())).build());
+      assertThat(result.isError()).isFalse();
+      var account=(Map<?,?>)((Map<?,?>)result.structuredContent()).get("account");
+      long id=((Number)account.get("id")).longValue();
+      assertThat(db.<Long>queryForObject("SELECT user_id FROM finance_account WHERE id=?",Long.class,id)).isEqualTo(1);
+      assertThat(db.queryForMap("SELECT actor_id,user_id FROM finance_audit WHERE entity_id=? AND operation='accounts.save' ORDER BY id DESC LIMIT 1",id))
+          .containsEntry("actor_id",1L).containsEntry("user_id",1L);
     }
   }
 

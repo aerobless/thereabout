@@ -17,6 +17,8 @@ paths:
     $ref: 'openapi/finances/settings.yaml#/paths/_mcp-key'
   /api/finances/overview:
     $ref: 'openapi/finances/reports.yaml#/paths/_overview'
+  /api/finances/transfer-accounts:
+    $ref: 'openapi/finances/accounts.yaml#/paths/_transfer_accounts'
   /api/finances/accounts:
     $ref: 'openapi/finances/accounts.yaml#/paths/_accounts'
   /api/finances/accounts/{id}:
@@ -79,6 +81,8 @@ paths:
     $ref: 'openapi/calendar.yaml#/paths/Reveal'
   /backend/api/v1/calendar/google/calendars:
     $ref: 'openapi/calendar.yaml#/paths/Calendars'
+  /backend/api/v1/calendar/google/calendars/{calendarId}/users:
+    $ref: 'openapi/calendar.yaml#/paths/Users'
   /backend/api/v1/calendar/google/import:
     $ref: 'openapi/calendar.yaml#/paths/Import'
   /backend/api/v1/calendar/google/sync:
@@ -100,11 +104,11 @@ paths:
     $ref: 'openapi/location.yaml#/paths/Location'
   /backend/api/v1/location/{id}:
     $ref: 'openapi/location.yaml#/paths/LocationById'
-  /backend/api/v1/statistics:
-    $ref: 'openapi/location.yaml#/paths/Statistics'
   # Client
   /backend/api/v1/config:
     $ref: 'openapi/client.yaml#/paths/Config'
+  /backend/api/v1/config/ingestion-key:
+    $ref: 'openapi/client.yaml#/paths/IngestionKey'
   /backend/api/v1/config/import-file:
     $ref: 'openapi/client.yaml#/paths/ConfigImportFile'
   /backend/api/v1/config/telegram:
@@ -345,10 +349,6 @@ components:
       $ref: 'openapi/client.yaml#/components/schemas/TelegramPasswordRequest'
 
     # Location
-    UserStatistics:
-      $ref: 'openapi/location.yaml#/components/schemas/UserStatistics'
-    CountryStatistic:
-      $ref: 'openapi/location.yaml#/components/schemas/CountryStatistic'
     SparseLocationHistoryResponse:
       $ref: 'openapi/location.yaml#/components/schemas/SparseLocationHistoryResponse'
     LocationHistoryResponse:

@@ -2,6 +2,7 @@ package com.sixtymeters.thereabout.finance.service;
 
 import static com.sixtymeters.thereabout.finance.domain.FinanceRules.*;
 
+import com.sixtymeters.thereabout.access.UserId;
 import com.sixtymeters.thereabout.finance.data.*;
 import com.sixtymeters.thereabout.generated.model.*;
 import java.math.BigDecimal;
@@ -17,8 +18,19 @@ public class AccountService {
   private final FinanceReadRepository reads;
   private final FinanceWriteCoordinator writes;
 
-  public FinanceAccountEntity requireAccount(long id) {
-    return accounts.findById(id).orElseThrow(() -> missing("Account"));
+  public FinanceAccountEntity requireAccount(UserId user, long id) {
+    var account=accounts.findById(id).orElseThrow(() -> missing("Account"));
+    if (account.getUserId() != null && account.getUserId() != user.value()) throw missing("Account");
+    return account;
+  }
+
+  /** Used only for legs of an already authorized transaction, including shared technical accounts. */
+  public FinanceAccountEntity transactionAccount(long id) { return accounts.findById(id).orElseThrow(() -> missing("Account")); }
+
+  public FinanceAccountEntity transferAccount(long id) {
+    var account=accounts.findById(id).orElseThrow(() -> missing("Account"));
+    if (!account.getKind().isOwn()) throw missing("Transfer account");
+    return account;
   }
 
   public void currency(String code) {
@@ -32,8 +44,8 @@ public class AccountService {
         "Amount exceeds currency precision");
   }
 
-  public GenFinanceAccountResult save(GenFinanceAccountInput input) {
-    return writes.write(
+  public GenFinanceAccountResult save(UserId user, GenFinanceAccountInput input) {
+    return writes.write(user,
         "accounts.save",
         input.getRequestKey(),
         input,
@@ -46,9 +58,9 @@ public class AccountService {
           require(kind.isOwn() || kind.isCounterparty(), "Invalid account kind");
           currency(currency);
           var account =
-              input.getId() == null ? new FinanceAccountEntity() : requireAccount(input.getId());
+              input.getId() == null ? new FinanceAccountEntity() : requireAccount(user, input.getId());
           GenFinanceAccount before =
-              account.getId() == null ? null : reads.account(account.getId());
+              account.getId() == null ? null : reads.account(user, account.getId());
           if (before != null) {
             version(input.getVersion(), account.getVersion());
             require(
@@ -66,13 +78,14 @@ public class AccountService {
           if (input.getWebsiteUrl() != null) account.setWebsiteUrl(websiteUrl(input.getWebsiteUrl()));
           account.setName(name);
           account.setKind(kind);
+          if (account.getId() == null) account.setUserId(kind.isOwn() ? user.value() : null);
           account.setCurrency(currency);
           account.setActive(input.getActive() == null || input.getActive());
           account.setIncludeNetWorth(
               kind.isOwn() && (input.getIncludeNetWorth() == null || input.getIncludeNetWorth()));
           accounts.saveAndFlush(account);
-          var after = reads.account(account.getId());
-          writes.audit("accounts.save", account.getId(), before, after);
+          var after = reads.account(user, account.getId());
+          writes.audit(user, "accounts.save", account.getId(), before, after);
           return new GenFinanceAccountResult().account(after);
         });
   }

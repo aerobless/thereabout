@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.communication.service.importer;
 
+import com.sixtymeters.thereabout.access.UserId;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.module.SimpleModule;
 import com.sixtymeters.thereabout.config.FlexibleLocalDateDeserializer;
@@ -55,15 +56,15 @@ class HealthAutoExportImporterTest {
         try {
             Files.copy(sampleFile.toPath(), copy.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-            importer.importFile(copy, null);
+            importer.importFile(copy, null, new UserId(1));
 
             ArgumentCaptor<List> workoutsCaptor = ArgumentCaptor.forClass(List.class);
-            verify(healthDataService).saveWorkouts(workoutsCaptor.capture());
+            verify(healthDataService).saveWorkouts(org.mockito.ArgumentMatchers.eq(new UserId(1)), workoutsCaptor.capture());
             List<?> workouts = workoutsCaptor.getValue();
             assertThat(workouts).hasSize(2);
 
             ArgumentCaptor<List> metricsCaptor = ArgumentCaptor.forClass(List.class);
-            verify(healthDataService).saveHealthMetrics(metricsCaptor.capture());
+            verify(healthDataService).saveHealthMetrics(org.mockito.ArgumentMatchers.eq(new UserId(1)), metricsCaptor.capture());
             List<?> metrics = metricsCaptor.getValue();
             assertThat(metrics).hasSize(1);
         } finally {

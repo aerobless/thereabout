@@ -10,7 +10,9 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "finance_request")
+@IdClass(FinanceRequestId.class)
 public class FinanceRequestEntity {
+  @Id private Long userId;
   @Id
   @Column(length = 100)
   private String requestKey;

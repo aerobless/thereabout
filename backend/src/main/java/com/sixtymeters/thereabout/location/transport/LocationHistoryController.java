@@ -25,6 +25,7 @@ import java.util.Optional;
 public class LocationHistoryController implements LocationApi {
 
     private final LocationHistoryService locationHistoryService;
+    private final com.sixtymeters.thereabout.access.UserContext users;
     private static final LocationHistoryMapper LOCATION_HISTORY_MAPPER = LocationHistoryMapper.INSTANCE;
 
     @Transactional
@@ -34,7 +35,7 @@ public class LocationHistoryController implements LocationApi {
 
         genAddGeoJsonLocationRequest.getLocations().stream()
                 .map(LOCATION_HISTORY_MAPPER::map)
-                .forEach(locationHistoryService::createLocationHistoryEntry);
+                .forEach(entry -> locationHistoryService.createLocationHistoryEntry(users.integration(), entry));
 
         return ResponseEntity.ok(GenAddGeoJsonLocation200Response.builder().result("ok").build());
     }
@@ -46,20 +47,20 @@ public class LocationHistoryController implements LocationApi {
         locationHistoryEntryCreationRequest.setId(null);
 
         final var createdLocationHistoryEntry = locationHistoryService
-                .createLocationHistoryEntry(locationHistoryEntryCreationRequest);
+                .createLocationHistoryEntry(users.current(), locationHistoryEntryCreationRequest);
 
         return ResponseEntity.ok(LOCATION_HISTORY_MAPPER.map(createdLocationHistoryEntry));
     }
 
     @Override
     public ResponseEntity<Void> deleteLocations(List<BigDecimal> ids) {
-        locationHistoryService.deleteLocationHistoryEntries(ids.stream().map(BigDecimal::longValue).toList());
+        locationHistoryService.deleteLocationHistoryEntries(users.current(), ids.stream().map(BigDecimal::longValue).toList());
         return ResponseEntity.noContent().build();
     }
 
     @Override
     public ResponseEntity<List<GenLocationHistoryEntry>> getLocations(Optional<LocalDate> from, Optional<LocalDate> to) {
-        final var filteredLocationHistory =  locationHistoryService.getLocationHistory(
+        final var filteredLocationHistory =  locationHistoryService.getLocationHistory(users.current(),
                 from.orElse(LocalDate.now().minusYears(100L)),
                 to.orElse(LocalDate.now().plusYears(100L))
         );
@@ -73,7 +74,7 @@ public class LocationHistoryController implements LocationApi {
 
     @Override
     public ResponseEntity<List<GenSparseLocationHistoryEntry>> getSparseLocations(Optional<LocalDate> from, Optional<LocalDate> to) {
-        final var filteredLocationHistory =  locationHistoryService.getSparseLocationHistory(
+        final var filteredLocationHistory =  locationHistoryService.getSparseLocationHistory(users.current(),
                 from.orElse(LocalDate.now().minusYears(100L)),
                 to.orElse(LocalDate.now().plusYears(100L))
         );
@@ -87,7 +88,7 @@ public class LocationHistoryController implements LocationApi {
 
     @Override
     public ResponseEntity<GenLocationHistoryEntry> updateLocation(BigDecimal id, GenLocationHistoryEntry genLocationHistoryEntry) {
-        final var updatedEntry = locationHistoryService.updateLocationHistoryEntry(id.longValue(), LOCATION_HISTORY_MAPPER.map(genLocationHistoryEntry));
+        final var updatedEntry = locationHistoryService.updateLocationHistoryEntry(users.current(), id.longValue(), LOCATION_HISTORY_MAPPER.map(genLocationHistoryEntry));
         return ResponseEntity.ok(LOCATION_HISTORY_MAPPER.map(updatedEntry));
     }
 

@@ -2,6 +2,7 @@ package com.sixtymeters.thereabout.finance.service;
 
 import static com.sixtymeters.thereabout.finance.domain.FinanceRules.*;
 
+import com.sixtymeters.thereabout.access.UserId;
 import com.sixtymeters.thereabout.finance.data.*;
 import com.sixtymeters.thereabout.generated.model.*;
 import java.math.BigDecimal;
@@ -21,17 +22,17 @@ public class TransactionService {
   private final FinanceWriteCoordinator writes;
   private final java.time.Clock financeClock;
 
-  public GenFinanceTransactionResult save(GenFinanceTransactionInput input) {
-    return writes.write(
+  public GenFinanceTransactionResult save(UserId user, GenFinanceTransactionInput input) {
+    return writes.write(user,
         "transactions.save",
         input.getRequestKey(),
         input,
         GenFinanceTransactionResult.class,
         () -> {
           var transaction =
-              input.getId() == null ? new FinanceTransactionEntity() : existing(input.getId());
+              input.getId() == null ? new FinanceTransactionEntity() : existing(user, input.getId());
           GenFinanceTransaction before =
-              transaction.getId() == null ? null : reads.transaction(transaction.getId());
+              transaction.getId() == null ? null : reads.transaction(user, transaction.getId());
           if (before != null) {
             version(input.getVersion(), transaction.getVersion());
             require(!transaction.isDeleted(), "Restore the transaction before editing");
@@ -50,8 +51,9 @@ public class TransactionService {
           require(
               !input.getSourceId().equals(input.getDestinationId()),
               "Source and destination must differ");
-          var source = accounts.requireAccount(input.getSourceId());
-          var destination = accounts.requireAccount(input.getDestinationId());
+          var source = type == TransactionType.TRANSFER ? accounts.transferAccount(input.getSourceId()) : accounts.requireAccount(user, input.getSourceId());
+          var destination = type == TransactionType.TRANSFER ? accounts.transferAccount(input.getDestinationId()) : accounts.requireAccount(user, input.getDestinationId());
+          if (!java.util.Objects.equals(source.getUserId(), user.value()) && !java.util.Objects.equals(destination.getUserId(), user.value())) throw missing("Own account");
           validateAccounts(type, source, destination);
           String sc = required(input.getSourceCurrency(), "sourceCurrency"),
               dc = required(input.getDestinationCurrency(), "destinationCurrency");
@@ -120,8 +122,8 @@ public class TransactionService {
           setPosting(transaction, PostingSide.DESTINATION, destination.getId(), da, dc, fa, fc);
           transaction.touch(financeClock);
           transactions.saveAndFlush(transaction);
-          var after = reads.transaction(transaction.getId());
-          writes.audit("transactions.save", transaction.getId(), before, after);
+          var after = reads.transaction(user, transaction.getId());
+          writes.audit(user, "transactions.save", transaction.getId(), before, after);
           return new GenFinanceTransactionResult().transaction(after);
         });
   }
@@ -175,7 +177,8 @@ public class TransactionService {
     posting.setForeignCurrency(foreignCurrency.isEmpty() ? null : foreignCurrency);
   }
 
-  private FinanceTransactionEntity existing(long id) {
+  private FinanceTransactionEntity existing(UserId user, long id) {
+    reads.transaction(user, id);
     return transactions.findById(id).orElseThrow(() -> missing("Transaction"));
   }
 
@@ -185,21 +188,21 @@ public class TransactionService {
         "Valuation-linked transactions cannot be edited or deleted; add a new dated valuation");
   }
 
-  public GenFinanceTransactionResult setDeleted(GenFinanceVersionedInput input, boolean deleted) {
+  public GenFinanceTransactionResult setDeleted(UserId user, GenFinanceVersionedInput input, boolean deleted) {
     String operation = deleted ? "transactions.delete" : "transactions.restore";
-    return writes.write(
+    return writes.write(user,
         operation,
         input.getRequestKey(),
         input,
         GenFinanceTransactionResult.class,
         () -> {
-          var transaction = existing(input.getId());
-          var before = reads.transaction(input.getId());
+          var transaction = existing(user, input.getId());
+          var before = reads.transaction(user, input.getId());
           version(input.getVersion(), transaction.getVersion());
           requireUnlinked(input.getId());
           if (!deleted)
             for (var posting : transaction.getPostings()) {
-              var account = accounts.requireAccount(posting.getAccountId());
+              var account = accounts.transactionAccount(posting.getAccountId());
               require(
                   !account.isDeleted()
                       && (!account.getKind().isOwn()
@@ -210,14 +213,14 @@ public class TransactionService {
           transaction.setDeleted(deleted);
           transaction.touch(financeClock);
           transactions.saveAndFlush(transaction);
-          var after = reads.transaction(transaction.getId());
-          writes.audit(operation, transaction.getId(), before, after);
+          var after = reads.transaction(user, transaction.getId());
+          writes.audit(user, operation, transaction.getId(), before, after);
           return new GenFinanceTransactionResult().transaction(after);
         });
   }
 
-  public GenFinanceBulkResult categorize(GenFinanceBulkCategoryInput input) {
-    return writes.write(
+  public GenFinanceBulkResult categorize(UserId user, GenFinanceBulkCategoryInput input) {
+    return writes.write(user,
         "transactions.categorize",
         input.getRequestKey(),
         input,
@@ -231,15 +234,19 @@ public class TransactionService {
               items.stream().map(GenFinanceSelection::getId).distinct().count() == items.size(),
               "Duplicate selection");
           Long category = categories.validate(input.getCategoryId());
-          for (var item : items) {
-            var transaction = existing(item.getId());
-            var before = reads.transaction(item.getId());
+          // Validate every ID and version before changing any managed entity.
+          var selected = items.stream().map(item -> {
+            var transaction = existing(user, item.getId());
             version(item.getVersion(), transaction.getVersion());
+            return transaction;
+          }).toList();
+          for (var transaction : selected) {
+            var before = reads.transaction(user, transaction.getId());
             transaction.setCategoryId(category);
             transaction.touch(financeClock);
             transactions.saveAndFlush(transaction);
-            writes.audit(
-                "transactions.categorize", item.getId(), before, reads.transaction(item.getId()));
+            writes.audit(user,
+                "transactions.categorize", transaction.getId(), before, reads.transaction(user, transaction.getId()));
           }
           return new GenFinanceBulkResult().updated(items.size());
         });
@@ -247,12 +254,14 @@ public class TransactionService {
 
   /** Called only inside the valuation service's existing atomic write boundary. */
   public Long valuationAdjustment(
+      UserId user,
       long account,
       String currency,
       LocalDateTime date,
       BigDecimal reported,
       BigDecimal delta,
       String reference) {
+    accounts.requireAccount(user, account);
     boolean gain = delta.signum() > 0;
     var counter =
         accounts.valuationCounter(gain ? AccountKind.REVENUE : AccountKind.EXPENSE, currency);
@@ -281,11 +290,11 @@ public class TransactionService {
         "");
     transaction.touch(financeClock);
     transactions.saveAndFlush(transaction);
-    writes.audit(
+    writes.audit(user,
         "transactions.valuation",
         transaction.getId(),
         null,
-        reads.transaction(transaction.getId()));
+        reads.transaction(user, transaction.getId()));
     return transaction.getId();
   }
 }

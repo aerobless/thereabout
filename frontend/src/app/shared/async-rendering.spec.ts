@@ -9,7 +9,6 @@ import {ChoicesCardComponent} from '../modules/dayview/choices/choices-card.comp
 import {WeightCardComponent} from '../modules/dayview/weight/weight-card.component';
 import {HeartRateCardComponent} from '../modules/dayview/heart/heart-rate-card.component';
 import {HrvCardComponent} from '../modules/dayview/heart/hrv-card.component';
-import {StatisticsComponent} from '../modules/statistics/statistics.component';
 import {MessagesListComponent} from '../modules/messages/messages-list.component';
 import {IdentitiesComponent} from '../modules/identities/identities.component';
 import {IdentityDetailComponent} from '../modules/identities/identity-detail/identity-detail.component';
@@ -27,9 +26,6 @@ const cases: {name: string; component: Type<unknown>; date?: string; path: strin
     response: {date, selectedDay: {date, averageBpm: 73, recordCount: 1, restingRecordCount: 0}, series: []}, expected: '73'},
   {name: 'HRV', component: HrvCardComponent, date, path: '/health/hrv',
     response: {date, state: 'UP', selectedDay: {date, averageMs: 56, recordCount: 1}, series: []}, expected: 'Improving HRV trend'},
-  {name: 'statistics', component: StatisticsComponent, path: '/statistics',
-    response: {visitedCountries: [{countryIsoCode: 'CH', countryName: 'Switzerland', continent: 'EU',
-      numberOfDaysSpent: 5, firstVisit: date, lastVisit: date}]}, expected: 'Switzerland'},
   {name: 'messages', component: MessagesListComponent, path: '/message/list',
     response: {content: [{id: 1, body: 'Asynchronous message', timestamp: `${date}T10:00:00Z`}], totalElements: 1}, expected: 'Asynchronous message'},
   {name: 'identities', component: IdentitiesComponent, path: '/identity', response: [identity], expected: 'Async identity'},

@@ -36,7 +36,15 @@
     /></label>
     <label
       >From
-      @if (usesCounterparty && form.controls.type.value === "DEPOSIT") {
+      @if (form.controls.type.value === 'TRANSFER') {
+        <p-autocomplete [ngModel]="transferSource" (ngModelChange)="transferSource=$event; transferChanged('sourceId', $event)"
+          [ngModelOptions]="{ standalone: true }" [suggestions]="transferSuggestions()" optionLabel="name"
+          [dropdown]="true" [delay]="250" [minQueryLength]="0" appendTo="body"
+          (completeMethod)="searchTransfer('sourceId', $event.query)" (onSelect)="selectTransfer('sourceId', $event.value)"
+          ariaLabel="From transfer account" placeholder="Find account…">
+          <ng-template #item let-account>{{ account.label }}</ng-template>
+        </p-autocomplete>
+      } @else if (usesCounterparty && form.controls.type.value === "DEPOSIT") {
         <p-autocomplete
           [ngModel]="counterpartySelection"
           (ngModelChange)="
@@ -80,7 +88,15 @@
       }</label
     ><label
       >To
-      @if (usesCounterparty && form.controls.type.value === "WITHDRAWAL") {
+      @if (form.controls.type.value === 'TRANSFER') {
+        <p-autocomplete [ngModel]="transferDestination" (ngModelChange)="transferDestination=$event; transferChanged('destinationId', $event)"
+          [ngModelOptions]="{ standalone: true }" [suggestions]="transferSuggestions()" optionLabel="name"
+          [dropdown]="true" [delay]="250" [minQueryLength]="0" appendTo="body"
+          (completeMethod)="searchTransfer('destinationId', $event.query)" (onSelect)="selectTransfer('destinationId', $event.value)"
+          ariaLabel="To transfer account" placeholder="Find account…">
+          <ng-template #item let-account>{{ account.label }}</ng-template>
+        </p-autocomplete>
+      } @else if (usesCounterparty && form.controls.type.value === "WITHDRAWAL") {
         <p-autocomplete
           [ngModel]="counterpartySelection"
           (ngModelChange)="

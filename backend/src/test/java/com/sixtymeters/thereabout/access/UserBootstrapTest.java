@@ -30,7 +30,7 @@ class UserBootstrapTest {
     @BeforeEach
     void withoutUsers() {
         jdbc.update("delete from identity_in_application where application='CLOUDFLARE'");
-        jdbc.update("update identity set is_user=false, is_admin=false");
+        jdbc.update("update identity set role=null");
         jdbc.update("delete from configuration where config_key='USER_BOOTSTRAP'");
     }
 
@@ -44,15 +44,15 @@ class UserBootstrapTest {
         assertThat(admin.displayName()).isEqualTo("Admin");
         assertThat(users.resolve(first)).contains(admin);
         assertThat(users.resolve(email())).isEmpty();
-        assertThat(jdbc.queryForObject("select count(*) from identity where is_user", Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from identity where role is not null", Integer.class)).isEqualTo(1);
     }
 
     @Test
     void existingUsersPreventBootstrap() {
         long id = identities.save(IdentityEntity.builder().shortName("existing-user").build()).getId();
-        identityUsers.createUser(id, email());
+        identityUsers.createUser(id, email(), com.sixtymeters.thereabout.communication.data.UserRole.USER);
         assertThat(users.resolve(email())).isEmpty();
-        assertThat(jdbc.queryForObject("select count(*) from identity where is_admin", Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from identity where role='ADMIN'", Integer.class)).isZero();
     }
 
     @Test
@@ -69,6 +69,6 @@ class UserBootstrapTest {
                 try { return result.get(); } catch (Exception e) { throw new IllegalStateException(e); }
             })).containsExactlyInAnyOrder(true, false);
         }
-        assertThat(jdbc.queryForObject("select count(*) from identity where is_user and is_admin", Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from identity where role='ADMIN'", Integer.class)).isEqualTo(1);
     }
 }

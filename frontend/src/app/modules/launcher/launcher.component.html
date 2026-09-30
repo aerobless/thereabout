@@ -100,7 +100,7 @@
 </div>
 
 <ng-template #shortcutIcon let-shortcut>
-  @if (hasIcon(shortcut)) { <img [src]="iconUrl(shortcut)" alt="" width="24" height="24" (error)="iconFailed(shortcut)"> }
+  @if (hasIcon(shortcut)) { <img [protectedImage]="iconUrl(shortcut)" alt="" width="24" height="24" (error)="iconFailed(shortcut)"> }
   @else { <span aria-hidden="true" [class.letter-icon]="!shortcut.emoji">{{ shortcut.emoji || shortcut.title.slice(0,1).toUpperCase() }}</span> }
 </ng-template>
 

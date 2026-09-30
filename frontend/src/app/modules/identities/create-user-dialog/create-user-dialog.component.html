@@ -5,6 +5,9 @@
     <input pInputText id="cloudflare-email" name="email" type="email" autocomplete="email" required
            [(ngModel)]="email" [disabled]="busy()" [attr.aria-invalid]="!!error()"
            [attr.aria-describedby]="error() ? 'cloudflare-email-error' : null" />
+    <label for="new-user-role">Role</label>
+    <p-select inputId="new-user-role" name="role" [options]="roles" optionLabel="label" optionValue="value"
+      [(ngModel)]="role" [disabled]="busy()" appendTo="body" />
     @if (error()) { <small id="cloudflare-email-error" class="field-error" role="alert">{{ error() }}</small> }
   </form>
   <ng-template #footer>

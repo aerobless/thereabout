@@ -49,6 +49,21 @@ public class CalendarStore {
                 r.getLong("pending_version"), r.getLong("processed_version"), instant(r,"next_safety_at"), instant(r,"retry_at"), r.getInt("failures")));
     }
     public List<CalendarRow> calendars() { return db.query("SELECT * FROM calendar_calendar ORDER BY name,id", this::mapCalendar); }
+    public List<CalendarRow> calendars(com.sixtymeters.thereabout.access.UserId user) {
+        return db.query("SELECT c.* FROM calendar_calendar c JOIN calendar_user u ON u.calendar_id=c.id WHERE u.user_id=? ORDER BY c.name,c.id", this::mapCalendar, user.value());
+    }
+    public List<Long> userIds(long calendarId) {
+        return db.queryForList("SELECT user_id FROM calendar_user WHERE calendar_id=? ORDER BY user_id", Long.class, calendarId);
+    }
+    public void requireAssigned(com.sixtymeters.thereabout.access.UserId user, long calendarId) {
+        if (db.queryForList("SELECT calendar_id FROM calendar_user WHERE calendar_id=? AND user_id=?",Long.class,calendarId,user.value()).isEmpty())
+            throw new com.sixtymeters.thereabout.config.ThereaboutException(org.springframework.http.HttpStatus.NOT_FOUND,"Calendar not found");
+    }
+    public void replaceUserIds(long calendarId, List<Long> users) {
+        db.update("DELETE FROM calendar_user WHERE calendar_id=?",calendarId);
+        for (long user : users) db.update("INSERT INTO calendar_user(calendar_id,user_id) VALUES (?,?)",calendarId,user);
+    }
+
     public CalendarRow calendar(long id) {
         return db.query("SELECT * FROM calendar_calendar WHERE id=?", this::mapCalendar, id).stream().findFirst().orElseThrow();
     }

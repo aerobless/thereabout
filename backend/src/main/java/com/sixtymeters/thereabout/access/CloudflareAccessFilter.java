@@ -52,7 +52,8 @@ public class CloudflareAccessFilter extends OncePerRequestFilter {
         String email = email(jwt);
         var user = email == null ? java.util.Optional.<CloudflareUsers.User>empty() : users.resolve(email);
         var principal = new AccessPrincipal(email, user.map(CloudflareUsers.User::identityId).orElse(null),
-                user.map(CloudflareUsers.User::displayName).orElse(null), false);
+                user.map(CloudflareUsers.User::displayName).orElse(null), false,
+                user.map(u -> u.admin() ? com.sixtymeters.thereabout.communication.data.UserRole.ADMIN : com.sixtymeters.thereabout.communication.data.UserRole.USER).orElse(null), null);
         AccessPrincipal.authenticate(principal,
                 AccessPrincipal.roles(user.isPresent(), user.map(CloudflareUsers.User::admin).orElse(false)));
         return Status.VERIFIED;

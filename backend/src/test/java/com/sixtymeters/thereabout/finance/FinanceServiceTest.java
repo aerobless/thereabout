@@ -17,6 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("test")
 @Transactional
 class FinanceServiceTest {
+    @org.springframework.beans.factory.annotation.Autowired org.springframework.jdbc.core.JdbcTemplate ownerDb;
+    @org.junit.jupiter.api.BeforeEach void ensureOwner() { com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb); }
+
   @Autowired FinanceTestDriver service;
   @Autowired JdbcTemplate db;
   @Autowired jakarta.persistence.EntityManager entityManager;
@@ -39,9 +42,9 @@ class FinanceServiceTest {
         "INSERT INTO finance_currency(code,name,symbol,decimal_places)"
             + " VALUES('CHF','Franc','CHF',2),('EUR','Euro','€',2)");
     db.update(
-        "INSERT INTO finance_account(id,name,kind,currency,include_net_worth)"
-            + " VALUES(1,'Cash','CASH','CHF',1),(2,'Depot','INVESTMENT','CHF',1),(3,'Shop','EXPENSE','CHF',0),(4,'Employer','REVENUE','CHF',0),(5,'Euro"
-            + " cash','CASH','EUR',1)");
+        "INSERT INTO finance_account(id,name,kind,currency,include_net_worth,user_id)"
+            + " VALUES(1,'Cash','CASH','CHF',1,1),(2,'Depot','INVESTMENT','CHF',1,1),(3,'Shop','EXPENSE','CHF',0,NULL),(4,'Employer','REVENUE','CHF',0,NULL),(5,'Euro"
+            + " cash','CASH','EUR',1,1)");
     db.update("INSERT INTO finance_category(id,name) VALUES(1,'Food'),(2,'Other')");
   }
 

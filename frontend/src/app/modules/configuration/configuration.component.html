@@ -45,7 +45,7 @@
         type="text"
         pInputText
         class="config-input-full"
-        [value]="$safeNavigationMigration(thereaboutConfig()?.thereaboutApiKey)"
+        [value]="ingestionKey()"
         [disabled]="true"/>
     </div>
     <p>Can be used to authenticate public API requests. See the POST GeoJson endpoint in the

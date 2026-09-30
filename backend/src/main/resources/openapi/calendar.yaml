@@ -80,6 +80,25 @@ paths:
           application/json:
             schema:
               "$ref": "#/components/schemas/CalendarSelection"
+  Users:
+    put:
+      tags: [Calendar]
+      operationId: assignGoogleCalendarUsers
+      description: Administrator-only display assignment. Empty list hides the calendar for everyone without stopping synchronization.
+      parameters:
+        - name: calendarId
+          in: path
+          required: true
+          schema: {type: integer, format: int64}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CalendarUserAssignment'}
+      responses:
+        '204': {description: Assignment saved.}
+        '403': {description: Administrator required.}
+        '404': {description: Calendar or eligible user not found.}
   Sync:
     post:
       tags:
@@ -242,9 +261,19 @@ components:
             format: int64
       required:
       - calendarIds
+    CalendarUserAssignment:
+      type: object
+      required: [userIds]
+      properties:
+        userIds:
+          type: array
+          items: {type: integer, format: int64}
     CalendarInfo:
       type: object
       properties:
+        userIds:
+          type: array
+          items: {type: integer, format: int64}
         id:
           type: integer
           format: int64

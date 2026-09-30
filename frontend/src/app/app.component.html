@@ -4,5 +4,5 @@
     <button type="button" aria-label="Stop impersonation" title="Stop impersonation" (click)="currentUser.stopImpersonation()">×</button>
   </div>
 }
-<thereabout-app-shell><router-outlet /></thereabout-app-shell>
+<thereabout-app-shell>@for (key of currentUser.viewKeys(); track key) { <router-outlet /> }</thereabout-app-shell>
 <p-toast />

@@ -2,6 +2,7 @@ package com.sixtymeters.thereabout.finance.service;
 
 import static com.sixtymeters.thereabout.finance.domain.FinanceRules.*;
 
+import com.sixtymeters.thereabout.access.UserId;
 import com.sixtymeters.thereabout.finance.data.*;
 import com.sixtymeters.thereabout.generated.model.*;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +23,8 @@ public class CategoryService {
     return id;
   }
 
-  public GenFinanceCategoryResult save(GenFinanceCategoryInput input) {
-    return writes.write(
+  public GenFinanceCategoryResult save(UserId user, GenFinanceCategoryInput input) {
+    return writes.write(user,
         "categories.save",
         input.getRequestKey(),
         input,
@@ -39,7 +40,7 @@ public class CategoryService {
           category.setName(required(input.getName(), "name"));
           categories.saveAndFlush(category);
           var after = reads.category(category.getId());
-          writes.audit("categories.save", category.getId(), before, after);
+          writes.audit(user, "categories.save", category.getId(), before, after);
           return new GenFinanceCategoryResult().category(after);
         });
   }

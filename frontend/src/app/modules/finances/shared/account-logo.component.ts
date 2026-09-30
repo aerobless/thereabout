@@ -5,13 +5,15 @@ import {
   input,
   signal,
 } from "@angular/core";
+import {ProtectedImageDirective} from "../../../shared/current-user/protected-image.directive";
 import { FinanceAccount } from "../../../../../generated/backend-api/thereabout";
 @Component({
   selector: "finance-account-logo",
+  imports: [ProtectedImageDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `@if (imageUrl() && failedUrl() !== imageUrl()) {
       <img
-        [src]="imageUrl()"
+        [protectedImage]="imageUrl()"
         alt=""
         referrerpolicy="no-referrer"
         (error)="failedUrl.set(imageUrl())"

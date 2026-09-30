@@ -26,13 +26,12 @@ public class IdentityEntity {
     @Builder.Default
     private boolean isGroup = false;
 
-    @Builder.Default
-    @Column(nullable = false)
-    private boolean isUser = false;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    private UserRole role;
 
-    @Builder.Default
-    @Column(nullable = false)
-    private boolean isAdmin = false;
+    public boolean isUser() { return role != null; }
+    public boolean isAdmin() { return role == UserRole.ADMIN; }
 
     private String relationship;
 

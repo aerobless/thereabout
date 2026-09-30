@@ -1,7 +1,7 @@
 import {provideZonelessChangeDetection} from '@angular/core';
 import {TestBed} from '@angular/core/testing';
-import {Subject} from 'rxjs';
-import {CalendarService, GoogleCalendarStatus} from '../../../../generated/backend-api/thereabout';
+import {Subject, of} from 'rxjs';
+import {IdentityService, CalendarService, GoogleCalendarStatus} from '../../../../generated/backend-api/thereabout';
 import {GoogleCalendarSettingsComponent} from './google-calendar-settings.component';
 import {MessageService} from 'primeng/api';
 
@@ -20,7 +20,7 @@ async function setup() {
     saveGoogleCalendarCredentials: vi.fn(() => save)
   };
   await TestBed.configureTestingModule({imports: [GoogleCalendarSettingsComponent], providers: [
-    MessageService,
+    MessageService, {provide: IdentityService, useValue: {getIdentities: () => of([])}},
     provideZonelessChangeDetection(), {provide: CalendarService, useValue: api}
   ]}).compileComponents();
   const fixture = TestBed.createComponent(GoogleCalendarSettingsComponent);

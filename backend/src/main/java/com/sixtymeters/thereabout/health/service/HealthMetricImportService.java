@@ -33,7 +33,7 @@ public class HealthMetricImportService {
     private final HealthMetricMapper mapper;
 
     @Transactional
-    public void saveHealthMetrics(List<GenHealthMetric> metrics) {
+    public void saveHealthMetrics(com.sixtymeters.thereabout.access.UserId user, List<GenHealthMetric> metrics) {
         if (metrics == null || metrics.isEmpty()) {
             return;
         }
@@ -55,11 +55,11 @@ public class HealthMetricImportService {
                 List<GenHealthMetricDataInner> dataItems = entry.getValue();
 
                 // Delete existing records for this metric name and date
-                healthMetricRepository.deleteByMetricNameAndMetricDate(metricName, metricDate);
+                healthMetricRepository.deleteByUserIdAndMetricNameAndMetricDate(user.value(), metricName, metricDate);
 
                 // Insert new records
                 for (GenHealthMetricDataInner dataItem : dataItems) {
-                    saveMetricDataItem(metricName, metricDate, units, dataItem);
+                    saveMetricDataItem(user, metricName, metricDate, units, dataItem);
                 }
             }
         }
@@ -73,12 +73,12 @@ public class HealthMetricImportService {
                 }));
     }
 
-    private void saveMetricDataItem(String metricName, LocalDate metricDate, String units, GenHealthMetricDataInner dataItem) {
+    private void saveMetricDataItem(com.sixtymeters.thereabout.access.UserId user, String metricName, LocalDate metricDate, String units, GenHealthMetricDataInner dataItem) {
         LocalDateTime timestamp = mapper.extractTimestamp(dataItem);
         String source = mapper.extractSource(dataItem);
 
         // Create base health metric entity
-        HealthMetricEntity baseEntity = HealthMetricEntity.builder()
+        HealthMetricEntity baseEntity = HealthMetricEntity.builder().userId(user.value())
                 .metricName(metricName)
                 .metricDate(metricDate)
                 .timestamp(timestamp)

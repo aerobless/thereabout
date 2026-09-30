@@ -12,15 +12,15 @@ import java.util.List;
 @Repository
 public interface HealthMetricRepository extends JpaRepository<HealthMetricEntity, Long> {
 
-    List<HealthMetricEntity> findByMetricNameAndMetricDate(String metricName, LocalDate metricDate);
+    List<HealthMetricEntity> findByUserIdAndMetricNameAndMetricDate(long userId, String metricName, LocalDate metricDate);
 
     @Modifying
-    @Query("DELETE FROM HealthMetricEntity h WHERE h.metricName = :metricName AND h.metricDate = :metricDate")
-    void deleteByMetricNameAndMetricDate(@Param("metricName") String metricName, @Param("metricDate") LocalDate metricDate);
+    @Query("DELETE FROM HealthMetricEntity h WHERE h.userId = :userId AND h.metricName = :metricName AND h.metricDate = :metricDate")
+    void deleteByUserIdAndMetricNameAndMetricDate(@Param("userId") long userId, @Param("metricName") String metricName, @Param("metricDate") LocalDate metricDate);
 
-    List<HealthMetricEntity> findByMetricNameAndMetricDateBetween(String metricName, LocalDate fromDate, LocalDate toDate);
+    List<HealthMetricEntity> findByUserIdAndMetricNameAndMetricDateBetween(long userId, String metricName, LocalDate fromDate, LocalDate toDate);
 
-    List<HealthMetricEntity> findByMetricNameInAndMetricDateLessThanEqual(List<String> metricNames, LocalDate date);
+    List<HealthMetricEntity> findByUserIdAndMetricNameInAndMetricDateLessThanEqual(long userId, List<String> metricNames, LocalDate date);
 
-    List<HealthMetricEntity> findByMetricDateBetween(LocalDate fromDate, LocalDate toDate);
+    List<HealthMetricEntity> findByUserIdAndMetricDateBetween(long userId, LocalDate fromDate, LocalDate toDate);
 }

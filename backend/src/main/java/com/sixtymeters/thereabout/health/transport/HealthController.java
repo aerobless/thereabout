@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 public class HealthController implements HealthApi {
 
     private final HealthDataService healthDataService;
+    private final com.sixtymeters.thereabout.access.UserContext users;
 
     @Override
     public ResponseEntity<Void> submitHealthData(GenSubmitHealthDataRequest genSubmitHealthDataRequest) {
@@ -42,12 +43,12 @@ public class HealthController implements HealthApi {
 
         try {
             if (healthData.getMetrics() != null && !healthData.getMetrics().isEmpty()) {
-                healthDataService.saveHealthMetrics(healthData.getMetrics());
+                healthDataService.saveHealthMetrics(users.integration(), healthData.getMetrics());
                 log.info("Saved {} health metrics", healthData.getMetrics().size());
             }
 
             if (healthData.getWorkouts() != null && !healthData.getWorkouts().isEmpty()) {
-                healthDataService.saveWorkouts(healthData.getWorkouts());
+                healthDataService.saveWorkouts(users.integration(), healthData.getWorkouts());
                 log.info("Saved {} workouts", healthData.getWorkouts().size());
             }
 
@@ -60,9 +61,10 @@ public class HealthController implements HealthApi {
 
     @Override
     public ResponseEntity<GenHealthDataResponse> getHealthDataByDateRange(LocalDate fromDate, Optional<LocalDate> toDate) {
+        var user = users.current();
         try {
             LocalDate endDate = toDate.orElse(fromDate);
-            HealthDataResponse domainResponse = healthDataService.getHealthData(fromDate, endDate);
+            HealthDataResponse domainResponse = healthDataService.getHealthData(user, fromDate, endDate);
             GenHealthDataResponse genResponse = convertToGenResponse(domainResponse);
             return ResponseEntity.ok(genResponse);
         } catch (IllegalArgumentException e) {

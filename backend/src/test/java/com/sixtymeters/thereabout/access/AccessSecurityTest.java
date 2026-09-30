@@ -27,6 +27,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,7 +67,7 @@ class AccessSecurityTest {
     void applicationDataRequiresAVerifiedThereaboutUser() throws Exception {
         assertThat(send(get("/backend/api/v1/identity")).statusCode()).isEqualTo(401);
         assertThat(send(get("/backend/api/v1/identity").header(CloudflareAccessFilter.HEADER, token("app", user, true))).statusCode()).isEqualTo(401);
-        assertThat(send(get("/backend/api/v1/identity").header(CloudflareAccessFilter.HEADER, token("app", user, false))).statusCode()).isEqualTo(200);
+        assertThat(send(get("/backend/api/v1/identity").header(CloudflareAccessFilter.HEADER, token("app", user, false))).statusCode()).isEqualTo(403);
         String unlinked = UUID.randomUUID() + "@example.test";
         assertThat(send(get("/backend/api/v1/identity").header(CloudflareAccessFilter.HEADER, token("app", unlinked, false))).statusCode()).isEqualTo(403);
         assertThat(send(get("/v3/api-docs")).statusCode()).isEqualTo(401);
@@ -78,14 +79,14 @@ class AccessSecurityTest {
         assertThat(send(get("/backend/api/v1/current-user").header(CloudflareAccessFilter.HEADER, token("app", UUID.randomUUID() + "@example.test", false))).body())
                 .contains("unlinked");
         assertThat(send(get("/backend/api/v1/current-user").header(CloudflareAccessFilter.HEADER, token("app", user, false))).body())
-                .contains("resolved").contains("\"isAdmin\":false");
+                .contains("resolved").contains("\"role\":\"USER\"");
         assertThat(send(get("/backend/api/v1/current-user").header(CloudflareAccessFilter.HEADER, token("app", admin, false))).body())
-                .contains("\"isAdmin\":true");
+                .contains("\"role\":\"ADMIN\"");
     }
 
     @Test
     void browserWritesRequireTheCsrfToken() throws Exception {
-        String login = token("app", user, false);
+        String login = token("app", admin, false);
         String body = "{\"id\":0,\"shortName\":\"csrf-" + UUID.randomUUID().toString().substring(0, 8) + "\"}";
         assertThat(send(json("/backend/api/v1/identity", body).header(CloudflareAccessFilter.HEADER, login)).statusCode()).isEqualTo(403);
         String csrf = send(get("/backend/api/v1/current-user")).headers().allValues("Set-Cookie").stream()
@@ -99,7 +100,7 @@ class AccessSecurityTest {
     void onlyAdministratorsCreateUsers() throws Exception {
         long person = identities.save(IdentityEntity.builder().shortName("person-" + UUID.randomUUID().toString().substring(0, 8)).build()).getId();
         String csrf = UUID.randomUUID().toString();
-        String body = "{\"email\":\"" + UUID.randomUUID() + "@example.test\"}";
+        String body = "{\"email\":\"" + UUID.randomUUID() + "@example.test\",\"role\":\"USER\"}";
         var request = json("/backend/api/v1/identity/" + person + "/user", body).header("Cookie", "XSRF-TOKEN=" + csrf).header("X-XSRF-TOKEN", csrf);
         assertThat(send(request.copy().header(CloudflareAccessFilter.HEADER, token("app", user, false))).statusCode()).isEqualTo(403);
         assertThat(send(request.copy().header(CloudflareAccessFilter.HEADER, token("app", admin, false))).statusCode()).isEqualTo(200);
@@ -155,6 +156,8 @@ class AccessSecurityTest {
         assertThat(send(mcp.copy().header(CloudflareAccessFilter.HEADER, serviceToken)).statusCode()).isEqualTo(401);
         assertThat(send(mcp.copy().header(CloudflareAccessFilter.HEADER, token("other-app", null, false)).header("Authorization", bearer)).statusCode()).isEqualTo(401);
         assertThat(send(mcp.copy().header(CloudflareAccessFilter.HEADER, serviceToken).header("Authorization", bearer)).statusCode()).isEqualTo(200);
+        assertThat(send(mcp.copy().header(CloudflareAccessFilter.HEADER, token("app",user,false)).header("Authorization",bearer)).statusCode()).isEqualTo(200);
+        assertThat(send(mcp.copy().header(CloudflareAccessFilter.HEADER, token("app",UUID.randomUUID()+"@example.test",false)).header("Authorization",bearer)).statusCode()).isEqualTo(401);
     }
 
     @Test
@@ -163,11 +166,30 @@ class AccessSecurityTest {
         assertThat(send(get("/locationhistory")).statusCode()).isNotIn(401, 403);
     }
 
+    @Test
+    void impersonationChecksActorAndAppliesTargetPermissionsOnEveryRequest() throws Exception {
+        long target=jdbc.queryForObject("SELECT identity_id FROM identity_in_application WHERE application='CLOUDFLARE' AND identifier=?",Long.class,user);
+        long actor=jdbc.queryForObject("SELECT identity_id FROM identity_in_application WHERE application='CLOUDFLARE' AND identifier=?",Long.class,admin);
+        var request=get("/backend/api/v1/current-user").header(ImpersonationFilter.HEADER,String.valueOf(target));
+        var result=send(request.copy().header(CloudflareAccessFilter.HEADER,token("app",admin,false)));
+        assertThat(result.statusCode()).isEqualTo(200);
+        assertThat(result.body()).contains("\"identityId\":"+target,"\"actorIdentityId\":"+actor,"\"impersonating\":true","\"role\":\"USER\"");
+        assertThat(send(request.copy().header(CloudflareAccessFilter.HEADER,token("app",user,false))).statusCode()).isEqualTo(403);
+        for(var path:List.of("/backend/api/v1/identity","/backend/api/v1/config/ingestion-key","/backend/api/v1/calendar/google/status","/api/finances/configuration/mcp-key")) {
+            assertThat(send(get(path).header(ImpersonationFilter.HEADER,String.valueOf(target)).header(CloudflareAccessFilter.HEADER,token("app",admin,false))).statusCode()).as(path).isEqualTo(403);
+        }
+        assertThat(send(get("/backend/api/v1/current-user").header(ImpersonationFilter.HEADER,"9223372036854775807").header(CloudflareAccessFilter.HEADER,token("app",admin,false))).statusCode()).isEqualTo(404);
+        jdbc.update("UPDATE identity SET role='USER' WHERE id=?",actor);
+        assertThat(send(request.copy().header(CloudflareAccessFilter.HEADER,token("app",admin,false))).statusCode()).isEqualTo(403);
+        jdbc.update("UPDATE identity SET role='ADMIN' WHERE id=?",actor);
+        jdbc.update("UPDATE identity SET role=NULL WHERE id=?",target);
+        assertThat(send(request.copy().header(CloudflareAccessFilter.HEADER,token("app",admin,false))).statusCode()).isEqualTo(404);
+    }
+
     private String createUser(boolean isAdmin) {
         String email = UUID.randomUUID() + "@example.test";
         long id = identities.save(IdentityEntity.builder().shortName("access-" + UUID.randomUUID().toString().substring(0, 8)).build()).getId();
-        users.createUser(id, email);
-        jdbc.update("update identity set is_admin=? where id=?", isAdmin, id);
+        users.createUser(id, email, isAdmin ? com.sixtymeters.thereabout.communication.data.UserRole.ADMIN : com.sixtymeters.thereabout.communication.data.UserRole.USER);
         return email;
     }
 

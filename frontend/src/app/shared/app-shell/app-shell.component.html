@@ -14,17 +14,19 @@
       <span class="brand-copy"><span class="brand-name">Thereabout</span><span class="brand-tagline">near that place or time</span></span>
     </a>
     <nav class="sidebar-nav" aria-label="Main navigation">
-      @for (link of links; track link.path) {
+      @for (link of links(); track link.path) {
         <a class="nav-link" [routerLink]="link.path" routerLinkActive="active" [routerLinkActiveOptions]="link.match" ariaCurrentWhenActive="page"
           [attr.aria-label]="link.label" [attr.title]="sidebarCollapsed() ? link.label : null">
           <i [class]="link.icon" aria-hidden="true"></i><span>{{ link.label }}</span>
         </a>
       }
     </nav>
+    @if (currentUser.canManageUsers()) {
     <a class="nav-link settings-link" routerLink="/configuration" routerLinkActive="active" [routerLinkActiveOptions]="exactMatch" ariaCurrentWhenActive="page"
       aria-label="Configuration" [attr.title]="sidebarCollapsed() ? 'Configuration' : null">
       <i class="pi pi-cog" aria-hidden="true"></i><span>Configuration</span>
     </a>
+    }
     </div>
   </aside>
   <div class="mobile-brand-row">
@@ -33,7 +35,7 @@
     </a>
   </div>
   <nav class="mobile-nav" aria-label="Mobile navigation">
-    @for (link of links.slice(0, 3); track link.path) {
+    @for (link of links().slice(0, 3); track link.path) {
       <a class="nav-link" [routerLink]="link.path" routerLinkActive="active" [routerLinkActiveOptions]="link.match" ariaCurrentWhenActive="page">
         <i [class]="link.icon" aria-hidden="true"></i><span>{{ link.mobileLabel }}</span>
       </a>
@@ -43,7 +45,7 @@
       <i class="pi pi-ellipsis-h" aria-hidden="true"></i><span>More</span>
     </button>
   </nav>
-  <p-menu #moreMenu id="mobile-more-menu" [model]="moreItems" [popup]="true" appendTo="body" styleClass="mobile-more-menu" ariaLabel="More navigation" />
+  <p-menu #moreMenu id="mobile-more-menu" [model]="moreItems()" [popup]="true" appendTo="body" styleClass="mobile-more-menu" ariaLabel="More navigation" />
 }
 <main id="main-content" tabindex="-1" [class.app-content]="!embedded()" [class.embed-content]="embedded()">
   <ng-content />

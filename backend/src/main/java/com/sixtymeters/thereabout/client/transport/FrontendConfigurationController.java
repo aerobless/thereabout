@@ -59,9 +59,14 @@ public class FrontendConfigurationController implements FrontendApi {
         log.info("Serving the frontend configuration.");
         return ResponseEntity.ok(GenFrontendConfigurationResponse.builder()
                 .googleMapsApiKey(googleMapsApiKey)
-                .thereaboutApiKey(configurationService.getThereaboutApiKey())
                 .versionDetails(getVersionDetails())
                 .build());
+    }
+
+    @Override
+    public ResponseEntity<com.sixtymeters.thereabout.generated.model.GenGetIngestionKey200Response> getIngestionKey() {
+        return ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore())
+                .body(new com.sixtymeters.thereabout.generated.model.GenGetIngestionKey200Response().value(configurationService.getThereaboutApiKey()));
     }
 
     private GenVersionDetails getVersionDetails() {

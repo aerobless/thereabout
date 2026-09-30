@@ -41,7 +41,6 @@ Health cards use the data you import. Missing sleep stages and missing days rema
 - **Location editing on desktop:** add points, drag markers, edit timestamps and details, and delete one or several entries.
 - **Daily photo shortcut:** open Google Photos search for the selected day.
 - **Embeddable map:** display a date-range route with day navigation using `/locationhistory?embed=true&fromDate=YYYY-MM-DD&toDate=YYYY-MM-DD`.
-- **Travel statistics:** country count and a country list with first visit, last visit and days spent.
 
 ![Location History heatmap showing fictional European trips](documentation/img/location-history.jpg)
 
@@ -49,7 +48,7 @@ Health cards use the data you import. Missing sleep stages and missing days rema
 
 - Import WhatsApp chat exports and connect Telegram for message synchronisation.
 - Browse messages with pagination, sorting and filters for date, source, sender, receiver and content.
-- Manage people and groups, and link their application-specific identities across sources.
+- Admins manage people and groups, link their application-specific identities across sources, and assign the Admin or User role to people with user access.
 - Start, cancel or repeat Telegram history synchronisation from Configuration, and disconnect when needed.
 
 ### Calendar
@@ -129,7 +128,7 @@ Add `TELEGRAM_API_ID` and `TELEGRAM_API_HASH` to the `thereabout` service's `env
 - Start typing to search names, descriptions, groups and URLs. Enter opens the selected result in the same tab; Tab/Shift+Tab and arrow keys select results, and Escape clears the search. Tab can leave the result list at either end.
 - The day, steps and next-event summaries open today's Day View. The next event is the next timed calendar occurrence starting within 30 days; all-day and already-started events are excluded.
 - Use the pencil beside a shortcut to edit its name, URL, description, group or icon. **Organize** adds/edits groups and changes the order of groups and shortcuts. Empty groups can be removed.
-- Icons are fetched once in the background and stored in MariaDB. Subsequent page loads use the stored image with browser caching. Icon retrieval accepts public HTTP(S) hosts on ports 80/443; local services use an emoji/letter fallback or a custom uploaded image. Uploads support PNG, JPEG, GIF, WebP and ICO up to 1 MB. **Use website icon** explicitly retries retrieval.
+- Icons are fetched once in the background and stored in MariaDB. Protected images are loaded and cached within the current user context. Icon retrieval accepts public HTTP(S) hosts on ports 80/443; local services use an emoji/letter fallback or a custom uploaded image. Uploads support PNG, JPEG, GIF, WebP and ICO up to 1 MB. **Use website icon** explicitly retries retrieval.
 - The database migration creates empty tables. Personal bookmarks and image bytes belong exclusively in runtime storage, never in migrations, fixtures, source files or checked-in import files.
 
 An empty launcher offers **Import shortcuts**. Paste a JSON collection there (or POST the same body to `/backend/api/v1/launcher/import`):

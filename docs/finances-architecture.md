@@ -44,3 +44,7 @@ The deletion confirmation is an in-app modal. It performs no write until explici
 The existing local demo upgraded successfully. A separate rehearsal schema received all 7,461 Firefly journals and 14,922 postings through the refactored importer. Ten historical balance checkpoints, exact amounts and source relationships reconciled without differences. Reports match independent Firefly SQL and the pre-refactor API baseline, allowing only the new DTO representation of optional null fields.
 
 Run backend tests from `backend/` with `mvn clean install -Dspring.datasource.url=jdbc:mariadb://localhost:3306/thereabout_finance_test`. This existing local test clone isolates synthetic fixtures from demo data. New backend assertions use AssertJ. See [the local runbook](finances-local-mvp.md) for frontend commands, runtime setup, verification evidence and the remaining live-browser limitation.
+
+## Personal finance
+
+Main account ownership, shared counterparty visibility, participant transfer rights, scoped idempotency/audits and personal cash-flow classification are described in [user-data.md](user-data.md). Cross-user transfers are personal income/expenses derived from the owned posting; same-user transfers remain excluded even with a single-account filter. REST uses the effective browser user; the shared MCP uses user 1 and retains the authenticated request actor in audits.

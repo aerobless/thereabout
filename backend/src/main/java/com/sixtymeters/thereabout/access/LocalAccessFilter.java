@@ -15,6 +15,8 @@ import java.util.Set;
  * check rejects DNS rebinding, where a foreign page resolves its own name to the loopback address.
  */
 public class LocalAccessFilter extends OncePerRequestFilter {
+    private final com.sixtymeters.thereabout.communication.data.IdentityRepository identities;
+    public LocalAccessFilter(com.sixtymeters.thereabout.communication.data.IdentityRepository identities) { this.identities = identities; }
     private static final Set<String> LOOPBACK = Set.of("localhost", "127.0.0.1", "::1", "[::1]", "0:0:0:0:0:0:0:1");
 
     @Override
@@ -22,7 +24,10 @@ public class LocalAccessFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         if (SecurityContextHolder.getContextHolderStrategy().getContext().getAuthentication() == null
                 && LOOPBACK.contains(request.getRemoteAddr()) && LOOPBACK.contains(request.getServerName())) {
-            AccessPrincipal.authenticate(AccessPrincipal.LOCAL, AccessPrincipal.roles(true, true));
+            var user = identities.findById(1L).filter(i -> i.isUser() && !i.isGroup());
+            AccessPrincipal.authenticate(new AccessPrincipal(null, user.map(i -> i.getId()).orElse(null),
+                    user.map(i -> i.getShortName()).orElse("Local administrator"), true,
+                    com.sixtymeters.thereabout.communication.data.UserRole.ADMIN, null), AccessPrincipal.roles(true, true));
         }
         chain.doFilter(request, response);
     }

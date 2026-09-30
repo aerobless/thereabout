@@ -45,7 +45,7 @@ public class WhatsAppChatImporter implements FileImporter {
     }
 
     @Override
-    public void importFile(File file, String receiver) {
+    public void importFile(File file, String receiver, com.sixtymeters.thereabout.access.UserId user) {
         log.info("Starting WhatsApp chat import from file: {}, receiver: {}", file.getName(), receiver);
 
         try {

@@ -38,6 +38,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Transactional
 class LocationHistoryControllerTest {
+    @org.springframework.beans.factory.annotation.Autowired org.springframework.jdbc.core.JdbcTemplate ownerDb;
+    @org.junit.jupiter.api.BeforeEach void ensureOwner() { com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb); }
+
 
     @Autowired
     private MockMvc mockMvc;
@@ -65,7 +68,7 @@ class LocationHistoryControllerTest {
         configurationRepository.save(apiKeyConfig);
 
         // Set up test location
-        testLocation = LocationHistoryEntity.builder()
+        testLocation = LocationHistoryEntity.builder().userId(1L)
                 .timestamp(LocalDateTime.now())
                 .latitude(47.3769)
                 .longitude(8.5417)
@@ -169,7 +172,7 @@ class LocationHistoryControllerTest {
 
     @Test
     void testDeleteLocations() throws Exception {
-        LocationHistoryEntity location2 = LocationHistoryEntity.builder()
+        LocationHistoryEntity location2 = LocationHistoryEntity.builder().userId(1L)
                 .timestamp(LocalDateTime.now())
                 .latitude(48.8566)
                 .longitude(2.3522)

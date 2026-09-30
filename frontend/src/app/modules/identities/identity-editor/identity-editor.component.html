@@ -15,11 +15,17 @@
     </p-floatlabel>
 
     <div style="margin-bottom: 10px; display: flex; align-items: flex-start; gap: 8px">
-      <p-checkbox [(ngModel)]="editingIdentity.isGroup" [disabled]="!!editingIdentity.isUser" [binary]="true" inputId="isGroup" label="Is a group"></p-checkbox>
+      <p-checkbox [(ngModel)]="editingIdentity.isGroup" [disabled]="!!editingIdentity.role" [binary]="true" inputId="isGroup" label="Is a group"></p-checkbox>
       <small style="flex: 1; color: var(--text-color-secondary); line-height: 1.4">
         Use for group chats or other non-person identities.
       </small>
     </div>
+
+    @if (editingIdentity.role) {
+      <label for="edit-user-role">Role</label>
+      <p-select inputId="edit-user-role" [options]="roles" optionLabel="label" optionValue="value"
+        [(ngModel)]="selectedRole" [disabled]="busy()" appendTo="body" />
+    }
 
     @if (!isNewIdentity && editingIdentity.identityInApplications && editingIdentity.identityInApplications.length > 0) {
       <div class="linked-app-identities">

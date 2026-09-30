@@ -16,16 +16,17 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class HeartHistoryController implements HeartApi {
     private final HeartHistoryService history;
+    private final com.sixtymeters.thereabout.access.UserContext users;
 
     @Override
     public ResponseEntity<GenHeartRateHistory> getHeartRateHistory(LocalDate date, Integer days) {
         validate(date, days);
-        return ResponseEntity.ok(history.heartRate(date, days));
+        return ResponseEntity.ok(history.heartRate(users.current(), date, days));
     }
     @Override
     public ResponseEntity<GenHrvHistory> getHrvHistory(LocalDate date, Integer days) {
         validate(date, days);
-        return ResponseEntity.ok(history.hrv(date, days));
+        return ResponseEntity.ok(history.hrv(users.current(), date, days));
     }
     private static void validate(LocalDate date, Integer days) {
         if (date == null || days == null || (days != 7 && days != 30))

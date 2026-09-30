@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.launcher;
 
+import com.sixtymeters.thereabout.access.UserId;
 import com.sixtymeters.thereabout.shared.icons.WebsiteIconFetcher;
 
 import com.sixtymeters.thereabout.config.ThereaboutException;
@@ -21,11 +22,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @ActiveProfiles("test")
 @Transactional
 class LauncherStoreTest {
+    @org.springframework.beans.factory.annotation.Autowired org.springframework.jdbc.core.JdbcTemplate ownerDb;
+    @org.junit.jupiter.api.BeforeEach void ensureOwner() { com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb); }
+
     @Autowired LauncherStore store;
     @Autowired MockMvc mvc;
     private static final byte[] PNG=Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
     private long group(String name) {
-        return store.createGroup(GenLauncherGroupInput.builder().section("Example section").name(name).build()).getGroups().stream()
+        return store.createGroup(new UserId(1), GenLauncherGroupInput.builder().section("Example section").name(name).build()).getGroups().stream()
                 .filter(g->g.getName().equals(name)).findFirst().orElseThrow().getId();
     }
     private GenLauncherShortcutInput link(long group,String title,String url) {
@@ -33,25 +37,25 @@ class LauncherStoreTest {
     }
     @Test void managesShortcutsAndGroupsWithoutLosingTargetsOrOrder() {
         long a=group("Group A"),b=group("Group B");
-        var one=store.createShortcut(link(a,"One","https://example.com/find?q=one%20two#saved")).getShortcuts().getFirst();
-        var two=store.createShortcut(link(a,"Two","http://192.0.2.1:8080/app")).getShortcuts().getLast();
-        assertThat(store.orderShortcuts(a,List.of(two.getId(),one.getId())).getShortcuts()).extracting(GenLauncherShortcut::getTitle).containsExactly("Two","One");
-        assertThat(store.orderGroups(List.of(b,a)).getGroups()).extracting(GenLauncherGroup::getId).containsExactly(b,a);
-        store.updateShortcut(one.getId(),link(b,"Renamed",one.getUrl()));
-        var moved=store.collection().getShortcuts().stream().filter(s->s.getId().equals(one.getId())).findFirst().orElseThrow();
+        var one=store.createShortcut(new UserId(1), link(a,"One","https://example.com/find?q=one%20two#saved")).getShortcuts().getFirst();
+        var two=store.createShortcut(new UserId(1), link(a,"Two","http://192.0.2.1:8080/app")).getShortcuts().getLast();
+        assertThat(store.orderShortcuts(new UserId(1), a,List.of(two.getId(),one.getId())).getShortcuts()).extracting(GenLauncherShortcut::getTitle).containsExactly("Two","One");
+        assertThat(store.orderGroups(new UserId(1), List.of(b,a)).getGroups()).extracting(GenLauncherGroup::getId).containsExactly(b,a);
+        store.updateShortcut(new UserId(1), one.getId(),link(b,"Renamed",one.getUrl()));
+        var moved=store.collection(new UserId(1)).getShortcuts().stream().filter(s->s.getId().equals(one.getId())).findFirst().orElseThrow();
         assertThat(moved.getGroupId()).isEqualTo(b);
         assertThat(moved.getUrl()).isEqualTo("https://example.com/find?q=one%20two#saved");
-        store.updateGroup(a,GenLauncherGroupInput.builder().section("Another section").name("Changed").build());
-        store.deleteShortcut(two.getId());store.deleteGroup(a);
-        assertThat(store.collection().getGroups()).hasSize(1);
-        assertThat(store.collection().getShortcuts()).hasSize(1);
+        store.updateGroup(new UserId(1), a,GenLauncherGroupInput.builder().section("Another section").name("Changed").build());
+        store.deleteShortcut(new UserId(1), two.getId());store.deleteGroup(new UserId(1), a);
+        assertThat(store.collection(new UserId(1)).getGroups()).hasSize(1);
+        assertThat(store.collection(new UserId(1)).getShortcuts()).hasSize(1);
     }
     @Test void refusesNonEmptyGroupDeletionAndStaleReorder() {
         long group=group("Keep");
-        store.createShortcut(link(group,"Saved","https://example.com"));
-        assertThatThrownBy(()->store.deleteGroup(group)).isInstanceOf(ThereaboutException.class);
-        assertThatThrownBy(()->store.orderShortcuts(group,List.of())).isInstanceOf(ThereaboutException.class);
-        assertThat(store.collection().getShortcuts()).hasSize(1);
+        store.createShortcut(new UserId(1), link(group,"Saved","https://example.com"));
+        assertThatThrownBy(()->store.deleteGroup(new UserId(1), group)).isInstanceOf(ThereaboutException.class);
+        assertThatThrownBy(()->store.orderShortcuts(new UserId(1), group,List.of())).isInstanceOf(ThereaboutException.class);
+        assertThat(store.collection(new UserId(1)).getShortcuts()).hasSize(1);
     }
     @Test void rejectsExecutableAndCredentialUrls() {
         for(String url:List.of("javascript:alert(1)","data:text/html,test","file:///tmp/private","https://name:password@example.com/","example.com"))
@@ -60,40 +64,40 @@ class LauncherStoreTest {
     }
     @Test void importsOnlyThroughRuntimeAndRejectsRepeatedImports() {
         // Run against an isolated test database; no personal collection is a fixture.
-        assertThat(store.collection().getGroups()).isEmpty();
+        assertThat(store.collection(new UserId(1)).getGroups()).isEmpty();
         var input=GenLauncherImport.builder().groups(List.of(GenLauncherImportGroup.builder().section("Example").name("Imported")
                 .shortcuts(List.of(GenLauncherLink.builder().title("Demo").url("https://example.org/#demo").build())).build())).build();
-        assertThat(store.importCollection(input).getShortcuts()).hasSize(1);
-        assertThatThrownBy(()->store.importCollection(input)).isInstanceOf(ThereaboutException.class);
-        assertThat(store.collection().getShortcuts()).hasSize(1);
+        assertThat(store.importCollection(new UserId(1), input).getShortcuts()).hasSize(1);
+        assertThatThrownBy(()->store.importCollection(new UserId(1), input)).isInstanceOf(ThereaboutException.class);
+        assertThat(store.collection(new UserId(1)).getShortcuts()).hasSize(1);
     }
     @Test void iconUploadPersistsAndSlowFetchCannotOverwriteNewerUpload() throws Exception {
         long group=group("Icons");
-        var shortcut=store.createShortcut(link(group,"Demo","https://example.org")).getShortcuts().getFirst();
+        var shortcut=store.createShortcut(new UserId(1), link(group,"Demo","https://example.org")).getShortcuts().getFirst();
         var pending=store.pendingIcons().getFirst();
-        store.saveCustomIcon(shortcut.getId(),PNG);
-        long version=store.icon(shortcut.getId()).orElseThrow().version();
+        store.saveCustomIcon(new UserId(1), shortcut.getId(),PNG);
+        long version=store.icon(new UserId(1), shortcut.getId()).orElseThrow().version();
         store.finishIcon(pending,null);
         store.finishIcon(pending,new WebsiteIconFetcher.Image(new byte[]{1,2,3},"image/gif"));
-        assertThat(store.icon(shortcut.getId()).orElseThrow().bytes()).isEqualTo(PNG);
-        assertThat(store.icon(shortcut.getId()).orElseThrow().version()).isEqualTo(version);
+        assertThat(store.icon(new UserId(1), shortcut.getId()).orElseThrow().bytes()).isEqualTo(PNG);
+        assertThat(store.icon(new UserId(1), shortcut.getId()).orElseThrow().version()).isEqualTo(version);
         var response=mvc.perform(get("/backend/api/v1/launcher/shortcuts/{id}/icon",shortcut.getId())).andReturn().getResponse();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getContentType()).isEqualTo("image/png");
-        assertThat(response.getHeader("Cache-Control")).contains("private");
+        assertThat(response.getHeader("Cache-Control")).contains("no-store");
         assertThat(response.getContentAsByteArray()).isEqualTo(PNG);
-        assertThatThrownBy(()->store.saveCustomIcon(shortcut.getId(),"<svg onload='alert(1)'/>".getBytes())).isInstanceOf(ThereaboutException.class);
+        assertThatThrownBy(()->store.saveCustomIcon(new UserId(1), shortcut.getId(),"<svg onload='alert(1)'/>".getBytes())).isInstanceOf(ThereaboutException.class);
     }
     @Test void changingUrlQueuesNewIconButKeepsAnUploadedImage() {
         long group=group("URL changes");
-        var shortcut=store.createShortcut(link(group,"Demo","https://example.org")).getShortcuts().getFirst();
+        var shortcut=store.createShortcut(new UserId(1), link(group,"Demo","https://example.org")).getShortcuts().getFirst();
         store.finishIcon(store.pendingIcons().getFirst(),new WebsiteIconFetcher.Image(PNG,"image/png"));
-        var changed=store.updateShortcut(shortcut.getId(),link(group,"Demo","https://example.com")).getShortcuts().getFirst();
+        var changed=store.updateShortcut(new UserId(1), shortcut.getId(),link(group,"Demo","https://example.com")).getShortcuts().getFirst();
         assertThat(changed.getHasIcon()).isFalse();
         assertThat(changed.getIconState()).isEqualTo(GenLauncherShortcut.IconStateEnum.PENDING);
-        store.saveCustomIcon(shortcut.getId(),PNG);
-        store.updateShortcut(shortcut.getId(),link(group,"Demo","https://example.net"));
-        assertThat(store.icon(shortcut.getId()).orElseThrow().bytes()).isEqualTo(PNG);
+        store.saveCustomIcon(new UserId(1), shortcut.getId(),PNG);
+        store.updateShortcut(new UserId(1), shortcut.getId(),link(group,"Demo","https://example.net"));
+        assertThat(store.icon(new UserId(1), shortcut.getId()).orElseThrow().bytes()).isEqualTo(PNG);
     }
     @Test void apiValidatesInputAndDoesNotCacheCollection() throws Exception {
         var invalid=mvc.perform(post("/backend/api/v1/launcher/groups").contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"\",\"section\":\"Example\"}"))

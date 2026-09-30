@@ -46,12 +46,12 @@ export class IdentityDetailComponent implements OnInit {
     readonly deleting = signal(false);
 
     confirmDelete(): void {
-        if (this.identity && !this.identity.isUser) this.deleteVisible.set(true);
+        if (this.identity && !this.identity.role) this.deleteVisible.set(true);
     }
 
     deleteIdentity(): void {
         const identity = this.identity;
-        if (!identity || identity.isUser || this.deleting()) return;
+        if (!identity || identity.role || this.deleting()) return;
         this.deleting.set(true);
         this.identityService.deleteIdentity(identity.id).subscribe({
             next: () => {

@@ -21,7 +21,7 @@ public class WorkoutImportService {
     private final WorkoutMapper mapper;
 
     @Transactional
-    public void saveWorkouts(List<GenWorkout> workouts) {
+    public void saveWorkouts(com.sixtymeters.thereabout.access.UserId user, List<GenWorkout> workouts) {
         if (workouts == null || workouts.isEmpty()) {
             return;
         }
@@ -33,15 +33,20 @@ public class WorkoutImportService {
             }
 
             WorkoutEntity workoutEntity = mapper.mapWorkoutToEntity(workout);
-            workoutRepository.save(workoutEntity);
+            workoutEntity.setUserId(user.value());
+            workoutRepository.findByUserIdAndSourceId(user.value(), workout.getId()).ifPresent(existing -> {
+                workoutEntity.setId(existing.getId());
+                workoutEntity.setCreatedAt(existing.getCreatedAt());
+            });
+            workoutRepository.saveAndFlush(workoutEntity);
 
             // Delete existing time-series data and recreate
-            workoutTimeSeriesDataRepository.deleteByWorkoutId(workout.getId());
-            saveWorkoutTimeSeriesData(workout.getId(), workout);
+            workoutTimeSeriesDataRepository.deleteByWorkoutId(workoutEntity.getId());
+            saveWorkoutTimeSeriesData(workoutEntity.getId(), workout);
         }
     }
 
-    private void saveWorkoutTimeSeriesData(String workoutId, GenWorkout workout) {
+    private void saveWorkoutTimeSeriesData(Long workoutId, GenWorkout workout) {
         WorkoutEntity workoutEntity = workoutRepository.findById(workoutId).orElse(null);
         if (workoutEntity == null) {
             return;

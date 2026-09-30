@@ -2,6 +2,8 @@ package com.sixtymeters.thereabout.finance.service;
 
 import static com.sixtymeters.thereabout.finance.domain.FinanceRules.*;
 
+import com.sixtymeters.thereabout.access.UserId;
+import com.sixtymeters.thereabout.access.UserContext;
 import com.sixtymeters.thereabout.finance.data.*;
 import jakarta.persistence.EntityManager;
 import java.nio.charset.StandardCharsets;
@@ -24,20 +26,23 @@ public class FinanceWriteCoordinator {
   private final EntityManager entityManager;
   private final ObjectMapper json;
   private final Clock financeClock;
+  private final UserContext users;
+  private final FinanceReadRepository reads;
 
   @Transactional
   public <T> T write(
-      String operation, String key, Object input, Class<T> resultType, Supplier<T> action) {
+      UserId user, String operation, String key, Object input, Class<T> resultType, Supplier<T> action) {
     require(
         key != null && !key.isBlank() && key.length() <= 100,
         "requestKey is required (max 100 characters)");
     if (locks.acquire() == null) throw new IllegalStateException("Finance write lock is missing");
     String fingerprint = fingerprint(operation, input);
-    var previous = replay(operation, key, input, resultType);
+    var previous = replay(user, operation, key, input, resultType);
     if (previous.isPresent()) return previous.get();
     T result = action.get();
     entityManager.flush();
     var record = new FinanceRequestEntity();
+    record.setUserId(user.value());
     record.setRequestKey(key);
     record.setFingerprint(fingerprint);
     record.setResultJson(json.writeValueAsString(result));
@@ -46,26 +51,32 @@ public class FinanceWriteCoordinator {
   }
 
   @Transactional(readOnly = true)
-  public <T> Optional<T> replay(String operation, String key, Object input, Class<T> resultType) {
+  public <T> Optional<T> replay(UserId user, String operation, String key, Object input, Class<T> resultType) {
     require(
         key != null && !key.isBlank() && key.length() <= 100,
         "requestKey is required (max 100 characters)");
     return requests
-        .findById(key)
+        .findById(new FinanceRequestId(user.value(), key))
         .map(
             previous -> {
               conflict(
                   previous.getFingerprint().equals(fingerprint(operation, input)),
                   "requestKey was already used for different arguments or an older API; use a new"
                       + " key for a new operation");
-              return json.readValue(previous.getResultJson(), resultType);
+              T result=json.readValue(previous.getResultJson(), resultType);
+              if (result instanceof com.sixtymeters.thereabout.generated.model.GenFinanceTransactionResult tx) reads.transaction(user,tx.getTransaction().getId());
+              if (result instanceof com.sixtymeters.thereabout.generated.model.GenFinanceAccountResult account) reads.account(user,account.getAccount().getId());
+              if (result instanceof com.sixtymeters.thereabout.generated.model.GenFinanceValuationResult valuation) reads.valuation(user,valuation.getValuation().getId());
+              return result;
             });
   }
 
-  public void audit(String operation, Long id, Object before, Object after) {
+  public void audit(UserId user, String operation, Long id, Object before, Object after) {
     var audit = new FinanceAuditEntity();
     audit.setOperation(operation);
     audit.setEntityId(id);
+    audit.setActorId(users.actorId());
+    audit.setUserId(user.value());
     audit.setCreatedAt(LocalDateTime.now(financeClock));
     audit.setBeforeJson(json.writeValueAsString(before));
     audit.setAfterJson(json.writeValueAsString(after));

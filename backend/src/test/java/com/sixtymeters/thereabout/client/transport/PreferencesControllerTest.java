@@ -27,15 +27,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @TestPropertySource(properties = {"thereabout.telegram.tdlib.api-id=0", "thereabout.telegram.tdlib.api-hash="})
 @Transactional
 class PreferencesControllerTest {
+    @org.springframework.beans.factory.annotation.Autowired org.springframework.jdbc.core.JdbcTemplate ownerDb;
+    @org.junit.jupiter.api.BeforeEach void ensureOwner() { com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb); }
+
     @Autowired MockMvc mvc;
     @Autowired JsonMapper mapper;
-    @Autowired ConfigurationRepository repository;
+    @Autowired com.sixtymeters.thereabout.client.data.UserPreferencesRepository repository;
     private final LocalDate started = LocalDate.now().minusDays(40);
 
     @BeforeEach void setup() {
-        repository.saveAll(List.of(
-                ConfigurationEntity.builder().configKey(ConfigurationKey.WEIGHT_GOAL_KG).configValue("75.0").build(),
-                ConfigurationEntity.builder().configKey(ConfigurationKey.WEIGHT_GOAL_STARTED_ON).configValue(started.toString()).build()));
+        com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb);
+        var value = new com.sixtymeters.thereabout.client.data.UserPreferencesEntity();
+        value.setUserId(1L); value.setWeightGoalKg(new java.math.BigDecimal("75.0")); value.setWeightGoalStartedOn(started);
+        repository.saveAndFlush(value);
     }
     private GenPreferences get() throws Exception {
         var response = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/backend/api/v1/preferences")).andReturn().getResponse();
@@ -57,7 +61,7 @@ class PreferencesControllerTest {
         assertThat(changed.getStatus()).isEqualTo(200);
         assertThat(get().getWeightGoalKg()).isEqualByComparingTo("78.2");
         assertThat(get().getWeightGoalStartedOn()).isEqualTo(LocalDate.now());
-        assertThat(repository.findById(ConfigurationKey.WEIGHT_GOAL_KG).orElseThrow().getConfigValue()).isEqualTo("78.2");
+        assertThat(repository.findById(1L).orElseThrow().getWeightGoalKg()).isEqualByComparingTo("78.2");
     }
     @Test void finiteLargeValuesFitConfigurationStorage() throws Exception {
         var response = mvc.perform(put("/backend/api/v1/preferences").contentType(MediaType.APPLICATION_JSON).content("{\"weightGoalKg\":1e300}")).andReturn().getResponse();

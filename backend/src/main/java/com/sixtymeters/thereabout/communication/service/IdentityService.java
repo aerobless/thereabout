@@ -27,8 +27,7 @@ public class IdentityService {
 
     @Transactional
     public IdentityEntity createIdentity(IdentityEntity identity) {
-        identity.setUser(false);
-        identity.setAdmin(false);
+        identity.setRole(null);
         if (identity.getIdentityInApplications() != null) {
             if (identity.getIdentityInApplications().stream().anyMatch(IdentityService::isCloudflare)) {
                 throw new ThereaboutException(HttpStatusCode.valueOf(400), "Use Create User to assign a Cloudflare email.");

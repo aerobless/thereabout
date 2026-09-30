@@ -1,46 +1,37 @@
 package com.sixtymeters.thereabout.client.service;
 
-import com.sixtymeters.thereabout.client.data.ConfigurationEntity;
-import com.sixtymeters.thereabout.client.data.ConfigurationKey;
-import com.sixtymeters.thereabout.client.data.ConfigurationRepository;
+import com.sixtymeters.thereabout.access.UserId;
+import com.sixtymeters.thereabout.client.data.*;
 import com.sixtymeters.thereabout.generated.model.GenPreferences;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.time.ZoneId;
 
-@Service
-@RequiredArgsConstructor
+@Service @RequiredArgsConstructor
 public class PreferencesService {
-    private final ConfigurationRepository repository;
-
-    @Transactional(readOnly = true)
-    public GenPreferences getPreferences() {
-        var values = repository.findAllById(List.of(ConfigurationKey.WEIGHT_GOAL_KG, ConfigurationKey.WEIGHT_GOAL_STARTED_ON))
-                .stream().collect(Collectors.toMap(ConfigurationEntity::getConfigKey, ConfigurationEntity::getConfigValue));
+    private final UserPreferencesRepository repository;
+    @Transactional(readOnly=true)
+    public GenPreferences getPreferences(UserId user) {
+        var value = repository.findById(user.value());
         return GenPreferences.builder()
-                .weightGoalKg(new BigDecimal(values.get(ConfigurationKey.WEIGHT_GOAL_KG)))
-                .weightGoalStartedOn(LocalDate.parse(values.get(ConfigurationKey.WEIGHT_GOAL_STARTED_ON)))
-                .build();
+                .weightGoalKg(value.map(UserPreferencesEntity::getWeightGoalKg).orElse(new BigDecimal("75.0")))
+                .weightGoalStartedOn(value.map(UserPreferencesEntity::getWeightGoalStartedOn).orElse(today())).build();
     }
-
     @Transactional
-    public GenPreferences updateGoal(BigDecimal goal) {
-        if (goal == null || goal.signum() <= 0 || !Double.isFinite(goal.doubleValue()) || goal.stripTrailingZeros().scale() > 1) {
+    public GenPreferences updateGoal(UserId user, BigDecimal goal) {
+        if (goal == null || !Double.isFinite(goal.doubleValue()) || goal.signum() <= 0 || goal.stripTrailingZeros().scale() > 1 || goal.toPlainString().length() > 1000)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Goal must be positive with at most one decimal place");
-        }
-        var current = getPreferences();
-        if (goal.compareTo(current.getWeightGoalKg()) == 0) return current;
-        LocalDate today = LocalDate.now();
-        repository.saveAll(List.of(
-                ConfigurationEntity.builder().configKey(ConfigurationKey.WEIGHT_GOAL_KG).configValue(goal.stripTrailingZeros().toString()).build(),
-                ConfigurationEntity.builder().configKey(ConfigurationKey.WEIGHT_GOAL_STARTED_ON).configValue(today.toString()).build()));
-        return GenPreferences.builder().weightGoalKg(goal).weightGoalStartedOn(today).build();
+        var existing = repository.findById(user.value());
+        if (existing.isPresent() && goal.compareTo(existing.get().getWeightGoalKg()) == 0) return getPreferences(user);
+        var value = existing.orElseGet(UserPreferencesEntity::new);
+        value.setUserId(user.value()); value.setWeightGoalKg(goal);
+        value.setWeightGoalStartedOn(today()); repository.save(value);
+        return getPreferences(user);
     }
+    private static LocalDate today() { return LocalDate.now(ZoneId.of("Europe/Zurich")); }
 }

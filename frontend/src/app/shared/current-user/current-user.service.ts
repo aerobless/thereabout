@@ -1,67 +1,75 @@
-import {computed, DestroyRef, inject, Injectable, isDevMode, signal} from '@angular/core';
+import {computed, DestroyRef, inject, Injectable, signal} from '@angular/core';
+import {toObservable} from '@angular/core/rxjs-interop';
+import {Router} from '@angular/router';
 import {CurrentUser, Identity, CurrentUserService as CurrentUserApi} from '../../../../generated/backend-api/thereabout';
-import {Subscription, timeout} from 'rxjs';
-
-export function canImpersonateLocally(development: boolean, hostname: string): boolean {
-  return development && ['localhost', '127.0.0.1', '[::1]'].includes(hostname);
-}
+import {filter, firstValueFrom, Subscription, timeout} from 'rxjs';
+import {UserSelectionService} from './user-selection.service';
 
 @Injectable({providedIn: 'root'})
 export class CurrentUserService {
   private readonly api = inject(CurrentUserApi);
+  private readonly selection = inject(UserSelectionService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   private pending?: Subscription;
-  readonly verifiedState = signal<CurrentUser | {status: 'loading'}>({status: 'loading'});
-  readonly impersonationAllowed = canImpersonateLocally(isDevMode(), location.hostname);
-  private readonly simulatedUser = signal<Identity | null>(null);
-  readonly impersonatedUser = this.simulatedUser.asReadonly();
-  readonly state = computed<CurrentUser | {status: 'loading'}>(() => {
-    const user = this.simulatedUser();
-    return user ? {status: 'resolved', identityId: user.id, displayName: user.shortName} : this.verifiedState();
+  readonly state = signal<CurrentUser | {status: 'loading'}>({status: 'loading'});
+  readonly verifiedState = this.state;
+  private readonly states = toObservable(this.state);
+  readonly impersonatedUser = computed(() => {
+    const state=this.state();
+    return state.status !== 'loading' && state.impersonating
+      ? {id: state.identityId, shortName: state.displayName} : null;
   });
-
-  impersonate(user: Identity): void {
-    if (!this.impersonationAllowed || !user.isUser || user.isGroup) return;
-    this.simulatedUser.set({...user});
-  }
-
-  stopImpersonation(): void {
-    this.simulatedUser.set(null);
-    this.load();
-  }
-  /** Only resolved non-admins are refused; local development acts as the local administrator. */
+  readonly impersonationAllowed = computed(() => {
+    const state=this.state();
+    return state.status !== 'loading' && state.actorRole === 'ADMIN';
+  });
   readonly canManageUsers = computed(() => {
-    const user = this.verifiedState();
-    return user.status !== 'resolved' || user.isAdmin === true;
+    const state=this.state();
+    return state.status !== 'loading' && state.role === 'ADMIN';
   });
   readonly displayName = computed(() => {
-    const user = this.state();
-    return user.status === 'resolved' ? user.displayName : undefined;
+    const state=this.state(); return state.status === 'resolved' ? state.displayName : undefined;
+  });
+  /** Removing the outlet while resolving also destroys editors, reports and their pending local state. */
+  readonly viewKeys = computed(() => {
+    const state=this.state();
+    return state.status === 'loading' ? [] : [`${state.identityId ?? 'none'}:${state.role ?? 'none'}:${state.impersonating ?? false}`];
   });
 
-  start(): void {
-    const clear = () => { this.pending?.unsubscribe(); this.verifiedState.set({status: 'loading'}); };
+  ready(): Promise<CurrentUser> {
+    return firstValueFrom(this.states.pipe(filter((state): state is CurrentUser => state.status !== 'loading')));
+  }
+  impersonate(user: Identity): void {
+    if (!this.impersonationAllowed() || !user.role || user.isGroup) return;
+    this.selection.select(user.id); this.load();
+  }
+  stopImpersonation(): void { this.selection.select(null); this.load(); }
+
+  start(): Promise<CurrentUser> {
+    const clear = () => { this.pending?.unsubscribe(); this.state.set({status: 'loading'}); };
     const visible = () => { if (document.visibilityState === 'visible') this.load(); else clear(); };
     const restored = (event: PageTransitionEvent) => { if (event.persisted) this.load(); };
     document.addEventListener('visibilitychange', visible);
-    window.addEventListener('pagehide', clear);
-    window.addEventListener('pageshow', restored);
+    window.addEventListener('pagehide', clear); window.addEventListener('pageshow', restored);
     this.destroyRef.onDestroy(() => {
-      clear();
-      document.removeEventListener('visibilitychange', visible);
-      window.removeEventListener('pagehide', clear);
-      window.removeEventListener('pageshow', restored);
+      clear(); document.removeEventListener('visibilitychange', visible);
+      window.removeEventListener('pagehide', clear); window.removeEventListener('pageshow', restored);
     });
-    this.load();
+    this.load(); return this.ready();
   }
-  private readonly destroyRef = inject(DestroyRef);
-
   load(): void {
-    this.pending?.unsubscribe();
-    // Always discard the previous person before resolving a new session.
-    this.verifiedState.set({status: 'loading'});
-    this.pending = this.api.getCurrentUser().pipe(timeout(10000)).subscribe({
-      next: user => this.verifiedState.set(user),
-      error: () => this.verifiedState.set({status: 'verification_unavailable'})
+    this.pending?.unsubscribe(); this.state.set({status: 'loading'});
+    this.pending=this.api.getCurrentUser().pipe(timeout(10000)).subscribe({
+      next: state => {
+        this.state.set(state);
+        if (state.role !== 'ADMIN' && /^\/(configuration|identities)(\/|$)/.test(this.router.url))
+          void this.router.navigateByUrl('/', {replaceUrl: true});
+      },
+      error: () => {
+        if (this.selection.target() != null) { this.selection.select(null); this.load(); }
+        else this.state.set({status: 'verification_unavailable'});
+      }
     });
   }
 }

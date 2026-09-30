@@ -21,11 +21,13 @@ import java.util.concurrent.Executors;
 public class FileImportService {
     private final List<FileImporter> importers;
     private final ImportProgressService progress;
+    private final com.sixtymeters.thereabout.access.UserContext users;
     private final ExecutorService executor = Executors.newSingleThreadExecutor(Thread.ofPlatform().name("file-import").factory());
 
-    public FileImportService(List<FileImporter> importers, ImportProgressService progress) {
+    public FileImportService(List<FileImporter> importers, ImportProgressService progress, com.sixtymeters.thereabout.access.UserContext users) {
         this.importers = List.copyOf(importers);
         this.progress = progress;
+        this.users = users;
     }
 
     public void start(MultipartFile file, GenImportType type, Optional<String> receiver) {
@@ -35,6 +37,7 @@ public class FileImportService {
         }
         var importer = importers.stream().filter(i -> i.getSupportedImportType() == type).findFirst()
                 .orElseThrow(() -> error(400, "Unsupported import type"));
+        var owner = users.integration();
         if (!progress.begin()) throw error(409, "Another file import is in progress");
         Path directory = null;
         Path upload = null;
@@ -45,7 +48,7 @@ public class FileImportService {
             file.transferTo(upload);
             final Path ownedDirectory = directory;
             final Path ownedFile = upload;
-            executor.execute(() -> run(importer, ownedFile, ownedDirectory, receiver.orElse(null)));
+            executor.execute(() -> run(importer, ownedFile, ownedDirectory, receiver.orElse(null), owner));
         } catch (IOException | RuntimeException e) {
             cleanup(upload, directory);
             progress.fail();
@@ -54,10 +57,10 @@ public class FileImportService {
         }
     }
 
-    private void run(FileImporter importer, Path file, Path directory, String receiver) {
+    private void run(FileImporter importer, Path file, Path directory, String receiver, com.sixtymeters.thereabout.access.UserId owner) {
         boolean succeeded = false;
         try {
-            importer.importFile(file.toFile(), receiver);
+            importer.importFile(file.toFile(), receiver, owner);
             succeeded = true;
         } catch (Exception e) {
             log.error("File import failed; already committed records are retained", e);

@@ -21,12 +21,16 @@ public class CurrentUserController implements CurrentUserApi {
     @Override
     public ResponseEntity<GenCurrentUser> getCurrentUser() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof AccessPrincipal principal && !principal.local()) {
-            if (principal.email() == null) return result(INVALID_TOKEN);
-            if (principal.identityId() == null) return result(UNLINKED);
-            boolean admin = authentication.getAuthorities().stream().anyMatch(role -> AccessPrincipal.ADMIN.equals(role.getAuthority()));
-            return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(GenCurrentUser.builder().status(RESOLVED)
-                    .identityId(principal.identityId()).displayName(principal.displayName()).isAdmin(admin).build());
+        if (authentication != null && authentication.getPrincipal() instanceof AccessPrincipal principal) {
+            var actor = principal.actor() == null ? principal : principal.actor();
+            if (principal.identityId() == null && !principal.local()) return result(principal.email() == null ? INVALID_TOKEN : UNLINKED);
+            var user = GenCurrentUser.builder().status(principal.identityId() == null ? DISABLED : RESOLVED)
+                    .identityId(principal.identityId()).displayName(principal.displayName())
+                    .role(principal.role() == null ? null : com.sixtymeters.thereabout.generated.model.GenUserRole.valueOf(principal.role().name()))
+                    .actorIdentityId(actor.identityId()).actorDisplayName(actor.displayName())
+                    .actorRole(actor.role() == null ? null : com.sixtymeters.thereabout.generated.model.GenUserRole.valueOf(actor.role().name()))
+                    .impersonating(principal.actor() != null).build();
+            return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(user);
         }
         if (!(request.getAttribute(CloudflareAccessFilter.STATUS) instanceof CloudflareAccessFilter.Status status)) return result(DISABLED);
         return result(switch (status) {

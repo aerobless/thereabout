@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.finance;
 
+import com.sixtymeters.thereabout.access.UserId;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -22,6 +23,9 @@ import org.springframework.web.server.ResponseStatusException;
 @SpringBootTest
 @ActiveProfiles("test")
 class FinanceWriteBoundaryTest {
+    @org.springframework.beans.factory.annotation.Autowired org.springframework.jdbc.core.JdbcTemplate ownerDb;
+    @org.junit.jupiter.api.BeforeEach void ensureOwner() { com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb); }
+
   @Autowired TransactionService transactions;
   @Autowired CategoryService categories;
   @Autowired ExchangeRateService rates;
@@ -46,8 +50,8 @@ class FinanceWriteBoundaryTest {
         "INSERT INTO finance_currency(code,name,symbol,decimal_places)"
             + " VALUES('CHF','Franc','CHF',2),('EUR','Euro','EUR',2)");
     db.update(
-        "INSERT INTO finance_account(id,name,kind,currency)"
-            + " VALUES(1,'Cash','CASH','CHF'),(2,'Shop','EXPENSE','CHF')");
+        "INSERT INTO finance_account(id,name,kind,currency,user_id)"
+            + " VALUES(1,'Cash','CASH','CHF',1),(2,'Shop','EXPENSE','CHF',NULL)");
     db.update("INSERT INTO finance_category(id,name) VALUES(1,'Original'),(2,'Other')");
   }
 
@@ -69,16 +73,16 @@ class FinanceWriteBoundaryTest {
 
   @Test
   void postingOnlyChangeAdvancesAggregateVersion() {
-    var original = transactions.save(expense("10.00")).getTransaction();
+    var original = transactions.save(new UserId(1), expense("10.00")).getTransaction();
     var updated =
         transactions
-            .save(expense("12.00").id(original.getId()).version(original.getVersion()))
+            .save(new UserId(1), expense("12.00").id(original.getId()).version(original.getVersion()))
             .getTransaction();
     assertThat(updated.getVersion()).isGreaterThan(original.getVersion());
     assertThat(new BigDecimal(updated.getSourceAmount())).isEqualByComparingTo("12.00");
     assertThatThrownBy(
             () ->
-                transactions.save(
+                transactions.save(new UserId(1),
                     expense("15.00").id(original.getId()).version(original.getVersion())))
         .isInstanceOf(ResponseStatusException.class);
     assertThat(
@@ -91,7 +95,7 @@ class FinanceWriteBoundaryTest {
 
   @Test
   void concurrentEditorsCannotBothOverwriteTheSameVersion() throws Exception {
-    var original = transactions.save(expense("10.00")).getTransaction();
+    var original = transactions.save(new UserId(1), expense("10.00")).getTransaction();
     var results =
         race(
             () -> attempt(expense("12.00").id(original.getId()).version(original.getVersion())),
@@ -101,7 +105,7 @@ class FinanceWriteBoundaryTest {
 
   private int attempt(GenFinanceTransactionInput input) {
     try {
-      transactions.save(input);
+      transactions.save(new UserId(1), input);
       return 200;
     } catch (ResponseStatusException conflict) {
       return conflict.getStatusCode().value();
@@ -113,8 +117,8 @@ class FinanceWriteBoundaryTest {
     String key = UUID.randomUUID().toString();
     var results =
         race(
-            () -> transactions.save(expense("10.00").requestKey(key)).getTransaction().getId(),
-            () -> transactions.save(expense("10.00").requestKey(key)).getTransaction().getId());
+            () -> transactions.save(new UserId(1), expense("10.00").requestKey(key)).getTransaction().getId(),
+            () -> transactions.save(new UserId(1), expense("10.00").requestKey(key)).getTransaction().getId());
     assertThat(results.get(0)).isEqualTo(results.get(1));
     assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_transaction", Integer.class))
         .isEqualTo(1);
@@ -149,8 +153,8 @@ class FinanceWriteBoundaryTest {
 
   @Test
   void failedBulkWriteRollsBackEntitiesAuditAndRequestReservation() {
-    var a = transactions.save(expense("10.00")).getTransaction();
-    var b = transactions.save(expense("20.00")).getTransaction();
+    var a = transactions.save(new UserId(1), expense("10.00")).getTransaction();
+    var b = transactions.save(new UserId(1), expense("20.00")).getTransaction();
     String key = UUID.randomUUID().toString();
     var input =
         new GenFinanceBulkCategoryInput()
@@ -160,7 +164,7 @@ class FinanceWriteBoundaryTest {
                 List.of(
                     new GenFinanceSelection().id(a.getId()).version(a.getVersion()),
                     new GenFinanceSelection().id(b.getId()).version(999L)));
-    assertThatThrownBy(() -> transactions.categorize(input))
+    assertThatThrownBy(() -> transactions.categorize(new UserId(1), input))
         .isInstanceOf(ResponseStatusException.class);
     assertThat(db.queryForList("SELECT category_id FROM finance_transaction", Long.class))
         .containsOnly(1L);
@@ -174,7 +178,7 @@ class FinanceWriteBoundaryTest {
                 "SELECT COUNT(*) FROM finance_request WHERE request_key=?", Integer.class, key))
         .isZero();
     input.getItems().get(1).setVersion(b.getVersion());
-    assertThat(transactions.categorize(input).getUpdated()).isEqualTo(2);
+    assertThat(transactions.categorize(new UserId(1), input).getUpdated()).isEqualTo(2);
   }
 
   @Test
@@ -190,8 +194,8 @@ class FinanceWriteBoundaryTest {
                   LocalDate.of(2026, 1, 1));
             });
     var input = new GenFinanceRefreshInput().requestKey(UUID.randomUUID().toString());
-    var first = rates.refresh(input);
-    var replay = rates.refresh(input);
+    var first = rates.refresh(new UserId(1), input);
+    var replay = rates.refresh(new UserId(1), input);
     assertThat(replay).isEqualTo(first);
     verify(ecb, times(1)).download();
   }

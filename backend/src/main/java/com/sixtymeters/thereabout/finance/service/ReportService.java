@@ -2,6 +2,7 @@ package com.sixtymeters.thereabout.finance.service;
 
 import static com.sixtymeters.thereabout.finance.domain.FinanceRules.*;
 
+import com.sixtymeters.thereabout.access.UserId;
 import com.sixtymeters.thereabout.finance.data.*;
 import com.sixtymeters.thereabout.finance.data.FinanceReadRepository.LedgerEntry;
 import com.sixtymeters.thereabout.generated.model.*;
@@ -21,12 +22,12 @@ public class ReportService {
   private final ExchangeRateReadRepository rates;
   private final Clock financeClock;
 
-  public GenFinanceOverview overview(GenFinancePeriodQuery query) {
+  public GenFinanceOverview overview(UserId user, GenFinancePeriodQuery query) {
     LocalDateTime now = LocalDateTime.now(financeClock);
     var period = period(query, now);
     var to = period.to().isAfter(now) ? now : period.to();
-    var accounts = reads.ownAccounts();
-    var ledger = reads.ledger();
+    var accounts = reads.ownAccounts(user);
+    var ledger = reads.ledger(user);
     var balances = balances(ledger, now);
     var fx = new Conversion(rates);
     var totals = new EnumMap<GenFinanceAccountKind, BigDecimal>(GenFinanceAccountKind.class);
@@ -106,15 +107,16 @@ public class ReportService {
         .warnings(fx.warnings())
         .complete(fx.complete())
         .asOf(now.toString())
-        .latestTransaction(reads.latestTransaction())
-        .earliestTransaction(reads.earliestTransaction());
+        .latestTransaction(reads.latestTransaction(user))
+        .earliestTransaction(reads.earliestTransaction(user));
   }
 
-  public GenFinanceReport report(GenFinancePeriodQuery query) {
+  public GenFinanceReport report(UserId user, GenFinancePeriodQuery query) {
     var period = period(query, LocalDateTime.now(financeClock));
     long selected = query.getAccountId() == null ? 0 : query.getAccountId();
-    var accounts = reads.ownAccounts();
-    var ledger = reads.ledger();
+    var accounts = reads.ownAccounts(user);
+    if (selected != 0 && accounts.stream().noneMatch(a -> a.getId() == selected)) throw missing("Own account");
+    var ledger = reads.ledger(user);
     var fx = new Conversion(rates);
     Set<Long> own = new HashSet<>();
     accounts.forEach(a -> own.add(a.getId()));
@@ -126,7 +128,8 @@ public class ReportService {
           || !period.contains(entry.occurredAt())) continue;
       if (entry.effect() != FinancialEffect.OPERATING
           || (entry.type() != TransactionType.DEPOSIT
-              && entry.type() != TransactionType.WITHDRAWAL)) continue;
+              && entry.type() != TransactionType.WITHDRAWAL
+              && !(entry.type() == TransactionType.TRANSFER && entry.crossUserTransfer()))) continue;
       var amount = fx.convert(entry.amount(), entry.currency(), entry.occurredAt().toLocalDate());
       String month = YearMonth.from(entry.occurredAt()).toString();
       months.computeIfAbsent(month, key -> new Cashflow(key, null)).add(amount);

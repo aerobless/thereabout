@@ -16,7 +16,7 @@ public class HealthDataService {
     private final WorkoutImportService workouts;
     private final HealthQueryService queries;
 
-    public void saveHealthMetrics(List<GenHealthMetric> input) { metrics.saveHealthMetrics(input); }
-    public void saveWorkouts(List<GenWorkout> input) { workouts.saveWorkouts(input); }
-    public HealthDataResponse getHealthData(LocalDate from, LocalDate to) { return queries.getHealthData(from, to); }
+    public void saveHealthMetrics(com.sixtymeters.thereabout.access.UserId user, List<GenHealthMetric> input) { metrics.saveHealthMetrics(user, input); }
+    public void saveWorkouts(com.sixtymeters.thereabout.access.UserId user, List<GenWorkout> input) { workouts.saveWorkouts(user, input); }
+    public HealthDataResponse getHealthData(com.sixtymeters.thereabout.access.UserId user, LocalDate from, LocalDate to) { return queries.getHealthData(user, from, to); }
 }

@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.choices;
 
+import com.sixtymeters.thereabout.access.UserId;
 import com.sixtymeters.thereabout.choices.data.ChoicesRepository;
 import com.sixtymeters.thereabout.choices.service.ChoicesService;
 import com.sixtymeters.thereabout.generated.model.*;
@@ -23,22 +24,25 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @ActiveProfiles("test")
 @TestPropertySource(properties = {"thereabout.telegram.tdlib.api-id=0", "thereabout.telegram.tdlib.api-hash="})
 class ChoicesTest {
+    @org.springframework.beans.factory.annotation.Autowired org.springframework.jdbc.core.JdbcTemplate ownerDb;
+    @org.junit.jupiter.api.BeforeEach void ensureOwner() { com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb); }
+
     @Autowired ChoicesService service;
     @Autowired ChoicesRepository repository;
     @Autowired MockMvc mvc;
     @Autowired JsonMapper mapper;
     private final LocalDate date = LocalDate.of(1902, 1, 2);
 
-    @BeforeEach @AfterEach void clean() { repository.deleteAllById(List.of(date, date.minusDays(1))); }
+    @BeforeEach @AfterEach void clean() { repository.deleteAllById(List.of(new com.sixtymeters.thereabout.choices.data.ChoicesId(1L,date), new com.sixtymeters.thereabout.choices.data.ChoicesId(1L,date.minusDays(1)))); }
 
     @Test void emptyHistoryIncludesEveryCalendarDayWithoutCreatingRows() {
-        var history = service.history(date, 30);
+        var history = service.history(new UserId(1), date, 30);
         assertThat(history.getScore()).isZero();
         assertThat(history.getEditable()).isTrue();
         assertThat(history.getSeries()).hasSize(30);
         assertThat(history.getSeries().getFirst().getDate()).isEqualTo(LocalDate.of(1901, 12, 4));
         assertThat(history.getSeries()).allSatisfy(day -> assertThat(day.getScore()).isZero());
-        assertThat(repository.findById(date)).isEmpty();
+        assertThat(repository.findById(new com.sixtymeters.thereabout.choices.data.ChoicesId(1L,date))).isEmpty();
     }
 
     @Test void signedAdjustmentsPersistAndDaysRemainIndependent() throws Exception {
@@ -48,7 +52,7 @@ class ChoicesTest {
                     .andReturn().getResponse();
             assertThat(result.getStatus()).isEqualTo(200);
         }
-        service.adjust(date.minusDays(1), 1);
+        service.adjust(new UserId(1), date.minusDays(1), 1);
         var response = mvc.perform(get("/backend/api/v1/choices").param("date", date.toString()).param("days", "7"))
                 .andReturn().getResponse();
         assertThat(response.getStatus()).isEqualTo(200);
@@ -56,16 +60,16 @@ class ChoicesTest {
         assertThat(history.getScore()).isEqualTo(-1);
         assertThat(history.getSeries()).hasSize(7);
         assertThat(history.getSeries().get(5).getScore()).isEqualTo(1);
-        assertThat(repository.findById(date).orElseThrow().getScore()).isEqualTo(-1);
+        assertThat(repository.findById(new com.sixtymeters.thereabout.choices.data.ChoicesId(1L,date)).orElseThrow().getScore()).isEqualTo(-1);
     }
 
     @Test void concurrentFirstWritesDoNotLosePoints() throws Exception {
         try (var executor = Executors.newFixedThreadPool(8)) {
             List<Callable<Void>> writes = new ArrayList<>();
-            for (int i = 0; i < 40; i++) writes.add(() -> { service.adjust(date, 1); return null; });
+            for (int i = 0; i < 40; i++) writes.add(() -> { service.adjust(new UserId(1), date, 1); return null; });
             for (var result : executor.invokeAll(writes)) result.get(20, TimeUnit.SECONDS);
         }
-        assertThat(service.history(date, 7).getScore()).isEqualTo(40);
+        assertThat(service.history(new UserId(1), date, 7).getScore()).isEqualTo(40);
     }
 
     @Test void invalidWritesAndRangesAreRejected() throws Exception {
@@ -78,10 +82,10 @@ class ChoicesTest {
         assertThat(mvc.perform(get("/backend/api/v1/choices").param("date", date.toString()).param("days", "8"))
                 .andReturn().getResponse().getStatus()).isEqualTo(400);
         var tomorrow = LocalDate.now(ZoneId.of("Europe/Zurich")).plusDays(1);
-        assertThat(service.history(tomorrow, 7).getEditable()).isFalse();
+        assertThat(service.history(new UserId(1), tomorrow, 7).getEditable()).isFalse();
         assertThat(mvc.perform(post("/backend/api/v1/choices/{date}/adjust", tomorrow)
                 .contentType(MediaType.APPLICATION_JSON).content("{\"delta\":1}"))
                 .andReturn().getResponse().getStatus()).isEqualTo(400);
-        assertThat(repository.findById(date)).isEmpty();
+        assertThat(repository.findById(new com.sixtymeters.thereabout.choices.data.ChoicesId(1L,date))).isEmpty();
     }
 }

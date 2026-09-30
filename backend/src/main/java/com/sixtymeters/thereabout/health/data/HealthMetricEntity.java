@@ -21,6 +21,9 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 public class HealthMetricEntity {
 
+    @Column(nullable = false)
+    private Long userId;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

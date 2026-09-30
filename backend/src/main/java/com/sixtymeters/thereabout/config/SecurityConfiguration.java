@@ -50,11 +50,13 @@ public class SecurityConfiguration {
     private final Mode mode;
     private final JwtDecoder decoder;
     private final CloudflareUsers users;
+    private final com.sixtymeters.thereabout.communication.data.IdentityRepository identities;
 
-    SecurityConfiguration(AccessProperties properties, CloudflareAccess cloudflare, CloudflareUsers users) {
+    SecurityConfiguration(AccessProperties properties, CloudflareAccess cloudflare, CloudflareUsers users, com.sixtymeters.thereabout.communication.data.IdentityRepository identities) {
         this.mode = properties.mode();
         this.decoder = cloudflare.decoder();
         this.users = users;
+        this.identities = identities;
     }
 
     /**
@@ -81,7 +83,13 @@ public class SecurityConfiguration {
         identify(machine(http.securityMatcher(new OrRequestMatcher(PATHS.matcher("/mcp/finances"), PATHS.matcher("/mcp/finances/**")))))
                 .addFilterBefore(new BearerKeyFilter(mcpKeys::matchesAuthorization, "ROLE_MCP", true),
                         AnonymousAuthenticationFilter.class)
-                .authorizeHttpRequests(rules -> rules.anyRequest().hasRole("MCP"))
+                .authorizeHttpRequests(rules -> rules.anyRequest().access((authentication, context) -> {
+                    var auth = authentication.get();
+                    boolean key = auth.getAuthorities().stream().anyMatch(a -> "ROLE_MCP".equals(a.getAuthority()));
+                    boolean eligible = auth.getPrincipal() instanceof com.sixtymeters.thereabout.access.AccessPrincipal p
+                            && (p.local() || p.identityId() != null || p.email() == null);
+                    return new org.springframework.security.authorization.AuthorizationDecision(key && eligible);
+                }))
                 .exceptionHandling(errors -> errors.authenticationEntryPoint(unauthorized(true))
                         .accessDeniedHandler((request, response, denied) -> unauthorized(true).commence(request, response, null)));
         return http.build();
@@ -91,7 +99,9 @@ public class SecurityConfiguration {
     @Order(3)
     SecurityFilterChain finance(HttpSecurity http) throws Exception {
         browser(http.securityMatcher(PATHS.matcher("/api/finances/**")))
-                .authorizeHttpRequests(rules -> rules.anyRequest().hasAuthority(USER));
+                .authorizeHttpRequests(rules -> rules
+                        .requestMatchers(PATHS.matcher("/api/finances/configuration/**")).hasAuthority(ADMIN)
+                        .anyRequest().hasAuthority(USER));
         return http.build();
     }
 
@@ -101,7 +111,9 @@ public class SecurityConfiguration {
     SecurityFilterChain application(HttpSecurity http) throws Exception {
         browser(http).authorizeHttpRequests(rules -> rules
                 .requestMatchers(PATHS.matcher(GET, "/backend/api/v1/current-user")).permitAll()
-                .requestMatchers(PATHS.matcher(POST, "/backend/api/v1/identity/{id}/user")).hasAuthority(ADMIN)
+                .requestMatchers(PATHS.matcher("/backend/api/v1/identity"), PATHS.matcher("/backend/api/v1/identity/**"),
+                        PATHS.matcher("/backend/api/v1/identity-in-application"), PATHS.matcher("/backend/api/v1/identity-in-application/**"),
+                        PATHS.matcher("/backend/api/v1/config/**"), PATHS.matcher("/backend/api/v1/calendar/google/**")).hasAuthority(ADMIN)
                 .requestMatchers(PATHS.matcher("/actuator/health"), PATHS.matcher("/actuator/health/**")).permitAll()
                 .requestMatchers(PATHS.matcher("/backend/api/v1/ingest/**")).denyAll()
                 .requestMatchers(PATHS.matcher("/backend/**"), PATHS.matcher("/api/**"), PATHS.matcher("/mcp/**"),
@@ -115,6 +127,7 @@ public class SecurityConfiguration {
         var tokens = CookieCsrfTokenRepository.withHttpOnlyFalse();
         tokens.setCookieCustomizer(cookie -> cookie.secure(mode == Mode.CLOUDFLARE).sameSite("Lax"));
         return identify(stateless(http))
+                .addFilterBefore(new com.sixtymeters.thereabout.access.ImpersonationFilter(identities), AnonymousAuthenticationFilter.class)
                 .csrf(csrf -> csrf.spa().csrfTokenRepository(tokens))
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
                 .headers(headers -> headers
@@ -126,7 +139,7 @@ public class SecurityConfiguration {
 
     private HttpSecurity identify(HttpSecurity http) {
         if (decoder != null) http.addFilterBefore(new CloudflareAccessFilter(decoder, users), AnonymousAuthenticationFilter.class);
-        if (mode == Mode.LOCAL) http.addFilterBefore(new LocalAccessFilter(), AnonymousAuthenticationFilter.class);
+        if (mode == Mode.LOCAL) http.addFilterBefore(new LocalAccessFilter(identities), AnonymousAuthenticationFilter.class);
         return http;
     }
 

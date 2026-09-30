@@ -2,6 +2,7 @@ package com.sixtymeters.thereabout.finance.service;
 
 import static com.sixtymeters.thereabout.finance.domain.FinanceRules.*;
 
+import com.sixtymeters.thereabout.access.UserId;
 import com.sixtymeters.thereabout.finance.data.*;
 import com.sixtymeters.thereabout.generated.model.*;
 import lombok.RequiredArgsConstructor;
@@ -16,15 +17,15 @@ public class ValuationService {
   private final TransactionService transactions;
   private final FinanceWriteCoordinator writes;
 
-  public GenFinanceValuationPreview preview(GenFinanceValuationPreviewInput input) {
-    var account = accounts.requireAccount(input.getAccountId());
+  public GenFinanceValuationPreview preview(UserId user, GenFinanceValuationPreviewInput input) {
+    var account = accounts.requireAccount(user, input.getAccountId());
     require(account.getKind().isValuedAsset(), "Account is not a valued asset");
     var date = dateTime(input.getDate(), null, false);
     require(date != null, "date required");
     var reported = decimal(input.getReportedValue());
     require(reported.signum() >= 0, "Value must not be negative");
     accounts.precision(reported, account.getCurrency());
-    var balance = reads.balance(account.getId(), date);
+    var balance = reads.balance(user, account.getId(), date);
     return new GenFinanceValuationPreview()
         .accountId(account.getId())
         .date(date.toString())
@@ -34,15 +35,15 @@ public class ValuationService {
         .currency(account.getCurrency());
   }
 
-  public GenFinanceValuationResult save(GenFinanceValuationInput input) {
-    return writes.write(
+  public GenFinanceValuationResult save(UserId user, GenFinanceValuationInput input) {
+    return writes.write(user,
         "valuations.save",
         input.getRequestKey(),
         input,
         GenFinanceValuationResult.class,
         () -> {
           var preview =
-              preview(
+              preview(user,
                   new GenFinanceValuationPreviewInput()
                       .accountId(input.getAccountId())
                       .date(input.getDate())
@@ -62,7 +63,7 @@ public class ValuationService {
           Long transactionId =
               delta.signum() == 0
                   ? null
-                  : transactions.valuationAdjustment(
+                  : transactions.valuationAdjustment(user,
                       input.getAccountId(),
                       preview.getCurrency(),
                       date,
@@ -78,8 +79,8 @@ public class ValuationService {
           valuation.setReference(reference);
           valuation.setOrigin("MANUAL");
           valuations.saveAndFlush(valuation);
-          var after = reads.valuation(valuation.getId());
-          writes.audit("valuations.save", input.getAccountId(), null, after);
+          var after = reads.valuation(user, valuation.getId());
+          writes.audit(user, "valuations.save", input.getAccountId(), null, after);
           return new GenFinanceValuationResult().valuation(after).preview(preview);
         });
   }

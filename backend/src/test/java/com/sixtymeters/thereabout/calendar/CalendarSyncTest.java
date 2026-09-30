@@ -1,5 +1,6 @@
 package com.sixtymeters.thereabout.calendar;
 
+import com.sixtymeters.thereabout.access.UserId;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponseException;
@@ -38,14 +39,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @ActiveProfiles("test")
 @Transactional
 class CalendarSyncTest {
+    @org.springframework.beans.factory.annotation.Autowired org.springframework.jdbc.core.JdbcTemplate ownerDb;
+
     @MockitoSpyBean CalendarStore store;
     @Autowired CalendarOccurrences occurrences;
+    @Autowired com.sixtymeters.thereabout.access.UserContext users;
     @Autowired MockMvc mvc;
     @MockitoBean GoogleCalendarGateway google;
     CalendarSyncService sync;
     long id;
     @BeforeEach void setup() throws Exception {
-        sync=new CalendarSyncService(store,google);
+        com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb);
+        sync=new CalendarSyncService(store,google,users);
         ReflectionTestUtils.setField(sync,"workerEnabled",true);
         ReflectionTestUtils.setField(sync,"publicOrigin","https://example.com");
         store.update("UPDATE calendar_connection SET account='me@example.com',state='READY',webhook_url=?,pending_version=0,processed_version=0,next_safety_at=?,retry_at=NULL WHERE id=1",
@@ -53,6 +58,7 @@ class CalendarSyncTest {
         store.metadata("me@example.com", new CalendarListEntry().setId("primary-test").setSummary("Personal").setTimeZone("Europe/Zurich").setAccessRole("owner"));
         id=store.calendars().stream().filter(c -> c.googleId().equals("primary-test")).findFirst().orElseThrow().id();
         store.update("UPDATE calendar_calendar SET selected=TRUE,active_generation='original',sync_token='old',pending_version=1 WHERE id=?",id);
+        store.replaceUserIds(id,List.of(1L));
         when(google.account()).thenReturn("me@example.com");
         when(google.calendars(any())).thenReturn(new CalendarList().setItems(List.of(new CalendarListEntry().setId("primary-test").setSummary("Personal").setTimeZone("Europe/Zurich").setAccessRole("owner"))));
         when(google.events(anyString(),any(),any())).thenReturn(new Events().setItems(List.of()).setNextSyncToken("next"));
@@ -179,6 +185,7 @@ class CalendarSyncTest {
         sync.credentials(Map.of("clientId","test-client","clientSecret","secret","refreshToken","refresh"));
         assertThat(store.calendar(id).selected()).isTrue();
         assertThat(store.identity("me@example.com",null)).isPositive();
+        store.replaceUserIds(id,List.of(1L));
         when(google.account()).thenReturn("other@example.com");
         sync.credentials(Map.of("refreshToken","replacement"));
         assertThat(store.calendar(id).selected()).isFalse();
@@ -198,36 +205,36 @@ class CalendarSyncTest {
         Event master=timed("series","2026-09-21T09:00:00+02:00","2026-09-21T10:00:00+02:00").setRecurrence(List.of("RRULE:FREQ=DAILY"));
         Event moved=timed("moved","2026-09-25T11:00:00+02:00","2026-09-25T12:00:00+02:00").setRecurringEventId("series").setOriginalStartTime(timed("x","2026-09-24T09:00:00+02:00","2026-09-24T10:00:00+02:00").getStart());
         store.page(store.calendar(id),"original",List.of(master,moved));
-        assertThat(occurrences.day(LocalDate.parse("2026-09-24"),ZoneId.of("Europe/Zurich"))).isEmpty();
-        assertThat(occurrences.day(LocalDate.parse("2026-09-25"),ZoneId.of("Europe/Zurich"))).hasSize(2);
+        assertThat(occurrences.day(new UserId(1), LocalDate.parse("2026-09-24"),ZoneId.of("Europe/Zurich"))).isEmpty();
+        assertThat(occurrences.day(new UserId(1), LocalDate.parse("2026-09-25"),ZoneId.of("Europe/Zurich"))).hasSize(2);
         moved.setStatus("cancelled"); store.page(store.calendar(id),"original",List.of(moved));
-        assertThat(occurrences.day(LocalDate.parse("2026-09-25"),ZoneId.of("Europe/Zurich"))).hasSize(1);
+        assertThat(occurrences.day(new UserId(1), LocalDate.parse("2026-09-25"),ZoneId.of("Europe/Zurich"))).hasSize(1);
     }
     @Test void localSeriesDeletionIsIdempotentAndSurvivesMovedExceptionsAndFullImport() throws Exception {
         Event master=timed("series","2026-09-21T09:00:00+02:00","2026-09-21T10:00:00+02:00").setRecurrence(List.of("RRULE:FREQ=DAILY"));
         store.page(store.calendar(id),"original",List.of(master));
         long pending=store.calendar(id).pending();
-        sync.delete(id,"series","2026-09-24T09:00:00+02:00");
-        sync.delete(id,"series","2026-09-24T07:00:00Z");
+        sync.delete(new UserId(1), id,"series","2026-09-24T09:00:00+02:00");
+        sync.delete(new UserId(1), id,"series","2026-09-24T07:00:00Z");
         assertThat(store.localDeletions(id)).hasSize(1);
         assertThat(store.calendar(id).pending()).isEqualTo(pending);
         verifyNoInteractions(google);
-        assertThat(occurrences.day(LocalDate.parse("2026-09-24"),ZoneId.of("Europe/Zurich"))).isEmpty();
-        assertThat(occurrences.day(LocalDate.parse("2026-09-25"),ZoneId.of("Europe/Zurich"))).hasSize(1);
-        assertThatThrownBy(() -> sync.delete(id,"series",null)).isInstanceOf(ThereaboutException.class);
-        assertThatThrownBy(() -> sync.delete(id,"series","invalid")).isInstanceOf(ThereaboutException.class);
+        assertThat(occurrences.day(new UserId(1), LocalDate.parse("2026-09-24"),ZoneId.of("Europe/Zurich"))).isEmpty();
+        assertThat(occurrences.day(new UserId(1), LocalDate.parse("2026-09-25"),ZoneId.of("Europe/Zurich"))).hasSize(1);
+        assertThatThrownBy(() -> sync.delete(new UserId(1), id,"series",null)).isInstanceOf(ThereaboutException.class);
+        assertThatThrownBy(() -> sync.delete(new UserId(1), id,"series","invalid")).isInstanceOf(ThereaboutException.class);
         Event moved=timed("moved","2026-09-25T11:00:00+02:00","2026-09-25T12:00:00+02:00")
                 .setRecurringEventId("series").setOriginalStartTime(timed("x","2026-09-24T09:00:00+02:00","2026-09-24T10:00:00+02:00").getStart());
         when(google.events(anyString(),any(),any())).thenReturn(new Events().setItems(List.of(master,moved)).setNextSyncToken("new"));
         sync.synchronize(store.calendar(id),true);
-        assertThat(occurrences.day(LocalDate.parse("2026-09-25"),ZoneId.of("Europe/Zurich"))).hasSize(1);
-        sync.delete(id,"moved","2026-09-24T07:00:00Z");
+        assertThat(occurrences.day(new UserId(1), LocalDate.parse("2026-09-25"),ZoneId.of("Europe/Zurich"))).hasSize(1);
+        sync.delete(new UserId(1), id,"moved","2026-09-24T07:00:00Z");
         store.page(store.calendar(id),store.calendar(id).generation(),List.of(moved.setStart(timed("x","2026-09-26T09:00:00+02:00","2026-09-26T10:00:00+02:00").getStart())
                 .setEnd(timed("x","2026-09-26T09:00:00+02:00","2026-09-26T10:00:00+02:00").getEnd())));
-        assertThat(occurrences.day(LocalDate.parse("2026-09-26"),ZoneId.of("Europe/Zurich"))).hasSize(1);
+        assertThat(occurrences.day(new UserId(1), LocalDate.parse("2026-09-26"),ZoneId.of("Europe/Zurich"))).hasSize(1);
         when(google.events(anyString(),any(),any())).thenReturn(new Events().setItems(List.of(master)).setNextSyncToken("rebuilt"));
         sync.synchronize(store.calendar(id),true);
-        sync.delete(id,"moved","2026-09-24T07:00:00Z"); // Previously deleted exception disappeared from Google's snapshot.
+        sync.delete(new UserId(1), id,"moved","2026-09-24T07:00:00Z"); // Previously deleted exception disappeared from Google's snapshot.
         assertThat(store.localDeletions(id)).hasSize(1);
     }
     @Test void localDeletionWorksOfflineOnReadOnlyInactiveCalendarsAndPreservesOtherCopies() throws Exception {
@@ -235,53 +242,54 @@ class CalendarSyncTest {
         store.page(store.calendar(id),"original",List.of(event));
         store.metadata("another-account",new CalendarListEntry().setId("copy").setSummary("Copy").setAccessRole("reader"));
         long copy=store.calendars().stream().filter(c -> c.googleId().equals("copy")).findFirst().orElseThrow().id();
+        store.replaceUserIds(copy,List.of(1L));
         store.update("UPDATE calendar_calendar SET active_generation='copy' WHERE id=?",copy);
         store.page(store.calendar(copy),"copy",List.of(event));
         store.update("UPDATE calendar_calendar SET access_role='reader',selected=FALSE WHERE id=?",id);
         store.update("UPDATE calendar_connection SET state='NOT_CONFIGURED',account=NULL WHERE id=1");
-        assertThat(occurrences.day(LocalDate.parse("2026-09-24"),ZoneId.of("Europe/Zurich"))).allMatch(e -> e.canDelete());
-        sync.delete(id,"event",null);
-        sync.delete(id,"event",null);
+        assertThat(occurrences.day(new UserId(1), LocalDate.parse("2026-09-24"),ZoneId.of("Europe/Zurich"))).allMatch(e -> e.canDelete());
+        sync.delete(new UserId(1), id,"event",null);
+        sync.delete(new UserId(1), id,"event",null);
         verifyNoInteractions(google);
-        assertThat(occurrences.day(LocalDate.parse("2026-09-24"),ZoneId.of("America/New_York"))).singleElement().satisfies(e -> assertThat(e.calendarId()).isEqualTo(copy));
+        assertThat(occurrences.day(new UserId(1), LocalDate.parse("2026-09-24"),ZoneId.of("America/New_York"))).singleElement().satisfies(e -> assertThat(e.calendarId()).isEqualTo(copy));
         when(google.events(anyString(),any(),any())).thenReturn(new Events().setItems(List.of(event.setSummary("Changed in Google"))).setNextSyncToken("new"));
         sync.synchronize(store.calendar(id),false);
         sync.synchronize(store.calendar(id),true);
         CalendarOccurrences restarted=new CalendarOccurrences(store);
-        assertThat(restarted.day(LocalDate.parse("2026-09-25"),ZoneId.of("Europe/Zurich"))).singleElement().satisfies(e -> assertThat(e.calendarId()).isEqualTo(copy));
+        assertThat(restarted.day(new UserId(1), LocalDate.parse("2026-09-25"),ZoneId.of("Europe/Zurich"))).singleElement().satisfies(e -> assertThat(e.calendarId()).isEqualTo(copy));
         assertThat(store.events(store.calendar(id))).hasSize(1);
     }
     @Test void allDaySeriesDeletionPreservesOtherDatesAcrossTimeZones() {
         Event master=allDay("daily","2026-09-01","2026-09-02").setRecurrence(List.of("RRULE:FREQ=DAILY"));
         store.page(store.calendar(id),"original",List.of(master));
-        sync.delete(id,"daily","2026-09-24");
+        sync.delete(new UserId(1), id,"daily","2026-09-24");
         for (String zone : List.of("Europe/Zurich","Pacific/Auckland","America/Los_Angeles")) {
-            assertThat(occurrences.day(LocalDate.parse("2026-09-24"),ZoneId.of(zone))).isEmpty();
-            assertThat(occurrences.day(LocalDate.parse("2026-09-25"),ZoneId.of(zone))).hasSize(1);
+            assertThat(occurrences.day(new UserId(1), LocalDate.parse("2026-09-24"),ZoneId.of(zone))).isEmpty();
+            assertThat(occurrences.day(new UserId(1), LocalDate.parse("2026-09-25"),ZoneId.of(zone))).hasSize(1);
         }
-        assertThatThrownBy(() -> sync.delete(id,"daily","2026-09-24T00:00:00Z")).isInstanceOf(ThereaboutException.class);
+        assertThatThrownBy(() -> sync.delete(new UserId(1), id,"daily","2026-09-24T00:00:00Z")).isInstanceOf(ThereaboutException.class);
         verifyNoInteractions(google);
     }
     @Test void failedLocalStorageKeepsEventAndDoesNotContactGoogle() {
         store.page(store.calendar(id),"original",List.of(allDay("event","2026-09-24","2026-09-25")));
         doThrow(new org.springframework.dao.DataAccessResourceFailureException("test storage failure"))
                 .when(store).deleteLocally(id,"event","","event");
-        assertThatThrownBy(() -> sync.delete(id,"event",null)).isInstanceOf(org.springframework.dao.DataAccessException.class);
+        assertThatThrownBy(() -> sync.delete(new UserId(1), id,"event",null)).isInstanceOf(org.springframework.dao.DataAccessException.class);
         assertThat(store.localDeletions(id)).isEmpty();
-        assertThat(occurrences.day(LocalDate.parse("2026-09-24"),ZoneId.of("Europe/Zurich"))).hasSize(1);
+        assertThat(occurrences.day(new UserId(1), LocalDate.parse("2026-09-24"),ZoneId.of("Europe/Zurich"))).hasSize(1);
         verifyNoInteractions(google);
     }
     @Test void fullImportPublishPreservesDeletionMadeWhileFetchingTheSnapshot() throws Exception {
         Event event=allDay("event","2026-09-24","2026-09-25");
         store.page(store.calendar(id),"original",List.of(event));
         when(google.events("primary-test",null,null)).thenAnswer(call -> {
-            sync.delete(id,"event",null);
+            sync.delete(new UserId(1), id,"event",null);
             return new Events().setItems(List.of(event)).setNextSyncToken("new");
         });
         sync.synchronize(store.calendar(id),true);
         assertThat(store.events(store.calendar(id))).hasSize(1);
         assertThat(store.localDeletions(id)).hasSize(1);
-        assertThat(occurrences.day(LocalDate.parse("2026-09-24"),ZoneId.of("Europe/Zurich"))).isEmpty();
+        assertThat(occurrences.day(new UserId(1), LocalDate.parse("2026-09-24"),ZoneId.of("Europe/Zurich"))).isEmpty();
         verify(google).events("primary-test",null,null);
         verifyNoMoreInteractions(google);
     }
@@ -306,7 +314,7 @@ class CalendarSyncTest {
         assertThat(store.events(store.calendar(id))).hasSize(1);
         assertThat(store.channels()).isEmpty();
         assertThat(sync.channelHealth(id)).isEqualTo("DISABLED");
-        assertThat(occurrences.day(LocalDate.parse("2026-09-24"),ZoneId.of("Europe/Zurich")))
+        assertThat(occurrences.day(new UserId(1), LocalDate.parse("2026-09-24"),ZoneId.of("Europe/Zurich")))
                 .singleElement().satisfies(e -> assertThat(e.canDelete()).isTrue());
         clearInvocations(google);
         sync.work();
@@ -315,7 +323,7 @@ class CalendarSyncTest {
         sync.work();
         verify(google).events("primary-test","imported",null);
         verify(google,never()).watch(any(),anyString(),anyString(),anyString());
-        sync.delete(id,"manual-event",null);
+        sync.delete(new UserId(1), id,"manual-event",null);
         assertThat(store.localDeletions(id)).hasSize(1);
         sync.webhookUrl("https://example.com"+CalendarSyncService.CALLBACK_PATH);
         sync.work();

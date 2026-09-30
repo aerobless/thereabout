@@ -14,6 +14,9 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class LocationHistoryEntity {
 
+    @Column(nullable = false)
+    private Long userId;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

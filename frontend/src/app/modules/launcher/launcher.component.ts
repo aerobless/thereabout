@@ -1,3 +1,4 @@
+import {ProtectedImageDirective} from '../../shared/current-user/protected-image.directive';
 import {afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, HostListener, inject, signal, viewChild} from '@angular/core';
 import {DatePipe, DecimalPipe, NgTemplateOutlet} from '@angular/common';
 import {FormsModule} from '@angular/forms';
@@ -17,7 +18,7 @@ interface ShortcutDraft extends LauncherShortcutInput {id?: number}
 
 @Component({
   selector:'app-launcher',
-  imports:[FormsModule,RouterLink,DatePipe,DecimalPipe,AppModalComponent,NgTemplateOutlet],
+  imports:[ProtectedImageDirective,FormsModule,RouterLink,DatePipe,DecimalPipe,AppModalComponent,NgTemplateOutlet],
   templateUrl:'./launcher.component.html',
   styleUrls:['./launcher.component.scss','./launcher-editor.scss'],
   changeDetection:ChangeDetectionStrategy.OnPush

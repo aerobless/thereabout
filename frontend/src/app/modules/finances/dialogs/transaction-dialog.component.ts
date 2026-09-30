@@ -18,6 +18,7 @@ import {
   FormsModule,
   Validators,
 } from "@angular/forms";
+import {FinanceTransferAccount} from "../../../../../generated/backend-api/thereabout";
 import { map, of } from "rxjs";
 import {
   FinanceContext,
@@ -67,6 +68,21 @@ export class TransactionDialogComponent implements OnInit {
     foreignCurrency: [""],
     foreignAmount: [""],
   });
+  transferSource: FinanceTransferAccount | string | null = null;
+  transferDestination: FinanceTransferAccount | string | null = null;
+  private transferSearch = signal({side: 'sourceId', q: ''});
+  readonly transferChoices = loadResource(this.transferSearch, query =>
+    this.context.api.client.financeListTransferAccounts(query.q, 0, 50));
+  readonly transferSuggestions = computed(() => (this.transferChoices().data?.items ?? []).map(account =>
+    ({...account, label: `${account.userName} · ${account.name} (${account.currency})`})));
+  searchTransfer(side: 'sourceId' | 'destinationId', q: string) { this.transferSearch.set({side, q}); }
+  transferChanged(side: 'sourceId' | 'destinationId', value: unknown) {
+    if (typeof value === 'string' || value == null) this.form.controls[side].setValue(0);
+  }
+  selectTransfer(side: 'sourceId' | 'destinationId', account: FinanceTransferAccount) {
+    if (side === 'sourceId') this.transferSource=account; else this.transferDestination=account;
+    this.form.controls[side].setValue(account.id); this.alignCurrency();
+  }
   counterQuery = "";
   counterpartySelection:
     | Pick<FinanceAccount, "id" | "name" | "currency">
@@ -268,6 +284,8 @@ export class TransactionDialogComponent implements OnInit {
         },
       ]);
     } else {
+      const initial=this.context.accounts().find(a => a.kind === 'CASH' && a.active);
+      if (initial) this.transferSource={id:initial.id,name:initial.name,currency:initial.currency,userId:0,userName:''};
       this.form.patchValue({
         sourceId:
           this.context.accounts().find((a) => a.kind === "CASH" && a.active)
@@ -277,6 +295,10 @@ export class TransactionDialogComponent implements OnInit {
     this.counterpartySelection = this.usesCounterparty
       ? (this.originalCounter()[0] ?? null)
       : null;
+    if (t?.type === 'TRANSFER') {
+      this.transferSource={id:t.sourceAccountId,name:t.sourceName,currency:t.sourceCurrency,userId:0,userName:''};
+      this.transferDestination={id:t.destinationAccountId,name:t.destinationName,currency:t.destinationCurrency,userId:0,userName:''};
+    }
     this.transactionOptions();
   }
   private currencyPlaces(currency?: string) {
@@ -319,6 +341,7 @@ export class TransactionDialogComponent implements OnInit {
           currency: t.sourceCurrency,
         },
       ];
+    if (this.form.controls.type.value === 'TRANSFER') return typeof this.transferSource === 'object' && this.transferSource ? [this.transferSource] : [];
     return this.form.controls.type.value === "DEPOSIT"
       ? this.counters
       : this.own;
@@ -336,7 +359,7 @@ export class TransactionDialogComponent implements OnInit {
         },
       ];
     return this.form.controls.type.value === "TRANSFER"
-      ? this.own
+      ? (typeof this.transferDestination === 'object' && this.transferDestination ? [this.transferDestination] : [])
       : this.form.controls.type.value === "DEPOSIT"
         ? this.own
         : this.counters;
@@ -348,6 +371,7 @@ export class TransactionDialogComponent implements OnInit {
     });
   }
   changeType() {
+    this.transferSource=null; this.transferDestination=null;
     this.counterpartySelection = null;
     this.counterQuery = "";
     this.form.patchValue({ sourceId: 0, destinationId: 0 });

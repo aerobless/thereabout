@@ -23,9 +23,6 @@ import org.springframework.web.server.ResponseStatusException;
 @SpringBootTest
 @ActiveProfiles("test")
 class FinanceWriteBoundaryTest {
-    @org.springframework.beans.factory.annotation.Autowired org.springframework.jdbc.core.JdbcTemplate ownerDb;
-    @org.junit.jupiter.api.BeforeEach void ensureOwner() { com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb); }
-
   @Autowired TransactionService transactions;
   @Autowired CategoryService categories;
   @Autowired ExchangeRateService rates;
@@ -34,6 +31,7 @@ class FinanceWriteBoundaryTest {
 
   @BeforeEach
   void fixtures() {
+    com.sixtymeters.thereabout.testing.TestUsers.owner(db);
     for (String table :
         List.of(
             "request",

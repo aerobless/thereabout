@@ -17,15 +17,13 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("test")
 @Transactional
 class FinanceServiceTest {
-    @org.springframework.beans.factory.annotation.Autowired org.springframework.jdbc.core.JdbcTemplate ownerDb;
-    @org.junit.jupiter.api.BeforeEach void ensureOwner() { com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb); }
-
   @Autowired FinanceTestDriver service;
   @Autowired JdbcTemplate db;
   @Autowired jakarta.persistence.EntityManager entityManager;
 
   @BeforeEach
   void setup() {
+    com.sixtymeters.thereabout.testing.TestUsers.owner(db);
     for (String t :
         List.of(
             "request",

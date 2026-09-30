@@ -39,7 +39,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class LocationHistoryControllerTest {
     @org.springframework.beans.factory.annotation.Autowired org.springframework.jdbc.core.JdbcTemplate ownerDb;
-    @org.junit.jupiter.api.BeforeEach void ensureOwner() { com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb); }
 
 
     @Autowired
@@ -59,6 +58,7 @@ class LocationHistoryControllerTest {
 
     @BeforeEach
     void setUp() {
+        com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb);
         // Set up test API key
         testApiKey = "test-api-key-12345";
         ConfigurationEntity apiKeyConfig = ConfigurationEntity.builder()

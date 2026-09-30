@@ -85,6 +85,30 @@ class AccessSecurityTest {
     }
 
     @Test
+    void mapBootstrapIsAvailableToUsersWithoutOpeningConfigurationManagement() throws Exception {
+        long target = jdbc.queryForObject("SELECT identity_id FROM identity_in_application WHERE application='CLOUDFLARE' AND identifier=?", Long.class, user);
+        for (var request : List.of(
+                get("/backend/api/v1/config").header(CloudflareAccessFilter.HEADER, token("app", user, false)),
+                get("/backend/api/v1/config").header(CloudflareAccessFilter.HEADER, token("app", admin, false))
+                        .header(ImpersonationFilter.HEADER, String.valueOf(target)))) {
+            var response = send(request);
+            assertThat(response.statusCode()).isEqualTo(200);
+            var body = tools.jackson.databind.json.JsonMapper.builder().build().readTree(response.body());
+            assertThat(body.size()).isEqualTo(2);
+            assertThat(body.has("googleMapsApiKey")).isTrue();
+            assertThat(body.has("versionDetails")).isTrue();
+        }
+        for (String path : List.of("/backend/api/v1/config/ingestion-key", "/backend/api/v1/config/telegram", "/backend/api/v1/config/import-file")) {
+            assertThat(send(get(path).header(CloudflareAccessFilter.HEADER, token("app", user, false))).statusCode()).as(path).isEqualTo(403);
+            assertThat(send(get(path).header(CloudflareAccessFilter.HEADER, token("app", admin, false))
+                    .header(ImpersonationFilter.HEADER, String.valueOf(target))).statusCode()).as(path).isEqualTo(403);
+        }
+        assertThat(send(get("/backend/api/v1/config")).statusCode()).isEqualTo(401);
+        assertThat(send(get("/backend/api/v1/config").header(CloudflareAccessFilter.HEADER,
+                token("app", UUID.randomUUID() + "@example.test", false))).statusCode()).isEqualTo(403);
+    }
+
+    @Test
     void browserWritesRequireTheCsrfToken() throws Exception {
         String login = token("app", admin, false);
         String body = "{\"id\":0,\"shortName\":\"csrf-" + UUID.randomUUID().toString().substring(0, 8) + "\"}";

@@ -111,6 +111,8 @@ public class SecurityConfiguration {
     SecurityFilterChain application(HttpSecurity http) throws Exception {
         browser(http).authorizeHttpRequests(rules -> rules
                 .requestMatchers(PATHS.matcher(GET, "/backend/api/v1/current-user")).permitAll()
+                // Map bootstrap is shared browser data; management and secrets below remain Admin-only.
+                .requestMatchers(PATHS.matcher(GET, "/backend/api/v1/config")).hasAuthority(USER)
                 .requestMatchers(PATHS.matcher("/backend/api/v1/identity"), PATHS.matcher("/backend/api/v1/identity/**"),
                         PATHS.matcher("/backend/api/v1/identity-in-application"), PATHS.matcher("/backend/api/v1/identity-in-application/**"),
                         PATHS.matcher("/backend/api/v1/config/**"), PATHS.matcher("/backend/api/v1/calendar/google/**")).hasAuthority(ADMIN)

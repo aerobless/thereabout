@@ -28,7 +28,8 @@ import {Identity, IdentityService} from '../../../../../generated/backend-api/th
 })
 export class IdentityDetailComponent implements OnInit {
   private readonly changeDetector = inject(ChangeDetectorRef);
-  readonly canManageUsers = inject(CurrentUserService).canManageUsers;
+  readonly currentUser = inject(CurrentUserService);
+  readonly canManageUsers = this.currentUser.canManageUsers;
   private readonly refresh = registerRefresh(() => this.loadIdentity(), () => !!this.creatingUser || this.editing || this.deleteVisible());
 
     editing = false;
@@ -44,6 +45,10 @@ export class IdentityDetailComponent implements OnInit {
 
     readonly deleteVisible = signal(false);
     readonly deleting = signal(false);
+
+    impersonate(): void {
+        if (this.identity) this.currentUser.impersonate(this.identity);
+    }
 
     confirmDelete(): void {
         if (this.identity && !this.identity.role) this.deleteVisible.set(true);

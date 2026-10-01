@@ -64,7 +64,7 @@ public class LauncherStore {
     @Transactional
     public GenLauncherCollection deleteGroup(UserId user, long id) {
         lockGroups(user); requireGroup(user, id);
-        if (!shortcutIds(id).isEmpty()) throw new ThereaboutException(HttpStatus.CONFLICT, "Move or remove the shortcuts before deleting this group.");
+        db.update("DELETE FROM launcher_shortcut WHERE group_id=?", id);
         db.update("DELETE FROM launcher_group WHERE id=?", id);
         return collection(user);
     }

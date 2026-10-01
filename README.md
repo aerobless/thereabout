@@ -127,7 +127,7 @@ Add `TELEGRAM_API_ID` and `TELEGRAM_API_HASH` to the `thereabout` service's `env
 
 - Start typing to search names, descriptions, groups and URLs. Enter opens the selected result in the same tab; Tab/Shift+Tab and arrow keys select results, and Escape clears the search. Tab can leave the result list at either end.
 - The day, steps and next-event summaries open today's Day View. The next event is the next timed calendar occurrence starting within 30 days; all-day and already-started events are excluded.
-- Use the pencil beside a shortcut to edit its name, URL, description, group or icon. **Organize** adds/edits groups and changes the order of groups and shortcuts. Empty groups can be removed.
+- Use the pencil beside a shortcut to edit its name, URL, description, group or icon, or the plus beside a group to add a shortcut there. **Organize** adds/edits groups and reorders groups and shortcuts by dragging. Drop a shortcut onto another group to append it there. Removing a group asks for confirmation and deletes its shortcuts too.
 - Icons are fetched once in the background and stored in MariaDB. Protected images are loaded and cached within the current user context. Icon retrieval accepts public HTTP(S) hosts on ports 80/443; local services use an emoji/letter fallback or a custom uploaded image. Uploads support PNG, JPEG, GIF, WebP and ICO up to 1 MB. **Use website icon** explicitly retries retrieval.
 - The database migration creates empty tables. Personal bookmarks and image bytes belong exclusively in runtime storage, never in migrations, fixtures, source files or checked-in import files.
 

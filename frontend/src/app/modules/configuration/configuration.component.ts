@@ -9,12 +9,11 @@ import {FinanceMcpSettingsComponent} from './finance-mcp-settings.component';
 import {GoogleCalendarSettingsComponent} from '../calendar/google-calendar-settings.component';
 import {FileImportComponent} from './file-import.component';
 import {TelegramSettingsComponent} from './telegram-settings.component';
-import {ImpersonationSettingsComponent} from './impersonation-settings.component';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 
 @Component({
   selector: 'app-configuration',
-  imports: [ImpersonationSettingsComponent, CardModule, ButtonModule, InputTextModule, TooltipModule, FinanceMcpSettingsComponent, GoogleCalendarSettingsComponent, FileImportComponent, TelegramSettingsComponent],
+  imports: [CardModule, ButtonModule, InputTextModule, TooltipModule, FinanceMcpSettingsComponent, GoogleCalendarSettingsComponent, FileImportComponent, TelegramSettingsComponent],
   templateUrl: './configuration.component.html', styleUrl: './configuration.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })

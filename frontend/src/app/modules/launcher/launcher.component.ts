@@ -1,7 +1,8 @@
 import {ProtectedImageDirective} from '../../shared/current-user/protected-image.directive';
-import {afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, HostListener, inject, signal, viewChild} from '@angular/core';
+import {afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, HostListener, inject, signal, viewChild, viewChildren} from '@angular/core';
 import {DatePipe, DecimalPipe, NgTemplateOutlet} from '@angular/common';
 import {FormsModule} from '@angular/forms';
+import {CdkDrag, CdkDragDrop, CdkDropList, DragDropModule, moveItemInArray} from '@angular/cdk/drag-drop';
 import {RouterLink} from '@angular/router';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import { AppModalComponent } from '../../shared/modal/app-modal.component';
@@ -18,7 +19,7 @@ interface ShortcutDraft extends LauncherShortcutInput {id?: number}
 
 @Component({
   selector:'app-launcher',
-  imports:[ProtectedImageDirective,FormsModule,RouterLink,DatePipe,DecimalPipe,AppModalComponent,NgTemplateOutlet],
+  imports:[ProtectedImageDirective,FormsModule,DragDropModule,RouterLink,DatePipe,DecimalPipe,AppModalComponent,NgTemplateOutlet],
   templateUrl:'./launcher.component.html',
   styleUrls:['./launcher.component.scss','./launcher-editor.scss'],
   changeDetection:ChangeDetectionStrategy.OnPush
@@ -56,6 +57,14 @@ export class LauncherComponent {
   });
   readonly dialog=signal<DialogMode>(null);
   readonly busy=signal(false);
+  readonly dragging=signal(false);
+  readonly organizerBusy=computed(()=>this.busy() || this.dragging());
+  readonly groupDropTargets=viewChildren<CdkDropList<number>>('groupDropTarget');
+  readonly shortcutDropTargets=computed(()=>[...this.groupDropTargets()]);
+  readonly acceptShortcut=(drag:CdkDrag<LauncherShortcut | LauncherGroup>,target:CdkDropList<number>)=>
+    'groupId' in drag.data && drag.data.groupId!==target.data;
+  readonly sortGroupWithinSection=(index:number,drag:CdkDrag<LauncherGroup>,list:CdkDropList<LauncherGroup[]>)=>
+    list.data[index]?.section===drag.data.section;
   readonly editorError=signal('');
   readonly confirmDelete=signal(false);
   readonly selectedGroupId=signal<number|null>(null);
@@ -80,7 +89,7 @@ export class LauncherComponent {
     interval(5000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(()=> {
       if(document.hidden) return;
       const previous=this.date(); this.now.set(new Date());
-      if(this.busy()) return;
+      if(this.organizerBusy()) return;
       if(this.dialog()) {if(this.collection().shortcuts.some(s=>s.iconState==='pending')) this.loadCollection();return;}
       if(previous!==this.date()) { this.steps.set(null); this.stepsState.set('loading'); this.loadSummary(); }
       else if(Date.now()-this.lastSummaryAt>=30000) this.loadSummary();
@@ -156,12 +165,14 @@ export class LauncherComponent {
   openOrganizer(event:Event) {this.beginDialog('organize',event);this.selectedGroupId.set(this.collection().groups[0]?.id??null);}
   openImport(event:Event) {this.beginDialog('import',event);this.importText='';}
   openShortcut(shortcut?:LauncherShortcut,event?:Event,groupId?:number) {
+    if(this.organizerBusy()) return;
     this.fromOrganizer=this.dialog()==='organize';this.beginDialog('shortcut',event);
     this.editingId.set(shortcut?.id);
     this.draft=shortcut?{id:shortcut.id,groupId:shortcut.groupId,title:shortcut.title,url:shortcut.url,description:shortcut.description,emoji:shortcut.emoji}
       :{groupId:groupId??this.selectedGroupId()??this.collection().groups[0]?.id??0,title:'',url:'',description:'',emoji:''};
   }
   openGroup(group?:LauncherGroup,event?:Event) {
+    if(this.organizerBusy()) return;
     this.fromOrganizer=this.dialog()==='organize';this.beginDialog('group',event);
     this.groupDraft=group?{id:group.id,name:group.name,section:group.section}:{name:'',section:this.collection().groups[0]?.section??'Personal'};
   }
@@ -170,7 +181,7 @@ export class LauncherComponent {
     this.releasePreview();this.dialog.set(mode);this.editorError.set('');this.confirmDelete.set(false);
   }
   closeDialog() {
-    if(this.busy()) return;
+    if(this.organizerBusy()) return;
     this.dialog.set(null);this.releasePreview();this.editorError.set('');this.confirmDelete.set(false);
     (this.trigger?.isConnected?this.trigger:this.searchInput()?.nativeElement)?.focus({preventScroll:true});
   }
@@ -185,8 +196,24 @@ export class LauncherComponent {
     this.busy.set(true);this.editorError.set('');++this.generation;this.refresh.cancel();
     request.pipe(finalize(()=>this.busy.set(false)),takeUntilDestroyed(this.destroyRef)).subscribe({
       next:data=> {this.apply(data);this.busy.set(false);done?.();},
-      error:error=>this.editorError.set(error.status===409?'The collection changed or this group still contains shortcuts. Refresh and try again.':
+      error:error=>this.editorError.set(error.status===409?'The collection changed. Refresh and try again.':
         error.status===400?'Please check the URL, required fields, and image format.':'Unable to save. Your changes are still here; please try again.')
+    });
+  }
+  private saveArrangement(request:Observable<LauncherCollection>,updated:LauncherCollection) {
+    if(this.busy()) return;
+    const previous=this.collection();
+    this.busy.set(true);this.editorError.set('');
+    ++this.generation;this.refresh.cancel();this.collection.set(updated);
+    // Keep the same rows and icons after confirmation; a failed save restores the prior arrangement.
+    request.pipe(finalize(()=>this.busy.set(false)),takeUntilDestroyed(this.destroyRef)).subscribe({
+      next:()=>{this.lastCollectionAt=Date.now();},
+      error:error=>{
+        this.collection.set(previous);
+        this.editorError.set(error.status===409
+          ? 'The collection changed. Your move was undone. Close this dialog and refresh before trying again.'
+          : 'Unable to save. Your move was undone; please try again.');
+      }
     });
   }
   saveShortcut() {
@@ -208,13 +235,17 @@ export class LauncherComponent {
     this.mutate(request,()=>this.saved());
   }
   deleteCurrent() {
+    if(!this.confirmDelete()) return;
     if(this.dialog()==='shortcut' && this.draft.id) this.mutate(this.api.deleteLauncherShortcut(this.draft.id),()=>this.saved());
     else if(this.dialog()==='group' && this.groupDraft.id) this.mutate(this.api.deleteLauncherGroup(this.groupDraft.id),()=>this.saved());
   }
-  groupHasShortcuts(id?:number) {return this.collection().shortcuts.some(s=>s.groupId===id);}
-  canMoveGroup(group:LauncherGroup,direction:number) {
-    const siblings=this.collection().groups.filter(g=>g.section===group.section);
-    return !!siblings[siblings.findIndex(g=>g.id===group.id)+direction];
+  groupShortcutCount() {return this.collection().shortcuts.filter(s=>s.groupId===this.groupDraft.id).length;}
+  startDrag() {
+    this.dragging.set(true);++this.generation;this.refresh.cancel();
+  }
+  selectOrganizerGroup(id:number) {
+    // Keep the drag source mounted through CDK's release animation.
+    if(!this.organizerBusy()) this.selectedGroupId.set(id);
   }
   moveGroup(group:LauncherGroup,direction:number) {
     const groups=this.collection().groups.slice(),siblings=groups.filter(g=>g.section===group.section);
@@ -222,13 +253,48 @@ export class LauncherComponent {
     if(!sibling) return;
     const i=groups.findIndex(g=>g.id===group.id),next=groups.findIndex(g=>g.id===sibling.id);
     [groups[i],groups[next]]=[groups[next],groups[i]];
-    this.mutate(this.api.reorderLauncherGroups({ids:groups.map(g=>g.id)}));
+    this.arrangeGroups(groups);
+  }
+  dropGroup(event:CdkDragDrop<LauncherGroup[]>) {
+    if(this.busy() || !event.isPointerOverContainer || event.previousContainer!==event.container || event.previousIndex===event.currentIndex) return;
+    const groups=this.collection().groups.slice();
+    if(groups[event.previousIndex]?.section!==groups[event.currentIndex]?.section) return;
+    moveItemInArray(groups,event.previousIndex,event.currentIndex);
+    this.arrangeGroups(groups);
+  }
+  private arrangeGroups(groups:LauncherGroup[]) {
+    this.saveArrangement(this.api.reorderLauncherGroups({ids:groups.map(g=>g.id)}),
+      {...this.collection(),groups:groups.map((group,position)=>({...group,position}))});
   }
   moveShortcut(shortcut:LauncherShortcut,direction:number) {
     const shortcuts=this.organizedShortcuts().slice(),i=shortcuts.findIndex(s=>s.id===shortcut.id),next=i+direction;
     if(next<0||next>=shortcuts.length) return;
     [shortcuts[i],shortcuts[next]]=[shortcuts[next],shortcuts[i]];
-    this.mutate(this.api.reorderLauncherShortcuts(shortcut.groupId,{ids:shortcuts.map(s=>s.id)}));
+    this.arrangeShortcuts(shortcut.groupId,shortcuts);
+  }
+  dropShortcut(event:CdkDragDrop<LauncherShortcut[]>) {
+    const groupId=this.selectedGroupId();
+    if(this.busy() || !groupId || event.previousContainer!==event.container || !event.isPointerOverContainer || event.previousIndex===event.currentIndex) return;
+    const shortcuts=this.organizedShortcuts().slice();
+    moveItemInArray(shortcuts,event.previousIndex,event.currentIndex);
+    this.arrangeShortcuts(groupId,shortcuts);
+  }
+  private arrangeShortcuts(groupId:number,ordered:LauncherShortcut[]) {
+    const shortcuts=this.collection().shortcuts.filter(shortcut=>shortcut.groupId!==groupId);
+    shortcuts.push(...ordered.map((shortcut,position)=>({...shortcut,position})));
+    this.saveArrangement(this.api.reorderLauncherShortcuts(groupId,{ids:ordered.map(shortcut=>shortcut.id)}),
+      {...this.collection(),shortcuts});
+  }
+  dropIntoGroup(event:CdkDragDrop<number,LauncherShortcut[],LauncherShortcut>) {
+    const groupId=event.container.data;
+    if(this.busy() || !event.isPointerOverContainer || event.previousContainer.id===event.container.id) return;
+    const shortcut=this.collection().shortcuts.find(shortcut=>shortcut.id===event.item.data.id);
+    if(!shortcut || shortcut.groupId===groupId || !this.collection().groups.some(group=>group.id===groupId)) return;
+    const position=Math.max(-1,...this.collection().shortcuts.filter(shortcut=>shortcut.groupId===groupId).map(shortcut=>shortcut.position))+1;
+    const moved={...shortcut,groupId,position};
+    this.saveArrangement(this.api.updateLauncherShortcut(shortcut.id,{
+      groupId,title:shortcut.title,url:shortcut.url,description:shortcut.description,emoji:shortcut.emoji
+    }),{...this.collection(),shortcuts:[...this.collection().shortcuts.filter(item=>item.id!==shortcut.id),moved]});
   }
   selectImage(event:Event) {
     const file=(event.target as HTMLInputElement).files?.[0];if(!file) return;

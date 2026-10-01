@@ -50,12 +50,25 @@ class LauncherStoreTest {
         assertThat(store.collection(new UserId(1)).getGroups()).hasSize(1);
         assertThat(store.collection(new UserId(1)).getShortcuts()).hasSize(1);
     }
-    @Test void refusesNonEmptyGroupDeletionAndStaleReorder() {
+    @Test void refusesStaleReorder() {
         long group=group("Keep");
         store.createShortcut(new UserId(1), link(group,"Saved","https://example.com"));
-        assertThatThrownBy(()->store.deleteGroup(new UserId(1), group)).isInstanceOf(ThereaboutException.class);
         assertThatThrownBy(()->store.orderShortcuts(new UserId(1), group,List.of())).isInstanceOf(ThereaboutException.class);
         assertThat(store.collection(new UserId(1)).getShortcuts()).hasSize(1);
+    }
+    @Test void deletesOnlyTheOwnedGroupAndAllItsShortcutsIncludingIcons() throws Exception {
+        long removed=group("Remove"),kept=group("Keep");
+        var one=store.createShortcut(new UserId(1),link(removed,"One","https://example.org/one")).getShortcuts().getFirst();
+        var two=store.createShortcut(new UserId(1),link(removed,"Two","https://example.org/two")).getShortcuts().getLast();
+        store.saveCustomIcon(new UserId(1),one.getId(),PNG);
+        store.createShortcut(new UserId(1),link(kept,"Keep","https://example.org/keep"));
+        assertThatThrownBy(()->store.deleteGroup(new UserId(2),removed)).isInstanceOf(ThereaboutException.class);
+        assertThat(store.collection(new UserId(1)).getShortcuts()).hasSize(3);
+        var response=mvc.perform(delete("/backend/api/v1/launcher/groups/{id}",removed)).andReturn().getResponse();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(store.collection(new UserId(1)).getGroups()).extracting(GenLauncherGroup::getId).containsExactly(kept);
+        assertThat(store.collection(new UserId(1)).getShortcuts()).extracting(GenLauncherShortcut::getTitle).containsExactly("Keep");
+        assertThat(ownerDb.queryForObject("SELECT COUNT(*) FROM launcher_shortcut WHERE id IN (?,?)",Long.class,one.getId(),two.getId())).isZero();
     }
     @Test void rejectsExecutableAndCredentialUrls() {
         for(String url:List.of("javascript:alert(1)","data:text/html,test","file:///tmp/private","https://name:password@example.com/","example.com"))

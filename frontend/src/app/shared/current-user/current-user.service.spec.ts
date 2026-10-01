@@ -35,21 +35,43 @@ describe('CurrentUserService', () => {
     service.load(); response.next({status: 'resolved', identityId: 1, displayName: 'Admin', role: 'ADMIN'});
     expect(service.canManageUsers()).toBe(true);
   });
-  it('clears hidden sessions and verifies again on return or back-forward restoration', () => {
+  it('retains the view while verifying on return or back-forward restoration', () => {
     const api = {getCurrentUser: vi.fn(() => new Subject<CurrentUser>())};
     TestBed.configureTestingModule({providers: [{provide: CurrentUserApi, useValue: api}]});
     const service = TestBed.inject(CurrentUserService);
     void service.start();
     service.verifiedState.set({status: 'resolved', identityId: 1, displayName: 'Theo'});
+    const keys = service.viewKeys();
     const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
     document.dispatchEvent(new Event('visibilitychange'));
-    expect(service.displayName()).toBeUndefined();
+    expect(service.displayName()).toBe('Theo');
+    expect(service.viewKeys()).toEqual(keys);
     visibility.mockReturnValue('visible');
     document.dispatchEvent(new Event('visibilitychange'));
     expect(api.getCurrentUser).toHaveBeenCalledTimes(2);
+    expect(service.viewKeys()).toEqual(keys);
     window.dispatchEvent(new PageTransitionEvent('pageshow', {persisted: true}));
     expect(api.getCurrentUser).toHaveBeenCalledTimes(3);
+    expect(service.viewKeys()).toEqual(keys);
     visibility.mockRestore();
+  });
+  it('resets the view when background verification finds a new user, permissions or a failure', () => {
+    const response = new Subject<CurrentUser>();
+    TestBed.configureTestingModule({providers: [{provide: CurrentUserApi, useValue: {getCurrentUser: () => response}}]});
+    const service = TestBed.inject(CurrentUserService);
+    const admin: CurrentUser = {status: 'resolved', identityId: 1, role: 'ADMIN', actorIdentityId: 1, actorRole: 'ADMIN'};
+    service.load(); response.next(admin);
+    const keys = service.viewKeys();
+    service.load(true); response.next({...admin, displayName: 'Updated name'});
+    expect(service.viewKeys()).toEqual(keys);
+    response.next({...admin, identityId: 2});
+    expect(service.viewKeys()).not.toEqual(keys);
+    response.next({...admin, actorRole: 'USER'});
+    expect(service.viewKeys()).not.toEqual(keys);
+    service.load(true); response.error(new Error('unavailable'));
+    expect(service.state().status).toBe('verification_unavailable');
+    expect(service.viewKeys()).not.toEqual(keys);
+    expect(service.displayName()).toBeUndefined();
   });
   it('clears prior identity on every load, ignores stale requests and distinguishes failures', () => {
     const first = new Subject<CurrentUser>(), second = new Subject<CurrentUser>();

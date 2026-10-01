@@ -80,7 +80,11 @@
         <div class="group-grid">
           @for (group of section.groups; track group.id) {
             <section class="bookmark-group" [attr.aria-label]="group.name">
-              <div class="group-heading"><h3>{{ group.name }}</h3><button type="button" class="icon-button group-edit" [attr.aria-label]="'Edit group ' + group.name" (click)="openGroup(group,$event)"><i class="pi pi-pencil" aria-hidden="true"></i></button></div>
+              <div class="group-heading">
+                <h3>{{ group.name }}</h3>
+                <button type="button" class="icon-button group-action" [attr.aria-label]="'Edit group ' + group.name" (click)="openGroup(group,$event)"><i class="pi pi-pencil" aria-hidden="true"></i></button>
+                <button type="button" class="icon-button group-action" [attr.aria-label]="'Add shortcut to ' + group.name" (click)="openShortcut(undefined,$event,group.id)"><i class="pi pi-plus" aria-hidden="true"></i></button>
+              </div>
               <ul>
                 @for (shortcut of group.shortcuts; track shortcut.id) {
                   <li class="shortcut-row">
@@ -105,7 +109,7 @@
 </ng-template>
 
 <app-modal [header]="dialogTitle()" [visible]="!!dialog()" (visibleChange)="!$event && closeDialog()" (onHide)="closeDialog()"
-  [dialogStyle]="{width: dialog() === 'organize' ? '58rem' : '34rem', maxWidth:'95vw'}" [dismissible]="!busy()">
+  [dialogStyle]="{width: dialog() === 'organize' ? '58rem' : '34rem', maxWidth:'95vw'}" [dismissible]="!organizerBusy() && !(dialog() === 'group' && confirmDelete())">
   <div class="launcher-editor">
     @if (dialog() === 'shortcut') {
       <form (ngSubmit)="saveShortcut()" id="shortcut-form" class="editor-form">
@@ -129,26 +133,27 @@
         <label for="group-section">Section</label><input id="group-section" name="section" [(ngModel)]="groupDraft.section" list="launcher-sections" maxlength="160" required [disabled]="busy()">
         <datalist id="launcher-sections">@for (section of sections(); track section.name) {<option [value]="section.name"></option>}</datalist>
         <small>Choose an existing section or type a new one.</small>
-        @if (groupDraft.id && groupHasShortcuts(groupDraft.id)) {<p class="muted">Move or remove this group's shortcuts before deleting the group.</p>}
       </form>
     }
     @if (dialog() === 'organize') {
-      <p class="editor-intro">Choose a group to arrange its shortcuts. Use the arrows to change their order. Edit a group to move it to another section.</p>
-      <div class="organizer">
-        <div><div class="organizer-heading"><h3>Groups</h3><button type="button" class="text-button" (click)="openGroup()" [disabled]="busy()"><i class="pi pi-plus" aria-hidden="true"></i> Add</button></div>
-          <ul class="organizer-list">@for (group of collection().groups; track group.id; let first=$first; let last=$last) {
-            <li [class.chosen]="selectedGroupId() === group.id"><button type="button" class="organizer-name" (click)="selectedGroupId.set(group.id)"><strong>{{ group.name }}</strong><small>{{ group.section }}</small></button>
-              <button type="button" class="icon-button" [attr.aria-label]="'Move group ' + group.name + ' up'" [disabled]="!canMoveGroup(group,-1) || busy()" (click)="moveGroup(group,-1)"><i class="pi pi-arrow-up" aria-hidden="true"></i></button>
-              <button type="button" class="icon-button" [attr.aria-label]="'Move group ' + group.name + ' down'" [disabled]="!canMoveGroup(group,1) || busy()" (click)="moveGroup(group,1)"><i class="pi pi-arrow-down" aria-hidden="true"></i></button>
-              <button type="button" class="icon-button" [attr.aria-label]="'Edit group ' + group.name" [disabled]="busy()" (click)="openGroup(group)"><i class="pi pi-pencil" aria-hidden="true"></i></button>
+      <p class="editor-intro">Drag groups or shortcuts to reorder them. Drop a shortcut onto a group to move it there. Edit a group to move it to another section.</p>
+      <div class="organizer" [class.arranging]="organizerBusy()">
+        <div><div class="organizer-heading"><h3>Groups</h3><button type="button" class="text-button" (click)="openGroup()" [disabled]="organizerBusy()"><i class="pi pi-plus" aria-hidden="true"></i> Add</button></div>
+          <ul class="organizer-list organizer-groups" cdkDropList [cdkDropListData]="collection().groups" [cdkDropListDisabled]="busy()" [cdkDropListSortPredicate]="sortGroupWithinSection" (cdkDropListDropped)="dropGroup($event)">@for (group of collection().groups; track group.id) {
+            <li class="organizer-group" cdkDrag (cdkDragStarted)="startDrag()" (cdkDragEnded)="dragging.set(false)" [cdkDragData]="group" [cdkDragDisabled]="busy()" cdkDragLockAxis="y" [class.chosen]="selectedGroupId() === group.id">
+              <div class="group-drop-target" cdkDropList #groupDropTarget="cdkDropList" [cdkDropListData]="group.id" [cdkDropListConnectedTo]="shortcutList" [cdkDropListSortingDisabled]="true" [cdkDropListDisabled]="busy()" [cdkDropListEnterPredicate]="acceptShortcut" (cdkDropListDropped)="dropIntoGroup($event)">
+                <button type="button" class="organizer-name" (click)="selectOrganizerGroup(group.id)" [disabled]="busy()" [attr.aria-disabled]="organizerBusy()"><strong>{{ group.name }}</strong><small>{{ group.section }}</small></button>
+              </div>
+              <button type="button" class="icon-button" [attr.aria-label]="'Edit group ' + group.name" [disabled]="organizerBusy()" (click)="openGroup(group)"><i class="pi pi-pencil" aria-hidden="true"></i></button>
+              <button type="button" class="icon-button drag-handle" cdkDragHandle [attr.aria-label]="'Drag group ' + group.name + ' to reorder'" title="Drag to reorder, or use the Up and Down keys" [disabled]="busy()" (keydown.arrowup)="moveGroup(group,-1); $event.preventDefault()" (keydown.arrowdown)="moveGroup(group,1); $event.preventDefault()"><i class="pi pi-bars" aria-hidden="true"></i></button>
             </li>
           }</ul>
         </div>
-        <div><div class="organizer-heading"><h3>Shortcuts</h3><button type="button" class="text-button" (click)="openShortcut()" [disabled]="!selectedGroupId() || busy()"><i class="pi pi-plus" aria-hidden="true"></i> Add</button></div>
-          <ul class="organizer-list">@for (shortcut of organizedShortcuts(); track shortcut.id; let first=$first; let last=$last) {
-            <li><span class="shortcut-icon"><ng-container *ngTemplateOutlet="shortcutIcon; context: {$implicit:shortcut}" /></span><button type="button" class="organizer-name" (click)="openShortcut(shortcut)" [disabled]="busy()">{{ shortcut.title }}</button>
-              <button type="button" class="icon-button" [attr.aria-label]="'Move ' + shortcut.title + ' up'" [disabled]="first || busy()" (click)="moveShortcut(shortcut,-1)"><i class="pi pi-arrow-up" aria-hidden="true"></i></button>
-              <button type="button" class="icon-button" [attr.aria-label]="'Move ' + shortcut.title + ' down'" [disabled]="last || busy()" (click)="moveShortcut(shortcut,1)"><i class="pi pi-arrow-down" aria-hidden="true"></i></button>
+        <div><div class="organizer-heading"><h3>Shortcuts</h3><button type="button" class="text-button" (click)="openShortcut()" [disabled]="!selectedGroupId() || organizerBusy()"><i class="pi pi-plus" aria-hidden="true"></i> Add</button></div>
+          <ul class="organizer-list organizer-shortcuts" cdkDropList #shortcutList="cdkDropList" [cdkDropListData]="organizedShortcuts()" [cdkDropListConnectedTo]="shortcutDropTargets()" [cdkDropListDisabled]="busy()" (cdkDropListDropped)="dropShortcut($event)">@for (shortcut of organizedShortcuts(); track shortcut.id) {
+            <li class="organizer-shortcut" cdkDrag (cdkDragStarted)="startDrag()" (cdkDragEnded)="dragging.set(false)" [cdkDragData]="shortcut" [cdkDragDisabled]="busy()">
+              <span class="shortcut-icon"><ng-container *ngTemplateOutlet="shortcutIcon; context: {$implicit:shortcut}" /></span><button type="button" class="organizer-name" (click)="openShortcut(shortcut)" [disabled]="organizerBusy()">{{ shortcut.title }}</button>
+              <button type="button" class="icon-button drag-handle" cdkDragHandle [attr.aria-label]="'Drag ' + shortcut.title + ' to reorder'" title="Drag to reorder or onto a group, or use the Up and Down keys" [disabled]="busy()" (keydown.arrowup)="moveShortcut(shortcut,-1); $event.preventDefault()" (keydown.arrowdown)="moveShortcut(shortcut,1); $event.preventDefault()"><i class="pi pi-bars" aria-hidden="true"></i></button>
             </li>
           } @empty {<li class="muted">No shortcuts in this group yet.</li>}</ul>
         </div>
@@ -159,13 +164,25 @@
       <label for="launcher-import">Collection JSON</label><textarea id="launcher-import" [(ngModel)]="importText" rows="10" placeholder='{"groups": [{"section": "Personal", "name": "Tools", "shortcuts": [{"title": "Example", "url": "https://example.com"}]}]}' [disabled]="busy()" spellcheck="false"></textarea>
     }
     @if (editorError()) {<p class="editor-error" role="alert">{{ editorError() }}</p>}
-    @if (confirmDelete()) {<div class="delete-confirm" role="alert"><span>Remove this {{ dialog() === 'group' ? 'empty group' : 'shortcut' }}?</span><button type="button" class="text-button" (click)="confirmDelete.set(false)" [disabled]="busy()">Keep it</button><button type="button" class="danger-button" (click)="deleteCurrent()" [disabled]="busy()">Remove</button></div>}
+    @if (confirmDelete() && dialog() === 'shortcut') {<div class="delete-confirm" role="alert"><span>Remove this shortcut?</span><button type="button" class="text-button" (click)="confirmDelete.set(false)" [disabled]="busy()">Keep it</button><button type="button" class="danger-button" (click)="deleteCurrent()" [disabled]="busy()">Remove</button></div>}
     <div class="editor-footer">
-      @if ((dialog() === 'shortcut' && draft.id) || (dialog() === 'group' && groupDraft.id)) {<button type="button" class="text-button danger-text" (click)="confirmDelete.set(true)" [disabled]="busy() || (dialog() === 'group' && groupHasShortcuts(groupDraft.id))">Remove</button>}
-      <span class="footer-spacer"></span><button type="button" class="text-button" (click)="closeDialog()" [disabled]="busy()">{{ dialog() === 'organize' ? 'Done' : 'Cancel' }}</button>
+      @if ((dialog() === 'shortcut' && draft.id) || (dialog() === 'group' && groupDraft.id)) {<button type="button" class="text-button danger-text" (click)="confirmDelete.set(true)" [disabled]="busy()">Remove</button>}
+      <span class="footer-spacer"></span><button type="button" class="text-button" (click)="closeDialog()" [disabled]="organizerBusy()">{{ dialog() === 'organize' ? 'Done' : 'Cancel' }}</button>
       @if (dialog() === 'shortcut') {<button type="submit" form="shortcut-form" class="add-button" [disabled]="busy()">{{ busy() ? 'Saving…' : 'Save shortcut' }}</button>}
       @if (dialog() === 'group') {<button type="submit" form="group-form" class="add-button" [disabled]="busy()">{{ busy() ? 'Saving…' : 'Save group' }}</button>}
       @if (dialog() === 'import') {<button type="button" class="add-button" [disabled]="busy() || !importText.trim()" (click)="importCollection()">{{ busy() ? 'Importing…' : 'Import collection' }}</button>}
     </div>
   </div>
 </app-modal>
+@if (dialog() === 'group' && confirmDelete()) {
+  <app-modal header="Delete group" [visible]="true" (visibleChange)="confirmDelete.set($event)" [dismissible]="!busy()" [dialogStyle]="{width: '32rem'}">
+    <div class="launcher-editor">
+      <p>Delete <strong>{{ groupDraft.name }}</strong> and its {{ groupShortcutCount() }} {{ groupShortcutCount() === 1 ? 'shortcut' : 'shortcuts' }}? This cannot be undone.</p>
+      @if (editorError()) {<p class="editor-error" role="alert">{{ editorError() }}</p>}
+    </div>
+    <ng-template #footer>
+      <button type="button" class="text-button" (click)="confirmDelete.set(false)" [disabled]="busy()">Keep group</button>
+      <button type="button" class="danger-button" (click)="deleteCurrent()" [disabled]="busy()">{{ busy() ? 'Deleting…' : 'Delete group' }}</button>
+    </ng-template>
+  </app-modal>
+}

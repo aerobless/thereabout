@@ -29,16 +29,16 @@
       <ng-template #header>
         <tr>
           <th pSortableColumn="shortName">Short Name <p-sorticon field="shortName"/></th>
+          <th>Role</th>
           <th pSortableColumn="relationship">Relationship <p-sorticon field="relationship"/></th>
           <th style="text-align: center">Group</th>
-          <th style="text-align: center">App Identities</th>
+          <th pSortableColumn="appIdentityCount" style="text-align: center">App Identities <p-sorticon field="appIdentityCount"/></th>
         </tr>
       </ng-template>
       <ng-template #body let-identity>
         <tr>
-          <td><a [routerLink]="['/identities', identity.id]">{{ identity.shortName }}</a>
-            @if (identity.role) { <p-tag [value]="identity.role === 'ADMIN' ? 'Admin' : 'User'" severity="success" /> }
-            @if (cloudflareEmail(identity); as email) { <small class="cloudflare-identity">Cloudflare: {{ email }}</small> }</td>
+          <td><a [routerLink]="['/identities', identity.id]">{{ identity.shortName }}</a></td>
+          <td data-label="Role">@if (identity.role) { <p-tag [value]="identity.role === 'ADMIN' ? 'Admin' : 'User'" severity="success" /> } @else { <span>—</span> }</td>
           <td data-label="Relationship">{{ identity.relationship || '—' }}</td>
           <td data-label="Group" style="text-align: center">
             @if (identity.isGroup) {
@@ -48,8 +48,8 @@
             }
           </td>
           <td data-label="App identities" style="text-align: center">
-            <p-tag [value]="'' + getAppIdentityCount(identity)"
-                   [severity]="getAppIdentityCount(identity) > 0 ? 'info' : 'secondary'"
+            <p-tag [value]="'' + identity.appIdentityCount"
+                   [severity]="identity.appIdentityCount > 0 ? 'info' : 'secondary'"
                    pTooltip="Linked application identities"
                    tooltipPosition="top"></p-tag>
           </td>
@@ -58,7 +58,7 @@
       </ng-template>
       <ng-template #emptymessage>
         <tr>
-          <td colspan="4" style="text-align: center">No identities found.</td>
+          <td colspan="5" style="text-align: center">No identities found.</td>
         </tr>
       </ng-template>
     </p-table>

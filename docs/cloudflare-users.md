@@ -16,7 +16,7 @@ Browser writes require the `XSRF-TOKEN` cookie and `X-XSRF-TOKEN` header. Static
 
 ## Impersonation
 
-**Configuration → Impersonation** works in the production bundle. An authenticated admin can select any eligible user. Browser requests send `X-Thereabout-Impersonate-User`; the server checks the real actor's current admin role and the target's eligibility on every request, then applies the target's data and permissions. Impersonating a normal user hides and blocks Configuration and Identities. The persistent banner's exit button restores the authenticated actor.
+**Identities → user → Impersonate** works in the production bundle. The Actions card offers this button to an authenticated admin for person identities with either the User or Admin role. Browser requests send `X-Thereabout-Impersonate-User`; the server checks the real actor's current admin role and the target's eligibility on every request, then applies the target's data and permissions. Impersonating a normal user hides and blocks Configuration and Identities. The persistent banner's exit button restores the authenticated actor.
 
 Selection stays only in the current tab's memory. A full reload ends impersonation. Context changes cancel pending browser requests and recreate route components, discarding editors and personal data. Private launcher/bank images use Angular HTTP blob requests with the same header and a user-scoped cache. Invalid targets or revoked actor privileges reject further requests; frontend verification failure clears the selection and resolves the actor again.
 

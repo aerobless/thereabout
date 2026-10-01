@@ -35,8 +35,14 @@
     background: transparent;
     box-shadow: none;
     color: #6B7280;
+    transition: background-color 120ms, color 120ms;
     .p-icon { width: 1rem; height: 1rem; }
-    &:hover { background: #E5E7EB; color: #374151; }
+    &.p-button:not(:disabled):hover {
+      background: var(--app-selection);
+      color: var(--app-ink);
+      border-color: transparent;
+      box-shadow: none;
+    }
     &:focus-visible { outline: 2px solid var(--app-link); outline-offset: 2px; }
   }
   .p-dialog-content { padding: 1.5rem; background: var(--app-surface); }

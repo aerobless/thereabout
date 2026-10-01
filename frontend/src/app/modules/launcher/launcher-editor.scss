@@ -20,4 +20,14 @@ button:disabled { opacity: .4; cursor: default; }
 .organizer { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; }.organizer > div { min-width: 0; }.organizer-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }.organizer-heading h3 { font-family: inherit; font-size: .85rem; font-weight: 600; margin: 0; }
 .organizer-list { list-style: none; margin: 0; padding: 0; max-height: 55vh; overflow-y: auto; }.organizer-list li { display: flex; align-items: center; gap: .15rem; padding: .3rem; border-radius: 6px; min-height: 40px; }.organizer-list li.chosen { background: var(--app-selection); }
 .organizer-name { display: block; flex: 1; min-width: 0; text-align: left; border: 0; background: transparent; padding: .45rem .35rem; color: var(--app-ink); font: inherit; font-size: .8rem; cursor: pointer; overflow: hidden; text-overflow: ellipsis; }.organizer-name strong { font-weight: 500; }.organizer-name small { display: block; margin-top: .2rem; }
+.drag-handle { cursor: grab; touch-action: none; }.drag-handle:active { cursor: grabbing; }
+.organizer-shortcut.cdk-drag-preview,.organizer-group.cdk-drag-preview { display: flex; align-items: center; gap: .15rem; padding: .3rem; border-radius: 6px; box-sizing: border-box; color: var(--app-ink); background: var(--app-surface); box-shadow: 0 4px 16px #0002; }
+.organizer-shortcut.cdk-drag-placeholder,.organizer-group.cdk-drag-placeholder { opacity: .25; }
+.organizer-shortcut.cdk-drag-animating,.organizer-group.cdk-drag-animating,.organizer-list.cdk-drop-list-dragging > .cdk-drag:not(.cdk-drag-placeholder) { transition: transform 180ms ease; }
+@media (prefers-reduced-motion: reduce) { .organizer-shortcut.cdk-drag-animating,.organizer-group.cdk-drag-animating,.organizer-list.cdk-drop-list-dragging > .cdk-drag { transition: none; } }
 @media (max-width: 650px) { .organizer { grid-template-columns: 1fr; gap: 1.2rem; }.organizer-list { max-height: 30vh; }.toolbar-actions .text-button { font-size: .7rem; padding-inline: .4rem; }.toolbar-actions .add-button { font-size: .7rem; padding-inline: .65rem; } }
+
+.group-drop-target { flex: 1; min-width: 0; border-radius: 6px; }.group-drop-target .organizer-name { width: 100%; }
+.group-drop-target.cdk-drop-list-receiving { outline: 1px dashed var(--app-border); }.group-drop-target.cdk-drop-list-dragging { background: var(--app-selection); outline: 2px solid var(--app-accent); }
+.group-drop-target .cdk-drag-placeholder { display: none; }
+.organizer.arranging button:disabled { opacity: 1; }

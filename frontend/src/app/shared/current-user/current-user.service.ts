@@ -31,10 +31,10 @@ export class CurrentUserService {
   readonly displayName = computed(() => {
     const state=this.state(); return state.status === 'resolved' ? state.displayName : undefined;
   });
-  /** Removing the outlet while resolving also destroys editors, reports and their pending local state. */
+  /** Reset views on a user or permission change, while retaining editors during background verification. */
   readonly viewKeys = computed(() => {
     const state=this.state();
-    return state.status === 'loading' ? [] : [`${state.identityId ?? 'none'}:${state.role ?? 'none'}:${state.impersonating ?? false}`];
+    return state.status === 'loading' ? [] : [`${state.status}:${state.identityId ?? 'none'}:${state.role ?? 'none'}:${state.actorIdentityId ?? 'none'}:${state.actorRole ?? 'none'}:${state.impersonating ?? false}`];
   });
 
   ready(): Promise<CurrentUser> {
@@ -48,18 +48,19 @@ export class CurrentUserService {
 
   start(): Promise<CurrentUser> {
     const clear = () => { this.pending?.unsubscribe(); this.state.set({status: 'loading'}); };
-    const visible = () => { if (document.visibilityState === 'visible') this.load(); else clear(); };
-    const restored = (event: PageTransitionEvent) => { if (event.persisted) this.load(); };
+    const visible = () => { if (document.visibilityState === 'visible') this.load(true); };
+    const restored = (event: PageTransitionEvent) => { if (event.persisted) this.load(true); };
     document.addEventListener('visibilitychange', visible);
-    window.addEventListener('pagehide', clear); window.addEventListener('pageshow', restored);
+    window.addEventListener('pageshow', restored);
     this.destroyRef.onDestroy(() => {
       clear(); document.removeEventListener('visibilitychange', visible);
-      window.removeEventListener('pagehide', clear); window.removeEventListener('pageshow', restored);
+      window.removeEventListener('pageshow', restored);
     });
     this.load(); return this.ready();
   }
-  load(): void {
-    this.pending?.unsubscribe(); this.state.set({status: 'loading'});
+  load(background = false): void {
+    this.pending?.unsubscribe();
+    if (!background) this.state.set({status: 'loading'});
     this.pending=this.api.getCurrentUser().pipe(timeout(10000)).subscribe({
       next: state => {
         this.state.set(state);

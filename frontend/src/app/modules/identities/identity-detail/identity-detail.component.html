@@ -54,6 +54,9 @@
         <span class="card-header-title">Actions</span>
       </div></ng-template>
       <div class="identity-actions">
+        @if (currentUser.impersonationAllowed() && identity.role && !identity.isGroup) {
+          <p-button label="Impersonate" ariaLabel="Impersonate" icon="pi pi-user" (onClick)="impersonate()" />
+        }
         @if (canManageUsers() && !identity.isGroup && !identity.role) {
           <p-button label="Create User" ariaLabel="Create User" icon="pi pi-user-plus" (onClick)="creatingUser = identity" />
         }

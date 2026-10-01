@@ -60,6 +60,7 @@ paths:
       tags:
       - Launcher
       operationId: deleteLauncherGroup
+      description: Delete the current user's group and all its shortcuts atomically.
       responses:
         '200':
           description: Updated collection

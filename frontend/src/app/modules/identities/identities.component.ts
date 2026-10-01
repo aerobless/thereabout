@@ -22,6 +22,8 @@ import {
     IdentityService
 } from '../../../../generated/backend-api/thereabout';
 
+type IdentityRow = Identity & {appIdentityCount: number};
+
 @Component({
     selector: 'app-identities',
     imports: [
@@ -49,7 +51,7 @@ export class IdentitiesComponent implements OnInit {
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly refresh = registerRefresh(() => { this.loadIdentities(); this.loadUnlinkedAppIdentities(); }, () => this.identityDialogVisible || this.linkDialogVisible);
 
-    identities: Identity[] = [];
+    identities: IdentityRow[] = [];
     unlinkedAppIdentities: IdentityInApplication[] = [];
     unlinkedGroupIdentities: IdentityInApplication[] = [];
     unlinkedFilter = '';
@@ -76,7 +78,7 @@ export class IdentitiesComponent implements OnInit {
 
     loadIdentities(): void {
         this.identityService.getIdentities().pipe(this.refresh.track('identities')).subscribe({next: identities => {
-            this.identities = identities;
+            this.identities = identities.map(identity => ({...identity, appIdentityCount: identity.identityInApplications?.length ?? 0}));
             this.changeDetector.markForCheck();
         }, error: () => {}});
     }
@@ -117,14 +119,6 @@ export class IdentitiesComponent implements OnInit {
                 this.messageService.add({severity: 'error', summary: 'Error', detail: 'Failed to link application identity'});
             }
         });
-    }
-
-    cloudflareEmail(identity: Identity): string | undefined {
-        return identity.identityInApplications?.find(app => app.application === 'Cloudflare')?.identifier;
-    }
-
-    getAppIdentityCount(identity: Identity): number {
-        return identity.identityInApplications?.length || 0;
     }
 
     identityLabel(identity: Identity): string {

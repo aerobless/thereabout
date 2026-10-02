@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -32,7 +33,7 @@ class PreferencesControllerTest {
     @Autowired MockMvc mvc;
     @Autowired JsonMapper mapper;
     @Autowired com.sixtymeters.thereabout.client.data.UserPreferencesRepository repository;
-    private final LocalDate started = LocalDate.now().minusDays(40);
+    private final LocalDate started = LocalDate.now(ZoneId.of("Europe/Zurich")).minusDays(40);
 
     @BeforeEach void setup() {
         com.sixtymeters.thereabout.testing.TestUsers.owner(ownerDb);
@@ -59,7 +60,7 @@ class PreferencesControllerTest {
         var changed = mvc.perform(put("/backend/api/v1/preferences").contentType(MediaType.APPLICATION_JSON).content("{\"weightGoalKg\":78.2}")).andReturn().getResponse();
         assertThat(changed.getStatus()).isEqualTo(200);
         assertThat(get().getWeightGoalKg()).isEqualByComparingTo("78.2");
-        assertThat(get().getWeightGoalStartedOn()).isEqualTo(LocalDate.now());
+        assertThat(get().getWeightGoalStartedOn()).isEqualTo(LocalDate.now(ZoneId.of("Europe/Zurich")));
         assertThat(repository.findById(1L).orElseThrow().getWeightGoalKg()).isEqualByComparingTo("78.2");
     }
     @Test void finiteLargeValuesFitConfigurationStorage() throws Exception {

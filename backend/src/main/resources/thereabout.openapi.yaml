@@ -19,6 +19,8 @@ paths:
     $ref: 'openapi/finances/reports.yaml#/paths/_overview'
   /api/finances/transfer-accounts:
     $ref: 'openapi/finances/accounts.yaml#/paths/_transfer_accounts'
+  /api/finances/users:
+    $ref: 'openapi/finances/accounts.yaml#/paths/_users'
   /api/finances/accounts:
     $ref: 'openapi/finances/accounts.yaml#/paths/_accounts'
   /api/finances/accounts/{id}:

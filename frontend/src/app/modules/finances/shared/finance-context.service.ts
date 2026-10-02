@@ -2,6 +2,7 @@ import { computed, inject, Injectable, signal } from "@angular/core";
 import { MessageService } from "primeng/api";
 import { Observable, firstValueFrom, forkJoin } from "rxjs";
 import { FinanceApi } from "./finance-api.service";
+import { assetKinds } from "./finance-format";
 import { loadResource, errorMessage } from "./finance-resource";
 @Injectable()
 export class FinanceContext {
@@ -13,18 +14,20 @@ export class FinanceContext {
   private pending?: { fingerprint: string; key: string };
   readonly metadata = loadResource(this.revision, () =>
     forkJoin({
-      accounts: this.api.allOwnAccounts({
-        scope: "OWN",
+      accounts: this.api.allAccounts({
+        scope: "ALL_OWN",
         pageSize: 200,
         includeInactive: true,
       }),
+      ownAccounts: this.api.allOwnAccounts({ includeInactive: true }),
       categories: this.api.client.financeListCategories(),
       currencies: this.api.client.financeCurrencies(),
     }),
   );
   readonly accounts = computed(
-    () => this.metadata().data?.accounts.items ?? [],
+    () => (this.metadata().data?.accounts.items ?? []).filter(a => assetKinds.some(([kind]) => kind === a.kind)),
   );
+  readonly ownAccounts = computed(() => this.metadata().data?.ownAccounts.items ?? []);
   readonly categories = computed(
     () => this.metadata().data?.categories.items ?? [],
   );

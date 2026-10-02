@@ -44,15 +44,28 @@ public class FinanceReadRepository {
             r.getString("category_name"),r.getBoolean("cross_user_transfer")),user.value());
   }
 
+  public List<GenFinanceUser> users() {
+    return db.query("SELECT id,short_name FROM identity WHERE role IS NOT NULL AND is_group=FALSE ORDER BY short_name,id",
+        (r,n) -> new GenFinanceUser().id(r.getLong("id")).name(r.getString("short_name")));
+  }
+
+  private static final String ACCOUNT_OWNER = "(SELECT i.short_name FROM identity i WHERE i.id=a.user_id) user_name";
+
+  public UserId accountOwner(UserId user, long id) {
+    var account = account(user, id);
+    if (account.getUserId() == null) throw missing("Own account");
+    return new UserId(account.getUserId());
+  }
+
   public List<GenFinanceAccount> ownAccounts(UserId user) {
     return db.query(
-        "SELECT a.*,0 balance FROM finance_account a WHERE user_id=? AND deleted=FALSE AND kind IN"
+        "SELECT a.*," + ACCOUNT_OWNER + ",0 balance FROM finance_account a WHERE user_id=? AND deleted=FALSE AND kind IN"
             + " ('CASH','INVESTMENT','REAL_ESTATE','OTHER_ASSET') ORDER BY kind,name,id",
         ACCOUNT, user.value());
   }
 
   public GenFinanceAccount account(UserId user, long id) {
-    return db.query("SELECT a.*,0 balance FROM finance_account a WHERE id=? AND (user_id=? OR user_id IS NULL)", ACCOUNT, id, user.value()).stream()
+    return db.query("SELECT a.*," + ACCOUNT_OWNER + ",0 balance FROM finance_account a WHERE id=?", ACCOUNT, id).stream()
         .findFirst()
         .orElseThrow(() -> missing("Account"));
   }
@@ -87,9 +100,9 @@ public class FinanceReadRepository {
     return db
         .query(
             "SELECT v.*,a.name,a.currency FROM finance_valuation v JOIN finance_account a ON"
-                + " a.id=v.account_id WHERE v.id=? AND a.user_id=?",
+                + " a.id=v.account_id WHERE v.id=?",
             VALUATION,
-            id, user.value())
+            id)
         .stream()
         .findFirst()
         .orElseThrow(() -> missing("Valuation"));
@@ -97,7 +110,7 @@ public class FinanceReadRepository {
 
   public GenFinanceValuationList valuations(UserId user, Long accountId) {
     long id = accountId == null ? 0 : accountId;
-    if (id != 0) requireOwnAccount(user, id);
+    if (id != 0) user = accountOwner(user, id);
     return new GenFinanceValuationList()
         .items(
             db.query(
@@ -141,10 +154,6 @@ public class FinanceReadRepository {
 
   private static final String OWN_TRANSACTION = "EXISTS(SELECT 1 FROM finance_posting visible JOIN finance_account owner ON owner.id=visible.account_id WHERE visible.transaction_id=t.id AND owner.user_id=?)";
 
-  private void requireOwnAccount(UserId user, long id) {
-    if (db.queryForList("SELECT id FROM finance_account WHERE id=? AND user_id=?", Long.class, id,user.value()).isEmpty()) throw missing("Own account");
-  }
-
   public GenFinanceTransferAccountPage transferAccounts(UserId user, String q, Integer pageNumber, Integer pageLength, Long id) {
     int page=page(pageNumber), size=pageSize(pageLength);
     var args=new ArrayList<Object>();
@@ -170,14 +179,16 @@ public class FinanceReadRepository {
     String q = text(p.getQ());
     int page = page(p.getPage()), size = pageSize(p.getPageSize());
     List<Object> args = new ArrayList<>();
-    String where = " WHERE (a.user_id=? OR a.user_id IS NULL)";
-    args.add(user.value());
+    String where = " WHERE 1=1";
+    Long owner = p.getUserId() != null ? p.getUserId()
+        : (scope.equals("OWN") && p.getId() == null ? user.value() : null);
+    if (owner != null) { where += " AND a.user_id=?"; args.add(owner); }
     if (!Boolean.TRUE.equals(p.getIncludeDeleted())) where += " AND a.deleted=FALSE";
     if (p.getActive() != null) {
       where += " AND a.active=?";
       args.add(p.getActive());
     } else if (!Boolean.TRUE.equals(p.getIncludeInactive())) where += " AND a.active=TRUE";
-    if (scope.equals("OWN"))
+    if (scope.equals("OWN") || scope.equals("ALL_OWN"))
       where += " AND a.kind IN ('CASH','INVESTMENT','REAL_ESTATE','OTHER_ASSET')";
     if (scope.equals("COUNTERPARTY")) where += " AND a.kind IN ('EXPENSE','REVENUE')";
     if (!q.isBlank()) {
@@ -201,9 +212,9 @@ public class FinanceReadRepository {
     queryArgs.add(page * size);
     var items =
         db.query(
-            "SELECT a.*,COALESCE((SELECT SUM(b.amount) FROM finance_posting b JOIN"
+            "SELECT a.*," + ACCOUNT_OWNER + ",COALESCE((SELECT SUM(b.amount) FROM finance_posting b JOIN"
                 + " finance_transaction t ON t.id=b.transaction_id WHERE b.account_id=a.id AND"
-                + " b.deleted=FALSE AND t.deleted=FALSE AND t.occurred_at<=? AND " + OWN_TRANSACTION + "),0) balance FROM"
+                + " b.deleted=FALSE AND t.deleted=FALSE AND t.occurred_at<=? AND " + "(a.user_id IS NOT NULL OR " + OWN_TRANSACTION + ")),0) balance FROM"
                 + " finance_account a"
                 + where
                 + " ORDER BY a.kind,a.name,a.id LIMIT ? OFFSET ?",
@@ -227,18 +238,20 @@ public class FinanceReadRepository {
           + " c.id=t.category_id ";
 
   public GenFinanceTransaction transaction(UserId user, long id) {
-    return db.query(TX_SELECT + TX_FROM + " WHERE t.id=? AND (sa.user_id=? OR da.user_id=?)", TRANSACTION, id, user.value(), user.value()).stream()
+    return db.query(TX_SELECT + TX_FROM + " WHERE t.id=?", TRANSACTION, id).stream()
         .findFirst()
         .orElseThrow(() -> missing("Transaction"));
   }
 
   public GenFinanceTransactionPage transactions(UserId user, GenFinanceTransactionQuery p) {
     List<Object> args = new ArrayList<>();
-    String where = " WHERE (sa.user_id=? OR da.user_id=?)";
-    args.add(user.value()); args.add(user.value());
+    long account = p.getAccountId() == null ? 0 : p.getAccountId();
+    // Main account details are shared; the unfiltered feed and counterparties retain the current user's perspective.
+    boolean mainAccount = account != 0 && account(user, account).getUserId() != null;
+    String where = mainAccount ? " WHERE 1=1" : " WHERE (sa.user_id=? OR da.user_id=?)";
+    if (!mainAccount) { args.add(user.value()); args.add(user.value()); }
     if (!Boolean.TRUE.equals(p.getIncludeDeleted()))
       where += " AND t.deleted=FALSE AND s.deleted=FALSE AND d.deleted=FALSE";
-    long account = p.getAccountId() == null ? 0 : p.getAccountId();
     if (account != 0) {
       account(user, account);
       where += " AND (s.account_id=? OR d.account_id=?)";
@@ -301,9 +314,10 @@ public class FinanceReadRepository {
             db.queryForObject(
                 "SELECT COALESCE(SUM(p.amount),0) FROM finance_posting p JOIN finance_transaction t"
                     + " ON t.id=p.transaction_id WHERE p.account_id=? AND p.deleted=FALSE AND"
-                    + " t.deleted=FALSE AND " + OWN_TRANSACTION + " AND (t.occurred_at<? OR (t.occurred_at=? AND t.id<=?))",
+                    + " t.deleted=FALSE AND (? OR " + OWN_TRANSACTION + ") AND (t.occurred_at<? OR (t.occurred_at=? AND t.id<=?))",
                 BigDecimal.class,
                 account,
+                mainAccount,
                 user.value(),
                 dateTime(row.getOccurredAt(), null, false),
                 dateTime(row.getOccurredAt(), null, false),
@@ -314,14 +328,15 @@ public class FinanceReadRepository {
   }
 
   public BigDecimal balance(UserId user, long account, LocalDateTime date) {
-    account(user, account);
+    boolean mainAccount = account(user, account).getUserId() != null;
     return db.queryForObject(
         "SELECT COALESCE(SUM(p.amount),0) FROM finance_posting p JOIN finance_transaction t ON"
             + " t.id=p.transaction_id WHERE p.account_id=? AND p.deleted=FALSE AND t.deleted=FALSE"
-            + " AND t.occurred_at<=? AND " + OWN_TRANSACTION,
+            + " AND t.occurred_at<=? AND (? OR " + OWN_TRANSACTION + ")",
         BigDecimal.class,
         account,
         date,
+        mainAccount,
         user.value());
   }
 }

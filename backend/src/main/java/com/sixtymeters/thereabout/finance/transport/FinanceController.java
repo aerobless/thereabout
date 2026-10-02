@@ -27,6 +27,12 @@ public class FinanceController {
     return reports.overview(users.current(), query);
   }
 
+  @GetMapping("/users")
+  public java.util.List<GenFinanceUser> financeUsers() {
+    users.current();
+    return reads.users();
+  }
+
   @GetMapping("/accounts")
   public GenFinanceAccountPage financeListAccounts(
       @Valid @ModelAttribute GenFinanceAccountQuery query) {

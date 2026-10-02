@@ -24,6 +24,7 @@
         <finance-account-logo [account]="account" />
         <div class="account-copy">
           <h2>{{ account.name }}</h2>
+          <span>Owner: {{ account.userName }}</span>
           <span
             >{{ label(account.kind) }} account · {{ account.currency }}</span
           >

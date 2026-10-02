@@ -53,7 +53,6 @@ public class TransactionService {
               "Source and destination must differ");
           var source = type == TransactionType.TRANSFER ? accounts.transferAccount(input.getSourceId()) : accounts.requireAccount(user, input.getSourceId());
           var destination = type == TransactionType.TRANSFER ? accounts.transferAccount(input.getDestinationId()) : accounts.requireAccount(user, input.getDestinationId());
-          if (!java.util.Objects.equals(source.getUserId(), user.value()) && !java.util.Objects.equals(destination.getUserId(), user.value())) throw missing("Own account");
           validateAccounts(type, source, destination);
           String sc = required(input.getSourceCurrency(), "sourceCurrency"),
               dc = required(input.getDestinationCurrency(), "destinationCurrency");

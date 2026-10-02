@@ -5,7 +5,7 @@ import {
 } from "../../../../../generated/backend-api/thereabout";
 export type FinanceDialog =
   | { kind: "transaction"; transaction?: FinanceTransaction }
-  | { kind: "account"; account?: FinanceAccount; counterparty?: boolean }
+  | { kind: "account"; account?: FinanceAccount; counterparty?: boolean; userId?: number }
   | { kind: "categories" }
   | { kind: "valuation"; account: FinanceAccount }
   | { kind: "rates" }

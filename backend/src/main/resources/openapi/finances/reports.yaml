@@ -207,6 +207,7 @@ components:
       - OWN
       - COUNTERPARTY
       - ALL
+      - ALL_OWN
     FinanceSeriesPoint:
       type: object
       additionalProperties: false

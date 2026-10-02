@@ -23,6 +23,8 @@ public class ReportService {
   private final Clock financeClock;
 
   public GenFinanceOverview overview(UserId user, GenFinancePeriodQuery query) {
+    if (query.getAccountId() != null && query.getAccountId() != 0)
+      user = reads.accountOwner(user, query.getAccountId());
     LocalDateTime now = LocalDateTime.now(financeClock);
     var period = period(query, now);
     var to = period.to().isAfter(now) ? now : period.to();
@@ -112,6 +114,8 @@ public class ReportService {
   }
 
   public GenFinanceReport report(UserId user, GenFinancePeriodQuery query) {
+    if (query.getAccountId() != null && query.getAccountId() != 0)
+      user = reads.accountOwner(user, query.getAccountId());
     var period = period(query, LocalDateTime.now(financeClock));
     long selected = query.getAccountId() == null ? 0 : query.getAccountId();
     var accounts = reads.ownAccounts(user);

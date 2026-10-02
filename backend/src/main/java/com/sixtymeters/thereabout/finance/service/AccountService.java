@@ -17,10 +17,11 @@ public class AccountService {
   private final FinancePostingRepository postings;
   private final FinanceReadRepository reads;
   private final FinanceWriteCoordinator writes;
+  private final com.sixtymeters.thereabout.access.UserContext users;
 
+  /** Main accounts are shared among authenticated personal data users; ownership governs reports, not access. */
   public FinanceAccountEntity requireAccount(UserId user, long id) {
     var account=accounts.findById(id).orElseThrow(() -> missing("Account"));
-    if (account.getUserId() != null && account.getUserId() != user.value()) throw missing("Account");
     return account;
   }
 
@@ -78,7 +79,13 @@ public class AccountService {
           if (input.getWebsiteUrl() != null) account.setWebsiteUrl(websiteUrl(input.getWebsiteUrl()));
           account.setName(name);
           account.setKind(kind);
-          if (account.getId() == null) account.setUserId(kind.isOwn() ? user.value() : null);
+          if (account.getId() == null) {
+            account.setUserId(kind.isOwn()
+                ? (input.getUserId() == null ? user.value() : users.require(input.getUserId()).value())
+                : null);
+          } else if (input.getUserId() != null) {
+            require(java.util.Objects.equals(account.getUserId(), input.getUserId()), "Account owner cannot be changed");
+          }
           account.setCurrency(currency);
           account.setActive(input.getActive() == null || input.getActive());
           account.setIncludeNetWorth(

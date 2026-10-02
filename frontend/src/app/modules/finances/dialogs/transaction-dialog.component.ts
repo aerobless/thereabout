@@ -11,6 +11,7 @@ import {
   OnInit,
   signal,
 } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { CommonModule } from "@angular/common";
 import {
   FormBuilder,
@@ -68,6 +69,25 @@ export class TransactionDialogComponent implements OnInit {
     foreignCurrency: [""],
     foreignAmount: [""],
   });
+  private readonly formValue = toSignal(this.form.valueChanges, {
+    initialValue: this.form.getRawValue(),
+  });
+  readonly validationMessages = computed(() => {
+    this.formValue();
+    const controls = this.form.controls;
+    const messages: string[] = [];
+    if (controls.description.invalid) messages.push(controls.description.hasError("maxlength")
+      ? "Keep the description within 1024 characters." : "Enter a description.");
+    if (controls.date.invalid) messages.push("Enter a valid date and time.");
+    if (controls.sourceId.invalid) messages.push(this.usesCounterparty && controls.type.value === "DEPOSIT"
+      ? "Select a counterparty from the suggestions." : "Choose a source account.");
+    if (controls.destinationId.invalid) messages.push(this.usesCounterparty && controls.type.value === "WITHDRAWAL"
+      ? "Select a counterparty from the suggestions." : "Choose a destination account.");
+    if (controls.sourceAmount.invalid) messages.push("Enter an amount.");
+    else if (controls.destinationAmount.invalid) messages.push(controls.sourceCurrency.value !== controls.destinationCurrency.value
+      ? "Enter the received amount." : "Enter an amount.");
+    return messages;
+  });
   transferSource: FinanceTransferAccount | string | null = null;
   transferDestination: FinanceTransferAccount | string | null = null;
   private transferSearch = signal({side: 'sourceId', q: ''});
@@ -120,9 +140,9 @@ export class TransactionDialogComponent implements OnInit {
         .map((c) => ({ ...c, name: c.code })),
     ];
   }
-  get suggestions() {
+  readonly suggestions = computed(() => {
     const rows = this.counterparties().data ?? [];
-    const name = this.counterQuery.trim();
+    const name = this.search().q.trim();
     const matches = rows.map((a) => ({ ...a, label: a.name, create: false }));
     if (
       name &&
@@ -136,12 +156,12 @@ export class TransactionDialogComponent implements OnInit {
           id: 0,
           name,
           label: `Create “${name}”`,
-          currency: this.form.controls.sourceCurrency.value,
+          currency: this.formValue().sourceCurrency ?? "CHF",
           create: true,
         },
       ];
     return matches;
-  }
+  });
   get usesCounterparty() {
     return ["WITHDRAWAL", "DEPOSIT"].includes(this.form.controls.type.value);
   }
@@ -284,11 +304,11 @@ export class TransactionDialogComponent implements OnInit {
         },
       ]);
     } else {
-      const initial=this.context.accounts().find(a => a.kind === 'CASH' && a.active);
+      const initial=this.context.ownAccounts().find(a => a.kind === 'CASH' && a.active);
       if (initial) this.transferSource={id:initial.id,name:initial.name,currency:initial.currency,userId:0,userName:''};
       this.form.patchValue({
         sourceId:
-          this.context.accounts().find((a) => a.kind === "CASH" && a.active)
+          this.context.ownAccounts().find((a) => a.kind === "CASH" && a.active)
             ?.id ?? 0,
       });
     }
@@ -314,7 +334,9 @@ export class TransactionDialogComponent implements OnInit {
     return this.context.saving();
   }
   private get own() {
-    return this.context.accounts().filter((a) => a.active);
+    return this.context.accounts().filter((a) => a.active).map(a => ({
+      ...a, name: a.userName ? `${a.userName} · ${a.name}` : a.name,
+    }));
   }
   private get counters() {
     const list = this.counterparties().data ?? [];

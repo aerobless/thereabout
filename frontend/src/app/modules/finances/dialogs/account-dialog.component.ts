@@ -37,6 +37,7 @@ export class AccountDialogComponent implements OnInit {
 
   readonly account = input<FinanceAccount>();
   readonly counterparty = input(false);
+  readonly userId = input<number>();
   readonly kinds = assetKinds;
   readonly kindOptions = [
     ...assetKinds.map(([value, label]) => ({ value, label })),
@@ -62,7 +63,7 @@ export class AccountDialogComponent implements OnInit {
     const a = this.account();
     const result = await this.context.write(
       "accounts.save",
-      { ...this.form.getRawValue(), id: a?.id, version: a?.version },
+      { ...this.form.getRawValue(), id: a?.id, version: a?.version, userId: a?.userId ?? this.userId() },
       (p) =>
         a
           ? this.context.api.client.financeUpdateAccounts(a.id, p)

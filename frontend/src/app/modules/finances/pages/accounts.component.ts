@@ -1,3 +1,4 @@
+import { CurrentUserService } from "../../../shared/current-user/current-user.service";
 import { TableModule } from "primeng/table";
 import { SelectModule } from "primeng/select";
 import { Subject, debounceTime } from "rxjs";
@@ -41,6 +42,25 @@ export class AccountsComponent {
   readonly context = inject(FinanceContext);
   private dialogs = inject(FinanceDialogs);
   counterparties = false;
+  readonly selectedUserId = signal<number | null>(null);
+  private readonly currentUser = inject(CurrentUserService);
+  readonly users = loadResource(this.context.revision, () => this.context.api.client.financeUsers());
+  readonly otherUsers = computed(() => {
+    const current = this.currentUser.state();
+    return (this.users().data ?? []).filter(user => current.status !== "loading" && user.id !== current.identityId);
+  });
+  selectUser(id: number | null) {
+    this.counterparties = false;
+    this.selectedUserId.set(id);
+    this.ownSearch = "";
+    this.page = 0;
+    this.loadAccounts();
+  }
+  selectCounterparties() {
+    this.counterparties = true;
+    this.page = 0;
+    this.loadAccounts();
+  }
   page = 0;
   private ownSearch = "";
   private counterpartySearch = "";
@@ -111,6 +131,7 @@ export class AccountsComponent {
   loadAccounts() {
     this.filters.set({
       scope: this.counterparties ? "COUNTERPARTY" : "OWN",
+      userId: this.counterparties ? undefined : (this.selectedUserId() ?? undefined),
       page: this.page,
       pageSize: 50,
       q: this.accountSearch,
@@ -126,6 +147,7 @@ export class AccountsComponent {
       kind: "account",
       account,
       counterparty: this.counterparties,
+      userId: this.counterparties ? undefined : (this.selectedUserId() ?? undefined),
     });
   }
 }

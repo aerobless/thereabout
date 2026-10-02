@@ -51,7 +51,7 @@
             counterpartySelection = $event; counterpartyChanged($event)
           "
           [ngModelOptions]="{ standalone: true }"
-          [suggestions]="suggestions"
+          [suggestions]="suggestions()"
           optionLabel="name"
           [dropdown]="true"
           [delay]="250"
@@ -103,7 +103,7 @@
             counterpartySelection = $event; counterpartyChanged($event)
           "
           [ngModelOptions]="{ standalone: true }"
-          [suggestions]="suggestions"
+          [suggestions]="suggestions()"
           optionLabel="name"
           [dropdown]="true"
           [delay]="250"
@@ -207,9 +207,15 @@
       >Notes<textarea name="notes" rows="3" formControlName="notes"></textarea>
     </label>
   </div>
+  @if (validationMessages().length && !saving) {
+    <p id="transaction-validation" class="validation-note" role="status">
+      {{ validationMessages().join(" ") }}
+    </p>
+  }
   <div class="dialog-footer">
     <button type="button" (click)="dialogs.close()">Cancel</button
-    ><button class="primary" [disabled]="saving || form.invalid">
+    ><button class="primary" [disabled]="saving || form.invalid"
+      [attr.aria-describedby]="validationMessages().length && !saving ? 'transaction-validation' : null">
       {{ saving ? "Saving…" : "Save transaction" }}
     </button>
   </div>

@@ -13,6 +13,8 @@ public final class FinanceRowMappers {
           new GenFinanceAccount()
               .id(r.getObject("id", Long.class))
               .sourceId(r.getObject("source_id", Long.class))
+              .userId(r.getObject("user_id", Long.class))
+              .userName(r.getString("user_name"))
               .name(r.getString("name"))
               .kind(GenFinanceAccountKind.fromValue(r.getString("kind")))
               .currency(r.getString("currency"))

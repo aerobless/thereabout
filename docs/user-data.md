@@ -2,7 +2,7 @@
 
 ## Ownership
 
-Every personal business operation receives an explicit `UserId`. Browser controllers derive it from the verified effective principal; payloads never set arbitrary owners. Ingestion, file-import jobs and the finance MCP explicitly use eligible identity 1.
+Every personal business operation receives an explicit `UserId`. Browser controllers derive it from the verified effective principal. Creating a main finance account can select another eligible user as owner; other domains derive ownership from the principal. Ingestion, file-import jobs and the finance MCP explicitly use eligible identity 1.
 
 | Domain | Owner and inherited data |
 | --- | --- |
@@ -12,19 +12,19 @@ Every personal business operation receives an explicit `UserId`. Browser control
 | Preferences | Weight goal and challenge start date per user, retaining exact legacy values. New users start at 75 kg today. |
 | Choices | Composite key `(user_id, score_date)`. Atomic adjustments are independent between users. |
 | Locations | Owner on every active entry; range, sparse, edit and bulk-delete operations filter it. |
-| Finance | Main account owner; postings, valuations and transaction visibility follow the participating main accounts. |
+| Finance | Main account owner; accounts and their transactions/valuations can be viewed and managed by every personal data user. |
 
 People, groups, messages, categories, expense/revenue counterparties, currencies, exchange rates and integration settings remain shared. Groups and contacts cannot own personal data. Legacy historical country codes and the existing migration archive remain stored; Statistics, its APIs and reverse-country calculation are removed.
 
 ## Finance permissions and reports
 
-`CASH`, `INVESTMENT`, `REAL_ESTATE` and `OTHER_ASSET` require an owner. `EXPENSE`, `REVENUE`, opening and reconciliation accounts have none. Main account owners cannot be changed through edits. A user can edit their main accounts and shared counterparties/categories. Own account lists, balances, valuations and net worth contain only that user's main accounts.
+`CASH`, `INVESTMENT`, `REAL_ESTATE` and `OTHER_ASSET` require an owner. `EXPENSE`, `REVENUE`, opening and reconciliation accounts have none. Main account owners cannot be changed through edits. Every personal data user can view and manage any user's main accounts, transactions and valuations, and create accounts for another eligible user. The Accounts view lists Your accounts, other users by name, then Counterparties. `OWN` defaults to the current user or filters by `userId`; `ALL_OWN` supplies main accounts across owners for shared account choices. Main account details include owner ID/name. Personal net-worth and operating summaries default to the current user; an explicit main-account filter uses that account's owner and ledger.
 
-`GET /api/finances/transfer-accounts` searches active main accounts across users and returns only ID, name, owner ID/name and currency. A selected existing account can be hydrated by ID even if inactive; inactive accounts cannot be used for a new transaction. This does not disclose balances, valuations or unrelated transactions, and does not change the account's type or owner.
+`GET /api/finances/transfer-accounts` searches active main accounts across users and returns only ID, name, owner ID/name and currency. A selected existing account can be hydrated by ID even if inactive; inactive accounts cannot be used for a new transaction. The choices omit balances and valuations; full main-account details are available separately to all users. Selecting a transfer target does not change its type or owner.
 
-A transfer is one transaction and two postings. Either participant may create, edit, delete or restore it in either direction. Editing requires an owned main account both before and after the change. An uninvolved third user receives 404. Deletes/restores affect the shared aggregate and both personal balances. The existing ledger lock, transaction boundary and optimistic version protect simultaneous operations. Bulk operations validate every selection before mutating any entity.
+A transfer is one transaction and two postings. Every personal data user may create, edit, delete or restore it in either direction, including transactions between other users. Deletes/restores affect the shared aggregate and both personal balances. The existing ledger lock, transaction boundary and optimistic version protect simultaneous operations. Bulk operations validate every selection before mutating any entity.
 
-Shared counterparties expose only transactions involving an owned main account; their displayed balances are calculated from those transactions. Request keys and replay responses use `(user_id, request_key)`. New audits retain the authenticated actor and effective data user. Replays recheck current object visibility before returning saved private results.
+Shared counterparties expose only transactions involving an owned main account; their displayed balances are calculated from those transactions. Request keys and replay responses use `(user_id, request_key)`. New audits retain the authenticated actor and effective data user. Replays recheck that the referenced object still exists before returning saved results.
 
 Personal operating reports derive cross-user transfers as outgoing expenses and incoming income. The stored transaction type and transaction-list label remain `TRANSFER`. Each report uses its own account side's exact amount/currency, then the existing CHF conversion, date-based rates and missing-rate warnings. Transfers between the same owner's main accounts are excluded even if only one account is selected. No duplicate income/expense transactions are created. Future group reports can still classify internal transfers from the account owners; group reports are not implemented here.
 

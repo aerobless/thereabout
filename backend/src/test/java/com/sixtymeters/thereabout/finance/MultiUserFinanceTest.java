@@ -21,6 +21,7 @@ class MultiUserFinanceTest {
     @Autowired TransactionService transactions;
     @Autowired FinanceReadRepository reads;
     @Autowired ReportService reports;
+    @Autowired ValuationService valuations;
     private final UserId alice = new UserId(100001), bob = new UserId(100002), eve = new UserId(100003);
     private long a,b,a2,counter;
     @BeforeEach void setup() {
@@ -43,25 +44,24 @@ class MultiUserFinanceTest {
         assertThat(new BigDecimal(report.getIncome())).isEqualByComparingTo(income);
         assertThat(new BigDecimal(report.getExpenses())).isEqualByComparingTo(expense);
     }
-    @Test void eitherParticipantCanCreateEditDeleteAndRestoreButNoThirdUserCanAccess() {
+    @Test void everyUserCanCreateEditDeleteAndRestoreOtherUsersTransactions() {
         var tx=transactions.save(bob,transfer(a,b,"10")).getTransaction();
         assertThat(reads.transaction(alice,tx.getId()).getType()).isEqualTo(GenFinanceTransactionType.TRANSFER);
         assertThat(reads.transaction(bob,tx.getId()).getId()).isEqualTo(tx.getId());
-        assertThatThrownBy(() -> reads.transaction(eve,tx.getId())).hasMessageContaining("404");
+        assertThat(reads.transaction(eve,tx.getId()).getId()).isEqualTo(tx.getId());
         report(alice,"0","10");report(bob,"10","0");
-        var edited=transactions.save(alice,transfer(a,b,"12").id(tx.getId()).version(tx.getVersion())).getTransaction();
+        var edited=transactions.save(eve,transfer(a,b,"12").id(tx.getId()).version(tx.getVersion())).getTransaction();
         assertThatThrownBy(() -> transactions.save(bob,transfer(a,b,"13").id(tx.getId()).version(tx.getVersion()))).hasMessageContaining("409");
-        assertThatThrownBy(() -> transactions.save(bob,transfer(a,a2,"12").id(tx.getId()).version(edited.getVersion()))).hasMessageContaining("404");
-        var deleted=transactions.setDeleted(bob,new GenFinanceVersionedInput().requestKey(UUID.randomUUID().toString()).id(tx.getId()).version(edited.getVersion()),true).getTransaction();
+        var deleted=transactions.setDeleted(eve,new GenFinanceVersionedInput().requestKey(UUID.randomUUID().toString()).id(tx.getId()).version(edited.getVersion()),true).getTransaction();
         report(alice,"0","0");report(bob,"0","0");
-        var restored=transactions.setDeleted(alice,new GenFinanceVersionedInput().requestKey(UUID.randomUUID().toString()).id(tx.getId()).version(deleted.getVersion()),false).getTransaction();
+        var restored=transactions.setDeleted(eve,new GenFinanceVersionedInput().requestKey(UUID.randomUUID().toString()).id(tx.getId()).version(deleted.getVersion()),false).getTransaction();
         report(alice,"0","12");report(bob,"12","0");
         assertThat(restored.getDeleted()).isFalse();
         assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_posting WHERE transaction_id=?",Integer.class,tx.getId())).isEqualTo(2);
         transactions.save(alice,transfer(b,a,"4"));
         report(alice,"4","12");report(bob,"12","4");
     }
-    @Test void internalTransfersStayExcludedEvenWithSingleAccountFiltersAndSharedAccountsDoNotLeak() {
+    @Test void ownerReportsStaySeparateWhileAccountDetailsAreShared() {
         transactions.save(alice,transfer(a,a2,"20"));
         assertThat(new BigDecimal(reports.report(alice,period().accountId(a)).getExpenses())).isZero();
         assertThat(new BigDecimal(reports.report(alice,period().accountId(a2)).getIncome())).isZero();
@@ -72,8 +72,18 @@ class MultiUserFinanceTest {
         assertThat(new BigDecimal(aliceCounter.getBalance())).isEqualByComparingTo("5");
         assertThat(new BigDecimal(bobCounter.getBalance())).isEqualByComparingTo("7");
         assertThat(reads.transactions(bob,new GenFinanceTransactionQuery().accountId(counter)).getItems()).hasSize(1);
-        assertThatThrownBy(() -> reads.account(alice,b)).hasMessageContaining("404");
-        assertThatThrownBy(() -> reports.report(alice,period().accountId(b))).hasMessageContaining("404");
+        assertThat(reads.account(alice,b).getUserId()).isEqualTo(bob.value());
+        assertThat(reads.account(alice,b).getUserName()).isEqualTo("Finance fixture "+bob.value());
+        var shared = reads.accounts(eve,new GenFinanceAccountQuery().scope(GenFinanceScope.OWN).userId(bob.value()));
+        assertThat(shared.getItems()).extracting(GenFinanceAccount::getId).containsExactly(b);
+        assertThat(new BigDecimal(shared.getItems().getFirst().getBalance())).isEqualByComparingTo("-7");
+        var txs=reads.transactions(eve,new GenFinanceTransactionQuery().accountId(b));
+        assertThat(txs.getItems()).hasSize(1);
+        assertThat(new BigDecimal(txs.getItems().getFirst().getRunningBalance())).isEqualByComparingTo("-7");
+        var overview=reports.overview(eve,period().accountId(b));
+        assertThat(overview.getAccounts()).extracting(GenFinanceAccount::getId).contains(b);
+        assertThat(new BigDecimal(overview.getAccounts().stream().filter(x -> x.getId()==b).findFirst().orElseThrow().getBalance())).isEqualByComparingTo("-7");
+        assertThat(new BigDecimal(reports.report(alice,period().accountId(b)).getExpenses())).isEqualByComparingTo("7");
         assertThat(reads.transferAccounts(alice,"Bob cash",0,20,null).getItems()).singleElement().satisfies(choice -> {
             assertThat(choice.getUserId()).isEqualTo(bob.value());assertThat(choice.getCurrency()).isEqualTo("CHF");
         });
@@ -85,8 +95,28 @@ class MultiUserFinanceTest {
         assertThat(transactions.save(bob,input).getTransaction().getId()).isNotEqualTo(first.getId());
         long third=account(eve,"Eve cash",GenFinanceAccountKind.CASH,"CHF");
         var foreign=transactions.save(eve,transfer(third,counter,"5").type(GenFinanceTransactionType.WITHDRAWAL)).getTransaction();
-        assertThatThrownBy(() -> transactions.categorize(alice,new GenFinanceBulkCategoryInput().requestKey(UUID.randomUUID().toString()).items(List.of(new GenFinanceSelection().id(first.getId()).version(first.getVersion()),new GenFinanceSelection().id(foreign.getId()).version(foreign.getVersion()))))).hasMessageContaining("404");
+        assertThatThrownBy(() -> transactions.categorize(alice,new GenFinanceBulkCategoryInput().requestKey(UUID.randomUUID().toString()).items(List.of(new GenFinanceSelection().id(first.getId()).version(first.getVersion()),new GenFinanceSelection().id(foreign.getId()).version(foreign.getVersion()+1))))).hasMessageContaining("409");
         assertThat(reads.transaction(alice,first.getId()).getVersion()).isEqualTo(first.getVersion());
+    }
+    @Test void newAccountsUseSelectedOwnerAndEditsPreserveIt() {
+        var created=accounts.save(alice,new GenFinanceAccountInput().requestKey(UUID.randomUUID().toString())
+            .name("For Bob").kind(GenFinanceAccountKind.INVESTMENT).currency("CHF").userId(bob.value())).getAccount();
+        assertThat(created.getUserId()).isEqualTo(bob.value());
+        var edited=accounts.save(eve,new GenFinanceAccountInput().requestKey(UUID.randomUUID().toString())
+            .id(created.getId()).version(created.getVersion()).name("Bob investment").kind(created.getKind()).currency("CHF")).getAccount();
+        assertThat(edited.getUserId()).isEqualTo(bob.value());
+        assertThatThrownBy(() -> accounts.save(alice,new GenFinanceAccountInput().requestKey(UUID.randomUUID().toString())
+            .name("Invalid owner").kind(GenFinanceAccountKind.CASH).currency("CHF").userId(999999L))).hasMessageContaining("404");
+        db.update("INSERT INTO identity(id,short_name,is_group,role) VALUES(100004,'Group',TRUE,NULL),(100005,'Contact',FALSE,NULL)");
+        assertThat(reads.users()).extracting(GenFinanceUser::getId).contains(alice.value(),bob.value(),eve.value()).doesNotContain(100004L,100005L);
+        assertThatThrownBy(() -> accounts.save(alice,new GenFinanceAccountInput().requestKey(UUID.randomUUID().toString())
+            .name("Group account").kind(GenFinanceAccountKind.CASH).currency("CHF").userId(100004L))).hasMessageContaining("404");
+        var preview=valuations.preview(eve,new GenFinanceValuationPreviewInput().accountId(created.getId()).date("1901-02-01").reportedValue("50"));
+        var result=valuations.save(eve,new GenFinanceValuationInput().requestKey(UUID.randomUUID().toString())
+            .accountId(created.getId()).date("1901-02-01").reportedValue("50").expectedBalance(preview.getPreviousBalance()).reference("shared-account"));
+        assertThat(new BigDecimal(reads.accounts(alice,new GenFinanceAccountQuery().id(created.getId())).getItems().getFirst().getBalance())).isEqualByComparingTo("50");
+        assertThat(reads.valuations(alice,created.getId()).getItems()).extracting(GenFinanceValuation::getId).contains(result.getValuation().getId());
+        assertThat(db.queryForObject("SELECT user_id FROM finance_audit WHERE entity_id=? AND operation='valuations.save'",Long.class,created.getId())).isEqualTo(eve.value());
     }
     @Test void foreignCurrencyUsesOwnSideAndExistingConversionAndMissingRateWarnings() {
         long euro=account(bob,"Bob euro",GenFinanceAccountKind.CASH,"EUR");

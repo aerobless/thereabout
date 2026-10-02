@@ -20,11 +20,15 @@ export class FinanceApi {
       q.asOf,
       q.includeDeleted,
       q.includeInactive,
+      q.userId,
       q.active,
     );
   }
   allOwnAccounts(q: FinanceAccountQuery = {}) {
-    const request = { ...q, scope: "OWN" as const, pageSize: 200 };
+    return this.allAccounts({ ...q, scope: "OWN" });
+  }
+  allAccounts(q: FinanceAccountQuery = {}) {
+    const request = { ...q, pageSize: 200 };
     return this.accounts({ ...request, page: 0 }).pipe(
       expand((page) =>
         (page.page + 1) * page.pageSize < page.total

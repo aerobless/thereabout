@@ -42,6 +42,7 @@ import { DeletionDialogComponent } from "./deletion-dialog.component";
           <finance-account-dialog
             [account]="dialog.account"
             [counterparty]="dialog.counterparty ?? false"
+            [userId]="dialog.userId"
           />
         }
         @case ("transaction") {

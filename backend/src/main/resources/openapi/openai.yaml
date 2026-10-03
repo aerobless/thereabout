@@ -1,0 +1,80 @@
+paths:
+  _openai:
+    get:
+      tags:
+      - OpenAI
+      operationId: openAiGetSettings
+      summary: openAiGetSettings
+      responses:
+        '200':
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAiSettings'
+    put:
+      tags:
+      - OpenAI
+      operationId: openAiSaveSettings
+      summary: openAiSaveSettings
+      responses:
+        '200':
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAiSettings'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenAiSettingsInput'
+  _openai_test:
+    post:
+      tags:
+      - OpenAI
+      operationId: openAiTestSettings
+      summary: openAiTestSettings
+      responses:
+        '200':
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAiTestResult'
+components:
+  schemas:
+    OpenAiSettings:
+      type: object
+      properties:
+        configured:
+          type: boolean
+        model:
+          type: string
+      required:
+      - configured
+      - model
+    OpenAiSettingsInput:
+      type: object
+      properties:
+        apiKey:
+          type: string
+          maxLength: 2048
+        removeKey:
+          type: boolean
+        model:
+          type: string
+          maxLength: 100
+      required:
+      - model
+    OpenAiTestResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+      - success
+      - message

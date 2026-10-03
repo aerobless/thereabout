@@ -1,5 +1,5 @@
 <app-modal header="Delete Identity" [(visible)]="deleteVisible" [dismissible]="!deleting()">
-  <p>Are you sure you want to delete "{{ identity?.shortName }}"?</p>
+  <p>Are you sure you want to delete "{{ fullName(identity) }}"?</p>
   <ng-template #footer>
     <p-button label="Cancel" severity="secondary" [disabled]="deleting()" (onClick)="deleteVisible.set(false)" />
     <p-button label="Delete" severity="danger" [loading]="deleting()" [disabled]="deleting()" (onClick)="deleteIdentity()" />
@@ -34,9 +34,15 @@
           <span class="field-value">{{ identity.role === 'ADMIN' ? 'Admin' : identity.role === 'USER' ? 'User' : 'Not a user' }}</span>
         </div>
         <div class="detail-field">
-          <span class="field-label">Short Name</span>
-          <span class="field-value">{{ identity.shortName }}</span>
+          <span class="field-label">{{ identity.isGroup ? 'Group name' : 'First name' }}</span>
+          <span class="field-value">{{ identity.firstName }}</span>
         </div>
+        @if (!identity.isGroup) {
+          <div class="detail-field">
+            <span class="field-label">Last name</span>
+            <span class="field-value">{{ identity.lastName || '—' }}</span>
+          </div>
+        }
         <div class="detail-field">
           <span class="field-label">Group</span>
           <span class="field-value">{{ identity.isGroup ? 'Yes' : 'No' }}</span>

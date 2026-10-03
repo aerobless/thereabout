@@ -84,11 +84,11 @@ public class WhatsAppChatImporter implements FileImporter {
     }
 
     /**
-     * Resolve the receiver: if an Identity with that shortName exists, use or create an IdentityInApplication
+     * Resolve the receiver: if an Identity with that complete name exists, use or create an IdentityInApplication
      * linked to it; otherwise use or create an orphan IdentityInApplication.
      */
     private IdentityInApplicationEntity getOrCreateReceiver(String receiverName) {
-        return identityRepository.findByShortName(receiverName)
+        return identityRepository.findUniqueByFullName(receiverName)
                 .map(identity -> identityInApplicationRepository
                         .findByApplicationAndIdentifier(CommunicationApplication.WHATSAPP, receiverName)
                         .orElseGet(() -> {

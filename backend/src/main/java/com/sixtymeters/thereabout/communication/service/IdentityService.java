@@ -27,6 +27,7 @@ public class IdentityService {
 
     @Transactional
     public IdentityEntity createIdentity(IdentityEntity identity) {
+        normalizeNames(identity);
         identity.setRole(null);
         if (identity.getIdentityInApplications() != null) {
             if (identity.getIdentityInApplications().stream().anyMatch(IdentityService::isCloudflare)) {
@@ -45,7 +46,9 @@ public class IdentityService {
         if (existing.isUser() && updatedIdentity.isGroup()) {
             throw new ThereaboutException(HttpStatusCode.valueOf(400), "Users cannot become groups.");
         }
-        existing.setShortName(updatedIdentity.getShortName());
+        normalizeNames(updatedIdentity);
+        existing.setFirstName(updatedIdentity.getFirstName());
+        existing.setLastName(updatedIdentity.getLastName());
         existing.setGroup(updatedIdentity.isGroup());
         existing.setRelationship(updatedIdentity.getRelationship());
 
@@ -81,6 +84,18 @@ public class IdentityService {
 
     private static boolean isCloudflare(IdentityInApplicationEntity app) {
         return app.getApplication() == com.sixtymeters.thereabout.communication.data.CommunicationApplication.CLOUDFLARE;
+    }
+
+    private static void normalizeNames(IdentityEntity identity) {
+        String first = identity.getFirstName() == null ? "" : identity.getFirstName().strip();
+        String last = identity.getLastName() == null ? "" : identity.getLastName().strip();
+        if (first.isBlank() || first.length() > 255 || last.length() > 255
+                || (identity.isGroup() && !last.isEmpty())) {
+            throw new ThereaboutException(HttpStatusCode.valueOf(400),
+                    "Enter a first name or group name of at most 255 characters. Groups cannot have a last name.");
+        }
+        identity.setFirstName(first);
+        identity.setLastName(last);
     }
 
     @Transactional

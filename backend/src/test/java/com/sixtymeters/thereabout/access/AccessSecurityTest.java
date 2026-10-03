@@ -111,7 +111,7 @@ class AccessSecurityTest {
     @Test
     void browserWritesRequireTheCsrfToken() throws Exception {
         String login = token("app", admin, false);
-        String body = "{\"id\":0,\"shortName\":\"csrf-" + UUID.randomUUID().toString().substring(0, 8) + "\"}";
+        String body = "{\"id\":0,\"firstName\":\"csrf-" + UUID.randomUUID().toString().substring(0, 8) + "\"}";
         assertThat(send(json("/backend/api/v1/identity", body).header(CloudflareAccessFilter.HEADER, login)).statusCode()).isEqualTo(403);
         String csrf = send(get("/backend/api/v1/current-user")).headers().allValues("Set-Cookie").stream()
                 .filter(cookie -> cookie.startsWith("XSRF-TOKEN=")).findFirst().orElseThrow()
@@ -122,7 +122,7 @@ class AccessSecurityTest {
 
     @Test
     void onlyAdministratorsCreateUsers() throws Exception {
-        long person = identities.save(IdentityEntity.builder().shortName("person-" + UUID.randomUUID().toString().substring(0, 8)).build()).getId();
+        long person = identities.save(IdentityEntity.builder().firstName("person-" + UUID.randomUUID().toString().substring(0, 8)).build()).getId();
         String csrf = UUID.randomUUID().toString();
         String body = "{\"email\":\"" + UUID.randomUUID() + "@example.test\",\"role\":\"USER\"}";
         var request = json("/backend/api/v1/identity/" + person + "/user", body).header("Cookie", "XSRF-TOKEN=" + csrf).header("X-XSRF-TOKEN", csrf);
@@ -212,7 +212,7 @@ class AccessSecurityTest {
 
     private String createUser(boolean isAdmin) {
         String email = UUID.randomUUID() + "@example.test";
-        long id = identities.save(IdentityEntity.builder().shortName("access-" + UUID.randomUUID().toString().substring(0, 8)).build()).getId();
+        long id = identities.save(IdentityEntity.builder().firstName("access-" + UUID.randomUUID().toString().substring(0, 8)).build()).getId();
         users.createUser(id, email, isAdmin ? com.sixtymeters.thereabout.communication.data.UserRole.ADMIN : com.sixtymeters.thereabout.communication.data.UserRole.USER);
         return email;
     }

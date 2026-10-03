@@ -49,7 +49,7 @@ class UserBootstrapTest {
 
     @Test
     void existingUsersPreventBootstrap() {
-        long id = identities.save(IdentityEntity.builder().shortName("existing-user").build()).getId();
+        long id = identities.save(IdentityEntity.builder().firstName("existing-user").build()).getId();
         identityUsers.createUser(id, email(), com.sixtymeters.thereabout.communication.data.UserRole.USER);
         assertThat(users.resolve(email())).isEmpty();
         assertThat(jdbc.queryForObject("select count(*) from identity where role='ADMIN'", Integer.class)).isZero();

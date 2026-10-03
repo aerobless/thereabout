@@ -23,7 +23,7 @@ class IdentityUserTest {
     @Autowired JdbcTemplate jdbc;
 
     long person(boolean group) {
-        return identities.saveAndFlush(IdentityEntity.builder().shortName("user-test-" + UUID.randomUUID().toString().substring(0, 8)).isGroup(group).build()).getId();
+        return identities.saveAndFlush(IdentityEntity.builder().firstName("user-test-" + UUID.randomUUID().toString().substring(0, 8)).isGroup(group).build()).getId();
     }
     String email() { return UUID.randomUUID() + "@example.test"; }
     int create(long id, String email) throws Exception {
@@ -102,29 +102,29 @@ class IdentityUserTest {
         assertThat(create(id, email())).isEqualTo(200);
         long link = link(id);
         assertThat(edit(id, """
-                {"id":%d,"shortName":"Heidi","role":null,"isGroup":false,"identityInApplications":[
+                {"id":%d,"firstName":"Heidi","role":null,"isGroup":false,"identityInApplications":[
                 {"id":0,"application":"Telegram","identifier":"%s"}]}
                 """.formatted(id, UUID.randomUUID()))).isEqualTo(200);
         assertThat(link(id)).isEqualTo(link);
         assertThat(identities.findById(id).orElseThrow().isUser()).isTrue();
-        assertThat(edit(id, "{\"id\":" + id + ",\"shortName\":\"Group\",\"isGroup\":true}")).isEqualTo(400);
-        assertThat(identities.findById(id).orElseThrow().getShortName()).isEqualTo("Heidi");
+        assertThat(edit(id, "{\"id\":" + id + ",\"firstName\":\"Group\",\"isGroup\":true}")).isEqualTo(400);
+        assertThat(identities.findById(id).orElseThrow().getFirstName()).isEqualTo("Heidi");
         assertThat(mvc.perform(put("/backend/api/v1/identity-in-application/{id}/unlink", link)).andReturn().getResponse().getStatus()).isEqualTo(400);
         assertThat(mvc.perform(put("/backend/api/v1/identity-in-application/{id}/link/{identityId}", link, person(false))).andReturn().getResponse().getStatus()).isEqualTo(400);
         assertThat(mvc.perform(delete("/backend/api/v1/identity/{id}", id)).andReturn().getResponse().getStatus()).isEqualTo(400);
         assertThat(edit(id, """
-                {"id":%d,"shortName":"Heidi","identityInApplications":[{"id":%d,"application":"Cloudflare","identifier":"changed@example.test"}]}
+                {"id":%d,"firstName":"Heidi","identityInApplications":[{"id":%d,"application":"Cloudflare","identifier":"changed@example.test"}]}
                 """.formatted(id, link))).isEqualTo(400);
         assertThat(link(id)).isEqualTo(link);
     }
     @Test void genericCreationAndEditingCannotManufactureCloudflareMappings() throws Exception {
         long id = person(false);
         String payload = """
-                {"id":%d,"shortName":"Forged","role":"ADMIN","identityInApplications":[{"id":0,"application":"Cloudflare","identifier":"%s"}]}
+                {"id":%d,"firstName":"Forged","role":"ADMIN","identityInApplications":[{"id":0,"application":"Cloudflare","identifier":"%s"}]}
                 """.formatted(id, email());
         assertThat(edit(id, payload)).isEqualTo(400);
         assertThat(mvc.perform(post("/backend/api/v1/identity").contentType(MediaType.APPLICATION_JSON).content(payload)).andReturn().getResponse().getStatus()).isEqualTo(400);
-        assertThat(edit(id, "{\"id\":" + id + ",\"shortName\":\"Still contact\",\"role\":\"ADMIN\"}")).isEqualTo(200);
+        assertThat(edit(id, "{\"id\":" + id + ",\"firstName\":\"Still contact\",\"role\":\"ADMIN\"}")).isEqualTo(200);
         assertThat(identities.findById(id).orElseThrow().isUser()).isFalse();
     }
 }

@@ -51,6 +51,7 @@ public class FinanceMcpConfiguration {
       ValuationService valuations,
       ExchangeRateService rates,
       ReportService reports,
+      FinanceImportService imports,
       ObjectMapper json,
       Validator validator)
       throws IOException {
@@ -61,6 +62,11 @@ public class FinanceMcpConfiguration {
             .serverInfo("thereabout-finances", "2.0.0")
             .capabilities(McpSchema.ServerCapabilities.builder().tools(false).build());
     builder.tools(
+        tools.tool("imports.prepare", false, GenFinanceImportPrepareInput.class, input -> imports.prepare(users.integration(), input)),
+        tools.tool("imports.get", true, GenFinanceImportQuery.class, input -> imports.get(users.integration(), input)),
+        tools.tool("imports.review", false, GenFinanceImportReviewInput.class, input -> imports.review(users.integration(), input)),
+        tools.tool("imports.cancel", false, GenFinanceImportQuery.class, input -> imports.cancel(users.integration(), input)),
+        tools.tool("imports.approve", false, GenFinanceImportApproveInput.class, input -> imports.approve(users.integration(), input)),
         tools.tool("overview", true, GenFinancePeriodQuery.class, input -> reports.overview(users.integration(), input)),
         tools.tool("accounts.list", true, GenFinanceAccountQuery.class, input -> reads.accounts(users.integration(), input)),
         tools.tool("accounts.save", false, GenFinanceAccountInput.class, input -> accounts.save(users.integration(), input)),
@@ -122,13 +128,13 @@ public class FinanceMcpConfiguration {
       var tool =
           McpSchema.Tool.builder("finance_" + operation.replace('.', '_'), schema)
               .description(
-                  "Finance "
+                  operation.startsWith("imports.") ? importDescription(operation) : "Finance "
                       + operation
                       + ". Monetary values are decimal strings; writes require requestKey and edits"
                       + " require version.")
               .annotations(
                   new McpSchema.ToolAnnotations(
-                      operation, read, !read, true, operation.equals("rates.refresh"), false))
+                      operation, read, !read && !operation.startsWith("imports."), !operation.equals("imports.prepare"), operation.equals("rates.refresh") || operation.equals("imports.prepare"), false))
               .build();
       return McpServerFeatures.SyncToolSpecification.builder()
           .tool(tool)
@@ -167,6 +173,16 @@ public class FinanceMcpConfiguration {
                 }
               })
           .build();
+    }
+
+    private String importDescription(String operation) {
+      return switch (operation) {
+        case "imports.prepare" -> "Prepare CSV suggestions in memory using OpenAI; consumes API credits, creates no ledger records. Supply accountId, fileName and csvText. Poll imports.get. Any user's main account can be selected.";
+        case "imports.get" -> "Get progress and paginated proposed transactions with immutable source rows and issues. Requests renew active drafts; abandoned drafts expire after 60 minutes without activity. Drafts are lost on restart.";
+        case "imports.review" -> "Correct any proposed rows using rowId and current revision. Source evidence cannot be changed. All rows must be resolved or explicitly skipped before approval.";
+        case "imports.cancel" -> "Cancel and discard an import draft without ledger changes.";
+        default -> "Approve a READY draft with current revision and unique requestKey. Optional corrected rows are reviewed atomically. Creates transactions, proposed counterparties and provenance in one database transaction. Categories must already exist; imports cannot create categories. Explicit duplicateOverride is required to keep flagged duplicates. Idempotent receipt survives draft expiry.";
+      };
     }
 
     private McpSchema.CallToolResult error(String detail) {

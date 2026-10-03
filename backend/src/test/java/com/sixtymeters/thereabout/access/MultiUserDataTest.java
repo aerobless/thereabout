@@ -40,7 +40,7 @@ class MultiUserDataTest {
     final LocalDate date=LocalDate.of(1902,2,1);
     @BeforeEach void fixtures() {
         com.sixtymeters.thereabout.testing.TestUsers.owner(db);
-        for(var user:List.of(a,b)) db.update("INSERT INTO identity(id,short_name,role) VALUES(?,?,'USER') ON DUPLICATE KEY UPDATE role='USER'",user.value(),"Personal fixture "+user.value());
+        for(var user:List.of(a,b)) db.update("INSERT INTO identity(id,first_name,role) VALUES(?,?,'USER') ON DUPLICATE KEY UPDATE role='USER'",user.value(),"Personal fixture "+user.value());
     }
     @Test void launcherIconsAndMixedOrdersCannotCrossUsers() {
         var group=launcher.createGroup(a,new GenLauncherGroupInput().section("Test").name("A")).getGroups().getFirst();
@@ -94,7 +94,7 @@ class MultiUserDataTest {
         assertThat(occurrences.day(a,date,ZoneId.of("Europe/Zurich"))).hasSize(1);
         assertThat(occurrences.day(b,date,ZoneId.of("Europe/Zurich"))).hasSize(1);
         assertThatThrownBy(() -> sync.delete(new UserId(1),cal.id(),"one",null)).hasMessageContaining("404");
-        db.update("INSERT INTO identity(id,short_name,is_group) VALUES(100013,'Group',TRUE) ON DUPLICATE KEY UPDATE role=NULL,is_group=TRUE");
+        db.update("INSERT INTO identity(id,first_name,is_group) VALUES(100013,'Group',TRUE) ON DUPLICATE KEY UPDATE role=NULL,is_group=TRUE");
         assertThatThrownBy(() -> assignments.assign(cal.id(),List.of(a.value(),100013L))).hasMessageContaining("404");
         assertThat(calendars.userIds(cal.id())).containsExactlyInAnyOrder(a.value(),b.value());
         sync.delete(a,cal.id(),"one",null);

@@ -25,7 +25,7 @@ class MultiUserFinanceTest {
     private final UserId alice = new UserId(100001), bob = new UserId(100002), eve = new UserId(100003);
     private long a,b,a2,counter;
     @BeforeEach void setup() {
-        for (var user : List.of(alice,bob,eve)) db.update("INSERT INTO identity(id,short_name,role) VALUES(?,?,'USER') ON DUPLICATE KEY UPDATE role='USER'",user.value(),"Finance fixture "+user.value());
+        for (var user : List.of(alice,bob,eve)) db.update("INSERT INTO identity(id,first_name,role) VALUES(?,?,'USER') ON DUPLICATE KEY UPDATE role='USER'",user.value(),"Finance fixture "+user.value());
         db.update("INSERT IGNORE INTO finance_currency(code,name,decimal_places) VALUES('CHF','Franc',2),('EUR','Euro',2)");
         a=account(alice,"Alice cash",GenFinanceAccountKind.CASH,"CHF");
         a2=account(alice,"Alice savings",GenFinanceAccountKind.CASH,"CHF");
@@ -39,6 +39,12 @@ class MultiUserFinanceTest {
         return new GenFinanceTransactionInput().requestKey(UUID.randomUUID().toString()).type(GenFinanceTransactionType.TRANSFER).date("1901-02-01T12:00:00").description("Shared transfer").sourceId(from).destinationId(to).sourceAmount(amount).destinationAmount(amount).sourceCurrency("CHF").destinationCurrency("CHF");
     }
     private GenFinancePeriodQuery period() { return new GenFinancePeriodQuery().from("1901-02-01").to("1901-02-28"); }
+    @Test void userChoicesAndAccountOwnersExposeOnlyFirstNames() {
+        db.update("UPDATE identity SET first_name='Alice',last_name='Winter' WHERE id=?",alice.value());
+        assertThat(reads.users().stream().filter(u -> u.getId().equals(alice.value())).findFirst().orElseThrow().getName()).isEqualTo("Alice");
+        assertThat(reads.accounts(alice,new GenFinanceAccountQuery().id(a)).getItems().getFirst().getUserName()).isEqualTo("Alice");
+        assertThat(reads.transferAccounts(alice,"Alice",0,20,a).getItems().getFirst().getUserName()).isEqualTo("Alice");
+    }
     private void report(UserId user,String income,String expense) {
         var report=reports.report(user,period());
         assertThat(new BigDecimal(report.getIncome())).isEqualByComparingTo(income);
@@ -107,7 +113,7 @@ class MultiUserFinanceTest {
         assertThat(edited.getUserId()).isEqualTo(bob.value());
         assertThatThrownBy(() -> accounts.save(alice,new GenFinanceAccountInput().requestKey(UUID.randomUUID().toString())
             .name("Invalid owner").kind(GenFinanceAccountKind.CASH).currency("CHF").userId(999999L))).hasMessageContaining("404");
-        db.update("INSERT INTO identity(id,short_name,is_group,role) VALUES(100004,'Group',TRUE,NULL),(100005,'Contact',FALSE,NULL)");
+        db.update("INSERT INTO identity(id,first_name,is_group,role) VALUES(100004,'Group',TRUE,NULL),(100005,'Contact',FALSE,NULL)");
         assertThat(reads.users()).extracting(GenFinanceUser::getId).contains(alice.value(),bob.value(),eve.value()).doesNotContain(100004L,100005L);
         assertThatThrownBy(() -> accounts.save(alice,new GenFinanceAccountInput().requestKey(UUID.randomUUID().toString())
             .name("Group account").kind(GenFinanceAccountKind.CASH).currency("CHF").userId(100004L))).hasMessageContaining("404");

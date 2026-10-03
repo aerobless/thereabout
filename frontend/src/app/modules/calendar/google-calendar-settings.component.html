@@ -48,7 +48,7 @@
           @if (calendar.selected) {
             <label [for]="'calendar-users-' + calendar.id">Visible to</label>
             <p-multiselect [inputId]="'calendar-users-' + calendar.id" [options]="users()"
-              optionLabel="shortName" optionValue="id" [ngModel]="calendar.userIds ?? []"
+              optionLabel="firstName" optionValue="id" [ngModel]="calendar.userIds ?? []"
               (ngModelChange)="saveUsers(calendar, $event)" [disabled]="busy" [filter]="true"
               appendTo="body" placeholder="No users" [style]="{width: '100%'}" />
             <span>Webhook: {{ calendar.webhookHealth }} · {{ calendar.importedCount }} events processed in last/current pass</span>

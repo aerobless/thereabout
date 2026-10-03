@@ -1,6 +1,6 @@
 <app-modal header="Create User" [visible]="true" (visibleChange)="close()" [dialogStyle]="{width: '450px', maxWidth: 'calc(100vw - 2rem)'}" [dismissible]="!busy()">
   <form id="create-user-form" class="dialog-form" (ngSubmit)="create()" novalidate>
-    <p>Create a Thereabout user for <strong>{{ identity().shortName }}</strong>.</p>
+    <p>Create a Thereabout user for <strong>{{ fullName(identity()) }}</strong>.</p>
     <label for="cloudflare-email">Cloudflare email *</label>
     <input pInputText id="cloudflare-email" name="email" type="email" autocomplete="email" required
            [(ngModel)]="email" [disabled]="busy()" [attr.aria-invalid]="!!error()"

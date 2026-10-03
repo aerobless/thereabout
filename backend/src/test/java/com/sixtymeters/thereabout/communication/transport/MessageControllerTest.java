@@ -32,6 +32,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class MessageControllerTest {
 
+    @Test void searchesAndDisplaysCompleteNamesInMixedMessageLists() throws Exception {
+        senderApplication.getIdentity().setFirstName("Theo");
+        senderApplication.getIdentity().setLastName("Winter");
+        senderApplication.getIdentity().setRole(com.sixtymeters.thereabout.communication.data.UserRole.USER);
+        receiverApplication.getIdentity().setFirstName("Anna");
+        receiverApplication.getIdentity().setLastName("van der Meer");
+        messageRepository.save(MessageEntity.builder().type("text").source(CommunicationApplication.WHATSAPP)
+                .sender(senderApplication).receiver(receiverApplication).body("Hello")
+                .timestamp(LocalDate.of(2026,2,10).atTime(10,0)).build());
+        for (String name : java.util.List.of("Theo", "Winter", "Theo Winter")) {
+            var json = mockMvc.perform(get("/backend/api/v1/message/list").param("sender",name)
+                    .param("receiver","van der Meer")).andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            var page = objectMapper.readValue(json, GenMessagePage.class);
+            assertThat(page.getContent()).hasSize(1);
+            assertThat(page.getContent().getFirst().getSender().getName()).isEqualTo("Theo Winter");
+            assertThat(page.getContent().getFirst().getReceiver().getName()).isEqualTo("Anna van der Meer");
+        }
+    }
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -55,7 +75,7 @@ class MessageControllerTest {
         messageRepository.deleteAll();
 
         IdentityEntity senderIdentity = IdentityEntity.builder()
-                .shortName("sender")
+                .firstName("sender")
                 .relationship("friend")
                 .build();
         senderApplication = IdentityInApplicationEntity.builder()
@@ -68,7 +88,7 @@ class MessageControllerTest {
         senderApplication = persistedSender.getIdentityInApplications().getFirst();
 
         IdentityEntity receiverIdentity = IdentityEntity.builder()
-                .shortName("receiver")
+                .firstName("receiver")
                 .relationship("family")
                 .build();
         receiverApplication = IdentityInApplicationEntity.builder()
@@ -121,7 +141,7 @@ class MessageControllerTest {
         assertThat(response).hasSize(1);
         assertThat(response[0].getSubject()).isEqualTo("Morning");
         assertThat(response[0].getBody()).isEqualTo("Hello there");
-        // Linked identities resolve to identity shortName
+        // Linked identities resolve to identity firstName
         assertThat(response[0].getSender().getName()).isEqualTo("sender");
         assertThat(response[0].getSender().getIdentityId()).isNotNull();
         assertThat(response[0].getReceiver().getName()).isEqualTo("receiver");
@@ -164,7 +184,7 @@ class MessageControllerTest {
         // Unlinked sender falls back to app identifier
         assertThat(response[0].getSender().getName()).isEqualTo("@unknown_user");
         assertThat(response[0].getSender().getIdentityId()).isNull();
-        // Linked receiver still resolves to identity shortName
+        // Linked receiver still resolves to identity firstName
         assertThat(response[0].getReceiver().getName()).isEqualTo("receiver");
         assertThat(response[0].getReceiver().getIdentityId()).isNotNull();
     }

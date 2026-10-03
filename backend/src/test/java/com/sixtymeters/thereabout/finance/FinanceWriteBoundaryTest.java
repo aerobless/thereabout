@@ -34,6 +34,7 @@ class FinanceWriteBoundaryTest {
     com.sixtymeters.thereabout.testing.TestUsers.owner(db);
     for (String table :
         List.of(
+            "import_source",
             "request",
             "audit",
             "valuation",

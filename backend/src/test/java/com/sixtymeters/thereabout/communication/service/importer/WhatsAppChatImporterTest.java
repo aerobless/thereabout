@@ -28,6 +28,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Transactional
 class WhatsAppChatImporterTest {
 
+    @Test void matchesFullNamesButDoesNotGuessAnAmbiguousPerson() throws IOException {
+        var person = identityRepository.save(IdentityEntity.builder().firstName("Example").lastName("Winter").build());
+        whatsAppChatImporter.importFile(copyTestFileToTemp(), "Example Winter", new UserId(1));
+        assertThat(identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.WHATSAPP, "Example Winter")
+                .orElseThrow().getIdentity().getId()).isEqualTo(person.getId());
+        identityRepository.save(IdentityEntity.builder().firstName("Ambiguous").lastName("Person").build());
+        identityRepository.save(IdentityEntity.builder().firstName("Ambiguous").lastName("Person").build());
+        whatsAppChatImporter.importFile(copyTestFileToTemp(), "Ambiguous Person", new UserId(1));
+        assertThat(identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.WHATSAPP, "Ambiguous Person")
+                .orElseThrow().getIdentity()).isNull();
+        whatsAppChatImporter.importFile(copyTestFileToTemp(), "Example", new UserId(1));
+        assertThat(identityInApplicationRepository.findByApplicationAndIdentifier(CommunicationApplication.WHATSAPP, "Example")
+                .orElseThrow().getIdentity()).isNull();
+    }
+
     @Autowired
     private WhatsAppChatImporter whatsAppChatImporter;
 
@@ -154,7 +169,7 @@ class WhatsAppChatImporterTest {
     void testImportGroupChat() throws IOException {
         // Given - create a group identity first (as user would in identity UI)
         IdentityEntity groupIdentity = IdentityEntity.builder()
-                .shortName("Family Group")
+                .firstName("Family Group")
                 .isGroup(true)
                 .build();
         groupIdentity = identityRepository.save(groupIdentity);

@@ -8,7 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-@RestControllerAdvice(assignableTypes = FinanceController.class)
+@RestControllerAdvice(assignableTypes = {FinanceController.class, FinanceImportController.class, com.sixtymeters.thereabout.ai.OpenAiController.class})
 public class FinanceExceptionHandler {
   @ExceptionHandler(ResponseStatusException.class)
   public ResponseEntity<GenFinanceError> application(ResponseStatusException error) {

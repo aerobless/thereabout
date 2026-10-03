@@ -1,6 +1,8 @@
 package com.sixtymeters.thereabout.client.data;
 
 public enum ConfigurationKey {
+    OPENAI_API_KEY,
+    OPENAI_MODEL,
     THEREABOUT_API_KEY,
     FINANCE_MCP_KEY,
     USER_BOOTSTRAP,

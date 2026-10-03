@@ -30,7 +30,7 @@ public class UserBootstrapService {
         String claim = UUID.randomUUID().toString();
         configuration.insertUserBootstrapIfAbsent(claim);
         if (!claim.equals(configuration.lockUserBootstrap()) || identities.anyUserExists()) return Optional.empty();
-        IdentityEntity admin = identities.save(IdentityEntity.builder().shortName(ADMIN_NAME).role(com.sixtymeters.thereabout.communication.data.UserRole.ADMIN).build());
+        IdentityEntity admin = identities.save(IdentityEntity.builder().firstName(ADMIN_NAME).role(com.sixtymeters.thereabout.communication.data.UserRole.ADMIN).build());
         return Optional.of(users.createUser(admin.getId(), email, com.sixtymeters.thereabout.communication.data.UserRole.ADMIN));
     }
 }

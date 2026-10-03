@@ -231,6 +231,7 @@ paths:
 components:
   schemas:
     FinanceUser:
+      description: A selectable Thereabout user; name contains their first name.
       type: object
       additionalProperties: false
       required: [id, name]
@@ -246,7 +247,7 @@ components:
         name: {type: string}
         currency: {type: string}
         userId: {type: integer, format: int64}
-        userName: {type: string}
+        userName: {type: string, description: First name of the account owner.}
     FinanceTransferAccountPage:
       type: object
       required: [items, total, page, pageSize]
@@ -277,7 +278,7 @@ components:
           format: int64
           minimum: 1
         userId: {type: integer, format: int64}
-        userName: {type: string}
+        userName: {type: string, description: First name of the account owner.}
         sourceId:
           type: integer
           format: int64

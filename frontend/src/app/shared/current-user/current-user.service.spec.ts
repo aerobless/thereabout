@@ -12,10 +12,10 @@ describe('CurrentUserService', () => {
     TestBed.configureTestingModule({providers: [{provide: CurrentUserApi, useValue: api}]});
     const service = TestBed.inject(CurrentUserService);
     service.load(); response.next({status: 'resolved', identityId: 1, role: 'ADMIN', actorRole: 'ADMIN'});
-    service.impersonate({id: 3, shortName: 'Group', role: 'USER' as const, isGroup: true});
-    service.impersonate({id: 4, shortName: 'Contact', role: null});
+    service.impersonate({id: 3, firstName: 'Group', role: 'USER' as const, isGroup: true});
+    service.impersonate({id: 4, firstName: 'Contact', role: null});
     expect(service.impersonatedUser()).toBeNull();
-    service.impersonate({id: 2, shortName: 'Heidi', role: 'USER' as const});
+    service.impersonate({id: 2, firstName: 'Heidi', role: 'USER' as const});
     response.next({status: 'resolved', identityId: 2, displayName: 'Heidi', role: 'USER', actorRole: 'ADMIN', impersonating: true});
     expect(service.state()).toMatchObject({status: 'resolved', identityId: 2, displayName: 'Heidi'});
     service.stopImpersonation();

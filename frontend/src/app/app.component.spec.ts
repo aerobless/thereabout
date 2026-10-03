@@ -19,7 +19,7 @@ describe('AppComponent', () => {
     const mock = TestBed.inject(CurrentUserService);
     // The fixture receives a writable signal through its mock provider.
     const target = mock.impersonatedUser;
-    (target as import('@angular/core').WritableSignal<{id: number; shortName: string} | null>).set({id: 2, shortName: 'Heidi'});
+    (target as import('@angular/core').WritableSignal<{id: number; firstName: string} | null>).set({id: 2, firstName: 'Heidi'});
     fixture.detectChanges();
     const banner = fixture.nativeElement.querySelector('.impersonation-banner');
     expect(banner.textContent).toContain('Heidi');

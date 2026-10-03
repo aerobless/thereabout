@@ -70,7 +70,7 @@ class CloudflareAccessFilterTest {
         return currentUser(request, decoder);
     }
 
-    @Test void knownEmailUsesStablePersonIdShortNameAndRole() throws Exception {
+    @Test void knownEmailUsesStablePersonIdFirstNameAndRole() throws Exception {
         when(users.resolve("heidi@example.test")).thenReturn(Optional.of(new CloudflareUsers.User(42L, "Heidi", false)));
         var user = currentUser(valid(" Heidi@Example.test "));
         assertThat(user.getStatus()).isEqualTo(RESOLVED);

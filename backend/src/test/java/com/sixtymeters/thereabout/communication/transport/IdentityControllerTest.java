@@ -45,7 +45,7 @@ class IdentityControllerTest {
     @BeforeEach
     void setUp() {
         IdentityEntity senderIdentity = IdentityEntity.builder()
-                .shortName("sender")
+                .firstName("sender")
                 .relationship("friend")
                 .build();
         IdentityInApplicationEntity senderApplication = IdentityInApplicationEntity.builder()
@@ -57,7 +57,7 @@ class IdentityControllerTest {
         identityRepository.save(senderIdentity);
 
         IdentityEntity receiverIdentity = IdentityEntity.builder()
-                .shortName("receiver")
+                .firstName("receiver")
                 .relationship("family")
                 .build();
         IdentityInApplicationEntity receiverApplication = IdentityInApplicationEntity.builder()
@@ -73,7 +73,7 @@ class IdentityControllerTest {
     void testCreateIdentity() throws Exception {
         GenIdentity request = GenIdentity.builder()
                 .id(BigDecimal.ZERO)
-                .shortName("new-contact")
+                .firstName("new-contact")
                 .relationship("colleague")
                 .identityInApplications(List.of(
                         GenIdentityInApplication.builder()
@@ -95,7 +95,7 @@ class IdentityControllerTest {
         GenIdentity response = objectMapper.readValue(responseContent, GenIdentity.class);
 
         assertThat(response.getId()).isNotNull();
-        assertThat(response.getShortName()).isEqualTo("new-contact");
+        assertThat(response.getFirstName()).isEqualTo("new-contact");
         assertThat(response.getIdentityInApplications()).hasSize(1);
         assertThat(response.getIdentityInApplications().getFirst().getApplication()).isEqualTo("Telegram");
     }
@@ -112,20 +112,20 @@ class IdentityControllerTest {
 
         assertThat(response).isNotEmpty();
         assertThat(response)
-                .extracting(GenIdentity::getShortName)
+                .extracting(GenIdentity::getFirstName)
                 .contains("sender", "receiver");
     }
 
     @Test
     void testUpdateIdentity() throws Exception {
         IdentityEntity existing = identityRepository.findAll().stream()
-                .filter(identity -> "sender".equals(identity.getShortName()))
+                .filter(identity -> "sender".equals(identity.getFirstName()))
                 .findFirst()
                 .orElseThrow();
 
         GenIdentity request = GenIdentity.builder()
                 .id(BigDecimal.valueOf(existing.getId()))
-                .shortName("sender-updated")
+                .firstName("sender-updated")
                 .relationship("best-friend")
                 .identityInApplications(List.of(
                         GenIdentityInApplication.builder()
@@ -147,7 +147,7 @@ class IdentityControllerTest {
         GenIdentity response = objectMapper.readValue(responseContent, GenIdentity.class);
 
         assertThat(response.getId()).isEqualTo(BigDecimal.valueOf(existing.getId()));
-        assertThat(response.getShortName()).isEqualTo("sender-updated");
+        assertThat(response.getFirstName()).isEqualTo("sender-updated");
         assertThat(response.getIdentityInApplications()).hasSize(1);
         assertThat(response.getIdentityInApplications().getFirst().getApplication()).isEqualTo("Signal");
     }
@@ -155,12 +155,12 @@ class IdentityControllerTest {
     @Test
     void testUpdateIdentityWithoutIdentityInApplications() throws Exception {
         IdentityEntity existing = identityRepository.findAll().stream()
-                .filter(identity -> "receiver".equals(identity.getShortName()))
+                .filter(identity -> "receiver".equals(identity.getFirstName()))
                 .findFirst()
                 .orElseThrow();
 
         String requestBody = """
-                {"id":%d,"shortName":"receiver-updated","relationship":"colleague"}
+                {"id":%d,"firstName":"receiver-updated","relationship":"colleague"}
                 """.formatted(existing.getId()).strip();
 
         String responseContent = mockMvc.perform(put("/backend/api/v1/identity/{id}", existing.getId())
@@ -174,7 +174,7 @@ class IdentityControllerTest {
         GenIdentity response = objectMapper.readValue(responseContent, GenIdentity.class);
 
         assertThat(response.getId()).isEqualTo(BigDecimal.valueOf(existing.getId()));
-        assertThat(response.getShortName()).isEqualTo("receiver-updated");
+        assertThat(response.getFirstName()).isEqualTo("receiver-updated");
         assertThat(response.getRelationship()).isEqualTo("colleague");
         assertThat(response.getIdentityInApplications()).hasSize(1);
         assertThat(response.getIdentityInApplications().getFirst().getIdentifier()).isEqualTo("+4100000002");
@@ -183,7 +183,7 @@ class IdentityControllerTest {
     @Test
     void testUpdateIdentityPreservesExistingIdentityInApplications() throws Exception {
         IdentityEntity existing = identityRepository.findAll().stream()
-                .filter(identity -> "sender".equals(identity.getShortName()))
+                .filter(identity -> "sender".equals(identity.getFirstName()))
                 .findFirst()
                 .orElseThrow();
 
@@ -191,7 +191,7 @@ class IdentityControllerTest {
 
         GenIdentity request = GenIdentity.builder()
                 .id(BigDecimal.valueOf(existing.getId()))
-                .shortName("sender-edited")
+                .firstName("sender-edited")
                 .relationship("colleague")
                 .identityInApplications(List.of(
                         GenIdentityInApplication.builder()
@@ -213,7 +213,7 @@ class IdentityControllerTest {
         GenIdentity response = objectMapper.readValue(responseContent, GenIdentity.class);
 
         assertThat(response.getId()).isEqualTo(BigDecimal.valueOf(existing.getId()));
-        assertThat(response.getShortName()).isEqualTo("sender-edited");
+        assertThat(response.getFirstName()).isEqualTo("sender-edited");
         assertThat(response.getIdentityInApplications()).hasSize(1);
         assertThat(response.getIdentityInApplications().getFirst().getId()).isEqualTo(BigDecimal.valueOf(existingApp.getId()));
         assertThat(response.getIdentityInApplications().getFirst().getApplication()).isEqualTo("WhatsApp");
@@ -223,7 +223,7 @@ class IdentityControllerTest {
     @Test
     void testDeleteIdentity() throws Exception {
         IdentityEntity existing = identityRepository.findAll().stream()
-                .filter(identity -> "receiver".equals(identity.getShortName()))
+                .filter(identity -> "receiver".equals(identity.getFirstName()))
                 .findFirst()
                 .orElseThrow();
 
@@ -231,5 +231,23 @@ class IdentityControllerTest {
                 .andExpect(status().isNoContent());
 
         assertThat(identityRepository.findById(existing.getId())).isEmpty();
+    }
+
+    @Test void normalizesBothNamesAndRejectsInvalidGroupsAndBlankNames() throws Exception {
+        var request = new GenIdentity().id(BigDecimal.ZERO).firstName("  Theo  ").lastName(" Winter ");
+        var content = mockMvc.perform(post("/backend/api/v1/identity").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        var saved = objectMapper.readValue(content, GenIdentity.class);
+        assertThat(saved.getFirstName()).isEqualTo("Theo");
+        assertThat(saved.getLastName()).isEqualTo("Winter");
+        assertThat(content).doesNotContain("shortName");
+        assertThat(identityRepository.findById(saved.getId().longValue()).orElseThrow().getFullName()).isEqualTo("Theo Winter");
+        request.setIsGroup(true);
+        mockMvc.perform(post("/backend/api/v1/identity").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))).andExpect(status().isBadRequest());
+        request.setFirstName(" "); request.setLastName("");
+        mockMvc.perform(post("/backend/api/v1/identity").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))).andExpect(status().isBadRequest());
     }
 }

@@ -157,7 +157,7 @@ public class TelegramMessageMapper {
                         .findByApplicationAndIdentifier(CommunicationApplication.TELEGRAM, receiverId)
                         .orElseGet(() -> {
                             var linked = receiverUsernameHint != null && !receiverUsernameHint.isBlank()
-                                    ? identityRepository.findByShortName(receiverUsernameHint).orElse(null)
+                                    ? identityRepository.findUniqueByFullName(receiverUsernameHint).orElse(null)
                                     : null;
                             return saveNewIdentityInApp(CommunicationApplication.TELEGRAM, receiverId, receiverUsernameHint, isGroup, linked);
                         }));

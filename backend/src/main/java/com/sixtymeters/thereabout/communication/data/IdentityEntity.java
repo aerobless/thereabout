@@ -20,8 +20,19 @@ public class IdentityEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String shortName;
+    @Column(nullable = false, length = 255)
+    private String firstName;
+
+    @Column(nullable = false, length = 255)
+    @Builder.Default
+    private String lastName = "";
+
+    @Transient
+    public String getFullName() {
+        return java.util.stream.Stream.of(firstName, lastName)
+                .filter(name -> name != null && !name.isBlank())
+                .map(String::strip).collect(java.util.stream.Collectors.joining(" "));
+    }
 
     @Builder.Default
     private boolean isGroup = false;

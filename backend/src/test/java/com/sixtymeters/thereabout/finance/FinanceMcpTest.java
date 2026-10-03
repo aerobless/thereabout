@@ -41,7 +41,7 @@ class FinanceMcpTest {
     try (var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(15)).build()) {
       assertThat(client.initialize().serverInfo().name()).isEqualTo("thereabout-finances");
       var tools = client.listTools().tools();
-      assertThat(tools).hasSize(19);
+      assertThat(tools).hasSize(24);
       assertThat(tools)
           .extracting(McpSchema.Tool::name)
           .contains("finance_transactions_save", "finance_valuations_preview");
@@ -91,7 +91,7 @@ class FinanceMcpTest {
   @Test
   void browserImpersonationCannotChangeMcpOwnerAndAuditRetainsRequestActor() {
     db.update("INSERT IGNORE INTO finance_currency(code,name,decimal_places) VALUES('CHF','Franc',2)");
-    db.update("INSERT INTO identity(id,short_name,role) VALUES(100031,'MCP target','USER') ON DUPLICATE KEY UPDATE role='USER'");
+    db.update("INSERT INTO identity(id,first_name,role) VALUES(100031,'MCP target','USER') ON DUPLICATE KEY UPDATE role='USER'");
     var transport=HttpClientStreamableHttpTransport.builder("http://127.0.0.1:"+port).endpoint("/mcp/finances")
       .requestBuilder(HttpRequest.newBuilder().header("Authorization","Bearer "+keys.getKey()).header("X-Thereabout-Impersonate-User","100031")).build();
     try(var client=McpClient.sync(transport).requestTimeout(Duration.ofSeconds(15)).build()) {

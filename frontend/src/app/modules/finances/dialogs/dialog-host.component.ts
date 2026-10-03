@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
 import { AppModalComponent } from '../../../shared/modal/app-modal.component';
 import { FinanceDialogs, FinanceContext } from "../shared/finance-ui";
+import { ImportDialogComponent } from "./import-dialog.component";
 import { AccountDialogComponent } from "./account-dialog.component";
 import { TransactionDialogComponent } from "./transaction-dialog.component";
 import { CategoriesDialogComponent } from "./categories-dialog.component";
@@ -14,6 +15,7 @@ import { DeletionDialogComponent } from "./deletion-dialog.component";
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     AppModalComponent,
+    ImportDialogComponent,
     AccountDialogComponent,
     TransactionDialogComponent,
     CategoriesDialogComponent,
@@ -28,16 +30,17 @@ import { DeletionDialogComponent } from "./deletion-dialog.component";
       (visibleChange)="close()"
       [header]="titles[dialog.kind]"
       [dialogStyle]="{
-        width: dialog.kind === 'categories' ? '900px' : '720px',
+        width: dialog.kind === 'import' ? '1200px' : dialog.kind === 'categories' ? '900px' : '720px',
         maxWidth: '94vw',
         maxHeight: '92vh',
       }"
       styleClass="finance-dialog"
-      [dismissible]="!context.saving()">
+      [dismissible]="!context.saving() && !dialogs.blocked()">
       @if (context.error()) {
         <p role="alert">{{ context.error() }}</p>
       }
       @switch (dialog.kind) {
+        @case ("import") { <finance-import-dialog [accountId]="dialog.accountId" /> }
         @case ("account") {
           <finance-account-dialog
             [account]="dialog.account"
@@ -71,6 +74,7 @@ export class DialogHostComponent {
   readonly dialogs = inject(FinanceDialogs);
   readonly context = inject(FinanceContext);
   readonly titles = {
+    import: "Import transactions",
     account: "Account",
     transaction: "Transaction",
     categories: "Categories",
@@ -80,6 +84,6 @@ export class DialogHostComponent {
     deletion: "Confirm change",
   };
   close() {
-    if (!this.context.saving()) this.dialogs.close();
+    if (!this.context.saving() && !this.dialogs.blocked()) this.dialogs.close();
   }
 }

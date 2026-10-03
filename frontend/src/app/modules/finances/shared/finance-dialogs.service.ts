@@ -6,6 +6,7 @@ import {
 export type FinanceDialog =
   | { kind: "transaction"; transaction?: FinanceTransaction }
   | { kind: "account"; account?: FinanceAccount; counterparty?: boolean; userId?: number }
+  | { kind: "import"; accountId?: number }
   | { kind: "categories" }
   | { kind: "valuation"; account: FinanceAccount }
   | { kind: "rates" }
@@ -13,6 +14,7 @@ export type FinanceDialog =
   | { kind: "history"; transaction: FinanceTransaction };
 @Injectable()
 export class FinanceDialogs {
+  readonly blocked = signal(false);
   readonly selected = signal<FinanceDialog | null>(null);
   open(dialog: FinanceDialog) {
     this.selected.set(dialog);

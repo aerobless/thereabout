@@ -5,17 +5,23 @@
   [dialogStyle]="{width: '550px', maxWidth: 'calc(100vw - 2rem)'}" [dismissible]="!busy()">
   <div class="dialog-form">
     <p-floatlabel>
-      <input pInputText id="shortName" [(ngModel)]="editingIdentity.shortName" style="width: 100%" />
-      <label for="shortName">Short Name *</label>
+      <input pInputText id="firstName" [(ngModel)]="editingIdentity.firstName" maxlength="255" style="width: 100%" />
+      <label for="firstName">{{ editingIdentity.isGroup ? 'Group name' : 'First name' }} *</label>
     </p-floatlabel>
 
+    @if (!editingIdentity.isGroup) {
+      <p-floatlabel>
+        <input pInputText id="lastName" [(ngModel)]="editingIdentity.lastName" maxlength="255" style="width: 100%" />
+        <label for="lastName">Last name</label>
+      </p-floatlabel>
+    }
     <p-floatlabel>
       <input pInputText id="relationship" [(ngModel)]="editingIdentity.relationship" style="width: 100%" />
       <label for="relationship">Relationship</label>
     </p-floatlabel>
 
     <div style="margin-bottom: 10px; display: flex; align-items: flex-start; gap: 8px">
-      <p-checkbox [(ngModel)]="editingIdentity.isGroup" [disabled]="!!editingIdentity.role" [binary]="true" inputId="isGroup" label="Is a group"></p-checkbox>
+      <p-checkbox [ngModel]="editingIdentity.isGroup" (ngModelChange)="changeGroup($event)" [disabled]="!!editingIdentity.role" [binary]="true" inputId="isGroup" label="Is a group"></p-checkbox>
       <small style="flex: 1; color: var(--text-color-secondary); line-height: 1.4">
         Use for group chats or other non-person identities.
       </small>
@@ -58,6 +64,6 @@
   <ng-template #footer>
     <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="close()" [disabled]="busy()"></p-button>
     <p-button label="Save" icon="pi pi-check" (onClick)="saveIdentity()"
-              [disabled]="!editingIdentity.shortName.trim() || busy()" [loading]="busy()"></p-button>
+              [disabled]="!editingIdentity.firstName.trim() || busy()" [loading]="busy()"></p-button>
   </ng-template>
 </app-modal>

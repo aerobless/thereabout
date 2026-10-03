@@ -1,0 +1,47 @@
+:host { display:block; }
+p { color:var(--app-muted); }
+small { display:block; margin:.25rem 0; }
+.issue { color:var(--app-danger, #ad2929); }
+.skipped { opacity:.65; }
+.row-editor { border:1px solid var(--app-border); border-radius:8px; padding:1rem; margin:1rem 0; }
+pre { white-space:pre-wrap; overflow-wrap:anywhere; margin:.2rem; }
+details { margin:.5rem 0 1rem; }
+input[type=checkbox] { width:auto; }
+@media(max-width:600px) { .row-editor { padding:.5rem; } }
+
+.editor { grid-template-columns:1fr 1fr; margin-bottom:1rem; }
+.span { grid-column:1 / -1; }
+@media(max-width:600px) { .editor { grid-template-columns:1fr; } }
+
+.import-row td { overflow-wrap:anywhere; }
+.cell-label { display:none; }
+@media(max-width:600px) {
+  .import-header { display:none; }
+  .import-row { display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid var(--app-border); padding:.5rem 0; }
+  .import-row td { border:0; padding:.4rem .6rem; }
+  .date-cell { order:0; }
+  .amount-cell { order:1; }
+  .type-cell { order:2; grid-column:1 / -1; }
+  .description-cell { order:3; grid-column:1 / -1; }
+  .counter-cell { order:4; }
+  .category-cell { order:5; }
+  .review-cell { order:6; grid-column:1 / -1; }
+  .cell-label { display:block; font-size:.7rem; color:var(--app-muted); }
+}
+
+.preparing { display:flex; align-items:center; justify-content:center; gap:1rem; min-height:130px; color:var(--app-muted); }
+.import-row-actions { display:flex; gap:.35rem; }
+.row-action { display:inline-flex; align-items:center; justify-content:center; width:2.25rem; height:2.25rem; padding:0; flex-shrink:0; }
+.row-action.accept { color:var(--p-green-700); }
+.row-action.skip { color:var(--p-red-700); }
+.row-action.accepted { background:var(--p-green-50); border-color:var(--p-green-500); }
+.import-header th:nth-child(3), .type-cell { width:125px; }
+.import-header th:last-child, .review-cell { width:220px; }
+@media(max-width:600px) { .type-cell, .review-cell { width:auto; } }
+
+.editor label.checkbox-field { flex-direction:row; align-items:center; }
+
+.import-row.requires-review, .import-row.requires-review td { background:var(--p-red-50); }
+.review-note { font-size:11px; margin:0 0 .5rem; color:var(--app-ink); }
+
+.duplicate-tag { display:inline-flex; margin-bottom:.5rem; }

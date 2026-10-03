@@ -10,7 +10,8 @@ class FinanceOpenApiSchemasTest {
   void suppliesSelfContainedMcpSchemasAcrossResourceFiles() throws Exception {
     var schemas = new FinanceOpenApiSchemas(new JsonMapper()).load();
 
-    assertThat(schemas.size()).isEqualTo(53);
+    assertThat(schemas.size()).isEqualTo(60);
+    assertThat(schemas.required("FinanceImportApproveInput").at("/properties/rows/items/properties/amount/type").asString()).isEqualTo("string");
     assertThat(schemas.toString()).doesNotContain("\"$ref\"");
     assertThat(schemas.required("FinanceTransactionInput").at("/properties/sourceAmount/type").asString())
         .isEqualTo("string");

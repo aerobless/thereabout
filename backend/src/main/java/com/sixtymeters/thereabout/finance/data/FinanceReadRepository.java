@@ -45,11 +45,11 @@ public class FinanceReadRepository {
   }
 
   public List<GenFinanceUser> users() {
-    return db.query("SELECT id,short_name FROM identity WHERE role IS NOT NULL AND is_group=FALSE ORDER BY short_name,id",
-        (r,n) -> new GenFinanceUser().id(r.getLong("id")).name(r.getString("short_name")));
+    return db.query("SELECT id,first_name FROM identity WHERE role IS NOT NULL AND is_group=FALSE ORDER BY first_name,id",
+        (r,n) -> new GenFinanceUser().id(r.getLong("id")).name(r.getString("first_name")));
   }
 
-  private static final String ACCOUNT_OWNER = "(SELECT i.short_name FROM identity i WHERE i.id=a.user_id) user_name";
+  private static final String ACCOUNT_OWNER = "(SELECT i.first_name FROM identity i WHERE i.id=a.user_id) user_name";
 
   public UserId accountOwner(UserId user, long id) {
     var account = account(user, id);
@@ -160,13 +160,13 @@ public class FinanceReadRepository {
     String where=" WHERE a.user_id IS NOT NULL AND a.deleted=FALSE AND (a.active=TRUE OR a.id=?)";
     args.add(id == null ? 0L : id);
     if (id != null) { where+=" AND a.id=?"; args.add(id); }
-    if (!text(q).isBlank()) { where+=" AND (a.name LIKE ? OR i.short_name LIKE ?)"; args.add("%"+q+"%");args.add("%"+q+"%"); }
+    if (!text(q).isBlank()) { where+=" AND (a.name LIKE ? OR i.first_name LIKE ?)"; args.add("%"+q+"%");args.add("%"+q+"%"); }
     String from=" FROM finance_account a JOIN identity i ON i.id=a.user_id";
     long total=count("SELECT COUNT(*)"+from+where,args);
     args.add(size);args.add(page*size);
-    var items=db.query("SELECT a.id,a.name,a.currency,a.user_id,i.short_name"+from+where+" ORDER BY i.short_name,a.name,a.id LIMIT ? OFFSET ?",
+    var items=db.query("SELECT a.id,a.name,a.currency,a.user_id,i.first_name"+from+where+" ORDER BY i.first_name,a.name,a.id LIMIT ? OFFSET ?",
         (r,n)->new GenFinanceTransferAccount().id(r.getLong("id")).name(r.getString("name"))
-            .currency(r.getString("currency")).userId(r.getLong("user_id")).userName(r.getString("short_name")), args.toArray());
+            .currency(r.getString("currency")).userId(r.getLong("user_id")).userName(r.getString("first_name")), args.toArray());
     return new GenFinanceTransferAccountPage().items(items).total(total).page(page).pageSize(size);
   }
 

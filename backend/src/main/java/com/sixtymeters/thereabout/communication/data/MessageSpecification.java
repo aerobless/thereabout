@@ -65,9 +65,9 @@ public final class MessageSpecification {
         return (root, query, cb) -> {
             var senderJoin = root.join("sender", JoinType.LEFT);
             var identityJoin = senderJoin.join("identity", JoinType.LEFT);
-            Predicate shortNameMatch = cb.like(cb.lower(cb.coalesce(identityJoin.get("shortName"), "")), pattern);
+            Predicate fullNameMatch = cb.like(cb.lower(cb.concat(cb.concat(cb.coalesce(identityJoin.get("firstName"), ""), " "), cb.coalesce(identityJoin.get("lastName"), ""))), pattern);
             Predicate identifierMatch = cb.like(cb.lower(senderJoin.get("identifier")), pattern);
-            return cb.or(shortNameMatch, identifierMatch);
+            return cb.or(fullNameMatch, identifierMatch);
         };
     }
 
@@ -79,9 +79,9 @@ public final class MessageSpecification {
         return (root, query, cb) -> {
             var receiverJoin = root.join("receiver", JoinType.LEFT);
             var identityJoin = receiverJoin.join("identity", JoinType.LEFT);
-            Predicate shortNameMatch = cb.like(cb.lower(cb.coalesce(identityJoin.get("shortName"), "")), pattern);
+            Predicate fullNameMatch = cb.like(cb.lower(cb.concat(cb.concat(cb.coalesce(identityJoin.get("firstName"), ""), " "), cb.coalesce(identityJoin.get("lastName"), ""))), pattern);
             Predicate identifierMatch = cb.like(cb.lower(receiverJoin.get("identifier")), pattern);
-            return cb.or(shortNameMatch, identifierMatch);
+            return cb.or(fullNameMatch, identifierMatch);
         };
     }
 }

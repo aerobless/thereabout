@@ -5,6 +5,7 @@ import {ButtonModule} from 'primeng/button';
 import {InputTextModule} from 'primeng/inputtext';
 import {TooltipModule} from 'primeng/tooltip';
 import {FrontendConfigurationResponse, FrontendService} from '../../../../generated/backend-api/thereabout';
+import {OpenAiSettingsComponent} from './openai-settings.component';
 import {FinanceMcpSettingsComponent} from './finance-mcp-settings.component';
 import {GoogleCalendarSettingsComponent} from '../calendar/google-calendar-settings.component';
 import {FileImportComponent} from './file-import.component';
@@ -13,7 +14,7 @@ import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 
 @Component({
   selector: 'app-configuration',
-  imports: [CardModule, ButtonModule, InputTextModule, TooltipModule, FinanceMcpSettingsComponent, GoogleCalendarSettingsComponent, FileImportComponent, TelegramSettingsComponent],
+  imports: [CardModule, ButtonModule, InputTextModule, TooltipModule, OpenAiSettingsComponent, FinanceMcpSettingsComponent, GoogleCalendarSettingsComponent, FileImportComponent, TelegramSettingsComponent],
   templateUrl: './configuration.component.html', styleUrl: './configuration.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })

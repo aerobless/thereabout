@@ -6,6 +6,7 @@
       <p>A clearer view of what you have, spend and grow.</p>
     </div>
     <div class="actions">
+      <button (click)="dialogs.open({ kind: 'import' })"><i class="pi pi-upload"></i> Import</button>
       <button class="secondary" (click)="dialogs.open({ kind: 'rates' })">
         <i class="pi pi-globe"></i> Exchange rates</button
       ><button class="primary" (click)="dialogs.open({ kind: 'transaction' })">

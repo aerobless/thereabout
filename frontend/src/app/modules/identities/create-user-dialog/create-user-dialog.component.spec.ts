@@ -6,7 +6,7 @@ import {CurrentUserService} from '../../../shared/current-user/current-user.serv
 import {CreateUserDialogComponent, normalizeCloudflareEmail, validCloudflareEmail} from './create-user-dialog.component';
 
 describe('CreateUserDialogComponent', () => {
-  const identity: Identity = {id: 42, shortName: 'Heidi', isGroup: false, role: null};
+  const identity: Identity = {id: 42, firstName: 'Heidi', isGroup: false, role: null};
   async function setup() {
     const response = new Subject<Identity>();
     const api = {createIdentityUser: vi.fn(() => response)};

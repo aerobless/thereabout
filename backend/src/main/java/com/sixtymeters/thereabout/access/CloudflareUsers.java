@@ -28,6 +28,6 @@ public class CloudflareUsers {
                 ? Optional.ofNullable(mapping.get().getIdentity())
                 : identities.anyUserExists() ? Optional.empty() : bootstrap.createFirstAdmin(email);
         return identity.filter(person -> person.isUser() && !person.isGroup())
-                .map(person -> new User(person.getId(), person.getShortName(), person.isAdmin()));
+                .map(person -> new User(person.getId(), person.getFirstName(), person.isAdmin()));
     }
 }

@@ -15,7 +15,7 @@ import {IdentityDetailComponent} from '../modules/identities/identity-detail/ide
 import {LocationhistoryComponent} from '../modules/locationhistory/locationhistory.component';
 
 const date = '2026-09-15';
-const identity = {id: 42, shortName: 'Async identity', isGroup: false, identityInApplications: []};
+const identity = {id: 42, firstName: 'Async identity', isGroup: false, identityInApplications: []};
 const cases: {name: string; component: Type<unknown>; date?: string; path: string; response: object; expected: string}[] = [
   {name: 'Choices', component: ChoicesCardComponent, date, path: '/choices',
     response: {date, score: 3, editable: true, series: [{date, score: 3}]}, expected: '+3'},

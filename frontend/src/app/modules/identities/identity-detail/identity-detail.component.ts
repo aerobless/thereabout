@@ -1,3 +1,4 @@
+import {fullName} from '../../../shared/identity-names';
 import {IdentityEditorComponent} from '../identity-editor/identity-editor.component';
 import { AppModalComponent } from '../../../shared/modal/app-modal.component';
 import {MessageService} from 'primeng/api';
@@ -27,6 +28,7 @@ import {Identity, IdentityService} from '../../../../../generated/backend-api/th
     styleUrl: './identity-detail.component.scss'
 })
 export class IdentityDetailComponent implements OnInit {
+  readonly fullName = fullName;
   private readonly changeDetector = inject(ChangeDetectorRef);
   readonly currentUser = inject(CurrentUserService);
   readonly canManageUsers = this.currentUser.canManageUsers;

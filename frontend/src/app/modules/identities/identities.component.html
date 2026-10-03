@@ -16,19 +16,26 @@
         </div>
       </div>
     </ng-template>
-    <p-table
+    <p-table #identityTable
       [value]="identities"
       [paginator]="true"
       [rows]="15"
       [rowsPerPageOptions]="[15, 25, 50]"
-      sortField="shortName"
+      [multiSortMeta]="nameSort" sortMode="multiple"
       [sortOrder]="1"
       class="identity-table" styleClass="p-datatable-striped"
-      [globalFilterFields]="['shortName', 'relationship']"
+      [globalFilterFields]="['firstName', 'lastName', 'fullName', 'relationship']"
       [tableStyle]="{'min-width': '40rem'}">
+      <ng-template #caption>
+        <p-iconfield>
+          <p-inputicon styleClass="pi pi-search" />
+          <input pInputText [(ngModel)]="identityFilter" (ngModelChange)="identityTable.filterGlobal(identityFilter, 'contains')"
+                 placeholder="Find an identity..." aria-label="Search identities" />
+        </p-iconfield>
+      </ng-template>
       <ng-template #header>
         <tr>
-          <th pSortableColumn="shortName">Short Name <p-sorticon field="shortName"/></th>
+          <th pSortableColumn="firstName">Name <p-sorticon field="firstName"/></th>
           <th>Role</th>
           <th pSortableColumn="relationship">Relationship <p-sorticon field="relationship"/></th>
           <th style="text-align: center">Group</th>
@@ -37,7 +44,7 @@
       </ng-template>
       <ng-template #body let-identity>
         <tr>
-          <td><a [routerLink]="['/identities', identity.id]">{{ identity.shortName }}</a></td>
+          <td><a [routerLink]="['/identities', identity.id]">{{ identity.fullName }}</a></td>
           <td data-label="Role">@if (identity.role) { <p-tag [value]="identity.role === 'ADMIN' ? 'Admin' : 'User'" severity="success" /> } @else { <span>—</span> }</td>
           <td data-label="Relationship">{{ identity.relationship || '—' }}</td>
           <td data-label="Group" style="text-align: center">
@@ -183,10 +190,10 @@
     <p-select
       [options]="identities"
       [(ngModel)]="selectedIdentityForLink"
-      [optionLabel]="'shortName'"
+      [optionLabel]="'fullName'"
       placeholder="Select an identity"
       [filter]="true"
-      filterBy="shortName"
+      filterBy="fullName"
       appendTo="body"
       [style]="{'width': '100%'}">
       <ng-template let-identity #item>

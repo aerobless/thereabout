@@ -16,6 +16,6 @@ public class ConfigurationEntity {
     @Enumerated(EnumType.STRING)
     private ConfigurationKey configKey;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String configValue;
 }

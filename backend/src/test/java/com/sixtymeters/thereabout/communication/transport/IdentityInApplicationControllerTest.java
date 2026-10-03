@@ -53,7 +53,7 @@ class IdentityInApplicationControllerTest {
         identityInApplicationRepository.deleteAll();
 
         identity = IdentityEntity.builder()
-                .shortName("johndoe")
+                .firstName("johndoe")
                 .relationship("friend")
                 .build();
         identity = identityRepository.save(identity);

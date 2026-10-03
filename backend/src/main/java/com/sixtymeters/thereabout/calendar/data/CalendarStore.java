@@ -149,7 +149,7 @@ public class CalendarStore {
     }
     public List<Guest> guests(long eventId) {
         return db.query("""
-            SELECT a.id,a.identity_id,a.identifier,COALESCE(i.short_name,p.display_name,a.username_hint,a.identifier) AS name,
+            SELECT a.id,a.identity_id,a.identifier,COALESCE(TRIM(CONCAT(i.first_name,' ',i.last_name)), p.display_name,a.username_hint,a.identifier) AS name,
                 p.response_status,p.organizer,p.self FROM calendar_participant p
             JOIN identity_in_application a ON a.id=p.application_identity_id LEFT JOIN identity i ON i.id=a.identity_id WHERE p.event_id=?
             """, (r,n) -> new Guest(r.getLong(1), r.getObject(2,Long.class), r.getString(3), r.getString(4), r.getString(5), r.getBoolean(6), r.getBoolean(7)), eventId);

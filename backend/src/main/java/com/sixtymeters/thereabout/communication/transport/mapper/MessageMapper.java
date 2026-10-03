@@ -38,7 +38,7 @@ public interface MessageMapper {
         BigDecimal identityId;
 
         if (entity.getIdentity() != null) {
-            name = entity.getIdentity().getShortName();
+            name = entity.getIdentity().getFullName();
             identityId = BigDecimal.valueOf(entity.getIdentity().getId());
         } else {
             String hint = entity.getUsernameHint();

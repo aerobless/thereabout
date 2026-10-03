@@ -1,3 +1,4 @@
+import {fullName} from '../../shared/identity-names';
 import {IdentityEditorComponent} from './identity-editor/identity-editor.component';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 import {inject, ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
@@ -22,7 +23,7 @@ import {
     IdentityService
 } from '../../../../generated/backend-api/thereabout';
 
-type IdentityRow = Identity & {appIdentityCount: number};
+type IdentityRow = Identity & {appIdentityCount: number; fullName: string};
 
 @Component({
     selector: 'app-identities',
@@ -48,10 +49,12 @@ type IdentityRow = Identity & {appIdentityCount: number};
     styleUrl: './identities.component.scss'
 })
 export class IdentitiesComponent implements OnInit {
+  readonly nameSort = [{field: 'firstName', order: 1}, {field: 'lastName', order: 1}];
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly refresh = registerRefresh(() => { this.loadIdentities(); this.loadUnlinkedAppIdentities(); }, () => this.identityDialogVisible || this.linkDialogVisible);
 
     identities: IdentityRow[] = [];
+    identityFilter = '';
     unlinkedAppIdentities: IdentityInApplication[] = [];
     unlinkedGroupIdentities: IdentityInApplication[] = [];
     unlinkedFilter = '';
@@ -78,7 +81,7 @@ export class IdentitiesComponent implements OnInit {
 
     loadIdentities(): void {
         this.identityService.getIdentities().pipe(this.refresh.track('identities')).subscribe({next: identities => {
-            this.identities = identities.map(identity => ({...identity, appIdentityCount: identity.identityInApplications?.length ?? 0}));
+            this.identities = identities.map(identity => ({...identity, fullName: fullName(identity), appIdentityCount: identity.identityInApplications?.length ?? 0}));
             this.changeDetector.markForCheck();
         }, error: () => {}});
     }
@@ -122,6 +125,6 @@ export class IdentitiesComponent implements OnInit {
     }
 
     identityLabel(identity: Identity): string {
-        return identity.isGroup ? `${identity.shortName} (group)` : identity.shortName;
+        return identity.isGroup ? `${fullName(identity)} (group)` : fullName(identity);
     }
 }

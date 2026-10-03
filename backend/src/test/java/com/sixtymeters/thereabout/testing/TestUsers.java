@@ -6,6 +6,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public final class TestUsers {
     private TestUsers() {}
     public static void owner(JdbcTemplate db) {
-        db.update("INSERT INTO identity(id,short_name,is_group,role) VALUES(1,'Test owner',FALSE,'ADMIN') ON DUPLICATE KEY UPDATE role='ADMIN',is_group=FALSE");
+        db.update("INSERT INTO identity(id,first_name,is_group,role) VALUES(1,'Test owner',FALSE,'ADMIN') ON DUPLICATE KEY UPDATE role='ADMIN',is_group=FALSE");
     }
 }

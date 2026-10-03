@@ -1,0 +1,82 @@
+@if (error()) { <p class="alert error" role="alert">{{ error() }}</p> }
+@if (job()?.status === 'READY' && (error() || context.error())) { <button (click)="editor.set(undefined); load()" [disabled]="busy()">Reload preview</button> }
+@if (!job()) {
+  <div class="editor">
+    <label>Account
+      <p-select [options]="accountChoices()" [filter]="true" filterBy="label" optionLabel="label" optionValue="value" [ngModel]="selectedAccount() ?? accountId()" (ngModelChange)="selectedAccount.set($event)" placeholder="Select an account" appendTo="body" />
+    </label>
+    <label>CSV file <input type="file" accept=".csv,text/csv" (change)="chooseFile($event)" [disabled]="busy()" /></label>
+    <p class="span">The file is sent to OpenAI to suggest transactions and categories. Review and correct the suggestions before creating anything. Up to 2 MiB and 2,000 data rows.</p>
+  </div>
+  <div class="dialog-footer"><button (click)="dialogs.close()" [disabled]="busy()">Cancel</button><button class="primary" [disabled]="busy() || !file() || !(selectedAccount() ?? accountId())" (click)="prepare()">{{ busy() ? 'Preparing…' : 'Prepare import' }}</button></div>
+} @else if (job(); as draft) {
+  <p><strong>{{ account()?.userName }} · {{ account()?.name }}</strong> · {{ draft.fileName }}</p>
+  @if (running()) {
+    <div class="preparing" role="status"><p-progress-spinner [style]="{width: '40px', height: '40px'}" strokeWidth="4" ariaLabel="Preparing transactions" /><span>Preparing transactions…</span></div>
+    <p>You can cancel without creating any transactions.</p>
+  } @else if (draft.status === 'FAILED') {
+    <p role="alert">{{ draft.error }}</p>
+  } @else if (draft.status === 'READY') {
+    <p>{{ draft.createCount }} to create · {{ draft.skippedCount }} skipped · {{ draft.unresolvedCount }} unresolved</p>
+    <p>Income: {{ context.money(draft.incomeTotal, account()?.currency) }} · Expenses: {{ context.money(draft.expenseTotal, account()?.currency) }}</p>
+    <p>Predicted balance: <strong>{{ context.money(draft.predictedBalance, account()?.currency) }}</strong></p>
+    <p>Balance change: <strong>{{ context.money(draft.balanceImpact, account()?.currency) }}</strong></p>
+    @if (editor(); as row) {
+      <section class="row-editor">
+        <h3>Review {{ row.rowId }}</h3>
+        <details open><summary>Original CSV row</summary><ol>@for (cell of row.source; track $index) { <li><pre>{{ cell }}</pre></li> }</ol></details>
+        @for (issue of row.issues; track $index) { <p class="issue">{{ issueText(issue) }}</p> }
+        @if (row.reason && !row.issues?.length) { <p>{{ row.reason }}</p> }
+        @if (row.duplicate) { <p class="alert">{{ row.duplicate }}</p> }
+        <div class="editor">
+          <label class="span checkbox-field"><input type="checkbox" [ngModel]="row.skip" (ngModelChange)="patch({skip: $event})" /> Skip this row</label>
+          @if (row.skip) {
+            <label class="span">Skip reason <input [ngModel]="row.reason" (ngModelChange)="patch({reason: $event})" /></label>
+          } @else {
+            <label>Type <p-select [options]="types" optionLabel="label" optionValue="value" [ngModel]="row.type" (ngModelChange)="patch({type: $event, otherAccountId: undefined, counterpartyName: ''}); counterValue.set('')" appendTo="body" /></label>
+            <label>Date & time <finance-date-input [dateTime]="true" [ngModel]="row.date" (ngModelChange)="patch({date: $event})" /></label>
+            <label class="span">Description <input [ngModel]="row.description" (ngModelChange)="patch({description: $event})" maxlength="1024" /></label>
+            <label>Booked amount · {{ account()?.currency }} <input inputmode="decimal" [ngModel]="row.amount" (ngModelChange)="patch({amount: $event})" /></label>
+            @if (row.type === 'TRANSFER') {
+              <label>Other account <p-select [options]="transferChoices()" [filter]="true" optionLabel="label" optionValue="value" [ngModel]="row.otherAccountId" (ngModelChange)="patch({otherAccountId: $event})" appendTo="body" /></label>
+              <label>Direction <p-select ariaLabel="Transfer direction" [options]="transferDirections()" optionLabel="label" optionValue="value" [ngModel]="row.incoming ?? false" (ngModelChange)="patch({incoming: $event})" appendTo="body" /></label>
+              @if (crossCurrencyTransfer()) {
+                <label>Other account amount · {{ otherAccount()?.currency }} <input aria-label="Other account amount" inputmode="decimal" [ngModel]="row.otherAmount" (ngModelChange)="patch({otherAmount: $event})" /></label>
+              }
+            } @else {
+              <label>Counterparty <p-autocomplete [ngModel]="counterValue()" (ngModelChange)="counterChange($event)" [suggestions]="counterSuggestions()" (completeMethod)="counterSearch($event)" (onSelect)="counterSelect($event)" optionLabel="name" [dropdown]="true" appendTo="body" /></label>
+              @if (!row.otherAccountId && row.counterpartyName) { <small>A new counterparty will be created: {{ row.counterpartyName }}</small> }
+            }
+            <label>Category <p-select ariaLabel="Category" [options]="context.categories()" optionLabel="name" optionValue="id" [filter]="true" [showClear]="true" [ngModel]="row.categoryId" (ngModelChange)="patch({categoryId: $event ?? undefined, categoryName: ''})" placeholder="Uncategorised" appendTo="body" /></label>
+            <label>Original currency <p-select [options]="context.currencies()" optionLabel="code" optionValue="code" [showClear]="true" [filter]="true" [ngModel]="row.foreignCurrency" (ngModelChange)="patch({foreignCurrency: $event ?? '', foreignAmount: $event ? row.foreignAmount : ''})" placeholder="None" appendTo="body" /></label>
+            <label>Original amount <input inputmode="decimal" [ngModel]="row.foreignAmount" (ngModelChange)="patch({foreignAmount: $event})" /></label>
+            <label class="span">Notes <textarea [ngModel]="row.notes" (ngModelChange)="patch({notes: $event})"></textarea></label>
+            <label class="span">External reference <input [ngModel]="row.externalReference" (ngModelChange)="patch({externalReference: $event})" maxlength="1024" /></label>
+            @if (row.duplicate) { <label class="span checkbox-field"><input type="checkbox" [ngModel]="row.duplicateOverride" (ngModelChange)="patch({duplicateOverride: $event})" /> Keep this transaction despite the duplicate warning</label> }
+          }
+        </div>
+        <div class="dialog-footer"><button (click)="editor.set(undefined)" [disabled]="busy()">Discard edit</button><button class="primary" (click)="review()" [disabled]="busy()">Apply review</button></div>
+      </section>
+    } @else {
+      <p-table [value]="draft.rows" [lazy]="true" [paginator]="true" [rows]="50" [totalRecords]="draft.total" [first]="page() * 50" (onPage)="paginate($event)" [loading]="busy()" [scrollable]="true" scrollHeight="420px" [tableStyle]="{width: '100%', tableLayout: 'fixed'}">
+        <ng-template #header><tr class="import-header"><th>Row / Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Counterparty</th><th>Category</th><th>Review</th></tr></ng-template>
+        <ng-template #body let-row><tr class="import-row" [class.skipped]="row.skip" [class.requires-review]="!row.skip && row.issues?.length">
+          <td class="date-cell">{{ row.rowId }}<br>{{ row.date }}</td><td class="description-cell">{{ row.description || row.reason }}</td><td class="type-cell"><p-tag [value]="typeLabel(row)" [severity]="typeSeverity(row)" /></td>
+          <td class="amount-cell">{{ row.amount }} {{ account()?.currency }}@if (row.foreignAmount) { <small>Original: {{ row.foreignAmount }} {{ row.foreignCurrency }}</small> }</td>
+          <td class="counter-cell"><span class="cell-label">Counterparty</span>{{ counterName(row) }}</td><td class="category-cell"><span class="cell-label">Category</span>{{ categoryName(row) }}</td>
+          <td class="review-cell">
+            @for (note of reviewNotes(row); track $index) { <p class="review-note">{{ note }}</p> }
+            @if (duplicateDetails(row); as duplicate) { <p-tag class="duplicate-tag" value="Duplicate" severity="danger" [title]="duplicate" /> }
+            <div class="import-row-actions">
+              <button class="row-action accept" [class.accepted]="row.reviewed && !row.skip && !row.issues?.length" (click)="accept(row)" [disabled]="busy() || needsEdit(row)" [attr.aria-label]="'Accept ' + row.rowId" [title]="needsEdit(row) ? 'Edit the required fields first' : duplicateDetails(row) ? 'Keep this duplicate' : 'Accept as suggested'"><i class="pi pi-check" aria-hidden="true"></i></button>
+              <button class="row-action" (click)="edit(row)" [disabled]="busy()" [attr.aria-label]="'Edit ' + row.rowId" [title]="reviewTitle(row)"><i class="pi pi-pencil" aria-hidden="true"></i></button>
+              <button class="row-action skip" (click)="skip(row)" [disabled]="busy() || row.skip" [attr.aria-label]="'Skip ' + row.rowId" title="Skip transaction"><i class="pi pi-times" aria-hidden="true"></i></button>
+            </div>
+          </td></tr></ng-template>
+      </p-table>
+    }
+  }
+  <div class="dialog-footer"><button (click)="dialogs.close()" [disabled]="context.saving() || busy()">{{ running() ? 'Cancel import' : 'Close' }}</button>
+    @if (draft.status === 'READY') { <button class="primary" (click)="approve()" [disabled]="!draft.readyToApprove || busy() || !!editor() || context.saving()">Import</button> }
+  </div>
+}

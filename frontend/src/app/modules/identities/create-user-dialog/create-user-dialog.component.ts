@@ -1,3 +1,4 @@
+import {fullName} from '../../../shared/identity-names';
 import {ChangeDetectionStrategy, Component, inject, input, output, signal} from '@angular/core';
 import {SelectModule} from 'primeng/select';
 import {FormsModule} from '@angular/forms';
@@ -24,6 +25,7 @@ export function validCloudflareEmail(email: string): boolean {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CreateUserDialogComponent {
+  readonly fullName = fullName;
   readonly identity = input.required<Identity>();
   readonly closed = output<void>();
   readonly created = output<Identity>();
@@ -49,7 +51,7 @@ export class CreateUserDialogComponent {
     this.api.createIdentityUser(this.identity().id, {email: this.email, role: this.role}).subscribe({
       next: identity => {
         this.busy.set(false);
-        this.messages.add({severity: 'success', summary: 'User created', detail: `${identity.shortName} is now a Thereabout user.`});
+        this.messages.add({severity: 'success', summary: 'User created', detail: `${identity.firstName} is now a Thereabout user.`});
         this.currentUser.load();
         this.created.emit(identity);
         this.closed.emit();

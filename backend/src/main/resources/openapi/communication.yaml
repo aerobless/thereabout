@@ -389,9 +389,10 @@ components:
           format: int64
         displayName:
           type: string
+          description: First name of the current user.
         role: {$ref: '#/components/schemas/UserRole'}
         actorIdentityId: {type: integer, format: int64}
-        actorDisplayName: {type: string}
+        actorDisplayName: {type: string, description: First name of the acting user.}
         actorRole: {$ref: '#/components/schemas/UserRole'}
         impersonating: {type: boolean}
     Identity:
@@ -399,16 +400,23 @@ components:
       type: object
       required:
         - id
-        - shortName
+        - firstName
       properties:
         id:
           type: number
           description: The unique identifier of the identity
           example: 1
-        shortName:
+        firstName:
           type: string
-          description: A short name or alias for the identity
-          example: "johndoe"
+          description: First name for a person, or the complete group name
+          minLength: 1
+          maxLength: 255
+          example: "John"
+        lastName:
+          type: string
+          maxLength: 255
+          description: Optional surname; empty for groups.
+          example: "Doe"
         role:
           allOf:
             - $ref: '#/components/schemas/UserRole'
@@ -511,7 +519,7 @@ components:
         name:
           type: string
           description: Display name - identity short name if linked, otherwise the application identifier
-          example: "johndoe"
+          example: "John"
         identityId:
           type: number
           description: The id of the linked identity, or null if unlinked

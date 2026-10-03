@@ -8,6 +8,12 @@ This document provides instructions for AI agents and developers working on the 
 - Prefer the simplest design that fully meets the requirements. Do not add speculative abstractions or weaken correctness, security or data integrity to reduce code.
 - Explain constraints and invariants rather than repeating signatures in comments. Keep changes scoped and preserve unrelated work.
 
+## Identity names
+
+- Address Thereabout users by first name in user-only views, greetings, selectors and account-owner labels: users know each other well enough not to need surnames.
+- In mixed identity tables, lists and selectors, show first name plus last name for every person, including users. Contacts otherwise use their full name. Groups use their complete group name, stored in `firstName` with an empty `lastName`.
+- Use shared name-formatting helpers. Names are display data; authentication and ownership use stable IDs.
+
 ## Running Tests
 
 Only [`backend/pom.xml`](backend/pom.xml) is a Maven project (no root reactor). Run Maven from `backend/`—not `mvn -pl backend` from the repo root.

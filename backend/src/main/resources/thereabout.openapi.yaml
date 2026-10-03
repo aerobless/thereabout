@@ -4,6 +4,20 @@ info:
   title: Frontend REST API
   version: "1.0"
 paths:
+  /api/finances/imports:
+    $ref: 'openapi/finances/imports.yaml#/paths/_imports'
+  /api/finances/imports/{jobId}:
+    $ref: 'openapi/finances/imports.yaml#/paths/_imports_job'
+  /api/finances/imports/review:
+    $ref: 'openapi/finances/imports.yaml#/paths/_imports_review'
+  /api/finances/imports/cancel:
+    $ref: 'openapi/finances/imports.yaml#/paths/_imports_cancel'
+  /api/finances/imports/approve:
+    $ref: 'openapi/finances/imports.yaml#/paths/_imports_approve'
+  /backend/api/v1/config/openai:
+    $ref: 'openapi/openai.yaml#/paths/_openai'
+  /backend/api/v1/config/openai/test:
+    $ref: 'openapi/openai.yaml#/paths/_openai_test'
   # Ingestion: the only paths for clients outside Cloudflare Access
   /backend/api/v1/ingest/health:
     $ref: 'openapi/health.yaml#/paths/Health'
@@ -170,6 +184,26 @@ components:
       scheme: bearer
       description: Ingestion API key from Configuration, for clients outside Cloudflare Access.
   schemas:
+    FinanceImportPrepareInput:
+      $ref: 'openapi/finances/imports.yaml#/components/schemas/FinanceImportPrepareInput'
+    FinanceImportQuery:
+      $ref: 'openapi/finances/imports.yaml#/components/schemas/FinanceImportQuery'
+    FinanceImportRow:
+      $ref: 'openapi/finances/imports.yaml#/components/schemas/FinanceImportRow'
+    FinanceImportJob:
+      $ref: 'openapi/finances/imports.yaml#/components/schemas/FinanceImportJob'
+    FinanceImportReviewInput:
+      $ref: 'openapi/finances/imports.yaml#/components/schemas/FinanceImportReviewInput'
+    FinanceImportApproveInput:
+      $ref: 'openapi/finances/imports.yaml#/components/schemas/FinanceImportApproveInput'
+    FinanceImportApproval:
+      $ref: 'openapi/finances/imports.yaml#/components/schemas/FinanceImportApproval'
+    OpenAiSettings:
+      $ref: 'openapi/openai.yaml#/components/schemas/OpenAiSettings'
+    OpenAiSettingsInput:
+      $ref: 'openapi/openai.yaml#/components/schemas/OpenAiSettingsInput'
+    OpenAiTestResult:
+      $ref: 'openapi/openai.yaml#/components/schemas/OpenAiTestResult'
     FinanceAccountKind:
       $ref: 'openapi/finances/accounts.yaml#/components/schemas/FinanceAccountKind'
     FinanceTransactionType:

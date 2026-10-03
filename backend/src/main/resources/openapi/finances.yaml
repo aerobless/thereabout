@@ -42,6 +42,20 @@ paths:
     $ref: finances/reports.yaml#/paths/_reports_investments
 components:
   schemas:
+    FinanceImportPrepareInput:
+      $ref: finances/imports.yaml#/components/schemas/FinanceImportPrepareInput
+    FinanceImportQuery:
+      $ref: finances/imports.yaml#/components/schemas/FinanceImportQuery
+    FinanceImportRow:
+      $ref: finances/imports.yaml#/components/schemas/FinanceImportRow
+    FinanceImportJob:
+      $ref: finances/imports.yaml#/components/schemas/FinanceImportJob
+    FinanceImportReviewInput:
+      $ref: finances/imports.yaml#/components/schemas/FinanceImportReviewInput
+    FinanceImportApproveInput:
+      $ref: finances/imports.yaml#/components/schemas/FinanceImportApproveInput
+    FinanceImportApproval:
+      $ref: finances/imports.yaml#/components/schemas/FinanceImportApproval
     FinanceAccountKind:
       $ref: finances/accounts.yaml#/components/schemas/FinanceAccountKind
     FinanceTransactionType:

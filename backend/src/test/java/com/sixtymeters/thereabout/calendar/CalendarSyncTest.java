@@ -79,13 +79,14 @@ class CalendarSyncTest {
         var guest=store.guests(store.events(store.calendar(id)).getFirst().id()).getFirst();
         assertThat(guest.email()).isEqualTo("guest@example.com");
         assertThat(guest.identityId()).isNull();
-        store.update("INSERT INTO identity(short_name) VALUES ('Calendar test guest')");
-        store.update("UPDATE identity_in_application SET identity_id=(SELECT MAX(id) FROM identity WHERE short_name='Calendar test guest') WHERE id=?",guest.applicationIdentityId());
+        store.update("INSERT INTO identity(first_name,last_name) VALUES ('Calendar test guest','Winter')");
+        store.update("UPDATE identity_in_application SET identity_id=(SELECT MAX(id) FROM identity WHERE first_name='Calendar test guest') WHERE id=?",guest.applicationIdentityId());
         doReturn(new Events().setItems(List.of(event)).setNextSyncToken("done")).when(google).events("primary-test",null,"p2");
         sync.synchronize(store.calendar(id),true);
         var after=store.guests(store.events(store.calendar(id)).getFirst().id()).getFirst();
         assertThat(after.applicationIdentityId()).isEqualTo(guest.applicationIdentityId());
         assertThat(after.identityId()).isNotNull();
+        assertThat(after.name()).isEqualTo("Calendar test guest Winter");
     }
     @Test void failedFullImportKeepsPublishedSnapshotAndToken() throws Exception {
         store.page(store.calendar(id),"original",List.of(allDay("existing","2026-09-24","2026-09-25")));

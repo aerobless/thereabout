@@ -19,7 +19,7 @@ class LastAdminTest {
         var old=db.queryForList("SELECT id,role FROM identity");
         try {
             db.update("UPDATE identity SET role='USER' WHERE role='ADMIN'");
-            for(long id:List.of(100021L,100022L)) db.update("INSERT INTO identity(id,short_name,role) VALUES(?,?,'ADMIN') ON DUPLICATE KEY UPDATE role='ADMIN'",id,"Admin fixture "+id);
+            for(long id:List.of(100021L,100022L)) db.update("INSERT INTO identity(id,first_name,role) VALUES(?,?,'ADMIN') ON DUPLICATE KEY UPDATE role='ADMIN'",id,"Admin fixture "+id);
             var gate=new CountDownLatch(1);
             try(var pool=Executors.newFixedThreadPool(2)) {
                 var tasks=List.of(100021L,100022L).stream().map(id -> pool.submit(() -> {

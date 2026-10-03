@@ -30,7 +30,7 @@ public class ImpersonationFilter extends OncePerRequestFilter {
             var user = identities.findById(id).filter(i -> i.isUser() && !i.isGroup());
             if (user.isEmpty()) { response.sendError(404); return; }
             var person = user.get();
-            AccessPrincipal.authenticate(new AccessPrincipal(actor.email(), person.getId(), person.getShortName(),
+            AccessPrincipal.authenticate(new AccessPrincipal(actor.email(), person.getId(), person.getFirstName(),
                     actor.local(), person.getRole(), actor), AccessPrincipal.roles(true, person.isAdmin()));
         }
         chain.doFilter(request, response);

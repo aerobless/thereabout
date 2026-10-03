@@ -1,0 +1,352 @@
+paths:
+  _imports:
+    post:
+      tags:
+      - Finances
+      operationId: financePrepareImport
+      summary: Prepare CSV import
+      responses:
+        '200':
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceImportJob'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - accountId
+              - file
+              properties:
+                accountId:
+                  type: integer
+                  format: int64
+                file:
+                  type: string
+                  format: binary
+      description: Start a bounded background CSV preview for any active main account.
+        No ledger changes until approval. CSV is sent to OpenAI; requires a configured
+        API key.
+  _imports_job:
+    get:
+      tags:
+      - Finances
+      operationId: financeGetImport
+      summary: Get CSV import preview
+      responses:
+        '200':
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceImportJob'
+      parameters:
+      - name: jobId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 0
+          minimum: 0
+          maximum: 2000
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          default: 50
+          minimum: 1
+          maximum: 200
+      description: Get caller-owned progress and paginated suggestions; jobs expire
+        after 60 minutes and are lost on restart.
+  _imports_review:
+    post:
+      tags:
+      - Finances
+      operationId: financeReviewImport
+      summary: Review CSV import rows
+      responses:
+        '200':
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceImportJob'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinanceImportReviewInput'
+      description: Apply row corrections with the current draft revision. Source cells
+        remain immutable.
+  _imports_cancel:
+    post:
+      tags:
+      - Finances
+      operationId: financeCancelImport
+      summary: Cancel CSV import
+      responses:
+        '200':
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceImportJob'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinanceImportQuery'
+      description: Cancel and discard an in-memory preview without ledger changes.
+  _imports_approve:
+    post:
+      tags:
+      - Finances
+      operationId: financeApproveImport
+      summary: Approve CSV import
+      responses:
+        '200':
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceImportApproval'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinanceImportApproveInput'
+      description: Approve the current revision atomically; optional corrected rows
+        must all be valid or explicitly skipped. Requires requestKey; replay remains
+        available after expiry.
+components:
+  schemas:
+    FinanceImportPrepareInput:
+      type: object
+      properties:
+        accountId:
+          type: integer
+          format: int64
+        fileName:
+          type: string
+          maxLength: 255
+        csvText:
+          type: string
+          maxLength: 2097152
+      required:
+      - accountId
+      - fileName
+      - csvText
+    FinanceImportQuery:
+      type: object
+      properties:
+        jobId:
+          type: string
+          minLength: 1
+        page:
+          type: integer
+          minimum: 0
+          default: 0
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+      required:
+      - jobId
+    FinanceImportRow:
+      type: object
+      properties:
+        rowId:
+          type: string
+        source:
+          type: array
+          items:
+            type: string
+        skip:
+          type: boolean
+        reason:
+          type: string
+        type:
+          type: string
+          enum:
+          - WITHDRAWAL
+          - DEPOSIT
+          - TRANSFER
+        date:
+          type: string
+        description:
+          type: string
+          maxLength: 1024
+        amount:
+          type: string
+        otherAccountId:
+          type: integer
+          format: int64
+        counterpartyName:
+          type: string
+        categoryId:
+          type: integer
+          format: int64
+          description: Existing category ID, or omitted for uncategorised. Imports cannot create categories.
+        categoryName:
+          type: string
+          description: Optional existing category name to resolve to a unique ID; unknown names require review and cannot be created.
+        otherAmount:
+          type: string
+        foreignAmount:
+          type: string
+        foreignCurrency:
+          type: string
+        notes:
+          type: string
+        externalReference:
+          type: string
+        duplicate:
+          type: string
+        duplicateOverride:
+          type: boolean
+        issues:
+          type: array
+          items:
+            type: string
+        incoming:
+          type: boolean
+        reviewed:
+          type: boolean
+      required:
+      - rowId
+    FinanceImportJob:
+      type: object
+      properties:
+        jobId:
+          type: string
+        accountId:
+          type: integer
+          format: int64
+        fileName:
+          type: string
+        status:
+          type: string
+          enum:
+          - QUEUED
+          - RUNNING
+          - READY
+          - FAILED
+          - CANCELLED
+          - APPROVED
+        revision:
+          type: integer
+          format: int64
+        processed:
+          type: integer
+        total:
+          type: integer
+          description: Source record count while preparing; review row count once complete, excluding headers and totals.
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceImportRow'
+        error:
+          type: string
+        expiresAt:
+          type: string
+          description: Idle expiry, renewed by authenticated draft requests. Open browser dialogs keep the draft alive.
+        balanceImpact:
+          type: string
+        readyToApprove:
+          type: boolean
+        currentBalance:
+          type: string
+        predictedBalance:
+          type: string
+        incomeTotal:
+          type: string
+        expenseTotal:
+          type: string
+        createCount:
+          type: integer
+        skippedCount:
+          type: integer
+        unresolvedCount:
+          type: integer
+      required:
+      - jobId
+      - accountId
+      - fileName
+      - status
+      - revision
+      - processed
+      - total
+      - page
+      - pageSize
+      - rows
+      - readyToApprove
+    FinanceImportReviewInput:
+      type: object
+      properties:
+        jobId:
+          type: string
+          minLength: 1
+        revision:
+          type: integer
+          format: int64
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceImportRow'
+      required:
+      - jobId
+      - revision
+      - rows
+    FinanceImportApproveInput:
+      type: object
+      properties:
+        jobId:
+          type: string
+          minLength: 1
+        revision:
+          type: integer
+          format: int64
+        requestKey:
+          type: string
+          maxLength: 100
+          minLength: 1
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceImportRow'
+      required:
+      - jobId
+      - revision
+      - requestKey
+    FinanceImportApproval:
+      type: object
+      properties:
+        transactionIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        created:
+          type: integer
+        skipped:
+          type: integer
+      required:
+      - transactionIds
+      - created
+      - skipped

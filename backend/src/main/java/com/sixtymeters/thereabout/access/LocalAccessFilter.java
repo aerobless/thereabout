@@ -26,7 +26,7 @@ public class LocalAccessFilter extends OncePerRequestFilter {
                 && LOOPBACK.contains(request.getRemoteAddr()) && LOOPBACK.contains(request.getServerName())) {
             var user = identities.findById(1L).filter(i -> i.isUser() && !i.isGroup());
             AccessPrincipal.authenticate(new AccessPrincipal(null, user.map(i -> i.getId()).orElse(null),
-                    user.map(i -> i.getShortName()).orElse("Local administrator"), true,
+                    user.map(i -> i.getFirstName()).orElse("Local administrator"), true,
                     com.sixtymeters.thereabout.communication.data.UserRole.ADMIN, null), AccessPrincipal.roles(true, true));
         }
         chain.doFilter(request, response);

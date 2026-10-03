@@ -23,6 +23,16 @@ public class TransactionService {
   private final java.time.Clock financeClock;
 
   public GenFinanceTransactionResult save(UserId user, GenFinanceTransactionInput input) {
+    return save(user, input, false);
+  }
+
+  /** Exact statement precision is retained; all ordinary ledger rules still apply. */
+  GenFinanceTransactionResult importTransaction(UserId user, GenFinanceTransactionInput input) {
+    require(input.getId() == null, "Imports only create new transactions");
+    return save(user, input, true);
+  }
+
+  private GenFinanceTransactionResult save(UserId user, GenFinanceTransactionInput input, boolean imported) {
     return writes.write(user,
         "transactions.save",
         input.getRequestKey(),
@@ -73,7 +83,7 @@ public class TransactionService {
                   && dc.equals(before.getDestinationCurrency())
                   && sa.compareTo(decimal(before.getSourceAmount())) == 0
                   && da.compareTo(decimal(before.getDestinationAmount())) == 0;
-          if (!unchanged) {
+          if (!unchanged && !imported) {
             accounts.precision(sa, sc);
             accounts.precision(da, dc);
           }
@@ -89,10 +99,10 @@ public class TransactionService {
           if (fa != null) {
             accounts.currency(fc);
             require(fa.signum() > 0, "Foreign amount must be positive");
-            if (before == null
+            if (!imported && (before == null
                 || !fc.equals(before.getForeignCurrency())
                 || before.getForeignAmount() == null
-                || fa.compareTo(decimal(before.getForeignAmount()).abs()) != 0)
+                || fa.compareTo(decimal(before.getForeignAmount()).abs()) != 0))
               accounts.precision(fa, fc);
           }
           var effect =

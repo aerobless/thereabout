@@ -9,6 +9,7 @@
     <div class="account-heading">
       <a routerLink="/finances/accounts">← All accounts</a>
       <div class="actions">
+        <button (click)="dialogs.open({ kind: 'import', accountId: accountId()! })">Import transactions</button>
         <button (click)="openAccount(currentAccount)">Edit account</button>
         @if (currentAccount?.kind !== "CASH") {
           <button class="primary" (click)="openValuation()">

@@ -18,7 +18,7 @@ export class CurrentUserService {
   readonly impersonatedUser = computed(() => {
     const state=this.state();
     return state.status !== 'loading' && state.impersonating
-      ? {id: state.identityId, shortName: state.displayName} : null;
+      ? {id: state.identityId, firstName: state.displayName} : null;
   });
   readonly impersonationAllowed = computed(() => {
     const state=this.state();

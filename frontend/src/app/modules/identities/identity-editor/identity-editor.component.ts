@@ -1,3 +1,4 @@
+import {fullName, splitName} from '../../../shared/identity-names';
 import {Component, Input, OnInit, inject, output, signal} from '@angular/core';
 import {SelectModule} from 'primeng/select';
 import {switchMap, of} from 'rxjs';
@@ -27,7 +28,7 @@ export class IdentityEditorComponent implements OnInit {
   readonly changed = output<void>();
   readonly busy = signal(false);
   readonly error = signal('');
-  editingIdentity: Identity = {id: 0, shortName: '', isGroup: false, identityInApplications: []};
+  editingIdentity: Identity = {id: 0, firstName: '', lastName: '', isGroup: false, identityInApplications: []};
   get isNewIdentity(): boolean { return !this.identity; }
   selectedRole: 'ADMIN' | 'USER' | null = null;
   readonly roles = [{label: 'User', value: 'USER'}, {label: 'Admin', value: 'ADMIN'}];
@@ -39,9 +40,17 @@ export class IdentityEditorComponent implements OnInit {
     this.selectedRole = this.identity?.role ?? null;
     if (this.identity) this.editingIdentity = {...this.identity, identityInApplications: [...(this.identity.identityInApplications ?? [])]};
   }
+  changeGroup(group: boolean): void {
+    if (this.editingIdentity.isGroup === group) return;
+    const name = fullName(this.editingIdentity);
+    Object.assign(this.editingIdentity, group ? {firstName: name, lastName: ''} : splitName(name));
+    this.editingIdentity.isGroup = group;
+  }
   close(): void { if (!this.busy()) this.closed.emit(); }
   saveIdentity(): void {
-    if (this.busy() || !this.editingIdentity.shortName.trim()) return;
+    if (this.busy() || !this.editingIdentity.firstName.trim()) return;
+    this.editingIdentity.firstName = this.editingIdentity.firstName.trim();
+    this.editingIdentity.lastName = this.editingIdentity.lastName?.trim() ?? '';
     this.busy.set(true); this.error.set('');
     const request = this.isNewIdentity ? this.api.createIdentity(this.editingIdentity)
       : this.api.updateIdentity(this.editingIdentity.id, this.editingIdentity);
@@ -49,7 +58,7 @@ export class IdentityEditorComponent implements OnInit {
       ? this.api.updateIdentityUserRole(saved.id, {role: this.selectedRole}) : of(saved))).subscribe({
       next: () => {
         this.busy.set(false); this.saved.emit(); this.closed.emit();
-        if (this.identity?.role !== this.selectedRole) this.currentUser.load();
+        if (this.identity?.role) this.currentUser.load(true);
         this.messages.add({severity: 'success', summary: 'Saved', detail: 'Identity saved successfully'});
       },
       error: error => { this.busy.set(false); this.error.set(error.status === 409 ? 'The last administrator cannot be demoted.' : 'Unable to save identity. Please try again.'); }

@@ -42,7 +42,7 @@ import { TransactionsComponent } from "./transactions.component";
 })
 export class OverviewComponent {
   readonly context = inject(FinanceContext);
-  private dialogs = inject(FinanceDialogs);
+  readonly dialogs = inject(FinanceDialogs);
   readonly accountId = input(0);
   from = today().slice(0, 4) + "-01-01";
   to = today();

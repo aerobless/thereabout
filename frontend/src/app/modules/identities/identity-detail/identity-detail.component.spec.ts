@@ -22,7 +22,7 @@ describe('IdentityDetailComponent impersonation', () => {
   }
 
   it.each(['USER', 'ADMIN'] as const)('lets an admin impersonate a person with role %s', async role => {
-    const identity: Identity = {id: 2, shortName: 'Example', role, isGroup: false};
+    const identity: Identity = {id: 2, firstName: 'Example', role, isGroup: false};
     const {fixture, currentUser, button} = await setup(identity);
     expect(button()).not.toBeNull();
     button()!.click();
@@ -33,15 +33,15 @@ describe('IdentityDetailComponent impersonation', () => {
   });
 
   it.each([
-    {id: 2, shortName: 'Contact'},
-    {id: 2, shortName: 'Group', role: 'USER' as const, isGroup: true}
-  ])('hides impersonation for an ineligible identity: $shortName', async identity => {
+    {id: 2, firstName: 'Contact'},
+    {id: 2, firstName: 'Group', role: 'USER' as const, isGroup: true}
+  ])('hides impersonation for an ineligible identity: $firstName', async identity => {
     const {button} = await setup(identity);
     expect(button()).toBeNull();
   });
 
   it('hides impersonation when the actor is not an admin', async () => {
-    const {button} = await setup({id: 2, shortName: 'Example', role: 'USER'}, false);
+    const {button} = await setup({id: 2, firstName: 'Example', role: 'USER'}, false);
     expect(button()).toBeNull();
   });
 });

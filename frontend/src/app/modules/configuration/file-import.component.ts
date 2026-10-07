@@ -73,7 +73,7 @@ export class FileImportComponent {
     this.uploading.set(true);
     this.api.importFromFile(file, this.selectedImportType().value, this.isReceiverRequired() ? this.receiverName().trim() : undefined)
       .pipe(finalize(() => this.uploading.set(false)), takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: () => { this.observedRunning = true; this.pollStatus(); },
+        next: () => { this.receiverName.set(''); this.observedRunning = true; this.pollStatus(); },
         error: () => { this.onError(); this.pollStatus(); }
       });
   }

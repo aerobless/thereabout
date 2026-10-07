@@ -1,0 +1,7 @@
+finance-split-button { display: inline-flex; }
+.finance-split-button .p-splitbutton-button { border-radius: 7px 0 0 7px; }
+// PrimeNG removes this border on hover. Keep it removed in every state so the width stays fixed.
+.finance-split-button .p-splitbutton-button.p-button { border-inline-end: 0; }
+.finance-split-button .p-splitbutton-dropdown { border-radius: 0 7px 7px 0; padding-inline: 10px; }
+.finance-split-button .p-splitbutton-dropdown::after { display: none; }
+.finance-action-menu { font-size: 13px; min-width: 220px; }

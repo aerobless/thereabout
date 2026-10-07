@@ -35,6 +35,27 @@ async function setup() {
 }
 
 describe('Google Calendar settings asynchronous rendering', () => {
+  it('clears credentials, cancels reveals and stops polling when its panel is destroyed', () => {
+    vi.useFakeTimers();
+    try {
+      const status = new Subject<GoogleCalendarStatus>();
+      const reveal = new Subject<{value: string}>();
+      const api = {getGoogleCalendarStatus: vi.fn(() => status), revealGoogleCalendarSecret: () => reveal};
+      TestBed.configureTestingModule({providers: [
+        MessageService, {provide: CalendarService, useValue: api},
+        {provide: IdentityService, useValue: {getIdentities: () => of([])}}
+      ]}).overrideComponent(GoogleCalendarSettingsComponent, {set: {template: ''}});
+      const fixture = TestBed.createComponent(GoogleCalendarSettingsComponent);
+      fixture.detectChanges(); status.next(storedStatus);
+      const component = fixture.componentInstance;
+      component.focus('clientSecret'); reveal.next({value: 'synthetic-revealed'});
+      expect(component.values.clientSecret).toBe('synthetic-revealed');
+      fixture.destroy(); reveal.next({value: 'synthetic-late'});
+      vi.advanceTimersByTime(15000);
+      expect(component.values).toEqual({});
+      expect(api.getGoogleCalendarStatus).toHaveBeenCalledTimes(1);
+    } finally { vi.useRealTimers(); }
+  });
   it('shows loading rather than absent credentials until status arrives, then Stored without interaction', async () => {
     const {fixture, root, input, api, ready} = await setup();
     expect(root.textContent).not.toContain('Not configured');
@@ -106,6 +127,7 @@ describe('Google Calendar settings asynchronous rendering', () => {
 
   it('saves only edited credentials and masks them again when the async save finishes', async () => {
     const {fixture, root, input, api, reveal, save, ready, focus} = await setup();
+    const toast = vi.spyOn(TestBed.inject(MessageService), 'add');
     await ready();
     await focus();
     // Use an editable, already revealed field as in the normal user flow.
@@ -125,7 +147,7 @@ describe('Google Calendar settings asynchronous rendering', () => {
     expect(button.disabled).toBe(false);
     expect(input().value).toBe('');
     expect(input().type).toBe('password');
-    expect(root.textContent).toContain('Google credentials saved and validated.');
+    expect(toast).toHaveBeenCalledWith(expect.objectContaining({severity: 'success', summary: 'Google credentials saved and validated.'}));
     fixture.destroy();
   });
 });

@@ -29,8 +29,8 @@ import { FinancesService } from "../../../../generated/backend-api/thereabout";
       field.
     </p>
     <p>
-      Use this key with <code>Authorization: Bearer &lt;key&gt;</code> at
-      <code>/mcp/finances</code>.
+      Connect your MCP client with <code>Authorization: Bearer &lt;key&gt;</code>.
+      Available endpoint: <code>/mcp/finances</code>.
     </p>
     @if (loading()) {
       <p role="status">Loading key…</p>
@@ -68,6 +68,8 @@ export class FinanceMcpSettingsComponent {
   readonly revealed = signal(false);
   readonly loading = signal(false);
   readonly error = signal("");
+
+  constructor() { this.destroyRef.onDestroy(() => this.hide()); }
 
   reveal() {
     if (this.revealed() || this.loading()) return;

@@ -15,12 +15,12 @@ import {MessagesListComponent} from '../../modules/messages/messages-list.compon
 import {LocationhistoryComponent} from '../../modules/locationhistory/locationhistory.component';
 import {IdentitiesComponent} from '../../modules/identities/identities.component';
 import {IdentityDetailComponent} from '../../modules/identities/identity-detail/identity-detail.component';
-import {ConfigurationComponent} from '../../modules/configuration/configuration.component';
+import {AboutComponent} from '../../modules/configuration/about.component';
 import {provideHttpClient} from '@angular/common/http';
 import {RefreshCoordinator} from './refresh-coordinator';
 
 describe('Page refresh integration', () => {
-  const components = [DayviewComponent, ChoicesCardComponent, WeightCardComponent, HeartRateCardComponent, HrvCardComponent, MessagesListComponent, LocationhistoryComponent, IdentitiesComponent, IdentityDetailComponent, ConfigurationComponent];
+  const components = [DayviewComponent, ChoicesCardComponent, WeightCardComponent, HeartRateCardComponent, HrvCardComponent, MessagesListComponent, LocationhistoryComponent, IdentitiesComponent, IdentityDetailComponent, AboutComponent];
   const locations = {getLocations: vi.fn(), getSparseLocations: vi.fn()};
   const health = {getHealthDataByDateRange: vi.fn()};
   const messages = {getMessages: vi.fn(), getMessageList: vi.fn()};
@@ -127,12 +127,13 @@ it('keeps health and message values on failure while applying successful locatio
   it('refreshes configuration snapshots without resetting fields or starting duplicate polling', async () => {
     config.getFrontendConfiguration.mockReturnValue(of({})); config.fileImportStatus.mockReturnValue(of({status: 'IN_PROGRESS', progress: 50}));
     config.getTelegramStatus.mockReturnValue(of({status: 'WAIT_CODE'})); linked.getIdentityInApplicationsByApplication.mockReturnValue(of([]));
-    const page = TestBed.createComponent(ConfigurationComponent).componentInstance;
+    TestBed.createComponent(AboutComponent);
     const imports = TestBed.createComponent(FileImportComponent).componentInstance;
     const telegram = TestBed.createComponent(TelegramSettingsComponent).componentInstance;
     telegram.phone.set('draft'); telegram.code.set('123'); imports.receiverName.set('kept');
     await TestBed.inject(RefreshCoordinator).refresh();
     expect(imports.status()?.progress).toBe(50); expect(telegram.phone()).toBe('draft'); expect(telegram.code()).toBe('123'); expect(imports.receiverName()).toBe('kept');
     expect(config.getTelegramStatus).toHaveBeenCalledTimes(2);
+    expect(config.getFrontendConfiguration).toHaveBeenCalledTimes(2);
   });
 });

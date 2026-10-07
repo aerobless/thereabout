@@ -16,7 +16,7 @@
       value on the account to make a correction.
     </p>
   } @else {
-    <button [disabled]="form.deleted" (click)="openTransaction(form)">
+    <button class="app-button" [disabled]="form.deleted" (click)="openTransaction(form)">
       Edit transaction
     </button>
   }

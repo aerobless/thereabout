@@ -24,6 +24,7 @@ class FinanceImportTest {
   @Autowired com.sixtymeters.thereabout.finance.service.FinanceMcpKeyService keys;
   @Autowired FinanceImportService imports;
   @Autowired TransactionService transactions;
+  @Autowired FinanceImportHintService hints;
   @Autowired JdbcTemplate db;
 
   @org.springframework.test.context.bean.override.mockito.MockitoSpyBean
@@ -38,6 +39,7 @@ class FinanceImportTest {
     com.sixtymeters.thereabout.testing.TestUsers.owner(db);
     for (String table :
         List.of(
+            "import_hint",
             "import_source",
             "request",
             "audit",
@@ -61,7 +63,7 @@ class FinanceImportTest {
             + " cash','CASH','EUR',100051)");
     db.update("INSERT INTO finance_category(id,name) VALUES(10,'Imported category'),(11,'Food')");
     when(ai.settings()).thenReturn(new GenOpenAiSettings().configured(true).model("test-model"));
-    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList()))
+    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList(), anyList()))
         .thenAnswer(
             invocation -> {
               @SuppressWarnings("unchecked")
@@ -126,6 +128,84 @@ class FinanceImportTest {
   }
 
   @Test
+  void hintsAreSharedAcrossUsersButIsolatedByAccountAndWritesAreAuditedAndReplayable() {
+    var input = new GenFinanceImportHintInput().accountId(1L).text("  Treat IBKR as a transfer  ")
+        .requestKey(UUID.randomUUID().toString());
+    var saved = hints.add(USER, input);
+    assertThat(saved.getText()).isEqualTo("Treat IBKR as a transfer");
+    assertThat(hints.add(USER, input).getId()).isEqualTo(saved.getId());
+    assertThat(hints.list(new UserId(100051), 1L).getItems()).hasSize(1);
+    assertThat(hints.snapshot(USER, 3L)).isEmpty();
+    assertThatThrownBy(() -> hints.add(USER, new GenFinanceImportHintInput().accountId(2L)
+        .text("Counterparty hint").requestKey(UUID.randomUUID().toString())))
+        .hasMessageContaining("Account not found");
+    var remove = new GenFinanceImportHintRemoveInput().accountId(1L).id(saved.getId())
+        .version(saved.getVersion() + 1).requestKey(UUID.randomUUID().toString());
+    assertThatThrownBy(() -> hints.remove(USER, remove)).hasMessageContaining("Record changed");
+    assertThat(hints.list(USER, 1L).getItems()).hasSize(1);
+    assertThatThrownBy(() -> hints.remove(USER, remove.accountId(3L).version(saved.getVersion())))
+        .hasMessageContaining("Hint not found");
+    remove.accountId(1L);
+    hints.remove(new UserId(100051), remove);
+    assertThat(hints.remove(new UserId(100051), remove).getId()).isEqualTo(saved.getId());
+    assertThat(hints.list(USER, 1L).getItems()).isEmpty();
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_audit WHERE operation LIKE 'import_hints.%'", Long.class)).isEqualTo(2);
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_transaction", Long.class)).isZero();
+  }
+
+  @Test
+  void rejectsBlankOversizedAndTooManyHintsWithoutChangingSavedHints() {
+    for (var text : List.of(" ", "x".repeat(1001))) {
+      assertThatThrownBy(() -> hints.add(USER, new GenFinanceImportHintInput().accountId(1L)
+          .text(text).requestKey(UUID.randomUUID().toString()))).hasMessageContaining("Enter a hint");
+    }
+    for (int i = 0; i < 50; i++) hints.add(USER, new GenFinanceImportHintInput().accountId(1L)
+        .text("Hint " + i).requestKey(UUID.randomUUID().toString()));
+    assertThatThrownBy(() -> hints.add(USER, new GenFinanceImportHintInput().accountId(1L)
+        .text("One too many").requestKey(UUID.randomUUID().toString()))).hasMessageContaining("up to 50");
+    assertThat(hints.list(USER, 1L).getItems()).hasSize(50);
+    db.update("UPDATE finance_account SET deleted=TRUE WHERE id=1");
+    assertThatThrownBy(() -> hints.list(USER, 1L)).hasMessageContaining("Account not found");
+  }
+
+  @Test
+  void everyChunkUsesThePrepareTimeHintsAndChangesOnlyAffectTheNextImport() throws Exception {
+    hints.add(USER, new GenFinanceImportHintInput().accountId(1L).text("Original guidance")
+        .requestKey(UUID.randomUUID().toString()));
+    hints.add(USER, new GenFinanceImportHintInput().accountId(3L).text("Other account guidance")
+        .requestKey(UUID.randomUUID().toString()));
+    var entered = new CountDownLatch(1);
+    var continueImport = new CountDownLatch(1);
+    var calls = new java.util.concurrent.CopyOnWriteArrayList<List<String>>();
+    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList(), anyList()))
+        .thenAnswer(invocation -> {
+          List<String> snapshot = invocation.getArgument(5);
+          calls.add(snapshot);
+          entered.countDown();
+          if (!continueImport.await(10, TimeUnit.SECONDS)) throw new AssertionError("Timed out waiting for hint update");
+          List<ImportCsvReader.Row> rows = invocation.getArgument(2);
+          var result = new ImportInterpreter.Result(); result.rows = new ArrayList<>();
+          for (var source : rows) {
+            var p = new ImportInterpreter.Proposal(); p.rowId = source.id();
+            p.skip = true; p.reason = "Synthetic skipped transaction"; result.rows.add(p);
+          }
+          return result;
+        });
+    String csv = java.util.stream.IntStream.range(0, 51).mapToObj(i -> "2026-01-01;Coffee " + i + ";12.12")
+        .collect(java.util.stream.Collectors.joining("\n"));
+    var job = prepare(csv);
+    try {
+      assertThat(entered.await(10, TimeUnit.SECONDS)).isTrue();
+      hints.add(USER, new GenFinanceImportHintInput().accountId(1L).text("New guidance")
+          .requestKey(UUID.randomUUID().toString()));
+    } finally { continueImport.countDown(); }
+    assertThat(ready(job).getStatus()).isEqualTo(GenFinanceImportJob.StatusEnum.READY);
+    assertThat(calls).hasSize(2).allSatisfy(snapshot -> assertThat(snapshot).containsExactly("Original guidance"));
+    ready(prepare("2026-01-01;Coffee;12.12"));
+    assertThat(calls.getLast()).containsExactly("Original guidance", "New guidance");
+  }
+
+  @Test
   void existingCategoryAndCounterpartyNamesResolveBeforePreviewWithoutCreatingDuplicates() {
     db.update("UPDATE finance_account SET name='Zühlke Engineering AG' WHERE id=2");
     var proposal = new ImportInterpreter.Proposal();
@@ -138,7 +218,7 @@ class FinanceImportTest {
     proposal.categoryName = "food";
     var result = new ImportInterpreter.Result();
     result.rows = List.of(proposal);
-    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList()))
+    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList(), anyList()))
         .thenReturn(result);
     var job = ready(prepare("2026-01-01;Lunch;12.12"));
     assertThat(job.getRows().getFirst().getOtherAccountId()).isEqualTo(2L);
@@ -246,7 +326,7 @@ class FinanceImportTest {
     proposal.notes = incoming ? "INCOMING:" : "OUTGOING:";
     var result = new ImportInterpreter.Result();
     result.rows = List.of(proposal);
-    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList()))
+    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList(), anyList()))
         .thenReturn(result);
     var job = ready(prepare("2026-01-01;Wallet transfer;12.123456789012345678901234"));
     assertThat(job.getReadyToApprove()).isTrue();
@@ -483,7 +563,7 @@ class FinanceImportTest {
 
   @Test
   void partialAiCoverageFailsWithoutWritesAndCancellationDiscards() {
-    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList()))
+    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList(), anyList()))
         .thenAnswer(
             i -> {
               var r = new ImportInterpreter.Result();
@@ -537,7 +617,7 @@ class FinanceImportTest {
 
   @Test
   void incompleteEvidenceAndAmbiguousDatesRequireManualReview() {
-    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList()))
+    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList(), anyList()))
         .thenAnswer(
             i -> {
               var result = new ImportInterpreter.Result();
@@ -563,7 +643,7 @@ class FinanceImportTest {
   void cancellationAndOneRunningJobPerCallerAreEnforced() throws Exception {
     var entered = new CountDownLatch(1);
     var release = new CountDownLatch(1);
-    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList()))
+    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList(), anyList()))
         .thenAnswer(
             i -> {
               entered.countDown();
@@ -601,6 +681,19 @@ class FinanceImportTest {
             .requestTimeout(Duration.ofSeconds(15))
             .build()) {
       client.initialize();
+      var hintJson = new tools.jackson.databind.ObjectMapper();
+      var addedHint = client.callTool(io.modelcontextprotocol.spec.McpSchema.CallToolRequest.builder("finance_import_hints_add")
+          .arguments(Map.of("accountId", 1, "text", "Always treat IBKR as a transfer", "requestKey", UUID.randomUUID().toString())).build());
+      assertThat(addedHint.isError()).isFalse();
+      var hint = hintJson.convertValue(addedHint.structuredContent(), GenFinanceImportHint.class);
+      var hintList = client.callTool(io.modelcontextprotocol.spec.McpSchema.CallToolRequest.builder("finance_import_hints_list")
+          .arguments(Map.of("accountId", 1)).build());
+      assertThat(hintList.isError()).isFalse();
+      assertThat(hintJson.convertValue(hintList.structuredContent(), GenFinanceImportHintList.class).getItems()).hasSize(1);
+      var removedHint = client.callTool(io.modelcontextprotocol.spec.McpSchema.CallToolRequest.builder("finance_import_hints_remove")
+          .arguments(Map.of("accountId", 1, "id", hint.getId(), "version", hint.getVersion(), "requestKey", UUID.randomUUID().toString())).build());
+      assertThat(removedHint.isError()).isFalse();
+      assertThat(hints.snapshot(USER, 1L)).isEmpty();
       var prepared =
           client.callTool(
               io.modelcontextprotocol.spec.McpSchema.CallToolRequest.builder(
@@ -731,7 +824,7 @@ class FinanceImportTest {
 
   @Test
   void malformedProposalFieldsRemainEditableRatherThanFailingTheWholePreview() {
-    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList()))
+    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList(), anyList()))
         .thenAnswer(
             i -> {
               var result = new ImportInterpreter.Result();

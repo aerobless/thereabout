@@ -1,3 +1,4 @@
+import { FinanceSplitButtonComponent } from './shared/finance-split-button.component';
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
@@ -12,6 +13,7 @@ import { DialogHostComponent } from "./dialogs/dialog-host.component";
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    FinanceSplitButtonComponent,
     CommonModule,
     RouterLink,
     RouterLinkActive,
@@ -25,4 +27,6 @@ import { DialogHostComponent } from "./dialogs/dialog-host.component";
 export class FinancesComponent {
   readonly context = inject(FinanceContext);
   readonly dialogs = inject(FinanceDialogs);
+  readonly transactionActions = [{label: 'Import transactions from CSV', icon: 'pi pi-upload',
+    command: () => this.dialogs.open({kind: 'import'})}];
 }

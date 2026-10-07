@@ -29,6 +29,7 @@ describe('AppShellComponent', () => {
                 {path: 'identities', component: PageStub},
         {path: 'identities/:id', component: PageStub},
         {path: 'configuration', component: PageStub},
+        {path: 'configuration/connections/:connection', component: PageStub},
         {path: 'messages', component: PageStub}
       ])]
     }).compileComponents();
@@ -102,6 +103,9 @@ describe('AppShellComponent', () => {
     expect(root().querySelector('.sidebar-nav [aria-current="page"]')?.textContent).toContain('Identities');
     expect(root().querySelector('.mobile-nav button')?.classList.contains('active')).toBe(true);
     await navigate('/configuration');
+    expect(root().querySelector('.settings-link')?.getAttribute('aria-current')).toBe('page');
+    expect(root().querySelector('.mobile-nav button')?.classList.contains('active')).toBe(true);
+    await navigate('/configuration/connections/openai');
     expect(root().querySelector('.settings-link')?.getAttribute('aria-current')).toBe('page');
     expect(root().querySelector('.mobile-nav button')?.classList.contains('active')).toBe(true);
     await navigate('/messages');

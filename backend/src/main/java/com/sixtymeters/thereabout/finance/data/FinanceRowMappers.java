@@ -46,6 +46,8 @@ public final class FinanceRowMappers {
           new GenFinanceTransaction()
               .id(r.getObject("id", Long.class))
               .sourceId(r.getObject("source_id", Long.class))
+              .syncSource(r.getString("sync_source"))
+              .syncManaged(r.getBoolean("sync_managed"))
               .type(GenFinanceTransactionType.fromValue(r.getString("type")))
               .effect(GenFinanceEffect.fromValue(r.getString("effect")))
               .description(r.getString("description"))

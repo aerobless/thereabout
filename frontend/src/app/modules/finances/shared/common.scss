@@ -26,39 +26,11 @@ a {
   color: var(--app-link, #3266ac);
   text-decoration: none;
 }
-button,
 input,
 select,
 textarea {
   font: inherit;
   font-size: 13px;
-}
-button {
-  border: 1px solid var(--app-border, #dce3ee);
-  background: white;
-  border-radius: 7px;
-  padding: 9px 13px;
-  color: var(--app-ink);
-  cursor: pointer;
-  white-space: nowrap;
-}
-button:hover {
-  background: var(--app-hover, #f3f8ff);
-}
-button:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-button.primary {
-  background: #24466c;
-  border-color: #24466c;
-  color: white;
-}
-button.primary:hover {
-  background: #3266ac;
-}
-.secondary {
-  background: transparent;
 }
 input,
 select,
@@ -73,9 +45,8 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus,
-button:focus-visible,
 a:focus-visible {
-  outline: 2px solid #477eca;
+  outline: 2px solid var(--app-accent);
   outline-offset: 2px;
 }
 .actions,
@@ -89,6 +60,7 @@ a:focus-visible {
 .actions i {
   margin-right: 5px;
 }
+.actions > button { height:38px; box-sizing:border-box; }
 .panel {
   background: white;
   border: 1px solid var(--app-border);
@@ -180,7 +152,7 @@ tr:hover td {
   margin-top: 5px;
 }
 .positive {
-  color: #387f69;
+  color: var(--app-success);
 }
 .select-col {
   width: 25px;
@@ -198,7 +170,7 @@ tr:hover td {
   background: transparent;
   border: 0;
   padding: 0;
-  color: #3266ac;
+  color: var(--app-link);
   font-weight: 500;
 }
 .date-cell {
@@ -296,12 +268,12 @@ tr:hover td {
   margin: 10px 0 18px;
 }
 .error {
-  background: #fff0ed;
-  color: #9d402f;
+  background: var(--app-danger-background);
+  color: var(--app-danger);
 }
 .warning {
-  background: #fff7e9;
-  color: #8b6329;
+  background: var(--app-warning-background);
+  color: var(--app-warning);
 }
 .alert button {
   float: right;

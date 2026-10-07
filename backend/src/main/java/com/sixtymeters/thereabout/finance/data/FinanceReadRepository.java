@@ -224,7 +224,8 @@ public class FinanceReadRepository {
   }
 
   private static final String TX_SELECT =
-      "SELECT t.*,s.account_id source_id_account,d.account_id destination_id_account,sa.name"
+      "SELECT (SELECT 'SPLITWISE' FROM splitwise_source ss WHERE ss.transaction_id=t.id LIMIT 1) sync_source, "
+          + "EXISTS(SELECT 1 FROM splitwise_source ss WHERE ss.transaction_id=t.id AND ss.locally_managed=FALSE) sync_managed, t.*,s.account_id source_id_account,d.account_id destination_id_account,sa.name"
           + " source_name,da.name destination_name,sa.kind source_kind,da.kind"
           + " destination_kind,ABS(s.amount) source_amount,ABS(d.amount)"
           + " destination_amount,s.currency source_currency,d.currency"

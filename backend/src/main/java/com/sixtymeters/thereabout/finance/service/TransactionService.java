@@ -21,18 +21,23 @@ public class TransactionService {
   private final CategoryService categories;
   private final FinanceWriteCoordinator writes;
   private final java.time.Clock financeClock;
+  private final com.sixtymeters.thereabout.finance.splitwise.SplitwiseLocalChanges splitwiseChanges;
 
   public GenFinanceTransactionResult save(UserId user, GenFinanceTransactionInput input) {
-    return save(user, input, false);
+    return save(user, input, false, false);
   }
 
   /** Exact statement precision is retained; all ordinary ledger rules still apply. */
   GenFinanceTransactionResult importTransaction(UserId user, GenFinanceTransactionInput input) {
     require(input.getId() == null, "Imports only create new transactions");
-    return save(user, input, true);
+    return save(user, input, true, false);
   }
 
-  private GenFinanceTransactionResult save(UserId user, GenFinanceTransactionInput input, boolean imported) {
+  public GenFinanceTransactionResult syncSave(UserId user, GenFinanceTransactionInput input) {
+    return save(user, input, true, true);
+  }
+
+  private GenFinanceTransactionResult save(UserId user, GenFinanceTransactionInput input, boolean imported, boolean synchronizedWrite) {
     return writes.write(user,
         "transactions.save",
         input.getRequestKey(),
@@ -109,6 +114,8 @@ public class TransactionService {
               input.getEffect() == null
                   ? FinancialEffect.OPERATING
                   : FinancialEffect.valueOf(input.getEffect().getValue());
+          require(effect != FinancialEffect.EXPENSE_REIMBURSEMENT || type == TransactionType.DEPOSIT,
+              "An expense reimbursement must be a deposit");
           if (type == TransactionType.OPENING) effect = FinancialEffect.OPENING;
           if (type == TransactionType.RECONCILIATION) effect = FinancialEffect.RECONCILIATION;
           var date = dateTime(input.getDate(), null, false);
@@ -132,6 +139,7 @@ public class TransactionService {
           transaction.touch(financeClock);
           transactions.saveAndFlush(transaction);
           var after = reads.transaction(user, transaction.getId());
+          if (!synchronizedWrite) { splitwiseChanges.changed(before, after); after = reads.transaction(user, transaction.getId()); }
           writes.audit(user, "transactions.save", transaction.getId(), before, after);
           return new GenFinanceTransactionResult().transaction(after);
         });
@@ -198,6 +206,14 @@ public class TransactionService {
   }
 
   public GenFinanceTransactionResult setDeleted(UserId user, GenFinanceVersionedInput input, boolean deleted) {
+    return setDeleted(user, input, deleted, false);
+  }
+
+  public GenFinanceTransactionResult syncSetDeleted(UserId user, GenFinanceVersionedInput input, boolean deleted) {
+    return setDeleted(user, input, deleted, true);
+  }
+
+  private GenFinanceTransactionResult setDeleted(UserId user, GenFinanceVersionedInput input, boolean deleted, boolean synchronizedWrite) {
     String operation = deleted ? "transactions.delete" : "transactions.restore";
     return writes.write(user,
         operation,
@@ -223,6 +239,7 @@ public class TransactionService {
           transaction.touch(financeClock);
           transactions.saveAndFlush(transaction);
           var after = reads.transaction(user, transaction.getId());
+          if (!synchronizedWrite) { splitwiseChanges.changed(before, after); after = reads.transaction(user, transaction.getId()); }
           writes.audit(user, operation, transaction.getId(), before, after);
           return new GenFinanceTransactionResult().transaction(after);
         });
@@ -254,6 +271,7 @@ public class TransactionService {
             transaction.setCategoryId(category);
             transaction.touch(financeClock);
             transactions.saveAndFlush(transaction);
+            splitwiseChanges.changed(before, reads.transaction(user, transaction.getId()));
             writes.audit(user,
                 "transactions.categorize", transaction.getId(), before, reads.transaction(user, transaction.getId()));
           }

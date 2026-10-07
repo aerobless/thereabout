@@ -18,7 +18,7 @@
     </div>
     <div class="actions">
       @if (!recent()) {
-        <button (click)="openCategories()">Categories</button>
+        <button class="app-button" (click)="openCategories()">Categories</button>
       }
       @if (recent()) {
         <a routerLink="/finances/transactions">View all →</a>
@@ -36,7 +36,7 @@
         optionValue="id"
         appendTo="body"
         [filter]="true"
-      /><button [disabled]="saving" (click)="bulk()">Apply category</button>
+      /><button class="app-button" [disabled]="saving" (click)="bulk()">Apply category</button>
     </div>
   }
   <p-table
@@ -193,12 +193,14 @@
           />
         </td>
         <td>
-          <button class="text-button description" (click)="showHistory(t)">
+          <button class="app-button text-button description" (click)="showHistory(t)">
             {{ t.description }}
           </button>
           @if (t.effect === "VALUATION") {
             <small class="badge">Valuation</small>
           }
+          @if (t.effect === "EXPENSE_REIMBURSEMENT") { <small class="badge">Reimbursement</small> }
+          @if (t.syncSource) { <small class="badge">{{ t.syncManaged ? "Splitwise" : "Managed locally" }}</small> }
           @if (t.deleted) {
             <small class="badge">Deleted</small>
           }
@@ -228,13 +230,13 @@
           </td>
         }
         <td class="row-actions">
-          <button
+          <button class="app-button"
             (click)="openTransaction(t)"
             [disabled]="t.deleted || !!t.valuationId"
             [attr.aria-label]="'Edit ' + t.description"
           >
             <i class="pi pi-pencil"></i></button
-          ><button
+          ><button class="app-button"
             (click)="deletion(t)"
             [disabled]="!!t.valuationId"
             [attr.aria-label]="

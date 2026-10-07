@@ -6,12 +6,11 @@
       <p>A clearer view of what you have, spend and grow.</p>
     </div>
     <div class="actions">
-      <button (click)="dialogs.open({ kind: 'import' })"><i class="pi pi-upload"></i> Import</button>
-      <button class="secondary" (click)="dialogs.open({ kind: 'rates' })">
+      <button class="app-button secondary" (click)="dialogs.open({ kind: 'rates' })">
         <i class="pi pi-globe"></i> Exchange rates</button
-      ><button class="primary" (click)="dialogs.open({ kind: 'transaction' })">
-        <i class="pi pi-plus"></i> Add transaction
-      </button>
+      >
+      <finance-split-button label="Add transaction" icon="pi pi-plus" [primary]="true"
+        [items]="transactionActions" (action)="dialogs.open({ kind: 'transaction' })" />
     </div>
   </header>
   <nav class="section-nav" aria-label="Finance navigation">
@@ -30,7 +29,7 @@
   @if (context.error() || context.metadata().error) {
     <div class="alert error" role="alert">
       {{ context.error() || context.metadata().error
-      }}<button (click)="context.error.set('')" aria-label="Dismiss error">
+      }}<button class="app-button" (click)="context.error.set('')" aria-label="Dismiss error">
         ×
       </button>
     </div>

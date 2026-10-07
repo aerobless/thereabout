@@ -372,6 +372,7 @@ components:
       type: string
       enum:
       - OPERATING
+      - EXPENSE_REIMBURSEMENT
       - VALUATION
       - OPENING
       - RECONCILIATION
@@ -441,6 +442,10 @@ components:
           example: '123.45'
         foreignCurrency:
           type: string
+        syncSource:
+          type: string
+        syncManaged:
+          type: boolean
         valuationId:
           type: integer
           format: int64

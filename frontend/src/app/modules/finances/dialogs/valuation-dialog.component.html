@@ -32,7 +32,7 @@
         placeholder="e.g. Monthly statement 2026-09"
     /></label>
   </div>
-  <button [disabled]="saving || form.invalid">Preview adjustment</button>
+  <button class="app-button" [disabled]="saving || form.invalid">Preview adjustment</button>
   @if (preview) {
     <div class="valuation-preview">
       <span
@@ -52,7 +52,7 @@
     </div>
     <button
       type="button"
-      class="primary"
+      class="app-button primary"
       [disabled]="saving || form.invalid"
       (click)="saveValuation()"
     >

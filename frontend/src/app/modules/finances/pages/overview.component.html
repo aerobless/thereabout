@@ -9,10 +9,13 @@
     <div class="account-heading">
       <a routerLink="/finances/accounts">← All accounts</a>
       <div class="actions">
-        <button (click)="dialogs.open({ kind: 'import', accountId: accountId()! })">Import transactions</button>
-        <button (click)="openAccount(currentAccount)">Edit account</button>
+        @if (canManageHints) {
+          <finance-split-button label="Import transactions" [items]="importActions()"
+            (action)="dialogs.open({ kind: 'import', accountId: accountId() })" />
+        }
+        <button class="app-button" (click)="openAccount(currentAccount)">Edit account</button>
         @if (currentAccount?.kind !== "CASH") {
-          <button class="primary" (click)="openValuation()">
+          <button class="app-button primary" (click)="openValuation()">
             Record total value
           </button>
         }
@@ -113,7 +116,7 @@
           <finance-date-input
             ariaLabel="Start date"
             [(ngModel)]="from"
-          /><finance-date-input ariaLabel="End date" [(ngModel)]="to" /><button
+          /><finance-date-input ariaLabel="End date" [(ngModel)]="to" /><button class="app-button"
             (click)="load()"
           >
             Apply

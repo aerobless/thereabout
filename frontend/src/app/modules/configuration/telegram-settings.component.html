@@ -1,10 +1,4 @@
-  <p-card>
-    <ng-template #header>
-      <div class="card-header">
-        <i class="pi pi-send card-header-icon"></i>
-        <span class="card-header-title">Telegram sync</span>
-      </div>
-    </ng-template>
+  <header class="service-heading"><h2 id="telegram-settings" tabindex="-1">Telegram</h2><p>Connect your account and synchronize messages.</p></header>
     @if (!status()?.configured) {
       <p>Telegram sync is not configured. Set <code>TELEGRAM_API_ID</code> and <code>TELEGRAM_API_HASH</code> (from <a href="https://my.telegram.org" target="_blank">my.telegram.org</a>) in the server environment.</p>
     } @else {
@@ -72,4 +66,3 @@
       }
     }
     @if (error()) { <p role="alert">{{ error() }}</p><p-button label="Retry status" (onClick)="loadStatus()" [text]="true" /> }
-  </p-card>

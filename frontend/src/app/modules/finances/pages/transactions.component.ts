@@ -2,7 +2,7 @@ import { FinanceDateInputComponent } from "../shared/finance-date-input.componen
 import { SelectModule } from "primeng/select";
 import { MultiSelectModule } from "primeng/multiselect";
 import { TableModule, TableLazyLoadEvent } from "primeng/table";
-import { Subject, debounceTime } from "rxjs";
+import { Subject, debounceTime, map, distinctUntilChanged, switchMap, catchError, of } from "rxjs";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import {
   ChangeDetectionStrategy,
@@ -49,6 +49,11 @@ export class TransactionsComponent {
   readonly recent = input(false);
   private readonly route = inject(ActivatedRoute);
   private readonly routeParams = toSignal(this.route.queryParamMap);
+  private readonly linkedTransaction = toSignal(this.route.queryParamMap.pipe(
+    map(params => Number(params.get("transaction"))), distinctUntilChanged(),
+    switchMap(id => Number.isSafeInteger(id) && id > 0
+      ? this.context.api.client.financeTransactionDetail(id).pipe(catchError(() => of(null))) : of(null)),
+  ));
   q = "";
   accountFilter = 0;
   categoryFilter = "";
@@ -79,6 +84,10 @@ export class TransactionsComponent {
   readonly selected = new Map<number, number>();
   private readonly filters = signal<FinanceTransactionQuery | null>(null);
   constructor() {
+    effect(() => {
+      const detail = this.linkedTransaction();
+      if (detail) this.dialogs.open({ kind: "history", transaction: detail.transaction });
+    });
     this.searchChanges
       .pipe(debounceTime(250), takeUntilDestroyed())
       .subscribe(() => this.filterTransactions());

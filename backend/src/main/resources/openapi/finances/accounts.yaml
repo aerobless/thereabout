@@ -311,6 +311,8 @@ components:
           type: string
         rateSource:
           type: string
+        suggestedStartDate:
+          type: string
         websiteUrl:
           type: string
           maxLength: 2048

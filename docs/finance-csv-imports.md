@@ -29,3 +29,13 @@ Use the same authenticated `/mcp/finances` server:
 Drafts belong to the preparing caller. Account ownership does not restrict the selected target account. The browser and MCP share parsing, interpretation, review, validation, duplicate detection and approval services.
 
 Synthetic fixtures and an in-process fake OpenAI endpoint verify the SDK and accounting boundaries without sending private bank data to a test service. Uploaded real CSVs must stay outside source control.
+
+## Account hints
+
+Select **Import hints** from the **Import transactions** split-button menu on a main account to add or remove reusable sentences such as “Always treat IBKR as a transfer”. Any finance user can manage any main account's hints. Hints are saved immediately, independently of transaction approval; cancelling an import keeps saved hints. Each account can have up to 50 hints of up to 1,000 characters each.
+
+Once the import preview is ready, **Import hints** opens the same hints modal above the preview. Closing it returns to the existing draft and page. Hints are not shown during file selection. Preparation captures all saved hints for that account and supplies the same snapshot to every interpretation chunk. Changes made after preparation apply to future imports and preserve the current draft. Hints guide interpretation but cannot override accounting safeguards, source evidence or the existing category list. Empty optional subjects are omitted from descriptions and notes instead of described as blank or missing.
+
+Editing a row opens a separate modal above the preview, containing its original CSV evidence, warnings and editable fields. The preview stays mounted on its current page. Closing or discarding the edit leaves the draft unchanged; applying it refreshes that page. Dismissal is locked while a review is saving, and a failed review retains the inputs and error in the editor.
+
+MCP exposes `finance_import_hints_list` (`accountId`), `finance_import_hints_add` (`accountId`, `text`, `requestKey`) and `finance_import_hints_remove` (`accountId`, `id`, `version`, `requestKey`). These tools use the same audited, idempotent service as the browser. `finance_imports_prepare` automatically uses saved account hints without additional input.

@@ -213,8 +213,8 @@
     </p>
   }
   <div class="dialog-footer">
-    <button type="button" (click)="dialogs.close()">Cancel</button
-    ><button class="primary" [disabled]="saving || form.invalid"
+    <button class="app-button" type="button" (click)="dialogs.close()">Cancel</button
+    ><button class="app-button primary" [disabled]="saving || form.invalid"
       [attr.aria-describedby]="validationMessages().length && !saving ? 'transaction-validation' : null">
       {{ saving ? "Saving…" : "Save transaction" }}
     </button>

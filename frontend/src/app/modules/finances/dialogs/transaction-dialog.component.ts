@@ -123,6 +123,7 @@ export class TransactionDialogComponent implements OnInit {
     const value = this.form.controls.effect.value;
     const options = [
       { value: "OPERATING", label: "Normal transaction" },
+      ...(this.form.controls.type.value === "DEPOSIT" ? [{ value: "EXPENSE_REIMBURSEMENT", label: "Expense reimbursement" }] : []),
       { value: "VALUATION", label: "Valuation gain / loss" },
     ];
     return value === "OPENING" || value === "RECONCILIATION"

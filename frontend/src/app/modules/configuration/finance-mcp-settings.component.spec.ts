@@ -47,4 +47,20 @@ describe("FinanceMcpSettingsComponent", () => {
     expect(fixture.componentInstance.key()).toBe("");
     http.verify();
   });
+  it("clears a revealed key and cancels pending reveals when its panel is destroyed", () => {
+    const http = TestBed.inject(HttpTestingController);
+    const first = TestBed.createComponent(FinanceMcpSettingsComponent);
+    first.componentInstance.reveal();
+    http.expectOne(endpoint).flush("synthetic-key");
+    first.destroy();
+    expect(first.componentInstance.key()).toBe("");
+    expect(first.componentInstance.revealed()).toBe(false);
+    const second = TestBed.createComponent(FinanceMcpSettingsComponent);
+    second.componentInstance.reveal();
+    const pending = http.expectOne(endpoint);
+    second.destroy();
+    expect(pending.cancelled).toBe(true);
+    expect(second.componentInstance.key()).toBe("");
+    http.verify();
+  });
 });

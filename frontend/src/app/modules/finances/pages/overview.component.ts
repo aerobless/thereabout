@@ -1,3 +1,4 @@
+import { FinanceSplitButtonComponent } from '../shared/finance-split-button.component';
 import { FinanceDateInputComponent } from "../shared/finance-date-input.component";
 import { AccountLogoComponent } from "../shared/account-logo.component";
 import { SelectModule } from "primeng/select";
@@ -19,6 +20,7 @@ import {
   FinanceDialogs,
   FinanceAccount,
   kindLabel,
+  assetKinds,
   loadResource,
   today,
 } from "../shared/finance-ui";
@@ -28,6 +30,7 @@ import { TransactionsComponent } from "./transactions.component";
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    FinanceSplitButtonComponent,
     FinanceDateInputComponent,
     AccountLogoComponent,
     SelectModule,
@@ -44,6 +47,8 @@ export class OverviewComponent {
   readonly context = inject(FinanceContext);
   readonly dialogs = inject(FinanceDialogs);
   readonly accountId = input(0);
+  readonly importActions = computed(() => [{label: 'Import hints', icon: 'pi pi-lightbulb',
+    command: () => this.dialogs.open({kind: 'hints', accountId: this.accountId()})}]);
   from = today().slice(0, 4) + "-01-01";
   to = today();
   range = "year";
@@ -64,6 +69,9 @@ export class OverviewComponent {
   );
   get currentAccount() {
     return this.state().data?.accounts.find((a) => a.id === this.accountId());
+  }
+  get canManageHints() {
+    return assetKinds.some(([kind]) => kind === this.currentAccount?.kind);
   }
   get ownAccounts() {
     return this.state().data?.accounts ?? [];

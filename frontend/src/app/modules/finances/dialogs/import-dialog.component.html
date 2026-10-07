@@ -1,32 +1,70 @@
-@if (error()) { <p class="alert error" role="alert">{{ error() }}</p> }
-@if (job()?.status === 'READY' && (error() || context.error())) { <button (click)="editor.set(undefined); load()" [disabled]="busy()">Reload preview</button> }
+@if (error() && !editor()) { <p class="alert error" role="alert">{{ error() }}</p> }
+@if (!editor() && job()?.status === 'READY' && (error() || context.error())) { <button class="app-button" (click)="editor.set(undefined); load()" [disabled]="busy()">Reload preview</button> }
 @if (!job()) {
   <div class="editor">
     <label>Account
-      <p-select [options]="accountChoices()" [filter]="true" filterBy="label" optionLabel="label" optionValue="value" [ngModel]="selectedAccount() ?? accountId()" (ngModelChange)="selectedAccount.set($event)" placeholder="Select an account" appendTo="body" />
+      <p-select [options]="accountChoices()" [filter]="true" filterBy="label" optionLabel="label" optionValue="value" [ngModel]="selectedAccount() ?? accountId()" (ngModelChange)="selectedAccount.set($event)" [disabled]="busy() || dialogs.hintsBlocked()" placeholder="Select an account" appendTo="body" />
     </label>
     <label>CSV file <input type="file" accept=".csv,text/csv" (change)="chooseFile($event)" [disabled]="busy()" /></label>
-    <p class="span">The file is sent to OpenAI to suggest transactions and categories. Review and correct the suggestions before creating anything. Up to 2 MiB and 2,000 data rows.</p>
+    <p class="span">The file is sent to OpenAI to suggest transactions and categories. Up to 2 MiB and 2,000 data rows.</p>
   </div>
-  <div class="dialog-footer"><button (click)="dialogs.close()" [disabled]="busy()">Cancel</button><button class="primary" [disabled]="busy() || !file() || !(selectedAccount() ?? accountId())" (click)="prepare()">{{ busy() ? 'Preparing…' : 'Prepare import' }}</button></div>
+  <div class="dialog-footer"><button class="app-button" (click)="dialogs.close()" [disabled]="busy() || dialogs.hintsBlocked()">Cancel</button><button class="app-button primary" [disabled]="busy() || dialogs.hintsBlocked() || !file() || !(selectedAccount() ?? accountId())" (click)="prepare()">{{ busy() ? 'Preparing…' : 'Prepare import' }}</button></div>
 } @else if (job(); as draft) {
-  <p><strong>{{ account()?.userName }} · {{ account()?.name }}</strong> · {{ draft.fileName }}</p>
+  <div class="import-summary-header">
+    <div class="import-file">
+      <strong>{{ account()?.userName }} · {{ account()?.name }}</strong>
+      <span>{{ draft.fileName }}</span>
+    </div>
+    @if (draft.status === 'READY' && account()) {
+      <button class="app-button" type="button" (click)="dialogs.openImportHints(account()!.id)" [disabled]="busy() || !!editor()">Import hints</button>
+    }
+  </div>
   @if (running()) {
     <div class="preparing" role="status"><p-progress-spinner [style]="{width: '40px', height: '40px'}" strokeWidth="4" ariaLabel="Preparing transactions" /><span>Preparing transactions…</span></div>
-    <p>You can cancel without creating any transactions.</p>
   } @else if (draft.status === 'FAILED') {
     <p role="alert">{{ draft.error }}</p>
   } @else if (draft.status === 'READY') {
-    <p>{{ draft.createCount }} to create · {{ draft.skippedCount }} skipped · {{ draft.unresolvedCount }} unresolved</p>
-    <p>Income: {{ context.money(draft.incomeTotal, account()?.currency) }} · Expenses: {{ context.money(draft.expenseTotal, account()?.currency) }}</p>
-    <p>Predicted balance: <strong>{{ context.money(draft.predictedBalance, account()?.currency) }}</strong></p>
-    <p>Balance change: <strong>{{ context.money(draft.balanceImpact, account()?.currency) }}</strong></p>
-    @if (editor(); as row) {
+    <div class="import-summary-cards" aria-label="Import summary">
+      <article class="import-summary-card row-counts">
+        <div><span>To create</span><strong>{{ draft.createCount }}</strong></div>
+        <div><span>Skipped</span><strong>{{ draft.skippedCount }}</strong></div>
+        <div><span>Unresolved</span><strong>{{ draft.unresolvedCount }}</strong></div>
+      </article>
+      <article class="import-summary-card"><span>Income</span><strong>{{ context.money(draft.incomeTotal, account()?.currency) }}</strong></article>
+      <article class="import-summary-card"><span>Expenses</span><strong>{{ context.money(draft.expenseTotal, account()?.currency) }}</strong></article>
+      <article class="import-summary-card"><span>Predicted balance</span><strong>{{ context.money(draft.predictedBalance, account()?.currency) }}</strong><small>Change {{ context.money(draft.balanceImpact, account()?.currency) }}</small></article>
+    </div>
+      <p-table [value]="draft.rows" [lazy]="true" [paginator]="true" [rows]="50" [totalRecords]="draft.total" [first]="page() * 50" (onPage)="paginate($event)" [loading]="busy()" [scrollable]="true" scrollHeight="flex" [tableStyle]="{width: '100%', tableLayout: 'fixed'}">
+        <ng-template #header><tr class="import-header"><th>Row / Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Counterparty</th><th>Category</th><th>Review</th></tr></ng-template>
+        <ng-template #body let-row><tr class="import-row" [class.skipped]="row.skip" [class.requires-review]="!row.skip && row.issues?.length">
+          <td class="date-cell">{{ row.rowId }}<br>{{ row.date }}</td><td class="description-cell">{{ row.description || row.reason }}</td><td class="type-cell"><p-tag [value]="typeLabel(row)" [severity]="typeSeverity(row)" /></td>
+          <td class="amount-cell">{{ row.amount }} {{ account()?.currency }}@if (row.foreignAmount) { <small>Original: {{ row.foreignAmount }} {{ row.foreignCurrency }}</small> }</td>
+          <td class="counter-cell"><span class="cell-label">Counterparty</span>{{ counterName(row) }}</td><td class="category-cell"><span class="cell-label">Category</span>{{ categoryName(row) }}</td>
+          <td class="review-cell">
+            @for (note of reviewNotes(row); track $index) { <p class="review-note">{{ note }}</p> }
+            @if (duplicateDetails(row); as duplicate) { <p-tag class="duplicate-tag" value="Duplicate" severity="danger" [title]="duplicate" /> }
+            <div class="import-row-actions">
+              <button class="app-button row-action accept" [class.accepted]="row.reviewed && !row.skip && !row.issues?.length" (click)="accept(row)" [disabled]="busy() || needsEdit(row)" [attr.aria-label]="'Accept ' + row.rowId" [title]="needsEdit(row) ? 'Edit the required fields first' : duplicateDetails(row) ? 'Keep this duplicate' : 'Accept as suggested'"><i class="pi pi-check" aria-hidden="true"></i></button>
+              <button class="app-button row-action" (click)="edit(row)" [disabled]="busy()" [attr.aria-label]="'Edit ' + row.rowId" [title]="reviewTitle(row)"><i class="pi pi-pencil" aria-hidden="true"></i></button>
+              <button class="app-button row-action skip" (click)="skip(row)" [disabled]="busy() || row.skip" [attr.aria-label]="'Skip ' + row.rowId" title="Skip transaction"><i class="pi pi-times" aria-hidden="true"></i></button>
+            </div>
+          </td></tr></ng-template>
+      </p-table>
+  }
+  <div class="dialog-footer"><button class="app-button" (click)="dialogs.close()" [disabled]="context.saving() || busy() || !!editor() || dialogs.hintsBlocked()">{{ running() ? 'Cancel import' : 'Close' }}</button>
+    @if (draft.status === 'READY') { <button class="app-button primary" (click)="approve()" [disabled]="!draft.readyToApprove || busy() || !!editor() || context.saving() || dialogs.hintsBlocked()">Import</button> }
+  </div>
+}
+
+@if (editor(); as row) {
+  <app-modal [visible]="true" (visibleChange)="discardEdit()" [header]="'Edit ' + row.rowId"
+    [dialogStyle]="{width: '1000px', maxWidth: '94vw', maxHeight: '92vh'}"
+    styleClass="finance-dialog finance-import-row-modal" [dismissible]="!busy() && !dialogs.hintsBlocked()">
       <section class="row-editor">
-        <h3>Review {{ row.rowId }}</h3>
+        @if (error()) { <p class="alert error" role="alert">{{ error() }}</p> }
         <details open><summary>Original CSV row</summary><ol>@for (cell of row.source; track $index) { <li><pre>{{ cell }}</pre></li> }</ol></details>
         @for (issue of row.issues; track $index) { <p class="issue">{{ issueText(issue) }}</p> }
-        @if (row.reason && !row.issues?.length) { <p>{{ row.reason }}</p> }
+        @if (row.reason && !row.issues?.length && !row.duplicate) { <p>{{ row.reason }}</p> }
         @if (row.duplicate) { <p class="alert">{{ row.duplicate }}</p> }
         <div class="editor">
           <label class="span checkbox-field"><input type="checkbox" [ngModel]="row.skip" (ngModelChange)="patch({skip: $event})" /> Skip this row</label>
@@ -55,28 +93,7 @@
             @if (row.duplicate) { <label class="span checkbox-field"><input type="checkbox" [ngModel]="row.duplicateOverride" (ngModelChange)="patch({duplicateOverride: $event})" /> Keep this transaction despite the duplicate warning</label> }
           }
         </div>
-        <div class="dialog-footer"><button (click)="editor.set(undefined)" [disabled]="busy()">Discard edit</button><button class="primary" (click)="review()" [disabled]="busy()">Apply review</button></div>
+        <div class="dialog-footer"><button class="app-button" (click)="discardEdit()" [disabled]="busy()">Discard edit</button><button class="app-button primary" (click)="review()" [disabled]="busy()">Apply review</button></div>
       </section>
-    } @else {
-      <p-table [value]="draft.rows" [lazy]="true" [paginator]="true" [rows]="50" [totalRecords]="draft.total" [first]="page() * 50" (onPage)="paginate($event)" [loading]="busy()" [scrollable]="true" scrollHeight="420px" [tableStyle]="{width: '100%', tableLayout: 'fixed'}">
-        <ng-template #header><tr class="import-header"><th>Row / Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Counterparty</th><th>Category</th><th>Review</th></tr></ng-template>
-        <ng-template #body let-row><tr class="import-row" [class.skipped]="row.skip" [class.requires-review]="!row.skip && row.issues?.length">
-          <td class="date-cell">{{ row.rowId }}<br>{{ row.date }}</td><td class="description-cell">{{ row.description || row.reason }}</td><td class="type-cell"><p-tag [value]="typeLabel(row)" [severity]="typeSeverity(row)" /></td>
-          <td class="amount-cell">{{ row.amount }} {{ account()?.currency }}@if (row.foreignAmount) { <small>Original: {{ row.foreignAmount }} {{ row.foreignCurrency }}</small> }</td>
-          <td class="counter-cell"><span class="cell-label">Counterparty</span>{{ counterName(row) }}</td><td class="category-cell"><span class="cell-label">Category</span>{{ categoryName(row) }}</td>
-          <td class="review-cell">
-            @for (note of reviewNotes(row); track $index) { <p class="review-note">{{ note }}</p> }
-            @if (duplicateDetails(row); as duplicate) { <p-tag class="duplicate-tag" value="Duplicate" severity="danger" [title]="duplicate" /> }
-            <div class="import-row-actions">
-              <button class="row-action accept" [class.accepted]="row.reviewed && !row.skip && !row.issues?.length" (click)="accept(row)" [disabled]="busy() || needsEdit(row)" [attr.aria-label]="'Accept ' + row.rowId" [title]="needsEdit(row) ? 'Edit the required fields first' : duplicateDetails(row) ? 'Keep this duplicate' : 'Accept as suggested'"><i class="pi pi-check" aria-hidden="true"></i></button>
-              <button class="row-action" (click)="edit(row)" [disabled]="busy()" [attr.aria-label]="'Edit ' + row.rowId" [title]="reviewTitle(row)"><i class="pi pi-pencil" aria-hidden="true"></i></button>
-              <button class="row-action skip" (click)="skip(row)" [disabled]="busy() || row.skip" [attr.aria-label]="'Skip ' + row.rowId" title="Skip transaction"><i class="pi pi-times" aria-hidden="true"></i></button>
-            </div>
-          </td></tr></ng-template>
-      </p-table>
-    }
-  }
-  <div class="dialog-footer"><button (click)="dialogs.close()" [disabled]="context.saving() || busy()">{{ running() ? 'Cancel import' : 'Close' }}</button>
-    @if (draft.status === 'READY') { <button class="primary" (click)="approve()" [disabled]="!draft.readyToApprove || busy() || !!editor() || context.saving()">Import</button> }
-  </div>
+  </app-modal>
 }

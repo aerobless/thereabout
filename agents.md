@@ -6,6 +6,7 @@ This document provides instructions for AI agents and developers working on the 
 
 - Follow `backend/AGENTS.md` and `frontend/AGENTS.md` for the relevant component.
 - Prefer the simplest design that fully meets the requirements. Do not add speculative abstractions or weaken correctness, security or data integrity to reduce code.
+- When planning seldom-used administrative or maintenance operations, consider exposing them through MCP only so an agent can execute them without cluttering the user interface. Reuse shared business services and retain authorization, validation, audit, version checks and idempotency.
 - Explain constraints and invariants rather than repeating signatures in comments. Keep changes scoped and preserve unrelated work.
 
 ## Identity names

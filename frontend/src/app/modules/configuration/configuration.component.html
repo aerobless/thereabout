@@ -1,72 +1,25 @@
-
-<div class="configuration-container">
-  <app-file-import />
-
-  <p-card>
-    <ng-template #header>
-      <div class="card-header">
-        <i class="pi pi-map-marker card-header-icon"></i>
-        <span class="card-header-title">Overland configuration</span>
-      </div>
-    </ng-template>
-    <p>
-      <a href="https://overland.p3k.app/" target="_blank">Overland</a> is an iOS/Android app that can be used
-      to track your location.
-      Click the button below on your mobile device to configure Overland for Thereabout.
-    </p>
-    <p-button label="Configure Overland" (onClick)="configureOverland()"></p-button>
-  </p-card>
-
-  <p-card header="OpenAI"><app-openai-settings /></p-card>
-
-  <app-telegram-settings />
-
-  <app-google-calendar-settings />
-
-  <p-card>
-    <ng-template #header>
-      <div class="card-header">
-        <i class="pi pi-key card-header-icon"></i>
-        <span class="card-header-title">Finances MCP</span>
-      </div>
-    </ng-template>
-    <app-finance-mcp-settings />
-  </p-card>
-
-  <p-card>
-    <ng-template #header>
-      <div class="card-header">
-        <i class="pi pi-key card-header-icon"></i>
-        <span class="card-header-title">API Authentication Key</span>
-      </div>
-    </ng-template>
-    <div class="flex flex-column gap-2">
-      <input
-        id="thereabout-api-key"
-        type="text"
-        pInputText
-        class="config-input-full"
-        [value]="ingestionKey()"
-        [disabled]="true"/>
-    </div>
-    <p>Can be used to authenticate public API requests. See the POST GeoJson endpoint in the
-      <a href="/swagger-ui/index.html" target="_blank">Thereabout API</a>.</p>
-  </p-card>
-
-  <p-card>
-    <ng-template #header>
-      <div class="card-header">
-        <i class="pi pi-info-circle card-header-icon"></i>
-        <span class="card-header-title">Version</span>
-      </div>
-    </ng-template>
-    <div class="version-content">
-      <b pTooltip="Branch: {{thereaboutConfig()?.versionDetails?.branch}}
-       Date: {{thereaboutConfig()?.versionDetails?.commitTime}}
-       Commit: {{thereaboutConfig()?.versionDetails?.commitRef}}"
-        tooltipPosition="top" showDelay="500">{{ thereaboutConfig()?.versionDetails?.version }}</b>
-      <span> made with ♡ by <a href="https://github.com/aerobless/thereabout"
-        target="_blank">aerobless</a></span>
-    </div>
-  </p-card>
+<div class="configuration-page">
+  <header class="configuration-heading">
+    <div><h1>Configuration</h1><p>Manage connections, data and access.</p></div>
+    <p-autocomplete inputId="configuration-search" ariaLabel="Search settings" placeholder="Search settings" [fluid]="true"
+      [ngModel]="search()" (ngModelChange)="search.set($event)" [suggestions]="suggestions()" optionLabel="label"
+      (completeMethod)="complete($event)" (onSelect)="select($event.value)" [forceSelection]="true"
+      [showEmptyMessage]="true" emptyMessage="No matching settings" appendTo="body">
+      <ng-template #item let-result><div class="configuration-search-result"><strong>{{ result.label }}</strong><small>{{ result.category }}</small></div></ng-template>
+    </p-autocomplete>
+  </header>
+  <nav class="configuration-tabs" aria-label="Configuration navigation">
+    @for (tab of tabs; track tab.path) {
+      <a [routerLink]="tab.path" routerLinkActive="active" ariaCurrentWhenActive="page">{{ tab.label }}</a>
+    }
+  </nav>
+  <router-outlet />
 </div>
+<app-modal header="Discard unsaved changes?" [visible]="navigation.confirming()" (visibleChange)="!$event && navigation.answer(false)"
+  [dialogStyle]="{width: '28rem', maxWidth: 'calc(100vw - 2rem)'}">
+  <p>Your changes have not been saved.</p>
+  <ng-template #footer>
+    <p-button label="Stay" severity="secondary" (onClick)="navigation.answer(false)" />
+    <p-button label="Discard changes" severity="danger" (onClick)="navigation.answer(true)" />
+  </ng-template>
+</app-modal>

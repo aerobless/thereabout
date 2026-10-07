@@ -52,6 +52,9 @@ public class FinanceMcpConfiguration {
       ExchangeRateService rates,
       ReportService reports,
       FinanceImportService imports,
+      FinanceImportHintService hints,
+      com.sixtymeters.thereabout.finance.splitwise.SplitwiseService splitwise,
+      com.sixtymeters.thereabout.finance.splitwise.SplitwiseSources splitwiseSources,
       ObjectMapper json,
       Validator validator)
       throws IOException {
@@ -62,6 +65,15 @@ public class FinanceMcpConfiguration {
             .serverInfo("thereabout-finances", "2.0.0")
             .capabilities(McpSchema.ServerCapabilities.builder().tools(false).build());
     builder.tools(
+        tools.tool("splitwise.get", true, EmptyInput.class, ignored -> new GenSplitwiseContext().settings(splitwise.settings()).catalog(splitwise.catalog()).status(splitwise.status())),
+        tools.tool("splitwise.sources.list", true, GenSplitwiseSourceQuery.class, splitwiseSources::list),
+        tools.tool("splitwise.sources.get", true, GenSplitwiseSourceKey.class, splitwiseSources::get),
+        tools.tool("splitwise.resolve", false, GenSplitwiseResolveInput.class, splitwise::resolve),
+        tools.tool("splitwise.categories.save", false, GenSplitwiseCategorySaveInput.class, splitwise::saveCategories),
+        tools.tool("splitwise.sync", false, EmptyInput.class, ignored -> splitwise.sync()),
+        tools.tool("import_hints.list", true, GenFinanceImportHintQuery.class, input -> hints.list(users.integration(), input.getAccountId())),
+        tools.tool("import_hints.add", false, GenFinanceImportHintInput.class, input -> hints.add(users.integration(), input)),
+        tools.tool("import_hints.remove", false, GenFinanceImportHintRemoveInput.class, input -> hints.remove(users.integration(), input)),
         tools.tool("imports.prepare", false, GenFinanceImportPrepareInput.class, input -> imports.prepare(users.integration(), input)),
         tools.tool("imports.get", true, GenFinanceImportQuery.class, input -> imports.get(users.integration(), input)),
         tools.tool("imports.review", false, GenFinanceImportReviewInput.class, input -> imports.review(users.integration(), input)),
@@ -128,13 +140,14 @@ public class FinanceMcpConfiguration {
       var tool =
           McpSchema.Tool.builder("finance_" + operation.replace('.', '_'), schema)
               .description(
-                  operation.startsWith("imports.") ? importDescription(operation) : "Finance "
+                  operation.startsWith("splitwise.") ? splitwiseDescription(operation) : operation.startsWith("import_hints.") ? "Manage saved account guidance for future imports. Any user's main account can be selected; changes never reinterpret existing drafts. Writes require requestKey; removal requires id and version."
+                      : operation.startsWith("imports.") ? importDescription(operation) : "Finance "
                       + operation
                       + ". Monetary values are decimal strings; writes require requestKey and edits"
                       + " require version.")
               .annotations(
                   new McpSchema.ToolAnnotations(
-                      operation, read, !read && !operation.startsWith("imports."), !operation.equals("imports.prepare"), operation.equals("rates.refresh") || operation.equals("imports.prepare"), false))
+                      operation, read, !read && !operation.startsWith("imports."), !operation.equals("imports.prepare"), operation.equals("rates.refresh") || operation.equals("imports.prepare") || operation.equals("splitwise.sync"), false))
               .build();
       return McpServerFeatures.SyncToolSpecification.builder()
           .tool(tool)
@@ -173,6 +186,17 @@ public class FinanceMcpConfiguration {
                 }
               })
           .build();
+    }
+
+    private String splitwiseDescription(String operation) {
+      return switch (operation) {
+        case "splitwise.get" -> "Read safe Splitwise settings, category/account mappings, cached catalog and current sync status. No secrets or remote requests.";
+        case "splitwise.sources.list" -> "Search persisted Splitwise sources, including pending, imported, ignored, deleted and locally managed history. Filter expenseId, memberId, state, Zurich date range or description; paginated, sorted by expense/member ID. Monetary values are exact decimal strings.";
+        case "splitwise.sources.get" -> "Inspect one Splitwise expenseId/memberId with original paid/owed shares, timestamps, classification, local link and current source/transaction versions. Read transactions through existing finance tools.";
+        case "splitwise.resolve" -> "Record one review decision: AS_EXPENSE, AS_SETTLEMENT, CREATE, LINK a matching bank booking, SKIP permanently, or LINK_EXISTING to an already prepared virtual-account transaction. Requires requestKey and sourceVersion; links also require transactionVersion. LINK_EXISTING changes provenance only and permanently preserves local content and deletion state. No automatic sync; resolve several entries, then call splitwise.sync. Rejects writes during a running sync.";
+        case "splitwise.categories.save" -> "Replace the complete Splitwise category mapping only. Requires requestKey and current settings revision. Missing source IDs are unmapped; null/omitted categoryId explicitly means Uncategorized. Does not recategorize existing transactions or start sync.";
+        default -> "Queue Splitwise synchronization and return immediately. Repeated requests coalesce with the existing worker. Poll splitwise.get for completion and review cases. May create/update managed financial transactions; never writes to Splitwise. Initial import must already be confirmed.";
+      };
     }
 
     private String importDescription(String operation) {

@@ -130,13 +130,13 @@ public class ReportService {
       if (!own.contains(entry.accountId())
           || (selected != 0 && entry.accountId() != selected)
           || !period.contains(entry.occurredAt())) continue;
-      if (entry.effect() != FinancialEffect.OPERATING
+      if (entry.effect() != FinancialEffect.EXPENSE_REIMBURSEMENT && (entry.effect() != FinancialEffect.OPERATING
           || (entry.type() != TransactionType.DEPOSIT
               && entry.type() != TransactionType.WITHDRAWAL
-              && !(entry.type() == TransactionType.TRANSFER && entry.crossUserTransfer()))) continue;
+              && !(entry.type() == TransactionType.TRANSFER && entry.crossUserTransfer())))) continue;
       var amount = fx.convert(entry.amount(), entry.currency(), entry.occurredAt().toLocalDate());
       String month = YearMonth.from(entry.occurredAt()).toString();
-      months.computeIfAbsent(month, key -> new Cashflow(key, null)).add(amount);
+      months.computeIfAbsent(month, key -> new Cashflow(key, null)).add(amount, entry.effect());
       long category = entry.categoryId() == null ? 0 : entry.categoryId();
       categories
           .computeIfAbsent(
@@ -145,7 +145,7 @@ public class ReportService {
                   new Cashflow(
                       entry.categoryName() == null ? "Uncategorized" : entry.categoryName(),
                       entry.categoryId()))
-          .add(amount);
+          .add(amount, entry.effect());
     }
     var monthRows = months.values().stream().map(Cashflow::row).toList();
     var categoryRows =
@@ -173,7 +173,7 @@ public class ReportService {
         switch (entry.effect()) {
           case VALUATION -> gain = gain.add(amount);
           case OPENING, RECONCILIATION -> other = other.add(amount);
-          case OPERATING -> {
+          case OPERATING, EXPENSE_REIMBURSEMENT -> {
             if (amount.signum() > 0) in = in.add(amount);
             else out = out.add(amount.abs());
           }
@@ -236,8 +236,9 @@ public class ReportService {
       this.categoryId = categoryId;
     }
 
-    void add(BigDecimal amount) {
-      if (amount.signum() >= 0) income = income.add(amount);
+    void add(BigDecimal amount, FinancialEffect effect) {
+      if (effect == FinancialEffect.EXPENSE_REIMBURSEMENT) expenses = expenses.subtract(amount);
+      else if (amount.signum() >= 0) income = income.add(amount);
       else expenses = expenses.add(amount.abs());
     }
 

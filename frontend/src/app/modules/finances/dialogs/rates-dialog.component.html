@@ -6,7 +6,7 @@
     Reference rates value your accounts in CHF. They never change the original
     transaction amounts.
   </p>
-  <button class="secondary" [disabled]="saving" (click)="refreshRates()">
+  <button class="app-button secondary" [disabled]="saving" (click)="refreshRates()">
     {{ saving ? "Updating…" : "Refresh ECB reference rates" }}
   </button>
   <h3>Manual dated rate</h3>
@@ -39,7 +39,7 @@
           formControlName="rate"
       /></label>
     </div>
-    <button [disabled]="saving || !rateReady">Save rate</button>
+    <button class="app-button" [disabled]="saving || !rateReady">Save rate</button>
   </form>
   <h3>Latest stored rates</h3>
   <div class="table-wrap">

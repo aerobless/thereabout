@@ -22,7 +22,7 @@
       }
     </nav>
     @if (currentUser.canManageUsers()) {
-    <a class="nav-link settings-link" routerLink="/configuration" routerLinkActive="active" [routerLinkActiveOptions]="exactMatch" ariaCurrentWhenActive="page"
+    <a class="nav-link settings-link" routerLink="/configuration" routerLinkActive="active" [routerLinkActiveOptions]="sectionMatch" ariaCurrentWhenActive="page"
       aria-label="Configuration" [attr.title]="sidebarCollapsed() ? 'Configuration' : null">
       <i class="pi pi-cog" aria-hidden="true"></i><span>Configuration</span>
     </a>

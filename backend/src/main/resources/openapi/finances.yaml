@@ -42,6 +42,62 @@ paths:
     $ref: finances/reports.yaml#/paths/_reports_investments
 components:
   schemas:
+    SplitwiseCategorySaveInput:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseCategorySaveInput
+    SplitwiseContext:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseContext
+    SplitwiseSourceQuery:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseSourceQuery
+    SplitwiseSourceKey:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseSourceKey
+    SplitwiseSource:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseSource
+    SplitwiseSourcePage:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseSourcePage
+    SplitwiseShare:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseShare
+    SplitwiseEvidence:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseEvidence
+    SplitwiseSourceDetail:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseSourceDetail
+    SplitwiseMemberMapping:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseMemberMapping
+    SplitwiseCategoryMapping:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseCategoryMapping
+    SplitwiseSettings:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseSettings
+    SplitwiseSettingsInput:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseSettingsInput
+    SplitwiseMember:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseMember
+    SplitwiseGroup:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseGroup
+    SplitwiseCategory:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseCategory
+    SplitwiseCatalog:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseCatalog
+    SplitwiseRow:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseRow
+    SplitwiseBalance:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseBalance
+    SplitwisePreview:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwisePreview
+    SplitwiseStatus:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseStatus
+    SplitwiseInitializeInput:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseInitializeInput
+    SplitwiseResolveInput:
+      $ref: finances/splitwise.yaml#/components/schemas/SplitwiseResolveInput
+    FinanceImportHint:
+      $ref: finances/import-hints.yaml#/components/schemas/FinanceImportHint
+    FinanceImportHintList:
+      $ref: finances/import-hints.yaml#/components/schemas/FinanceImportHintList
+    FinanceImportHintQuery:
+      $ref: finances/import-hints.yaml#/components/schemas/FinanceImportHintQuery
+    FinanceImportHintInput:
+      $ref: finances/import-hints.yaml#/components/schemas/FinanceImportHintInput
+    FinanceImportHintRemoveInput:
+      $ref: finances/import-hints.yaml#/components/schemas/FinanceImportHintRemoveInput
     FinanceImportPrepareInput:
       $ref: finances/imports.yaml#/components/schemas/FinanceImportPrepareInput
     FinanceImportQuery:

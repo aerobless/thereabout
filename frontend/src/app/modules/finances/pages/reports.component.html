@@ -7,7 +7,7 @@
 <div class="toolbar">
   <div class="segmented">
     @for (tab of ["cashflow", "categories", "investments"]; track tab) {
-      <button [class.active]="reportTab === tab" (click)="reportTab = tab">
+      <button class="app-button" [class.active]="reportTab === tab" (click)="reportTab = tab">
         {{ tab === "cashflow" ? "Income vs. expenses" : (tab | titlecase) }}
       </button>
     }
@@ -87,7 +87,7 @@
             @for (r of report.months; track r.name) {
               <tr>
                 <td>
-                  <button class="text-button" (click)="monthDrill(r.name)">
+                  <button class="app-button text-button" (click)="monthDrill(r.name)">
                     {{ r.name }}
                   </button>
                 </td>
@@ -117,7 +117,7 @@
           @for (r of report.categories; track r.categoryId) {
             <tr>
               <td>
-                <button class="text-button" (click)="categoryDrill(r)">
+                <button class="app-button text-button" (click)="categoryDrill(r)">
                   {{ r.name }}
                 </button>
               </td>
@@ -125,7 +125,7 @@
               <td class="numeric">{{ money(r.income) }}</td>
               <td class="numeric">{{ money(r.net) }}</td>
               <td>
-                <button
+                <button class="app-button"
                   (click)="categoryDrill(r)"
                   aria-label="View transactions"
                 >

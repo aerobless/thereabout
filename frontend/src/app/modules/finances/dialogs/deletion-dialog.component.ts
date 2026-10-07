@@ -24,10 +24,10 @@ import {
       <p>The transaction can be restored from the deleted entries view.</p>
     }
     <div class="dialog-footer">
-      <button [disabled]="context.saving()" (click)="dialogs.close()">
+      <button class="app-button" [disabled]="context.saving()" (click)="dialogs.close()">
         Cancel</button
       ><button
-        class="primary"
+        class="app-button primary"
         [disabled]="context.saving()"
         (click)="confirm()"
       >

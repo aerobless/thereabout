@@ -63,6 +63,11 @@ final class FinanceOpenApiSchemas {
       for (var property : node.properties()) {
         result.set(property.getKey(), resolve(property.getValue(), source, resolving));
       }
+      // MCP validates JSON Schema, where OpenAPI 3.0's nullable flag has no meaning.
+      if (node.path("nullable").asBoolean(false) && node.path("type").isString()) {
+        result.set("type", json.createArrayNode().add(node.path("type").asString()).add("null"));
+        result.remove("nullable");
+      }
       return result;
     }
     if (node.isArray()) {

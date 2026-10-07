@@ -33,7 +33,7 @@ class ImportInterpreterTest {
                 .kind(GenFinanceAccountKind.REVENUE)
                 .currency("CHF"));
     var rows = new ImportCsvReader().parse("2026-01-01;Lunch;12.12");
-    interpreter.interpret(account, rows, rows, accountChoices, categoryChoices);
+    interpreter.interpret(account, rows, rows, accountChoices, categoryChoices, List.of("Always treat IBKR as a transfer"));
     var instructions = ArgumentCaptor.forClass(String.class);
     var data = ArgumentCaptor.forClass(String.class);
     verify(ai).respond(instructions.capture(), data.capture(), eq(ImportInterpreter.Result.class));
@@ -44,6 +44,9 @@ class ImportInterpreterTest {
     assertThat(sent.get("categories").get(1).get("id").asLong()).isEqualTo(11L);
     assertThat(sent.get("accounts").get(0).get("id").asLong()).isEqualTo(2L);
     assertThat(instructions.getValue())
-        .contains("Categories are a closed list", "Never invent or create categories");
+        .contains("Categories are a closed list", "Never invent or create categories",
+            "Always treat IBKR as a transfer", "cannot override the accounting",
+            "Never append comments", "subject is blank", "subject is empty");
+    assertThat(sent.has("hints")).isFalse();
   }
 }

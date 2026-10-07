@@ -3,23 +3,25 @@ import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {DatePipe} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {EMPTY, Observable, Subscription, expand, finalize, switchMap, timer} from 'rxjs';
-import {CardModule} from 'primeng/card';
 import {ButtonModule} from 'primeng/button';
 import {InputTextModule} from 'primeng/inputtext';
 import {ProgressBarModule} from 'primeng/progressbar';
 import {MessageService} from 'primeng/api';
 import {FrontendService, TelegramStatus} from '../../../../generated/backend-api/thereabout';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
+import {ConfigurationEditor} from './configuration-navigation';
+import {ConnectionSummaries, telegramSummary} from './connection-summaries';
 
 @Component({
-  selector: 'app-telegram-settings', imports: [DatePipe, FormsModule, CardModule, ButtonModule, InputTextModule, ProgressBarModule],
-  templateUrl: './telegram-settings.component.html', styleUrl: './configuration.component.scss',
+  selector: 'app-telegram-settings', imports: [DatePipe, FormsModule, ButtonModule, InputTextModule, ProgressBarModule],
+  templateUrl: './telegram-settings.component.html', styleUrls: ['./configuration.component.scss', './configuration-panel.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TelegramSettingsComponent {
+export class TelegramSettingsComponent implements ConfigurationEditor {
   private readonly api = inject(FrontendService);
   private readonly toast = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly summaries = inject(ConnectionSummaries, {optional: true});
   private polling?: Subscription;
   readonly status = signal<TelegramStatus | null>(null);
   readonly phone = signal('');
@@ -31,7 +33,12 @@ export class TelegramSettingsComponent {
   protected readonly TelegramStatus = TelegramStatus;
   private readonly refresh = registerRefresh(() => this.loadStatus(), () => this.saving());
 
-  constructor() { this.loadStatus(); }
+  constructor() {
+    this.loadStatus();
+    this.destroyRef.onDestroy(() => { this.phone.set(''); this.code.set(''); this.password.set(''); });
+  }
+  hasUnsavedChanges(): boolean { return !!(this.phone().trim() || this.code().trim() || this.password()); }
+  isNavigationBlocked(): boolean { return this.saving(); }
 
   loadStatus(): void {
     this.polling?.unsubscribe();
@@ -45,11 +52,12 @@ export class TelegramSettingsComponent {
       next: status => {
         const wasResyncing = this.resyncing();
         this.status.set(status);
+        this.summaries?.update('telegram', telegramSummary(status));
         if (wasResyncing && !this.resyncing()) this.toast.add({
           severity: status.resyncStatus === 'COMPLETE' ? 'success' : status.resyncStatus === 'CANCELLED' ? 'info' : 'warn',
           summary: status.resyncStatus === 'COMPLETE' ? 'Resync complete' : status.resyncStatus === 'CANCELLED' ? 'Resync cancelled' : 'Resync ended'
         });
-      }, error: () => this.error.set('Telegram status could not be loaded.')
+      }, error: () => { this.error.set('Telegram status could not be loaded.'); this.summaries?.unavailable('telegram'); }
     });
   }
 
@@ -72,7 +80,7 @@ export class TelegramSettingsComponent {
     if (this.saving()) return;
     this.saving.set(true);
     request.pipe(finalize(() => this.saving.set(false)), takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => this.loadStatus(),
+      next: () => { this.phone.set(''); this.code.set(''); this.password.set(''); this.loadStatus(); },
       error: () => this.toast.add({severity: 'error', summary: 'Telegram action failed'})
     });
   }

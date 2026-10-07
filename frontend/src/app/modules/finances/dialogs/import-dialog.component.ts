@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, DestroyRef, inject, input, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { AppModalComponent } from '../../../shared/modal/app-modal.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SelectModule } from 'primeng/select';
 import { AutoCompleteCompleteEvent, AutoCompleteModule, AutoCompleteSelectEvent } from 'primeng/autocomplete';
@@ -12,8 +13,9 @@ import { FinanceDateInputComponent } from '../shared/finance-date-input.componen
 
 @Component({
   selector: 'finance-import-dialog',
-  imports: [FormsModule, SelectModule, AutoCompleteModule, TableModule, FinanceDateInputComponent, ProgressSpinnerModule, TagModule],
+  imports: [ AppModalComponent, FormsModule, SelectModule, AutoCompleteModule, TableModule, FinanceDateInputComponent, ProgressSpinnerModule, TagModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[class.import-preview]': "job()?.status === 'READY'" },
   templateUrl: './import-dialog.component.html',
   styleUrls: ['./dialog.scss', './import-dialog.component.scss'],
 })
@@ -49,7 +51,7 @@ export class ImportDialogComponent implements OnDestroy {
   private polling?: Subscription;
   private approved = false;
   constructor() {
-    effect(() => this.dialogs.blocked.set(this.busy()));
+    effect(() => this.dialogs.blocked.set(this.busy() || !!this.editor()));
     interval(60000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.job()?.status === 'READY' && !this.busy()) void this.keepAlive();
     });
@@ -65,7 +67,7 @@ export class ImportDialogComponent implements OnDestroy {
   }
   async prepare() {
     const account = this.selectedAccount() ?? this.accountId(); const file = this.file();
-    if (!account || !file) return;
+    if (!account || !file || this.dialogs.hintsBlocked()) return;
     this.busy.set(true); this.error.set('');
     try {
       this.job.set(await firstValueFrom(this.api.client.financePrepareImport(account, file)));
@@ -89,8 +91,15 @@ export class ImportDialogComponent implements OnDestroy {
   }
   paginate(event: TablePageEvent) { if (!this.editor()) void this.load(event.first / 50); }
   edit(row: FinanceImportRow) {
-    this.editor.set(structuredClone(row));
+    this.error.set('');
+    const copy = structuredClone(row);
+    // Preserve the warning when a skipped duplicate is reopened and then unskipped.
+    copy.duplicate = this.duplicateDetails(row) || row.duplicate;
+    this.editor.set(copy);
     this.counterValue.set(this.counterparties().find(a => a.id === row.otherAccountId) ?? row.counterpartyName ?? '');
+  }
+  discardEdit() {
+    if (!this.busy() && !this.dialogs.hintsBlocked()) { this.editor.set(undefined); this.error.set(''); }
   }
   patch(change: Partial<FinanceImportRow>) { this.editor.update(row => row ? { ...row, ...change } : row); }
   counterSearch(event: AutoCompleteCompleteEvent) {
@@ -133,7 +142,7 @@ export class ImportDialogComponent implements OnDestroy {
   }
   skip(row: FinanceImportRow) { void this.review({ ...row, skip: true, reason: row.reason || 'Skipped by reviewer' }); }
   async approve() {
-    const job = this.job(); if (!job?.readyToApprove || this.editor()) return;
+    const job = this.job(); if (!job?.readyToApprove || this.editor() || this.dialogs.hintsBlocked()) return;
     const result = await this.context.write('imports.approve', { jobId: job.jobId, revision: job.revision }, request => this.api.client.financeApproveImport(request));
     if (result) { this.approved = true; this.dialogs.close(); }
     else await this.load();

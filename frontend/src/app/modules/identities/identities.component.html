@@ -11,9 +11,6 @@
       <div class="card-header">
         <i class="pi pi-users card-header-icon"></i>
         <span class="card-header-title">Identities</span>
-        <div class="card-header-actions">
-          <p-button label="New Identity" icon="pi pi-plus" (onClick)="showNewIdentityDialog()"></p-button>
-        </div>
       </div>
     </ng-template>
     <p-table #identityTable
@@ -27,11 +24,14 @@
       [globalFilterFields]="['firstName', 'lastName', 'fullName', 'relationship']"
       [tableStyle]="{'min-width': '40rem'}">
       <ng-template #caption>
-        <p-iconfield>
-          <p-inputicon styleClass="pi pi-search" />
-          <input pInputText [(ngModel)]="identityFilter" (ngModelChange)="identityTable.filterGlobal(identityFilter, 'contains')"
-                 placeholder="Find an identity..." aria-label="Search identities" />
-        </p-iconfield>
+        <div class="flex align-items-center justify-content-between gap-3">
+          <p-iconfield class="flex-1 min-w-0 max-w-16rem">
+            <p-inputicon styleClass="pi pi-search" />
+            <input pInputText class="w-full" [(ngModel)]="identityFilter" (ngModelChange)="identityTable.filterGlobal(identityFilter, 'contains')"
+                   placeholder="Find an identity..." aria-label="Search identities" />
+          </p-iconfield>
+          <p-button class="flex-shrink-0" label="New Identity" icon="pi pi-plus" (onClick)="showNewIdentityDialog()"></p-button>
+        </div>
       </ng-template>
       <ng-template #header>
         <tr>

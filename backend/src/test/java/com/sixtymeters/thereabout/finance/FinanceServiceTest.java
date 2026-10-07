@@ -26,6 +26,7 @@ class FinanceServiceTest {
     com.sixtymeters.thereabout.testing.TestUsers.owner(db);
     for (String t :
         List.of(
+            "import_hint",
             "import_source",
             "request",
             "audit",

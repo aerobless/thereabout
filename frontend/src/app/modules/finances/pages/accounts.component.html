@@ -9,25 +9,25 @@
 }
 <div class="toolbar">
   <div class="segmented">
-    <button
+    <button class="app-button"
       [class.active]="!counterparties && selectedUserId() === null"
       (click)="selectUser(null)"
     >
       Your accounts
     </button>
     @for (user of otherUsers(); track user.id) {
-      <button [class.active]="!counterparties && selectedUserId() === user.id" (click)="selectUser(user.id)">
+      <button class="app-button" [class.active]="!counterparties && selectedUserId() === user.id" (click)="selectUser(user.id)">
         {{ user.name }}
       </button>
     }
-    <button
+    <button class="app-button"
       [class.active]="counterparties"
       (click)="selectCounterparties()"
     >
       Counterparties
     </button>
   </div>
-  <button class="primary" (click)="openAccount()">
+  <button class="app-button primary" (click)="openAccount()">
     + Add {{ counterparties ? "counterparty" : "account" }}
   </button>
 </div>
@@ -140,7 +140,7 @@
               a.active ? "Active" : "Inactive"
             }}</span>
           </td>
-          <td><button (click)="openAccount(a)">Edit</button></td>
+          <td><button class="app-button" (click)="openAccount(a)">Edit</button></td>
         </tr></ng-template
       >
       <ng-template #emptymessage

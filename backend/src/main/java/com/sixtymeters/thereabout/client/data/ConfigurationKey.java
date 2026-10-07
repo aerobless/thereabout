@@ -1,6 +1,7 @@
 package com.sixtymeters.thereabout.client.data;
 
 public enum ConfigurationKey {
+    SPLITWISE_API_KEY,
     OPENAI_API_KEY,
     OPENAI_MODEL,
     THEREABOUT_API_KEY,

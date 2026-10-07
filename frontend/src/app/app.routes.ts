@@ -46,7 +46,8 @@ export const routes: Routes = [
     {
         path: 'configuration',
         canActivate: [adminOnly],
-        loadComponent: () => import('./modules/configuration/configuration.component').then(m => m.ConfigurationComponent)
+        canActivateChild: [adminOnly],
+        loadChildren: () => import('./modules/configuration/configuration.routes').then(m => m.configurationRoutes)
     },
     {
         path: 'identities',

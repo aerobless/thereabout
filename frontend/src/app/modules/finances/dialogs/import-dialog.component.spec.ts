@@ -1,3 +1,4 @@
+import { MessageService } from 'primeng/api';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, Subject } from 'rxjs';
@@ -17,10 +18,10 @@ describe('Finance import review', () => {
     vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
     accounts.set([account]);
     prepare.mockReset(); get.mockReset().mockReturnValue(of(draft)); review.mockReset(); cancel.mockReset().mockReturnValue(of(draft)); write.mockReset();
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), FinanceDialogs, { provide: FinanceContext, useValue: {
+    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), FinanceDialogs, MessageService, { provide: FinanceContext, useValue: {
       accounts, categories: signal([]), currencies: signal([{ code: 'CHF' }]), saving: signal(false),
       money: (amount: string) => amount, write, error: signal(''),
-      api: { allAccounts: () => of({ items: [] }), client: { financePrepareImport: prepare, financeGetImport: get, financeReviewImport: review, financeCancelImport: cancel } },
+      api: { allAccounts: () => of({ items: [] }), client: { financePrepareImport: prepare, financeGetImport: get, financeReviewImport: review, financeCancelImport: cancel, financeListImportHints: () => of({items: []}), financeAddImportHint: (accountId: number, input: {text: string}) => of({id: 11, accountId, text: input.text, version: 0, createdAt: '2026-10-04T12:00:00Z'}) } },
     } }] });
   });
   afterEach(() => { TestBed.resetTestingModule(); vi.unstubAllGlobals(); });
@@ -42,6 +43,20 @@ describe('Finance import review', () => {
     expect(component.job()?.readyToApprove).toBe(true);
     fixture.destroy(); expect(cancel).toHaveBeenCalledWith({ jobId: 'draft-1' });
   });
+  it('only offers account hints once interpretation is ready', async () => {
+    const fixture = TestBed.createComponent(ImportDialogComponent); fixture.componentRef.setInput('accountId', 7);
+    await fixture.whenStable();
+    const hintButton = () => [...fixture.nativeElement.querySelectorAll('button')].find((button: Element) => button.textContent?.trim() === 'Import hints') as HTMLButtonElement | undefined;
+    expect(hintButton()).toBeUndefined();
+    fixture.componentInstance.job.set({...draft, status: 'RUNNING'}); await fixture.whenStable();
+    expect(hintButton()).toBeUndefined();
+    fixture.componentInstance.job.set(draft); await fixture.whenStable();
+    hintButton()!.click();
+    expect(fixture.componentInstance.dialogs.hintAccountId()).toBe(7);
+    expect(fixture.nativeElement.querySelectorAll('.import-summary-card')).toHaveLength(4);
+    fixture.destroy();
+  });
+
   it('requires an account globally and clears a selected identity when text changes', async () => {
     const fixture = TestBed.createComponent(ImportDialogComponent); fixture.detectChanges(); await fixture.whenStable();
     const component = fixture.componentInstance;
@@ -102,7 +117,7 @@ describe('Finance import review', () => {
     expect(element.querySelector<HTMLButtonElement>('button[aria-label="Accept row-1"]')!.disabled).toBe(true);
     element.querySelector<HTMLButtonElement>('button[aria-label="Edit row-1"]')!.click();
     await fixture.whenStable();
-    expect(element.querySelector('.row-editor')?.textContent).toContain('Enter a booked amount');
+    expect(document.querySelector('.finance-import-row-modal .row-editor')?.textContent).toContain('Enter a booked amount');
     fixture.destroy();
   });
 
@@ -141,6 +156,18 @@ describe('Finance import review', () => {
     fixture.destroy();
   });
 
+  it('preserves a skipped duplicate warning and the explicit keep option when editing it', async () => {
+    const fixture = TestBed.createComponent(ImportDialogComponent); const component = fixture.componentInstance;
+    component.job.set(draft);
+    component.edit({...draft.rows[0], skip:true, reason:'Duplicate: Matches an existing transaction', issues:[]});
+    component.patch({skip:false}); await fixture.whenStable();
+    const modal = document.querySelector('.finance-import-row-modal')!;
+    expect(modal.textContent).toContain('Matches an existing transaction');
+    expect(modal.textContent).toContain('Keep this transaction despite the duplicate warning');
+    expect(component.editor()?.duplicate).toBe('Matches an existing transaction');
+    fixture.destroy();
+  });
+
   it('shows named transfer directions and only asks for a second amount across currencies', async () => {
     const fixture = TestBed.createComponent(ImportDialogComponent);
     const component = fixture.componentInstance;
@@ -148,7 +175,7 @@ describe('Finance import review', () => {
     component.job.set(draft);
     component.edit({...draft.rows[0],type:'TRANSFER',otherAccountId:8,amount:'12.123456789',incoming:false});
     await fixture.whenStable();
-    const element = fixture.nativeElement as HTMLElement;
+    const element = document.querySelector('.finance-import-row-modal') as HTMLElement;
     expect(element.querySelector('input[aria-label="Other account amount"]')).toBeNull();
     expect(element.textContent).toContain('Cash → Wallet');
     component.patch({incoming:true});
@@ -166,7 +193,7 @@ describe('Finance import review', () => {
     const component = fixture.componentInstance;
     component.job.set(draft); component.edit({...draft.rows[0],categoryName:'Invented category'});
     await fixture.whenStable();
-    const element = fixture.nativeElement as HTMLElement;
+    const element = document.querySelector('.finance-import-row-modal') as HTMLElement;
     expect(element.querySelector('p-select[ariaLabel="Category"]')).not.toBeNull();
     expect(element.querySelector('.row-editor')?.textContent).not.toContain('A new category');
     expect(component.categoryName({...draft.rows[0], categoryName:'Food'})).toBe('Food');

@@ -199,7 +199,7 @@ class AccessSecurityTest {
         assertThat(result.statusCode()).isEqualTo(200);
         assertThat(result.body()).contains("\"identityId\":"+target,"\"actorIdentityId\":"+actor,"\"impersonating\":true","\"role\":\"USER\"");
         assertThat(send(request.copy().header(CloudflareAccessFilter.HEADER,token("app",user,false))).statusCode()).isEqualTo(403);
-        for(var path:List.of("/backend/api/v1/identity","/backend/api/v1/config/ingestion-key","/backend/api/v1/calendar/google/status","/api/finances/configuration/mcp-key")) {
+        for(var path:List.of("/backend/api/v1/identity","/backend/api/v1/config/ingestion-key","/backend/api/v1/calendar/google/status","/api/finances/configuration/mcp-key","/api/finances/configuration/splitwise/settings","/api/finances/configuration/splitwise/catalog","/api/finances/configuration/splitwise/status")) {
             assertThat(send(get(path).header(ImpersonationFilter.HEADER,String.valueOf(target)).header(CloudflareAccessFilter.HEADER,token("app",admin,false))).statusCode()).as(path).isEqualTo(403);
         }
         assertThat(send(get("/backend/api/v1/current-user").header(ImpersonationFilter.HEADER,"9223372036854775807").header(CloudflareAccessFilter.HEADER,token("app",admin,false))).statusCode()).isEqualTo(404);

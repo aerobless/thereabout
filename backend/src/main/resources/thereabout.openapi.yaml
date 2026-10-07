@@ -29,12 +29,34 @@ paths:
     $ref: 'openapi/finances/accounts.yaml#/paths/_accounts_id_icon'
   /api/finances/configuration/mcp-key:
     $ref: 'openapi/finances/settings.yaml#/paths/_mcp-key'
+  /api/finances/configuration/splitwise/categories:
+    $ref: 'openapi/finances/splitwise.yaml#/paths/_categories'
+  /api/finances/configuration/splitwise/settings:
+    $ref: 'openapi/finances/splitwise.yaml#/paths/_settings'
+  /api/finances/configuration/splitwise/test:
+    $ref: 'openapi/finances/splitwise.yaml#/paths/_test'
+  /api/finances/configuration/splitwise/catalog:
+    $ref: 'openapi/finances/splitwise.yaml#/paths/_catalog'
+  /api/finances/configuration/splitwise/preview:
+    $ref: 'openapi/finances/splitwise.yaml#/paths/_preview'
+  /api/finances/configuration/splitwise/initialize:
+    $ref: 'openapi/finances/splitwise.yaml#/paths/_initialize'
+  /api/finances/configuration/splitwise/sync:
+    $ref: 'openapi/finances/splitwise.yaml#/paths/_sync'
+  /api/finances/configuration/splitwise/status:
+    $ref: 'openapi/finances/splitwise.yaml#/paths/_status'
+  /api/finances/configuration/splitwise/resolve:
+    $ref: 'openapi/finances/splitwise.yaml#/paths/_resolve'
   /api/finances/overview:
     $ref: 'openapi/finances/reports.yaml#/paths/_overview'
   /api/finances/transfer-accounts:
     $ref: 'openapi/finances/accounts.yaml#/paths/_transfer_accounts'
   /api/finances/users:
     $ref: 'openapi/finances/accounts.yaml#/paths/_users'
+  /api/finances/accounts/{accountId}/import-hints:
+    $ref: 'openapi/finances/import-hints.yaml#/paths/_hints'
+  /api/finances/accounts/{accountId}/import-hints/{hintId}:
+    $ref: 'openapi/finances/import-hints.yaml#/paths/_hint'
   /api/finances/accounts:
     $ref: 'openapi/finances/accounts.yaml#/paths/_accounts'
   /api/finances/accounts/{id}:
@@ -184,8 +206,28 @@ components:
       scheme: bearer
       description: Ingestion API key from Configuration, for clients outside Cloudflare Access.
   schemas:
+    SplitwiseCategorySaveInput:
+      $ref: openapi/finances/splitwise.yaml#/components/schemas/SplitwiseCategorySaveInput
+    SplitwiseContext:
+      $ref: openapi/finances/splitwise.yaml#/components/schemas/SplitwiseContext
+    SplitwiseSourceQuery:
+      $ref: openapi/finances/splitwise.yaml#/components/schemas/SplitwiseSourceQuery
+    SplitwiseSourceKey:
+      $ref: openapi/finances/splitwise.yaml#/components/schemas/SplitwiseSourceKey
+    SplitwiseSource:
+      $ref: openapi/finances/splitwise.yaml#/components/schemas/SplitwiseSource
+    SplitwiseSourcePage:
+      $ref: openapi/finances/splitwise.yaml#/components/schemas/SplitwiseSourcePage
+    SplitwiseShare:
+      $ref: openapi/finances/splitwise.yaml#/components/schemas/SplitwiseShare
+    SplitwiseEvidence:
+      $ref: openapi/finances/splitwise.yaml#/components/schemas/SplitwiseEvidence
+    SplitwiseSourceDetail:
+      $ref: openapi/finances/splitwise.yaml#/components/schemas/SplitwiseSourceDetail
     FinanceImportPrepareInput:
       $ref: 'openapi/finances/imports.yaml#/components/schemas/FinanceImportPrepareInput'
+    FinanceImportHintQuery:
+      $ref: openapi/finances/import-hints.yaml#/components/schemas/FinanceImportHintQuery
     FinanceImportQuery:
       $ref: 'openapi/finances/imports.yaml#/components/schemas/FinanceImportQuery'
     FinanceImportRow:

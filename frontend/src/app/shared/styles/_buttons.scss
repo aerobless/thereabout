@@ -1,0 +1,28 @@
+// Native actions opt in explicitly; PrimeNG buttons use the same theme tokens.
+.app-button {
+  font: inherit;
+  font-size: var(--p-button-font-size);
+  border: 1px solid var(--p-button-secondary-border-color);
+  background: var(--p-button-secondary-background);
+  border-radius: var(--p-button-border-radius);
+  padding: var(--p-button-padding-y) var(--p-button-padding-x);
+  color: var(--p-button-secondary-color);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 120ms, border-color 120ms;
+
+  &:not(:disabled):hover { background: var(--p-button-secondary-hover-background); }
+  &:not(:disabled):active { background: var(--p-button-secondary-active-background); }
+  &:disabled { opacity: var(--p-disabled-opacity, .45); cursor: default; }
+  &:focus-visible { outline: 2px solid var(--app-accent); outline-offset: 2px; }
+
+  &.primary {
+    background: var(--p-button-primary-background);
+    border-color: var(--p-button-primary-border-color);
+    color: var(--p-button-primary-color);
+    &:not(:disabled):hover { background: var(--p-button-primary-hover-background); border-color: var(--p-button-primary-hover-border-color); }
+    &:not(:disabled):active { background: var(--p-button-primary-active-background); border-color: var(--p-button-primary-active-border-color); }
+  }
+
+  &.secondary { background: transparent; }
+}

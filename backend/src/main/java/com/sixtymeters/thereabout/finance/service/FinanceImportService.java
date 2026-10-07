@@ -23,6 +23,7 @@ import tools.jackson.databind.ObjectMapper;
 public class FinanceImportService {
   private final ImportCsvReader csv;
   private final ImportInterpreter interpreter;
+  private final FinanceImportHintService hints;
   private final AccountService accounts;
   private final CategoryService categories;
   private final TransactionService transactions;
@@ -30,6 +31,7 @@ public class FinanceImportService {
   private final FinanceAccountRepository accountRepository;
   private final FinanceImportSourceRepository sources;
   private final FinancePostingRepository postings;
+  private final com.sixtymeters.thereabout.finance.splitwise.SplitwiseSourceRepository splitwiseSources;
   private final FinanceWriteCoordinator writes;
   private final ObjectMapper json;
   private final Clock financeClock;
@@ -93,6 +95,8 @@ public class FinanceImportService {
                         .currency(a.getCurrency()))
             .toList();
     var categoryList = reads.categories().getItems();
+    // A prepare-time snapshot keeps every chunk consistent despite later hint changes.
+    var hintSnapshot = hints.snapshot(user, account.getId());
     var job = new Job();
     job.id = UUID.randomUUID().toString();
     job.fileName = name;
@@ -109,7 +113,7 @@ public class FinanceImportService {
     }
     jobs.put(job.id, job);
     try {
-      job.task = workers.submit(() -> run(job, account, known, categoryList));
+      job.task = workers.submit(() -> run(job, account, known, categoryList, hintSnapshot));
     } catch (RejectedExecutionException ex) {
       jobs.remove(job.id);
       require(false, "Import workers are busy; try again shortly");
@@ -121,7 +125,8 @@ public class FinanceImportService {
       Job job,
       FinanceAccountEntity account,
       List<GenFinanceAccount> known,
-      List<GenFinanceCategory> categoryList) {
+      List<GenFinanceCategory> categoryList,
+      List<String> hintSnapshot) {
     synchronized (job) {
       if (job.status == GenFinanceImportJob.StatusEnum.CANCELLED) return;
       job.status = GenFinanceImportJob.StatusEnum.RUNNING;
@@ -138,7 +143,8 @@ public class FinanceImportService {
                 job.source.subList(0, Math.min(20, job.source.size())),
                 chunk,
                 known,
-                categoryList);
+                categoryList,
+                hintSnapshot);
         require(
             response != null && response.rows != null && response.rows.size() == chunk.size(),
             "AI did not cover every source row");
@@ -546,11 +552,15 @@ public class FinanceImportService {
                                 .getOccurredAt()
                                 .toLocalDate()
                                 .equals(date.toLocalDate()));
+        boolean linkedSettlement = possible && ledger.stream().anyMatch(p -> p.getAmount().compareTo(signed) == 0
+            && p.getTransaction().getOccurredAt().toLocalDate().equals(date.toLocalDate())
+            && p.getTransaction().getType() == TransactionType.TRANSFER
+            && !splitwiseSources.findByTransactionId(p.getTransaction().getId()).isEmpty());
         if (clear || possible) {
           row.setDuplicate(
               clear
                   ? "Matches an imported row or existing transaction"
-                  : "Possible duplicate: same date and amount");
+                  : linkedSettlement ? "Existing Splitwise settlement books this bank movement; skip or explicitly keep" : "Possible duplicate: same date and amount");
           if (clear && autoSkip) {
             row.setSkip(true);
             row.setReason("Duplicate: " + row.getDuplicate());

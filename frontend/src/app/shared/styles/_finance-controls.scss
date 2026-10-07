@@ -1,4 +1,10 @@
 // Shared finance controls use the application PrimeNG preset, including overlays.
+.finance-import-modal:has(finance-import-dialog.import-preview) {
+  .p-dialog-content { display:flex; flex-direction:column; flex:1; min-height:0; }
+}
+@media (min-width: 769px) {
+  .finance-import-modal:has(finance-import-dialog.import-preview) { width:80vw !important; height:80dvh; max-height:80dvh !important; }
+}
 app-finances,
 .finance-dialog {
   .p-select,
@@ -128,8 +134,8 @@ app-finances,
     display: inline-block;
     padding: 4px 8px;
     border-radius: 5px;
-    background: #edf6f1;
-    color: #387f69;
+    background: var(--app-success-background);
+    color: var(--app-success);
   }
   .status.inactive {
     background: #f0f3f7;

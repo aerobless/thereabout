@@ -28,7 +28,7 @@ export class AppShellComponent {
   private readonly urlTree = computed(() => this.router.parseUrl(this.url()));
   private readonly path = computed(() => this.urlTree().root.children[PRIMARY_OUTLET]?.segments.map(segment => segment.path).join('/') ?? '');
   readonly embedded = computed(() => this.path() === 'locationhistory' && this.urlTree().queryParams['embed'] === 'true');
-  readonly moreActive = computed(() => this.path().startsWith('finances') || this.path() === 'configuration' || this.path() === 'identities' || this.path().startsWith('identities/'));
+  readonly moreActive = computed(() => this.path().startsWith('finances') || this.path() === 'configuration' || this.path().startsWith('configuration/') || this.path() === 'identities' || this.path().startsWith('identities/'));
   readonly exactMatch: IsActiveMatchOptions = {paths: 'exact', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'};
   readonly sectionMatch: IsActiveMatchOptions = {...this.exactMatch, paths: 'subset'};
   readonly links = computed(() => [

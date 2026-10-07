@@ -1,0 +1,152 @@
+<header class="service-heading"><h2>Splitwise</h2><p>Bring shared expenses into Thereabout.</p></header>
+@if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+<div class="connection" id="splitwise-connection" tabindex="-1">
+  <label for="splitwise-key">{{ settings()?.configured ? 'Replace API key' : 'API key' }}</label>
+  <input id="splitwise-key" pInputText type="password" autocomplete="new-password" [ngModel]="key()" (ngModelChange)="key.set($event)" [disabled]="busy()" placeholder="Enter API key" />
+  <div class="actions">
+    <p-button label="Save" (onClick)="save(false, true)" [disabled]="busy() || !key()" />
+    <p-button label="Test connection" severity="secondary" (onClick)="test()" [disabled]="busy() || !settings()?.configured" />
+    <p-button label="Remove key" severity="secondary" (onClick)="save(true, true)" [disabled]="busy() || !settings()?.configured" />
+  </div>
+  <span class="muted">{{ settings()?.tested ? 'Connected' : settings()?.configured ? 'Key saved · connection not tested' : 'No key configured' }}</span>
+</div>
+<section id="splitwise-accounts" tabindex="-1" aria-label="Group and accounts">
+@if (catalog()?.groups?.length) {
+  <div class="section">
+    <h3>Group and accounts</h3>
+    <p-select ariaLabel="Splitwise group" [options]="catalog()?.groups" optionLabel="name" optionValue="id" placeholder="Select group" appendTo="body"
+      [ngModel]="group()" (ngModelChange)="selectGroup($event)" [disabled]="busy() || !!settings()?.initialized" />
+    @for (member of selectedGroup()?.members ?? []; track member.id) {
+      <div class="member">
+        <strong>{{ member.name }}</strong>
+        <label>Virtual account
+          <p-select [ariaLabel]="member.name + ' virtual account'" [options]="accountOptions()" optionLabel="label" optionValue="id" [filter]="true" [showClear]="true" appendTo="body" placeholder="Do not import"
+            [ngModel]="draft(member.id).accountId" (ngModelChange)="selectAccount(member.id, $event)" [disabled]="busy() || !!settings()?.initialized" />
+        </label>
+        @if (draft(member.id).accountId) {
+          <label>Bank account for settlements
+            <p-select [ariaLabel]="member.name + ' bank account'" [options]="bankOptions(member.id)" optionLabel="label" optionValue="id" appendTo="body" placeholder="Select bank account"
+              [ngModel]="draft(member.id).bankAccountId" (ngModelChange)="editMember(member.id, { bankAccountId: $event })" [disabled]="busy() || !!settings()?.initialized" />
+          </label>
+          <label class="history"><p-checkbox [binary]="true" [ngModel]="!draft(member.id).startDate" (ngModelChange)="toggleHistory(member.id, $event)"
+              [disabled]="busy() || !!settings()?.initialized" /> Full history</label>
+          @if (draft(member.id).startDate) {
+            <label>Import from <finance-date-input [ariaLabel]="member.name + ' import start date'" [ngModel]="draft(member.id).startDate"
+              (ngModelChange)="editMember(member.id, { startDate: $event })" [disabled]="busy() || !!settings()?.initialized" /></label>
+          }
+        }
+      </div>
+    }
+  </div>
+} @else {
+  <div class="section"><h3>Group and accounts</h3><p class="muted">Connect Splitwise to choose a group and map its accounts.</p></div>
+}
+</section>
+<section class="section" id="splitwise-categories" tabindex="-1" aria-label="Category mapping">
+    <h3>Category mapping</h3>
+    @if (catalog()?.groups?.length) {
+    <div class="actions">
+      <p-button label="Category mapping" severity="secondary" (onClick)="openCategories()" [disabled]="!settings()?.tested || savingCategories()" />
+      <span class="muted">{{ categoryCount() }}/{{ catalog()?.sourceCategories?.length ?? 0 }} mapped</span>
+    </div>
+    } @else { <p class="muted">Connect Splitwise to map its categories.</p> }
+</section>
+<div class="section" id="splitwise-sync" tabindex="-1">
+  <h3>Synchronization</h3>
+  <label class="history"><p-checkbox [binary]="true" [ngModel]="enabled()" (ngModelChange)="enabled.set($event)" [disabled]="busy() || !settings()?.initialized || !settings()?.tested" /> Automatically sync every five minutes</label>
+  <div class="actions">
+    <p-button label="Save settings" (onClick)="save()" [disabled]="busy()" />
+    @if (!settings()?.initialized) { <p-button label="Preview first import" severity="secondary" (onClick)="preview()" [disabled]="busy() || unsaved() || !settings()?.tested || !settings()?.members?.length" /> }
+    @else { <p-button label="Sync now" severity="secondary" (onClick)="sync()" [disabled]="busy() || unsaved() || !settings()?.tested" /> }
+  </div>
+  @if (unsaved()) { <small class="muted">Save settings before previewing or syncing.</small> }
+  @if (status(); as status) {
+    <p class="muted" role="status">{{ status.state }} @if (busy()) { · {{ status.processed }} source entries processed }</p>
+    @if (status.lastSuccess) { <p class="muted">Last successful sync: {{ status.lastSuccess }}</p> }
+    @if (status.error) { <p class="error" role="alert">{{ status.error }} @if (status.retryAt) { Next retry: {{ status.retryAt }} }</p> }
+    @if (status.preview && !settings()?.initialized) { <p-button label="Show first-import preview" severity="secondary" (onClick)="previewOpen.set(true)" /> }
+    <p-button [label]="'Needs review · ' + status.rows.length" severity="secondary" (onClick)="reviewOpen.set(true)" />
+  }
+</div>
+<app-modal header="First Splitwise import" [visible]="previewOpen()" (visibleChange)="previewOpen.set($event)" [dialogStyle]="{width: '72rem', maxWidth: 'calc(100vw - 2rem)'}" [dismissible]="!busy()">
+  <div class="modal-body">
+  @if (status()?.preview; as preview) {
+    <p tabindex="0">{{ count('CREATE') }} new · {{ count('ADOPT') }} linked · {{ count('IGNORED') }} historical entries preserved · {{ count('PENDING') }} need review</p>
+    <p class="muted">Pending entries remain unimported. Projected balances exclude pending entries and optional starting corrections. Future entries retain their dates. Existing historical transactions are preserved.</p>
+    @for (balance of preview.balances; track balance.memberId) {
+      <div class="balance">
+        <strong>{{ balance.name }}</strong>
+        <span>Splitwise: {{ balance.sourceBalance | number:'1.2-2' }} {{ balance.currency }} · Current: {{ balance.localBalance | number:'1.2-2' }} {{ balance.currency }} · Projected: {{ balance.projectedBalance | number:'1.2-2' }} {{ balance.currency }}</span>
+        @if (balance.canCorrect && balance.correctionDelta !== '0') {
+          <label class="history"><p-checkbox [binary]="true" [ngModel]="corrections().includes(balance.memberId)" (ngModelChange)="correction(balance.memberId, $event)" [disabled]="busy()" />
+            Apply a separate starting-balance correction of {{ balance.correctionDelta | number:'1.2-2' }} {{ balance.currency }}. I checked this account's historical group coverage.</label>
+        }
+      </div>
+    }
+    <p-table [value]="preview.rows" [paginator]="true" [rows]="10" [tableStyle]="{tableLayout: 'fixed', width: '100%'}">
+      <ng-template #header><tr><th class="preview-desktop">Entry</th><th class="preview-desktop">Person</th><th class="preview-desktop">Amount</th><th class="preview-desktop">Action</th><th class="preview-mobile" colspan="4">Entries</th></tr></ng-template>
+      <ng-template #body let-row><tr>
+        <td class="preview-desktop">{{ row.description }}<br /><small>{{ row.date.slice(0,10) }} @if (row.future) { · Future }</small></td><td class="preview-desktop">{{ name(row) }}</td><td class="preview-desktop">{{ row.amount | number:'1.2-2' }} {{ row.currency }}</td><td class="preview-desktop">{{ row.action }}<br /><small>{{ row.message }}</small></td>
+        <td class="preview-mobile" colspan="4"><div class="entry-summary">
+          <strong>{{ row.description }}</strong><span>{{ name(row) }} · {{ row.amount | number:'1.2-2' }} {{ row.currency }}</span>
+          <small>{{ row.date.slice(0,10) }} @if (row.future) { · Future } · {{ row.action }}</small>
+          @if (row.message) { <small>{{ row.message }}</small> }
+        </div></td>
+      </tr></ng-template>
+    </p-table>
+  } @else if (busy()) { <p role="status">Loading source entries…</p> }
+  @else { <p>Request a new first-import preview to include the latest settings and review decisions.</p> }
+  </div>
+  <ng-template #footer><p-button label="Confirm first import" (onClick)="initialize()" [disabled]="busy() || unsaved() || status()?.state !== 'PREVIEW_READY' || !!settings()?.initialized" /></ng-template>
+</app-modal>
+<app-modal header="Category mapping" [visible]="categoryOpen()" (visibleChange)="!$event && closeCategories()" [dismissible]="!savingCategories()" [dialogStyle]="{width: '50rem', maxWidth: 'calc(100vw - 2rem)'}">
+  <div class="modal-body">
+    @if (categoryError()) { <p class="error" role="alert">{{ categoryError() }}</p> }
+    @if (categoryConflict()) {
+      <p class="muted">Settings changed. Reload the current mappings before saving again. Reloading replaces this draft.</p>
+      <p-button label="Reload mappings" severity="secondary" (onClick)="reloadCategories()" [disabled]="savingCategories()" />
+    }
+    @for (group of categoryGroups(); track group.name) {
+      <section class="category-group">
+        <h3>{{ group.name }}</h3>
+        @for (category of group.categories; track category.id) {
+          <div class="category-row">
+            <label [for]="'splitwise-category-' + category.id">{{ category.name }}</label>
+            <div>
+              <p-select [inputId]="'splitwise-category-' + category.id" [ariaLabel]="category.name + ' category mapping'" [options]="categoryOptions()" optionLabel="label" optionValue="id" [filter]="true" appendTo="body" placeholder="Unmapped"
+                [ngModel]="isMapped(category.id) ? mapping(category.id) ?? null : undefined" (ngModelChange)="mapCategory(category.id, $event)" [disabled]="savingCategories()" />
+              <div class="mapping-state">
+                <small>{{ isMapped(category.id) ? (mapping(category.id) == null ? 'Uncategorized' : 'Mapped') : 'Unmapped' }}</small>
+                @if (isMapped(category.id)) { <p-button label="Clear mapping" size="small" severity="secondary" [text]="true" (onClick)="unmapCategory(category.id)" [disabled]="savingCategories()" /> }
+              </div>
+            </div>
+          </div>
+        }
+      </section>
+    }
+  </div>
+  <ng-template #footer>
+    <p-button label="Cancel" severity="secondary" (onClick)="closeCategories()" [disabled]="savingCategories()" />
+    <p-button label="Save" (onClick)="saveCategories()" [disabled]="busy() || savingCategories() || categoryConflict()" />
+  </ng-template>
+</app-modal>
+<app-modal header="Splitwise Reconciliation" [visible]="reviewOpen()" (visibleChange)="reviewOpen.set($event)" [dialogStyle]="{width: '64rem', maxWidth: 'calc(100vw - 2rem)'}">
+  <div class="modal-body">
+    <p class="muted">Reconciliation is available through the finance MCP tools.</p>
+    <p-table [value]="status()?.rows ?? []" [paginator]="true" [rows]="10" [tableStyle]="{tableLayout: 'fixed', width: '100%'}">
+      <ng-template #header><tr><th>Entry</th><th>Reason</th></tr></ng-template>
+      <ng-template #body let-row><tr>
+        <td><div class="entry-summary"><strong>{{ row.description }}</strong>
+          <span>{{ name(row) }} · {{ row.date.slice(0,10) }}</span>
+          <span>{{ row.amount | number:'1.2-2' }} {{ row.currency }}</span>
+          <small>{{ row.classification || (row.requiresClassification ? 'Needs classification' : 'Not classified') }} @if (row.future) { · Future }</small>
+          <a [href]="'https://secure.splitwise.com/expenses/' + row.expenseId" target="_blank" rel="noopener noreferrer">Splitwise expense</a>
+          @if (row.transactionId) { <a routerLink="/finances/transactions" [queryParams]="{transaction: row.transactionId}">Local transaction #{{ row.transactionId }}</a> }
+        </div></td>
+        <td class="review-reason">{{ row.message }}</td>
+      </tr></ng-template>
+      <ng-template #emptymessage><tr><td colspan="2">No entries need review.</td></tr></ng-template>
+    </p-table>
+  </div>
+  <ng-template #footer><p-button label="Close" severity="secondary" (onClick)="reviewOpen.set(false)" /></ng-template>
+</app-modal>

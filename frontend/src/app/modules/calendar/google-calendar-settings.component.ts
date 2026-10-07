@@ -5,29 +5,31 @@ import {FormsModule} from '@angular/forms';
 import {DatePipe} from '@angular/common';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {interval, Observable, finalize} from 'rxjs';
-import {CardModule} from 'primeng/card';
 import {ButtonModule} from 'primeng/button';
 import { AppModalComponent } from '../../shared/modal/app-modal.component';
 import {InputTextModule} from 'primeng/inputtext';
 import {Identity, IdentityService, CalendarService, CalendarInfo, GoogleCalendarStatus, GoogleCredentials} from '../../../../generated/backend-api/thereabout';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
 import {MessageService} from 'primeng/api';
+import {ConfigurationEditor} from '../configuration/configuration-navigation';
+import {ConnectionSummaries, googleSummary} from '../configuration/connection-summaries';
 
 type SecretKey = 'clientId' | 'clientSecret' | 'refreshToken';
 @Component({
   selector: 'app-google-calendar-settings',
-  imports: [MultiSelectModule, FormsModule, DatePipe, CardModule, ButtonModule, AppModalComponent, InputTextModule],
+  imports: [MultiSelectModule, FormsModule, DatePipe, ButtonModule, AppModalComponent, InputTextModule],
   templateUrl: './google-calendar-settings.component.html',
-  styleUrl: './google-calendar-settings.component.scss',
+  styleUrls: ['./google-calendar-settings.component.scss', '../configuration/configuration-panel.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class GoogleCalendarSettingsComponent implements OnInit {
+export class GoogleCalendarSettingsComponent implements OnInit, ConfigurationEditor {
   readonly users = signal<Identity[]>([]);
   private readonly identities = inject(IdentityService);
   private readonly api = inject(CalendarService);
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(MessageService);
+  private readonly summaries = inject(ConnectionSummaries, {optional: true});
   private readonly refresh = registerRefresh(() => this.load(), () => this.busy || Object.keys(this.dirty).length > 0);
   readonly fields: {key: SecretKey; label: string; help: string}[] = [
     {key: 'clientId', label: 'Google client ID', help: 'Identifies your Google OAuth application.'},
@@ -42,12 +44,21 @@ export class GoogleCalendarSettingsComponent implements OnInit {
   busy = false;
   error = '';
   loadError = '';
-  notice = '';
   selectionVisible = false;
   available: CalendarInfo[] = [];
   selected = new Set<number>();
   private revision = 0;
 
+  constructor() {
+    this.destroyRef.onDestroy(() => { this.values = {}; this.dirty = {}; this.revealing = {}; this.focused = null; });
+  }
+  hasUnsavedChanges(): boolean {
+    return Object.values(this.dirty).some(Boolean) || this.selectionVisible && this.available.some(calendar => this.selected.has(calendar.id) !== calendar.selected);
+  }
+  isNavigationBlocked(): boolean { return this.busy; }
+  private notify(message: string): void {
+    this.toast.add({severity: 'success', summary: message});
+  }
   ngOnInit() {
     this.identities.getIdentities().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: identities => this.users.set(identities.filter(i => !!i.role && !i.isGroup)),
@@ -65,12 +76,14 @@ export class GoogleCalendarSettingsComponent implements OnInit {
       error: () => {
         if (revision !== this.revision) return;
         this.loadError = 'Unable to load Google Calendar settings.';
+        this.summaries?.unavailable('google-calendar');
         this.changeDetector.markForCheck();
       }
     });
   }
   private accept(status: GoogleCalendarStatus) {
     this.status = status;
+    this.summaries?.update('google-calendar', googleSummary(status));
     // HTTP and polling callbacks must notify Angular even without a user interaction.
     this.changeDetector.markForCheck();
   }
@@ -101,7 +114,7 @@ export class GoogleCalendarSettingsComponent implements OnInit {
     this.fields.forEach(({key}) => { if (this.dirty[key]) values[key] = this.values[key] ?? ''; });
     this.run(this.api.saveGoogleCalendarCredentials(values), status => {
       this.values = {}; this.dirty = {}; this.focused = null; this.accept(status);
-      this.notice = status.state === 'READY' ? 'Google credentials saved and validated.' : 'Credentials saved. Complete or correct them to enable sync.';
+      this.notify(status.state === 'READY' ? 'Google credentials saved and validated.' : 'Credentials saved. Complete or correct them to enable sync.');
     });
   }
   async copyWebhookUrl(url: string) {
@@ -122,7 +135,7 @@ export class GoogleCalendarSettingsComponent implements OnInit {
   toggle(id: number, checked: boolean) { checked ? this.selected.add(id) : this.selected.delete(id); }
   import() {
     this.run(this.api.importGoogleCalendars({calendarIds: [...this.selected]}), () => {
-      this.selectionVisible = false; this.notice = 'Calendar selection saved. Selected calendars are queued for full import.'; this.load();
+      this.selectionVisible = false; this.notify('Calendar selection saved. Selected calendars are queued for full import.'); this.load();
     });
   }
   saveUsers(calendar: CalendarInfo, userIds: number[]) {
@@ -132,11 +145,11 @@ export class GoogleCalendarSettingsComponent implements OnInit {
       this.load();
     });
   }
-  syncNow() { this.run(this.api.syncGoogleCalendars(), () => { this.notice = 'Incremental synchronization queued.'; this.load(); }); }
+  syncNow() { this.run(this.api.syncGoogleCalendars(), () => { this.notify('Incremental synchronization queued.'); this.load(); }); }
   get canSync() { return this.status?.state === 'READY' && !this.busy; }
   private run<T>(request: Observable<T>, success: (value: T) => void) {
     if (this.busy) return;
-    ++this.revision; this.busy = true; this.error = ''; this.notice = '';
+    ++this.revision; this.busy = true; this.error = '';
     request.pipe(finalize(() => { this.busy = false; this.changeDetector.markForCheck(); }), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: value => { success(value); this.changeDetector.markForCheck(); },
       error: () => this.error = 'The operation failed. Check credentials, permissions, and the HTTPS callback URL, then retry.'

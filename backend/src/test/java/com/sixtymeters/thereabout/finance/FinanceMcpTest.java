@@ -26,6 +26,7 @@ class FinanceMcpTest {
   private static final String CSRF = "finance-test-csrf";
 
   @LocalServerPort int port;
+  @org.springframework.beans.factory.annotation.Autowired tools.jackson.databind.ObjectMapper json;
   @org.springframework.test.context.bean.override.mockito.MockitoBean SplitwiseClient splitwiseClient;
   @org.springframework.beans.factory.annotation.Autowired SplitwiseService splitwiseJobs;
   @org.springframework.beans.factory.annotation.Autowired CategoryService categoryService;
@@ -50,7 +51,7 @@ class FinanceMcpTest {
     try (var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(15)).build()) {
       assertThat(client.initialize().serverInfo().name()).isEqualTo("thereabout-finances");
       var tools = client.listTools().tools();
-      assertThat(tools).hasSize(33);
+      assertThat(tools).hasSize(37);
       assertThat(tools)
           .extracting(McpSchema.Tool::name)
           .contains("finance_splitwise_get", "finance_splitwise_sources_list", "finance_splitwise_sources_get",
@@ -324,5 +325,45 @@ class FinanceMcpTest {
             .POST(HttpRequest.BodyPublishers.ofString("{}"));
     assertThat(client.send(req.build(), HttpResponse.BodyHandlers.ofString()).statusCode())
         .isEqualTo(403);
+  }
+  @Test void counterpartyPreviewAndMergeHaveRestParityVersionChecksAndIdempotentReceipts() throws Exception {
+    String marker=UUID.randomUUID().toString();
+    db.update("INSERT IGNORE INTO finance_currency(code,name,decimal_places) VALUES('CHF','Franc',2)");
+    long expense=accounts.save(new UserId(1),new GenFinanceAccountInput().name("MCP shop "+marker).kind(GenFinanceAccountKind.EXPENSE).currency("CHF").requestKey(UUID.randomUUID().toString())).getAccount().getId();
+    long revenue=accounts.save(new UserId(1),new GenFinanceAccountInput().name("MCP refund "+marker).kind(GenFinanceAccountKind.REVENUE).currency("CHF").requestKey(UUID.randomUUID().toString())).getAccount().getId();
+    long first=db.queryForObject("SELECT counterparty_id FROM finance_account WHERE id=?",Long.class,expense);
+    long second=db.queryForObject("SELECT counterparty_id FROM finance_account WHERE id=?",Long.class,revenue);
+    var arguments=new LinkedHashMap<String,Object>();arguments.put("ids",List.of(first,second));arguments.put("targetId",first);arguments.put("name","MCP canonical "+marker);arguments.put("websiteUrl","example.com");
+    var transport=HttpClientStreamableHttpTransport.builder("http://127.0.0.1:"+port).endpoint("/mcp/finances").requestBuilder(HttpRequest.newBuilder().header("Authorization","Bearer "+keys.getKey())).build();
+    try(var client=McpClient.sync(transport).requestTimeout(Duration.ofSeconds(15)).build()) {
+      client.initialize();
+      var preview=call(client,"finance_counterparties_merge_preview",arguments);
+      var rest=HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/finances/counterparties/merge/preview"))
+          .header("Content-Type","application/json").header("Cookie","XSRF-TOKEN="+CSRF).header("X-XSRF-TOKEN",CSRF)
+          .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(arguments))).build(),HttpResponse.BodyHandlers.ofString());
+      assertThat(rest.statusCode()).isEqualTo(200);assertThat(json.readTree(rest.body())).isEqualTo(json.valueToTree(preview));
+      var selected=(List<?>)preview.get("selected");var versions=new ArrayList<Map<String,Object>>();
+      for(Object item:selected) { var c=(Map<?,?>)item;versions.add(Map.of("id",c.get("id"),"version",c.get("version"))); }
+      arguments.put("versions",versions);arguments.put("requestKey",UUID.randomUUID().toString());
+      var stale=new LinkedHashMap<>(arguments);stale.put("requestKey",UUID.randomUUID().toString());
+      stale.put("versions",List.of(Map.of("id",first,"version",999999),Map.of("id",second,"version",999999)));
+      assertThat(client.callTool(McpSchema.CallToolRequest.builder("finance_counterparties_merge").arguments(stale).build()).isError()).isTrue();
+      assertThat(db.queryForObject("SELECT counterparty_id FROM finance_account WHERE id=?",Long.class,revenue)).isEqualTo(second);
+      var merged=call(client,"finance_counterparties_merge",arguments);
+      assertThat(call(client,"finance_counterparties_merge",arguments)).isEqualTo(merged);
+      var retry=HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/finances/counterparties/merge"))
+          .header("Content-Type","application/json").header("Cookie","XSRF-TOKEN="+CSRF).header("X-XSRF-TOKEN",CSRF)
+          .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(arguments))).build(),HttpResponse.BodyHandlers.ofString());
+      assertThat(retry.statusCode()).isEqualTo(200);assertThat(json.readTree(retry.body())).isEqualTo(json.valueToTree(merged));
+      assertThat(db.queryForObject("SELECT counterparty_id FROM finance_account WHERE id=?",Long.class,revenue)).isEqualTo(first);
+      arguments.put("name","Changed payload");
+      assertThat(client.callTool(McpSchema.CallToolRequest.builder("finance_counterparties_merge").arguments(arguments).build()).isError()).isTrue();
+      var canonical=call(client,"finance_counterparties_get",Map.of("id",second));assertThat(((Number)canonical.get("id")).longValue()).isEqualTo(first);
+      var catalog=HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/api/finances/configuration/mcp-tools")).GET().build(),HttpResponse.BodyHandlers.ofString());
+      assertThat(catalog.statusCode()).isEqualTo(200);
+      var published=json.readTree(catalog.body()).at("/endpoints/0/tools");
+      assertThat(published.size()).isEqualTo(client.listTools().tools().size());
+      for(var tool:client.listTools().tools()) assertThat(published.toString()).contains(tool.name(),tool.description());
+    }
   }
 }

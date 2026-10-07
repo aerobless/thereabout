@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AccountService {
   private final FinanceAccountRepository accounts;
+  private final CounterpartyService counterparties;
   private final FinanceCurrencyRepository currencies;
   private final FinancePostingRepository postings;
   private final FinanceReadRepository reads;
@@ -76,7 +77,7 @@ public class AccountService {
                 "Cannot change counterparty direction");
           }
           if (input.getLogoUrl() != null) account.setLogoUrl(logoUrl(input.getLogoUrl()));
-          if (input.getWebsiteUrl() != null) account.setWebsiteUrl(websiteUrl(input.getWebsiteUrl()));
+          if (input.getWebsiteUrl() != null) account.setWebsiteUrl(WebsiteUrls.normalize(input.getWebsiteUrl()));
           account.setName(name);
           account.setKind(kind);
           if (account.getId() == null) {
@@ -90,6 +91,7 @@ public class AccountService {
           account.setActive(input.getActive() == null || input.getActive());
           account.setIncludeNetWorth(
               kind.isOwn() && (input.getIncludeNetWorth() == null || input.getIncludeNetWorth()));
+          counterparties.attach(account);
           accounts.saveAndFlush(account);
           var after = reads.account(user, account.getId());
           writes.audit(user, "accounts.save", account.getId(), before, after);
@@ -108,25 +110,6 @@ public class AccountService {
     } catch (IllegalArgumentException ex) {
       throw new com.sixtymeters.thereabout.config.ThereaboutException(
           org.springframework.http.HttpStatus.BAD_REQUEST, "Invalid logo URL");
-    }
-  }
-
-  private String websiteUrl(String value) {
-    if (value.isBlank()) return null;
-    require(value.length() <= 2048, "Website URL is too long");
-    String url = value.trim();
-    if (!url.contains("://")) url = "https://" + url;
-    try {
-      var uri = java.net.URI.create(url);
-      require("https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null
-          && uri.getUserInfo() == null && (uri.getPort() == -1 || uri.getPort() == 443),
-          "Enter a bank website using HTTPS without credentials");
-      // Only the public home page is needed; never fetch or retain private paths or query strings.
-      return new java.net.URI("https", null, uri.getHost().toLowerCase(java.util.Locale.ROOT),
-          -1, "/", null, null).toASCIIString();
-    } catch (IllegalArgumentException | java.net.URISyntaxException ex) {
-      throw new com.sixtymeters.thereabout.config.ThereaboutException(
-          org.springframework.http.HttpStatus.BAD_REQUEST, "Invalid website URL");
     }
   }
 

@@ -31,7 +31,6 @@ import {
 })
 export class RatesDialogComponent {
   readonly context = inject(FinanceContext);
-  readonly dialogs = inject(FinanceDialogs);
   private fb = inject(FormBuilder).nonNullable;
   get saving() {
     return this.context.saving();
@@ -88,12 +87,12 @@ export class RatesDialogComponent {
       this.form.getRawValue(),
       (p) => this.context.api.client.financeSaveRate(p),
     );
-    if (result) this.prepareRate();
+    if (result) { this.form.markAsPristine(); this.prepareRate(); }
   }
   async refreshRates() {
     const result = await this.context.write("rates.refresh", {}, (p) =>
       this.context.api.client.financeRefreshRates(p),
     );
-    if (result) this.prepareRate();
+    if (result) { this.form.markAsPristine(); this.prepareRate(); }
   }
 }

@@ -39,6 +39,7 @@ public class TelegramMessageMapper {
      * @param receiverUsernameHint optional chat title; stored as username_hint for display when unlinked.
      * @param receiverIsGroup true if the receiver is a group/supergroup chat (sets is_group on the app identity when created).
      */
+    @org.springframework.transaction.annotation.Transactional
     public MessageEntity toMessageEntity(
             TdApi.Message msg,
             String chatIdStr,
@@ -57,6 +58,7 @@ public class TelegramMessageMapper {
      * Like toMessageEntity but with explicit sourceIdentifier = sourceIdPrefix + msg.id.
      * Used for basic-group messages stored under supergroup receiver (telegram-{supergroupChatId}-b-{msgId}).
      */
+    @org.springframework.transaction.annotation.Transactional
     public MessageEntity toMessageEntityWithSourcePrefix(
             TdApi.Message msg,
             String sourceIdPrefix,
@@ -84,7 +86,8 @@ public class TelegramMessageMapper {
         var existingMessage = messageRepository.findFirstBySourceIdentifierOrderByIdAsc(sourceIdentifier);
         if (existingMessage.isPresent()) {
             MessageEntity entity = existingMessage.get();
-            if (Objects.equals(entity.getBody(), body)) {
+            boolean newOwner = entity.getArchiveUserIds().add(1L);
+            if (!newOwner && Objects.equals(entity.getBody(), body)) {
                 return null;
             }
             entity.setBody(body);
@@ -94,6 +97,7 @@ public class TelegramMessageMapper {
         IdentityInApplicationEntity receiver = getOrCreateReceiver(receiverId, receiverUsernameHint, receiverIsGroup);
         LocalDateTime timestamp = LocalDateTime.ofInstant(Instant.ofEpochSecond(msg.date), ZoneOffset.UTC);
         return MessageEntity.builder()
+                .archiveUserIds(new java.util.HashSet<>(java.util.Set.of(1L)))
                 .type("text")
                 .source(CommunicationApplication.TELEGRAM)
                 .sourceIdentifier(sourceIdentifier)

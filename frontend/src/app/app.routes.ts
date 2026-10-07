@@ -18,6 +18,7 @@ export const routes: Routes = [
       {path:'',loadComponent:()=>import('./modules/finances/pages/overview.component').then(m=>m.OverviewComponent)},
       {path:'accounts',loadComponent:()=>import('./modules/finances/pages/accounts.component').then(m=>m.AccountsComponent)},
       {path:'accounts/:id',loadComponent:()=>import('./modules/finances/pages/account-detail.component').then(m=>m.AccountDetailComponent)},
+      {path:'counterparties/:id',loadComponent:()=>import('./modules/finances/pages/counterparty-detail.component').then(m=>m.CounterpartyDetailComponent)},
       {path:'transactions',loadComponent:()=>import('./modules/finances/pages/transactions.component').then(m=>m.TransactionsComponent)},
       {path:'reports',loadComponent:()=>import('./modules/finances/pages/reports.component').then(m=>m.ReportsComponent)}
     ]},

@@ -38,6 +38,7 @@ public class WhatsAppChatImporter implements FileImporter {
     private final IdentityRepository identityRepository;
     private final MessageRepository messageRepository;
     private final ImportProgressService importProgressService;
+    private final com.sixtymeters.thereabout.communication.service.MessageArchiveOwnership archiveOwnership;
 
     @Override
     public GenImportType getSupportedImportType() {
@@ -55,7 +56,7 @@ public class WhatsAppChatImporter implements FileImporter {
             IdentityInApplicationEntity receiverEntity = getOrCreateReceiver(receiver);
 
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-                processFile(reader, totalMessages, receiverEntity);
+                processFile(reader, totalMessages, receiverEntity, user);
             }
         } catch (IOException e) {
             throw new ThereaboutException(HttpStatusCode.valueOf(400),
@@ -112,7 +113,7 @@ public class WhatsAppChatImporter implements FileImporter {
                         }));
     }
 
-    private void processFile(BufferedReader reader, long totalMessages, IdentityInApplicationEntity receiverEntity) throws IOException {
+    private void processFile(BufferedReader reader, long totalMessages, IdentityInApplicationEntity receiverEntity, com.sixtymeters.thereabout.access.UserId user) throws IOException {
         Map<String, IdentityInApplicationEntity> identityCache = new HashMap<>();
         Set<String> knownHashes = new HashSet<>();
         List<MessageEntity> batch = new ArrayList<>(BATCH_SIZE);
@@ -135,7 +136,8 @@ public class WhatsAppChatImporter implements FileImporter {
                 if (currentSenderName != null && currentBody != null) {
                     MessageEntity message = buildMessage(currentSenderName, currentBody.toString(), currentTimestamp, identityCache, receiverEntity);
 
-                    if (!isDuplicate(message.getSourceIdentifier(), knownHashes)) {
+                    if (!isDuplicate(message, knownHashes, user)) {
+                        message.getArchiveUserIds().add(user.value());
                         knownHashes.add(message.getSourceIdentifier());
                         batch.add(message);
                     } else {
@@ -169,7 +171,8 @@ public class WhatsAppChatImporter implements FileImporter {
         // Flush the last message
         if (currentSenderName != null && currentBody != null) {
             MessageEntity message = buildMessage(currentSenderName, currentBody.toString(), currentTimestamp, identityCache, receiverEntity);
-            if (!isDuplicate(message.getSourceIdentifier(), knownHashes)) {
+            if (!isDuplicate(message, knownHashes, user)) {
+                        message.getArchiveUserIds().add(user.value());
                 batch.add(message);
             } else {
                 skippedDuplicates++;
@@ -203,8 +206,10 @@ public class WhatsAppChatImporter implements FileImporter {
     /**
      * Check if a message with this hash already exists in the current batch or in the database.
      */
-    private boolean isDuplicate(String hash, Set<String> knownHashes) {
-        return knownHashes.contains(hash) || messageRepository.existsBySourceIdentifier(hash);
+    private boolean isDuplicate(MessageEntity message, Set<String> knownHashes, com.sixtymeters.thereabout.access.UserId user) {
+        String hash = message.getSourceIdentifier();
+        if (knownHashes.contains(hash)) return true;
+        return archiveOwnership.retainExisting(hash, message.getReceiver().getId(), user);
     }
 
     private MessageEntity buildMessage(String senderName, String body, LocalDateTime timestamp,

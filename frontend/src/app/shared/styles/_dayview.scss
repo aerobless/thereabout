@@ -51,7 +51,7 @@ a {
 // ============================================================================
 .dayview-cards-region {
   container: dayview / inline-size;
-  max-width: 1600px;
+  max-width: var(--app-page-max-width);
   margin: 0 auto;
 }
 

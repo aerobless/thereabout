@@ -225,8 +225,8 @@ public class FinanceReadRepository {
 
   private static final String TX_SELECT =
       "SELECT (SELECT 'SPLITWISE' FROM splitwise_source ss WHERE ss.transaction_id=t.id LIMIT 1) sync_source, "
-          + "EXISTS(SELECT 1 FROM splitwise_source ss WHERE ss.transaction_id=t.id AND ss.locally_managed=FALSE) sync_managed, t.*,s.account_id source_id_account,d.account_id destination_id_account,sa.name"
-          + " source_name,da.name destination_name,sa.kind source_kind,da.kind"
+          + "EXISTS(SELECT 1 FROM splitwise_source ss WHERE ss.transaction_id=t.id AND ss.locally_managed=FALSE) sync_managed, t.*,s.account_id source_id_account,d.account_id destination_id_account,sa.counterparty_id source_counterparty_id,da.counterparty_id destination_counterparty_id,COALESCE(sc.name,sa.name)"
+          + " source_name,COALESCE(dc.name,da.name) destination_name,sa.kind source_kind,da.kind"
           + " destination_kind,ABS(s.amount) source_amount,ABS(d.amount)"
           + " destination_amount,s.currency source_currency,d.currency"
           + " destination_currency,s.foreign_amount,s.foreign_currency,c.name category_name,(SELECT"
@@ -236,7 +236,7 @@ public class FinanceReadRepository {
           + " s.side='SOURCE' JOIN finance_posting d ON d.transaction_id=t.id AND"
           + " d.side='DESTINATION' JOIN finance_account sa ON sa.id=s.account_id JOIN"
           + " finance_account da ON da.id=d.account_id LEFT JOIN finance_category c ON"
-          + " c.id=t.category_id ";
+          + " c.id=t.category_id LEFT JOIN finance_counterparty sc ON sc.id=sa.counterparty_id LEFT JOIN finance_counterparty dc ON dc.id=da.counterparty_id ";
 
   public GenFinanceTransaction transaction(UserId user, long id) {
     return db.query(TX_SELECT + TX_FROM + " WHERE t.id=?", TRANSACTION, id).stream()
@@ -259,10 +259,15 @@ public class FinanceReadRepository {
       args.add(account);
       args.add(account);
     }
+    if (p.getCounterpartyId() != null) {
+      where += " AND (sa.counterparty_id=? OR da.counterparty_id=?)";
+      args.add(p.getCounterpartyId()); args.add(p.getCounterpartyId());
+    }
+    where += FinanceDateSearch.where(p.getDateFilter(), args);
     String q = text(p.getQ());
     if (!q.isBlank()) {
-      where += " AND (t.description LIKE ? OR sa.name LIKE ? OR da.name LIKE ? OR t.notes LIKE ?)";
-      for (int i = 0; i < 4; i++) args.add("%" + q + "%");
+      where += " AND (t.description LIKE ? OR sa.name LIKE ? OR da.name LIKE ? OR t.notes LIKE ? OR sc.name LIKE ? OR dc.name LIKE ?)";
+      for (int i = 0; i < 6; i++) args.add("%" + q + "%");
     }
     var categories = p.getCategoryIds();
     if (categories == null || categories.isEmpty())

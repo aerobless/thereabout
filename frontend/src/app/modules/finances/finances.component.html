@@ -6,9 +6,6 @@
       <p>A clearer view of what you have, spend and grow.</p>
     </div>
     <div class="actions">
-      <button class="app-button secondary" (click)="dialogs.open({ kind: 'rates' })">
-        <i class="pi pi-globe"></i> Exchange rates</button
-      >
       <finance-split-button label="Add transaction" icon="pi pi-plus" [primary]="true"
         [items]="transactionActions" (action)="dialogs.open({ kind: 'transaction' })" />
     </div>

@@ -16,6 +16,7 @@ export const configurationRoutes: Routes = [{
     ]},
     {path: 'location-imports', canDeactivate: [configurationCanDeactivate], loadComponent: () => import('./location-imports.component').then(m => m.LocationImportsComponent)},
     {path: 'api-access', loadComponent: () => import('./api-access.component').then(m => m.ApiAccessComponent)},
+    {path: 'finances', canDeactivate: [configurationCanDeactivate], loadComponent: () => import('./finance-settings.component').then(m => m.FinanceSettingsComponent)},
     {path: 'about', loadComponent: () => import('./about.component').then(m => m.AboutComponent)}
   ]
 }];

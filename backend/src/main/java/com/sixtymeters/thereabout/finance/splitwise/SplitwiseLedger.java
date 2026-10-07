@@ -20,6 +20,7 @@ public class SplitwiseLedger {
   private final SplitwiseSources sourceReads;
   private final SplitwiseConnectionRepository connections;
   private final FinanceTransactionRepository transactions;
+  private final com.sixtymeters.thereabout.finance.service.CounterpartyService counterparties;
   private final FinanceAccountRepository accountRepository;
   private final FinanceReadRepository reads;
   private final TransactionService ledger;
@@ -193,7 +194,7 @@ public class SplitwiseLedger {
   private long counter(AccountKind kind, String currency) {
     String name = kind == AccountKind.REVENUE ? "Splitwise reimbursements" : "Splitwise shared expenses";
     return accountRepository.findFirstByNameAndKindAndCurrencyAndDeletedFalseOrderByIdAsc(name, kind, currency).map(FinanceAccountEntity::getId).orElseGet(() -> {
-      var a = new FinanceAccountEntity(); a.setName(name); a.setKind(kind); a.setCurrency(currency); return accountRepository.saveAndFlush(a).getId();
+      var a = new FinanceAccountEntity(); a.setName(name); a.setKind(kind); a.setCurrency(currency); counterparties.attach(a); return accountRepository.saveAndFlush(a).getId();
     });
   }
   private GenFinanceTransactionInput input(long own, long other, BigDecimal amount, String currency, LocalDateTime date, String description, boolean settlement) {

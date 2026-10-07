@@ -320,6 +320,8 @@ tr:hover td {
 }
 .category-list button {
   display: flex;
+  gap: .75rem;
+  white-space: normal;
   justify-content: space-between;
   text-align: left;
   border: 0;

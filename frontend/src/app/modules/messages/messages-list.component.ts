@@ -1,5 +1,7 @@
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {CurrentUserService} from '../../shared/current-user/current-user.service';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, DestroyRef, effect, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TableModule, TableLazyLoadEvent } from 'primeng/table';
@@ -32,6 +34,9 @@ interface FilterMeta {
   styleUrl: './messages-list.component.scss',
 })
 export class MessagesListComponent {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly currentUser = inject(CurrentUserService);
+  private requestId = 0;
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly refresh = registerRefresh(() => this.loadMessages(this.lastQuery, true));
   messages: Message[] = [];
@@ -52,7 +57,10 @@ export class MessagesListComponent {
   private sortField = this.defaultSortField;
   private sortOrder = this.defaultSortOrder;
 
-  constructor(private messageApiService: MessageApiService) {}
+  private viewKey = this.currentUser.viewKeys().join();
+  constructor(private messageApiService: MessageApiService) {
+    effect(() => { const key=this.currentUser.viewKeys().join(); if(key===this.viewKey)return; this.viewKey=key; this.requestId++; this.messages = []; this.totalRecords = 0; this.changeDetector.markForCheck(); });
+  }
 
   private lastQuery: TableLazyLoadEvent = {};
 
@@ -126,16 +134,20 @@ export class MessagesListComponent {
     receiver?: string,
     preserve = false
   ): void {
+    const requestId = ++this.requestId;
+    const viewKey = this.currentUser.viewKeys().join();
     this.loading = true;
     this.changeDetector.markForCheck();
-    this.messageApiService.getMessageList(page, size, sort, search, dateFrom, dateTo, source, sender, receiver).pipe(this.refresh.track('messages')).subscribe({
+    this.messageApiService.getMessageList(page, size, sort, search, dateFrom, dateTo, source, sender, receiver).pipe(this.refresh.track('messages')).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (pageResponse) => {
+        if (requestId !== this.requestId || viewKey !== this.currentUser.viewKeys().join()) return;
         this.messages = pageResponse.content ?? [];
         this.totalRecords = pageResponse.totalElements ?? 0;
         this.loading = false;
         this.changeDetector.markForCheck();
       },
       error: () => {
+        if (requestId !== this.requestId || viewKey !== this.currentUser.viewKeys().join()) return;
         if (!preserve) { this.messages = []; this.totalRecords = 0; }
         this.loading = false;
         this.changeDetector.markForCheck();

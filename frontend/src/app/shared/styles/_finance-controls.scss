@@ -94,6 +94,7 @@ app-finances,
     color: var(--app-muted);
     font-size: 12px;
   }
+  .table-caption { flex-wrap: wrap; }
   .table-tools {
     justify-content: space-between;
     flex-wrap: wrap;
@@ -157,6 +158,8 @@ app-finances,
 }
 
 app-finances, .finance-dialog {
+  .alias-editor .p-chip { max-width:100%; }
+  .alias-editor .p-chip-label { min-width:0; overflow-wrap:anywhere; }
   finance-date-input .p-datepicker {
     width: 100%;
   }

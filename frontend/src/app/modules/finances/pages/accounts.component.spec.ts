@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection, signal } from "@angular/core";
 import { TestBed } from "@angular/core/testing";
-import { provideRouter } from "@angular/router";
+import { Router, provideRouter } from "@angular/router";
+import { RouterTestingHarness } from "@angular/router/testing";
 import { MessageService } from "primeng/api";
 import { of, Subject } from "rxjs";
 import { CurrentUserService } from "../../../shared/current-user/current-user.service";
@@ -17,6 +18,7 @@ describe("Shared finance accounts", () => {
   let users: Subject<FinanceUser[]>;
   const api = {
     financeUsers: vi.fn(),
+    financeListCounterparties: vi.fn(() => of({items:[],total:0,page:0,pageSize:50})),
     financeListAccounts: vi.fn(),
     financeListCategories: vi.fn(() => of({ items: [] })),
     financeCurrencies: vi.fn(() => of({ items: [] })),
@@ -31,7 +33,7 @@ describe("Shared finance accounts", () => {
       return of({ items, total: items.length, page: 0, pageSize: 200 });
     });
     TestBed.configureTestingModule({providers: [
-      provideZonelessChangeDetection(), provideRouter([]), FinanceApi, FinanceContext, FinanceDialogs,
+      provideZonelessChangeDetection(), provideRouter([{path: "finances/accounts", component: AccountsComponent}]), FinanceApi, FinanceContext, FinanceDialogs,
       { provide: FinancesService, useValue: api },
       { provide: MessageService, useValue: { add: vi.fn() } },
       { provide: CurrentUserService, useValue: {state: signal({status: "resolved", identityId: 1})} },
@@ -60,8 +62,27 @@ describe("Shared finance accounts", () => {
     expect(root.querySelectorAll(".account-group")).toHaveLength(0);
     buttons[3].click();
     await fixture.whenStable();
-    expect(api.financeListAccounts.mock.calls.at(-1)?.[2]).toBe("COUNTERPARTY");
-    expect(api.financeListAccounts.mock.calls.at(-1)?.[9]).toBeUndefined();
+    expect(api.financeListCounterparties).toHaveBeenCalled();
+  });
+
+  it("opens the Counterparties return destination and keeps tab selection in the URL", async () => {
+    const harness = await RouterTestingHarness.create();
+    const component = await harness.navigateByUrl("/finances/accounts?view=counterparties", AccountsComponent);
+    await harness.fixture.whenStable();
+    expect(harness.routeNativeElement?.querySelector(".segmented button.active")?.textContent?.trim()).toBe("Counterparties");
+    expect(harness.routeNativeElement?.querySelector("finance-counterparties")).not.toBeNull();
+
+    component.selectUser(null);
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe("/finances/accounts");
+    expect(harness.routeNativeElement?.querySelector(".segmented button.active")?.textContent?.trim()).toBe("Your accounts");
+    component.selectCounterparties();
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe("/finances/accounts?view=counterparties");
+
+    await harness.navigateByUrl("/finances/accounts", AccountsComponent);
+    await harness.fixture.whenStable();
+    expect(harness.routeNativeElement?.querySelector(".segmented button.active")?.textContent?.trim()).toBe("Your accounts");
   });
 
   it("creates a main account for the selected owner", async () => {

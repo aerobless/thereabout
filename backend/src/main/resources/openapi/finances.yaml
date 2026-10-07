@@ -42,6 +42,14 @@ paths:
     $ref: finances/reports.yaml#/paths/_reports_investments
 components:
   schemas:
+    FinanceCounterpartyQuery:
+      $ref: 'finances/counterparties.yaml#/components/schemas/FinanceCounterpartyQuery'
+    FinanceCounterpartyId:
+      $ref: 'finances/counterparties.yaml#/components/schemas/FinanceCounterpartyId'
+    FinanceCounterpartyMergePreviewInput:
+      $ref: 'finances/counterparties.yaml#/components/schemas/FinanceCounterpartyMergePreviewInput'
+    FinanceCounterpartyMergeInput:
+      $ref: 'finances/counterparties.yaml#/components/schemas/FinanceCounterpartyMergeInput'
     SplitwiseCategorySaveInput:
       $ref: finances/splitwise.yaml#/components/schemas/SplitwiseCategorySaveInput
     SplitwiseContext:

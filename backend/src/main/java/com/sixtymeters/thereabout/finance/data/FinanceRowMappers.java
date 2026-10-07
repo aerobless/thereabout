@@ -60,6 +60,8 @@ public final class FinanceRowMappers {
               .version(r.getObject("version", Long.class))
               .sourceAccountId(r.getObject("source_id_account", Long.class))
               .destinationAccountId(r.getObject("destination_id_account", Long.class))
+              .sourceCounterpartyId(r.getObject("source_counterparty_id", Long.class))
+              .destinationCounterpartyId(r.getObject("destination_counterparty_id", Long.class))
               .sourceName(r.getString("source_name"))
               .destinationName(r.getString("destination_name"))
               .sourceAmount(money(r.getBigDecimal("source_amount")))

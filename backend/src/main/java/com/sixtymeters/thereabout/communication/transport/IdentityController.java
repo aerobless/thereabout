@@ -21,6 +21,18 @@ public class IdentityController implements IdentityApi {
 
     private static final IdentityMapper IDENTITY_MAPPER = IdentityMapper.INSTANCE;
     private final IdentityService identityService;
+    private final com.sixtymeters.thereabout.communication.service.GroupMembershipService memberships;
+
+    @Override
+    public ResponseEntity<com.sixtymeters.thereabout.generated.model.GenGroupMembers> getGroupMembers(Long id) {
+        return ResponseEntity.ok(memberships.get(id));
+    }
+
+    @Override
+    public ResponseEntity<com.sixtymeters.thereabout.generated.model.GenGroupMembers> saveGroupMembers(Long id,
+            com.sixtymeters.thereabout.generated.model.GenGroupMembers input) {
+        return ResponseEntity.ok(memberships.save(id, input));
+    }
 
     private final com.sixtymeters.thereabout.communication.service.IdentityUserService identityUserService;
 

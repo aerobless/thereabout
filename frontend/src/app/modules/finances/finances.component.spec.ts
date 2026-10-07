@@ -154,7 +154,7 @@ describe("Finance boundaries", () => {
     fixture.detectChanges();
     expect(api.financeDeleteTransaction).not.toHaveBeenCalled();
     const button = fixture.nativeElement.querySelector(
-      "button.primary",
+      "button.danger",
     ) as HTMLButtonElement;
     button.click();
     await fixture.whenStable();

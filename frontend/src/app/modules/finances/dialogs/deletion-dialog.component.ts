@@ -27,7 +27,7 @@ import {
       <button class="app-button" [disabled]="context.saving()" (click)="dialogs.close()">
         Cancel</button
       ><button
-        class="app-button primary"
+        class="app-button" [class.danger]="!transaction().deleted" [class.primary]="transaction().deleted"
         [disabled]="context.saving()"
         (click)="confirm()"
       >

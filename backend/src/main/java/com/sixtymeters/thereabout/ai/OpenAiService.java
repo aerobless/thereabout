@@ -15,19 +15,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class OpenAiService {
   private final ConfigurationRepository configuration;
   private final OpenAiClientFactory clients;
-  private static final String DEFAULT_MODEL = "gpt-6-luna";
+
 
   @Transactional(readOnly = true)
   public GenOpenAiSettings settings() {
     return new GenOpenAiSettings()
         .configured(!value(ConfigurationKey.OPENAI_API_KEY, "").isBlank())
-        .model(value(ConfigurationKey.OPENAI_MODEL, DEFAULT_MODEL));
+        .useCases(AiUseCases.metadata());
   }
 
   @Transactional
   public GenOpenAiSettings save(GenOpenAiSettingsInput input) {
-    String model = text(input.getModel());
-    require(model.matches("[a-zA-Z0-9][a-zA-Z0-9._:-]{0,99}"), "Enter a model identifier");
     require(
         !(Boolean.TRUE.equals(input.getRemoveKey()) && !text(input.getApiKey()).isEmpty()),
         "Choose replacement or removal");
@@ -39,7 +37,6 @@ public class OpenAiService {
           "Invalid API key");
       put(ConfigurationKey.OPENAI_API_KEY, input.getApiKey());
     }
-    put(ConfigurationKey.OPENAI_MODEL, model);
     return settings();
   }
 
@@ -52,14 +49,14 @@ public class OpenAiService {
     try {
       var params =
           ResponseCreateParams.builder()
-              .model(value(ConfigurationKey.OPENAI_MODEL, DEFAULT_MODEL))
+              .model(AiUseCases.TRANSACTION_IMPORT.model())
               .instructions(instructions)
               .input(data)
               .store(false)
               .maxOutputTokens(24000)
               .reasoning(
                   com.openai.models.Reasoning.builder()
-                      .effort(com.openai.models.ReasoningEffort.MEDIUM)
+                      .effort(AiUseCases.TRANSACTION_IMPORT.reasoning())
                       .build())
               .text(schema)
               .build();

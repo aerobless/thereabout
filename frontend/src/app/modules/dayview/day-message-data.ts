@@ -1,4 +1,4 @@
-import { Injectable, inject, DestroyRef, signal, computed } from '@angular/core';
+import { Injectable, inject, DestroyRef, signal, computed, effect } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { registerRefresh } from '../../shared/refresh/refresh-coordinator';
 import { localDateString } from '../../shared/dates/local-date';
@@ -20,6 +20,17 @@ export class DayMessageData {
   messagesLoading = signal(false);
   messagesError = signal(false);
   private messageRequestId = 0;
+  private viewKey = this.currentUser.viewKeys().join();
+  constructor() {
+    effect(() => {
+      const key = this.currentUser.viewKeys().join();
+      if (key === this.viewKey) return;
+      this.viewKey = key;
+      this.messageRequestId++;
+      this.messages.set([]); this.messagesDialogVisible.set(false);
+      this.messagesLoading.set(false); this.messagesError.set(false);
+    });
+  }
   readonly sentMessageCount = computed(() => this.identityId() == null ? 0 :
     this.messages().filter(message => message.sender?.identityId === this.identityId()).length);
   readonly receivedMessageCount = computed(() => this.identityId() == null ? 0 :
@@ -29,6 +40,7 @@ export class DayMessageData {
       return;
     const dateStr = this.dateToString(this.selectedDate);
     const requestId = ++this.messageRequestId;
+    const viewKey = this.currentUser.viewKeys().join();
     if (!preserve) {
       this.messagesDialogVisible.set(false);
       this.messages.set([]);
@@ -38,13 +50,13 @@ export class DayMessageData {
     this.messagesError.set(false);
     this.messageApiService.getMessages(dateStr).pipe(this.refresh.track('messages'), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (messages) => {
-        if (requestId !== this.messageRequestId)
+        if (requestId !== this.messageRequestId || viewKey !== this.currentUser.viewKeys().join())
           return;
         this.messages.set([...messages].sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp)));
         this.messagesLoading.set(false);
       },
       error: (error) => {
-        if (requestId !== this.messageRequestId)
+        if (requestId !== this.messageRequestId || viewKey !== this.currentUser.viewKeys().join())
           return;
         console.error('Error loading messages:', error);
         if (!preserve)

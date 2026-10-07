@@ -1,11 +1,12 @@
-import { Component, DestroyRef, inject, signal } from "@angular/core";
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { InputTextModule } from "primeng/inputtext";
 import { Subscription } from "rxjs";
-import { FinancesService } from "../../../../generated/backend-api/thereabout";
+import { FinancesService, FinanceMcpEndpoint } from "../../../../generated/backend-api/thereabout";
 
 @Component({
   selector: "app-finance-mcp-settings",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [InputTextModule],
   template: `
     <label for="finance-mcp-key">MCP bearer key</label>
@@ -32,6 +33,17 @@ import { FinancesService } from "../../../../generated/backend-api/thereabout";
       Connect your MCP client with <code>Authorization: Bearer &lt;key&gt;</code>.
       Available endpoint: <code>/mcp/finances</code>.
     </p>
+    <h3>Available tools</h3>
+    @if (catalogLoading()) { <p role="status">Loading tools…</p> }
+    @if (catalogError()) { <p role="alert">{{catalogError()}}</p> }
+    @for (endpoint of endpoints(); track endpoint.path) {
+      <h4><code>{{endpoint.path}}</code></h4>
+      <dl class="mcp-tools">
+        @for (tool of endpoint.tools; track tool.name) {
+          <div><dt><code>{{tool.name}}</code><span class="tool-mode">{{tool.readOnly ? 'Read' : 'Write'}}</span></dt><dd>{{tool.description}}</dd></div>
+        }
+      </dl>
+    }
     @if (loading()) {
       <p role="status">Loading key…</p>
     }
@@ -55,9 +67,12 @@ import { FinancesService } from "../../../../generated/backend-api/thereabout";
     p {
       color: var(--app-muted);
     }
-    code {
-      overflow-wrap: anywhere;
-    }
+    code { overflow-wrap: anywhere; }
+    .mcp-tools { margin:0; }
+    .mcp-tools > div { padding:1rem 0; border-top:1px solid var(--app-border); }
+    dt { display:flex; align-items:baseline; justify-content:space-between; gap:1rem; }
+    dd { margin:.5rem 0 0; color:var(--app-muted); line-height:1.5; }
+    .tool-mode { color:var(--app-muted); font-size:.8rem; flex:none; }
   `,
 })
 export class FinanceMcpSettingsComponent {
@@ -69,7 +84,16 @@ export class FinanceMcpSettingsComponent {
   readonly loading = signal(false);
   readonly error = signal("");
 
-  constructor() { this.destroyRef.onDestroy(() => this.hide()); }
+  readonly endpoints = signal<FinanceMcpEndpoint[]>([]);
+  readonly catalogLoading = signal(true);
+  readonly catalogError = signal('');
+  constructor() {
+    this.destroyRef.onDestroy(() => this.hide());
+    this.api.financeMcpCatalog().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: catalog => { this.endpoints.set(catalog.endpoints); this.catalogLoading.set(false); },
+      error: () => { this.catalogError.set('Tools could not be loaded. Reopen this tab to retry.'); this.catalogLoading.set(false); }
+    });
+  }
 
   reveal() {
     if (this.revealed() || this.loading()) return;

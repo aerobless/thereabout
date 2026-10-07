@@ -81,6 +81,11 @@ public class FinanceController {
     return categories.save(users.current(), input);
   }
 
+  @PostMapping("/transactions/search")
+  public GenFinanceTransactionPage searchTransactions(@Valid @RequestBody GenFinanceTransactionQuery input) {
+    return reads.transactions(users.current(), input);
+  }
+
   @GetMapping("/transactions")
   public GenFinanceTransactionPage financeListTransactions(
       @Valid @ModelAttribute GenFinanceTransactionQuery query) {

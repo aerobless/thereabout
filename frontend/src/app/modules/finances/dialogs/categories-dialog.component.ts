@@ -1,3 +1,4 @@
+import {CategoryLabelComponent} from "../shared/category-label.component";
 import { ChangeDetectionStrategy, Component, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
@@ -7,13 +8,12 @@ import { FinanceContext, FinanceDialogs, FinanceCategory } from "../shared/finan
   selector: "finance-categories-dialog",
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CategoryLabelComponent,CommonModule, ReactiveFormsModule],
   templateUrl: "./categories-dialog.component.html",
   styleUrl: "./dialog.scss",
 })
 export class CategoriesDialogComponent {
   readonly context = inject(FinanceContext);
-  readonly dialogs = inject(FinanceDialogs);
   private fb = inject(FormBuilder).nonNullable;
   get saving() {
     return this.context.saving();

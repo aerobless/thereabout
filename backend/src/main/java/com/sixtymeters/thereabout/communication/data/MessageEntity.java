@@ -36,6 +36,12 @@ public class MessageEntity {
     @JoinColumn(name = "receiver_id", nullable = false)
     private IdentityInApplicationEntity receiver;
 
+    @ElementCollection
+    @CollectionTable(name = "message_archive_user", joinColumns = @JoinColumn(name = "message_id"))
+    @Column(name = "user_id", nullable = false)
+    @Builder.Default
+    private java.util.Set<Long> archiveUserIds = new java.util.HashSet<>();
+
     private String subject;
 
     @Column(columnDefinition = "TEXT")

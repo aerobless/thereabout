@@ -1,3 +1,4 @@
+import {GroupMembersComponent} from './group-members.component';
 import {fullName} from '../../../shared/identity-names';
 import {IdentityEditorComponent} from '../identity-editor/identity-editor.component';
 import { AppModalComponent } from '../../../shared/modal/app-modal.component';
@@ -14,7 +15,7 @@ import {Identity, IdentityService} from '../../../../../generated/backend-api/th
 
 @Component({
     selector: 'app-identity-detail',
-    imports: [
+    imports: [GroupMembersComponent,
         IdentityEditorComponent,
         AppModalComponent,
         CreateUserDialogComponent,

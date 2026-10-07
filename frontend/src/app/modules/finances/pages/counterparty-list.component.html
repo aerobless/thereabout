@@ -1,0 +1,31 @@
+<section class="panel">
+  @if (state().error) { <p role="alert" class="alert error">{{state().error}}</p> }
+  <p-table [value]="items()" [lazy]="true" [lazyLoadOnInit]="false" [paginator]="true" [rows]="50" [first]="(filters().page ?? 0)*50" [totalRecords]="state().data?.total ?? 0" [loading]="state().loading" (onPage)="page($event)" [showCurrentPageReport]="true" currentPageReportTemplate="{first}–{last} of {totalRecords} counterparties">
+    <ng-template #caption><div class="table-caption"><h2>Counterparties</h2><span>{{selected().length}} selected</span><button class="app-button primary" [disabled]="selected().length < 2 || selected().length > 100" (click)="open()">Combine counterparties</button></div></ng-template>
+    <ng-template #header>
+      <tr><th></th><th>Name</th><th>Kind</th><th>Status</th></tr>
+      <tr class="column-filters"><th></th><th><input aria-label="Search counterparties" placeholder="Search names or aliases…" [(ngModel)]="q" (ngModelChange)="searchChanges.next()" /></th><th><p-select ariaLabel="Counterparty kind" [options]="kindOptions" optionLabel="label" optionValue="value" [(ngModel)]="kind" (onChange)="filter()" appendTo="body" /></th><th><p-select ariaLabel="Counterparty status" [options]="statusOptions" optionLabel="label" optionValue="value" [(ngModel)]="active" (onChange)="filter()" appendTo="body" /></th></tr>
+    </ng-template>
+    <ng-template #body let-c><tr><td><input type="checkbox" [attr.aria-label]="'Select ' + c.name" [checked]="checked(c.id)" (change)="toggle(c,$event)" /></td><td><a class="counterparty-name" [routerLink]="['/finances/counterparties',c.id]"><finance-counterparty-logo [counterparty]="c" />{{c.name}}</a></td><td>@for (kind of c.accountKinds; track kind) { <span class="badge">{{kind}}</span> }</td><td><span class="status" [class.inactive]="!c.active">{{c.active ? 'Active' : 'Inactive'}}</span></td></tr></ng-template>
+    <ng-template #emptymessage><tr><td colspan="4" class="empty">No counterparties match these filters.</td></tr></ng-template>
+  </p-table>
+</section>
+<app-modal [visible]="visible()" (visibleChange)="close()" header="Combine counterparties" styleClass="finance-dialog" [dialogStyle]="{width:'48rem', maxWidth:'calc(100vw - 2rem)'}" [dismissible]="!context.saving() && !loadingPreview()">
+  <div class="counterparty-merge">
+    <p>Selected accounts will share one name and aliases. Transaction descriptions and booked amounts stay unchanged.</p>
+    <div class="form-grid"><label>Display name<input [(ngModel)]="name" (ngModelChange)="changed()" [disabled]="context.saving() || loadingPreview()" /></label><label>Website<input [(ngModel)]="websiteUrl" (ngModelChange)="changed()" placeholder="https://example.com" [disabled]="context.saving() || loadingPreview()" /></label></div>
+    <label>Keep this identity<p-select [options]="selected()" optionLabel="name" optionValue="id" [(ngModel)]="targetId" (onChange)="changed()" [disabled]="context.saving() || loadingPreview()" appendTo="body" /></label>
+    @if (loadingPreview()) { <p role="status">Preparing preview…</p> }
+    @if (preview(); as p) {
+      <p><strong>{{p.selected.length}} counterparties</strong> · {{p.affectedTransactions}} affected transactions</p>
+      <h3>Selected counterparties</h3>
+      <ul class="merge-selection">@for (counterparty of previewSelection(); track counterparty.id) {
+        <li><strong>{{counterparty.name}}</strong><span>@for (kind of counterparty.accountKinds; track kind) { <span class="badge">{{kind}}</span> }</span></li>
+      }</ul>
+      <h3>Resulting aliases</h3><div class="alias-chips">@for (alias of p.aliases; track alias) { <span class="badge">{{alias}}</span> }</div>
+      @for (conflict of p.conflicts; track conflict) { <p role="alert">{{conflict}}</p> }
+    }
+    @if (error()) { <p role="alert" class="alert error">{{error()}}</p> }
+  </div>
+  <ng-template #footer><button class="app-button" (click)="close()" [disabled]="context.saving() || loadingPreview()">Cancel</button>@if (!preview()) { <button class="app-button primary" [disabled]="loadingPreview() || !name.trim()" (click)="review()">Preview combination</button> } @else { <button class="app-button primary" [disabled]="context.saving() || !!preview()?.conflicts?.length" (click)="combine()">{{context.saving() ? 'Combining…' : 'Combine counterparties'}}</button> }</ng-template>
+</app-modal>

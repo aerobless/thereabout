@@ -46,6 +46,8 @@ public class FinanceMcpConfiguration {
       com.sixtymeters.thereabout.access.UserContext users,
       FinanceReadRepository reads,
       AccountService accounts,
+      CounterpartyService counterparties,
+      McpToolCatalog catalog,
       CategoryService categories,
       TransactionService transactions,
       ValuationService valuations,
@@ -59,7 +61,7 @@ public class FinanceMcpConfiguration {
       Validator validator)
       throws IOException {
     JsonNode schemas = new FinanceOpenApiSchemas(json).load();
-    var tools = new ToolFactory(json, validator, schemas);
+    var tools = new ToolFactory(json, validator, schemas, catalog);
     var builder =
         McpServer.sync(transport)
             .serverInfo("thereabout-finances", "2.0.0")
@@ -80,6 +82,10 @@ public class FinanceMcpConfiguration {
         tools.tool("imports.cancel", false, GenFinanceImportQuery.class, input -> imports.cancel(users.integration(), input)),
         tools.tool("imports.approve", false, GenFinanceImportApproveInput.class, input -> imports.approve(users.integration(), input)),
         tools.tool("overview", true, GenFinancePeriodQuery.class, input -> reports.overview(users.integration(), input)),
+        tools.tool("counterparties.list", true, GenFinanceCounterpartyQuery.class, input -> counterparties.list(users.integration(), input)),
+        tools.tool("counterparties.get", true, GenFinanceCounterpartyId.class, input -> counterparties.get(users.integration(), input.getId())),
+        tools.tool("counterparties.merge_preview", true, GenFinanceCounterpartyMergePreviewInput.class, input -> counterparties.preview(users.integration(), input)),
+        tools.tool("counterparties.merge", false, GenFinanceCounterpartyMergeInput.class, input -> counterparties.merge(users.integration(), input)),
         tools.tool("accounts.list", true, GenFinanceAccountQuery.class, input -> reads.accounts(users.integration(), input)),
         tools.tool("accounts.save", false, GenFinanceAccountInput.class, input -> accounts.save(users.integration(), input)),
         tools.tool("categories.list", true, EmptyInput.class, ignored -> reads.categories()),
@@ -130,7 +136,7 @@ public class FinanceMcpConfiguration {
   /** Maps SDK JSON at the transport boundary only; application services receive typed inputs. */
   public record EmptyInput() {}
 
-  private record ToolFactory(ObjectMapper json, Validator validator, JsonNode schemas) {
+  private record ToolFactory(ObjectMapper json, Validator validator, JsonNode schemas, McpToolCatalog catalog) {
     @SuppressWarnings("unchecked")
     <I, R> McpServerFeatures.SyncToolSpecification tool(
         String operation, boolean read, Class<I> inputType, Function<I, R> handler) {
@@ -141,14 +147,12 @@ public class FinanceMcpConfiguration {
           McpSchema.Tool.builder("finance_" + operation.replace('.', '_'), schema)
               .description(
                   operation.startsWith("splitwise.") ? splitwiseDescription(operation) : operation.startsWith("import_hints.") ? "Manage saved account guidance for future imports. Any user's main account can be selected; changes never reinterpret existing drafts. Writes require requestKey; removal requires id and version."
-                      : operation.startsWith("imports.") ? importDescription(operation) : "Finance "
-                      + operation
-                      + ". Monetary values are decimal strings; writes require requestKey and edits"
-                      + " require version.")
+                      : operation.startsWith("imports.") ? importDescription(operation) : description(operation))
               .annotations(
                   new McpSchema.ToolAnnotations(
                       operation, read, !read && !operation.startsWith("imports."), !operation.equals("imports.prepare"), operation.equals("rates.refresh") || operation.equals("imports.prepare") || operation.equals("splitwise.sync"), false))
               .build();
+      catalog.register(tool, read);
       return McpServerFeatures.SyncToolSpecification.builder()
           .tool(tool)
           .callHandler(
@@ -186,6 +190,35 @@ public class FinanceMcpConfiguration {
                 }
               })
           .build();
+    }
+
+    private String description(String operation) {
+      return switch (operation) {
+        case "counterparties.list" -> "Search canonical counterparties and aliases, with pagination and direction/status filters.";
+        case "counterparties.get" -> "Read canonical name, website, aliases, associated ledger accounts and current version. Follows combined IDs.";
+        case "counterparties.merge_preview" -> "Preview combining 2–100 counterparties: surviving identity, aliases, directions/currencies, affected transaction count and all current versions. Read-only; preserves financial history.";
+        case "counterparties.merge" -> "Atomically combine the reviewed counterparties. Supply ids, targetId, name, websiteUrl, versions for every selected identity and requestKey. Rejects stale versions and own accounts; idempotent retries. Preserves postings, balances, descriptions, source IDs and Splitwise state.";
+        case "accounts.list" -> "Search ledger accounts by owner, name, direction and status; returns exact balances and versions.";
+        case "accounts.save" -> "Create or update an account. Requires requestKey and version for edits; preserves posted currency and counterparty direction.";
+        case "currencies.list" -> "List supported currencies, precision and enabled status.";
+        case "categories.list" -> "List available transaction categories and their current versions.";
+        case "categories.save" -> "Create or rename a category. Requires requestKey and version for edits.";
+        case "transactions.list" -> "Search visible transactions with server pagination, categories and AND/OR calendar-day rules.";
+        case "transactions.get" -> "Read a transaction's exact amounts, accounts, provenance and change history.";
+        case "transactions.save" -> "Create or edit a transaction and both ledger movements atomically; requires requestKey and version for edits.";
+        case "transactions.delete" -> "Reversibly delete a transaction and its postings; requires id, version and requestKey.";
+        case "transactions.restore" -> "Restore a deleted transaction and its postings; requires id, version and requestKey.";
+        case "transactions.categorize" -> "Assign a category to selected transactions with expected versions and requestKey.";
+        case "valuations.preview" -> "Preview a reported account valuation and derived correction without changing the ledger.";
+        case "valuations.save" -> "Record a valuation and its linked correction atomically; requires requestKey.";
+        case "valuations.list" -> "List reported account valuations and linked corrections.";
+        case "overview" -> "Read account balances, net worth and completeness warnings for the selected period.";
+        case "reports" -> "Read income, expenses, categories and investment reporting for a selected period.";
+        case "rates.list" -> "List stored dated exchange rates, sources and current versions.";
+        case "rates.save" -> "Save a manual dated exchange rate; requires current version and requestKey.";
+        case "rates.refresh" -> "Fetch ECB reference rates without changing booked transaction amounts; requires requestKey.";
+        default -> throw new IllegalArgumentException("Missing MCP tool description: " + operation);
+      };
     }
 
     private String splitwiseDescription(String operation) {

@@ -1,4 +1,15 @@
 paths:
+  Catalog:
+    get:
+      tags: [Finances]
+      operationId: financeMcpCatalog
+      summary: List actual registered MCP tools without credentials; administrator only.
+      responses:
+        '200':
+          description: Registered endpoints and tools.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FinanceMcpCatalog'}
   _mcp-key:
     get:
       tags: [Finances]
@@ -23,3 +34,27 @@ paths:
           description: Request outside the allowed origin or network
         '404':
           description: Finances are disabled
+components:
+  schemas:
+    FinanceMcpCatalog:
+      type: object
+      required: [endpoints]
+      properties:
+        endpoints:
+          type: array
+          items: {$ref: '#/components/schemas/FinanceMcpEndpoint'}
+    FinanceMcpEndpoint:
+      type: object
+      required: [path, tools]
+      properties:
+        path: {type: string}
+        tools:
+          type: array
+          items: {$ref: '#/components/schemas/FinanceMcpTool'}
+    FinanceMcpTool:
+      type: object
+      required: [name, description, readOnly]
+      properties:
+        name: {type: string}
+        description: {type: string}
+        readOnly: {type: boolean}

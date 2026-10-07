@@ -44,23 +44,24 @@ class OpenAiServiceTest {
   @Test
   void storesReplacementAndRemovalWithoutReturningSecrets() {
     var ai = service();
-    assertThat(ai.settings().getModel()).isEqualTo("gpt-6-luna");
+    assertThat(ai.settings().getUseCases().getFirst().getModel()).isEqualTo("gpt-6-luna");
     assertThatThrownBy(() -> ai.respond("test", "test", OpenAiService.ConnectionResult.class))
         .hasMessageContaining("Configure");
-    var saved = ai.save(new GenOpenAiSettingsInput().model("gpt-6-luna").apiKey("synthetic-key"));
+    var saved = ai.save(new GenOpenAiSettingsInput().apiKey("synthetic-key"));
     assertThat(saved.getConfigured()).isTrue();
     assertThat(saved.toString()).doesNotContain("synthetic-key");
-    ai.save(new GenOpenAiSettingsInput().model("another-model"));
+    ai.save(new GenOpenAiSettingsInput());
     assertThat(values.get(ConfigurationKey.OPENAI_API_KEY).getConfigValue())
         .isEqualTo("synthetic-key");
-    ai.save(new GenOpenAiSettingsInput().model("another-model").removeKey(true));
+    ai.save(new GenOpenAiSettingsInput().removeKey(true));
     assertThat(ai.settings().getConfigured()).isFalse();
   }
 
   @Test
   void exercisesOfficialSdkWireFormatAndTypedResponseWithoutExternalApiCalls() throws Exception {
     var ai = service();
-    ai.save(new GenOpenAiSettingsInput().model("gpt-6-luna").apiKey("synthetic-key"));
+    ai.save(new GenOpenAiSettingsInput().apiKey("synthetic-key"));
+    values.put(ConfigurationKey.OPENAI_MODEL, ConfigurationEntity.builder().configKey(ConfigurationKey.OPENAI_MODEL).configValue("ignored-legacy-model").build());
     var request = new AtomicReference<String>();
     var response =
         new AtomicReference<String>(
@@ -95,6 +96,7 @@ class OpenAiServiceTest {
           .isEqualTo("ready");
       var json = new ObjectMapper();
       var sent = json.readTree(request.get());
+      assertThat(sent.path("model").asString()).isEqualTo(ai.settings().getUseCases().getFirst().getModel());
       assertThat(sent.path("store").asBoolean()).isFalse();
       assertThat(sent.at("/text/format/strict").asBoolean()).isTrue();
       assertThat(sent.at("/reasoning/effort").asString()).isEqualTo("medium");

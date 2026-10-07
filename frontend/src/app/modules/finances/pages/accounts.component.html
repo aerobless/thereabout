@@ -10,28 +10,28 @@
 <div class="toolbar">
   <div class="segmented">
     <button class="app-button"
-      [class.active]="!counterparties && selectedUserId() === null"
+      [class.active]="!counterparties() && selectedUserId() === null"
       (click)="selectUser(null)"
     >
       Your accounts
     </button>
     @for (user of otherUsers(); track user.id) {
-      <button class="app-button" [class.active]="!counterparties && selectedUserId() === user.id" (click)="selectUser(user.id)">
+      <button class="app-button" [class.active]="!counterparties() && selectedUserId() === user.id" (click)="selectUser(user.id)">
         {{ user.name }}
       </button>
     }
     <button class="app-button"
-      [class.active]="counterparties"
+      [class.active]="counterparties()"
       (click)="selectCounterparties()"
     >
       Counterparties
     </button>
   </div>
   <button class="app-button primary" (click)="openAccount()">
-    + Add {{ counterparties ? "counterparty" : "account" }}
+    + Add {{ counterparties() ? "counterparty" : "account" }}
   </button>
 </div>
-@if (!counterparties) {
+@if (!counterparties()) {
   <div class="section-search">
     <i class="pi pi-search" aria-hidden="true"></i>
     <input
@@ -70,86 +70,5 @@
     }
   }
 } @else {
-  <section class="panel">
-    <p-table
-      [value]="accounts"
-      [lazy]="true"
-      [lazyLoadOnInit]="false"
-      [paginator]="true"
-      [rows]="50"
-      [first]="page * 50"
-      [totalRecords]="total"
-      (onPage)="pageChanged($event)"
-      [loading]="busy"
-      [showCurrentPageReport]="true"
-      currentPageReportTemplate="{first}–{last} of {totalRecords} counterparties"
-    >
-      <ng-template #caption
-        ><div class="table-caption">
-          <h2>Counterparties</h2>
-          <span>{{ total }} entries</span>
-        </div></ng-template
-      >
-      <ng-template #header>
-        <tr>
-          <th>Name</th>
-          <th>Kind</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-        <tr class="column-filters">
-          <th>
-            <input
-              aria-label="Search counterparties"
-              placeholder="Search by name…"
-              [(ngModel)]="accountSearch"
-              (ngModelChange)="searchChanges.next()"
-            />
-          </th>
-          <th>
-            <p-select
-              ariaLabel="Counterparty kind"
-              [options]="kindOptions"
-              optionLabel="label"
-              optionValue="value"
-              [(ngModel)]="kindFilter"
-              (onChange)="filterAccounts()"
-              appendTo="body"
-            />
-          </th>
-          <th>
-            <p-select
-              ariaLabel="Counterparty status"
-              [options]="statusOptions"
-              optionLabel="label"
-              optionValue="value"
-              [(ngModel)]="activeFilter"
-              (onChange)="filterAccounts()"
-              appendTo="body"
-            />
-          </th>
-          <th></th>
-        </tr>
-      </ng-template>
-      <ng-template #body let-a
-        ><tr>
-          <td>{{ a.name }}</td>
-          <td>{{ label(a.kind) }}</td>
-          <td>
-            <span class="status" [class.inactive]="!a.active">{{
-              a.active ? "Active" : "Inactive"
-            }}</span>
-          </td>
-          <td><button class="app-button" (click)="openAccount(a)">Edit</button></td>
-        </tr></ng-template
-      >
-      <ng-template #emptymessage
-        ><tr>
-          <td colspan="4" class="empty">
-            No counterparties match these filters.
-          </td>
-        </tr></ng-template
-      >
-    </p-table>
-  </section>
+  <finance-counterparties />
 }

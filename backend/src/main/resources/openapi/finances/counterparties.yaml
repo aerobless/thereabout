@@ -1,0 +1,173 @@
+paths:
+  Collection:
+    get:
+      tags: [Finances]
+      operationId: financeListCounterparties
+      summary: Search canonical counterparties and aliases.
+      parameters:
+        - {in: query, name: q, schema: {type: string}}
+        - {in: query, name: page, schema: {type: integer, minimum: 0}}
+        - {in: query, name: pageSize, schema: {type: integer, minimum: 1, maximum: 200}}
+        - {in: query, name: kind, schema: {type: string, enum: [EXPENSE, REVENUE]}}
+        - {in: query, name: active, schema: {type: boolean}}
+      responses:
+        '200':
+          description: Canonical counterparties.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FinanceCounterpartyPage'}
+  Detail:
+    parameters:
+      - {in: path, name: id, required: true, schema: {type: integer, format: int64}}
+    get:
+      tags: [Finances]
+      operationId: financeGetCounterparty
+      summary: Read canonical counterparty, aliases and associated accounts; follows merged IDs.
+      responses:
+        '200':
+          description: Counterparty.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FinanceCounterparty'}
+    put:
+      tags: [Finances]
+      operationId: financeSaveCounterparty
+      summary: Update display name, website and the complete alias list.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FinanceCounterpartyInput'}
+      responses:
+        '200':
+          description: Saved counterparty.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FinanceCounterparty'}
+  Preview:
+    post:
+      tags: [Finances]
+      operationId: financePreviewCounterpartyMerge
+      summary: Preview combining counterparties without changing the ledger.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FinanceCounterpartyMergePreviewInput'}
+      responses:
+        '200':
+          description: Reviewed selection and versions.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FinanceCounterpartyMergeResult'}
+  Merge:
+    post:
+      tags: [Finances]
+      operationId: financeMergeCounterparties
+      summary: Atomically combine the reviewed identities; preserves every financial posting.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FinanceCounterpartyMergeInput'}
+      responses:
+        '200':
+          description: Idempotent combination receipt.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FinanceCounterpartyMergeResult'}
+        '409': {description: Selection changed or request key reused with different arguments.}
+components:
+  schemas:
+    FinanceCounterparty:
+      type: object
+      required: [id, name, aliases, accounts, version, active]
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        websiteUrl: {type: string}
+        aliases: {type: array, items: {type: string}}
+        accounts:
+          type: array
+          items: {$ref: 'accounts.yaml#/components/schemas/FinanceAccount'}
+        version: {type: integer, format: int64}
+        active: {type: boolean}
+    FinanceCounterpartyQuery:
+      type: object
+      properties:
+        q: {type: string}
+        page: {type: integer, minimum: 0}
+        pageSize: {type: integer, minimum: 1, maximum: 200}
+        kind: {type: string, enum: [EXPENSE, REVENUE]}
+        active: {type: boolean}
+    FinanceCounterpartyId:
+      type: object
+      required: [id]
+      properties:
+        id: {type: integer, format: int64, minimum: 1}
+    FinanceCounterpartyPage:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/FinanceCounterparty'}}
+        total: {type: integer, format: int64}
+        page: {type: integer}
+        pageSize: {type: integer}
+    FinanceCounterpartyInput:
+      type: object
+      required: [name, aliases, version, requestKey]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 1024}
+        websiteUrl: {type: string, maxLength: 2048}
+        aliases:
+          type: array
+          maxItems: 500
+          items: {type: string, minLength: 1, maxLength: 1024}
+        version: {type: integer, format: int64}
+        requestKey: {type: string, minLength: 1, maxLength: 100}
+    FinanceCounterpartyVersion:
+      type: object
+      required: [id, version]
+      properties:
+        id: {type: integer, format: int64}
+        version: {type: integer, format: int64}
+    FinanceCounterpartyMergePreviewInput:
+      type: object
+      required: [ids, targetId, name]
+      properties:
+        ids:
+          type: array
+          minItems: 2
+          maxItems: 100
+          items: {type: integer, format: int64}
+        targetId: {type: integer, format: int64}
+        name: {type: string, minLength: 1, maxLength: 1024}
+        websiteUrl: {type: string, maxLength: 2048}
+    FinanceCounterpartyMergeInput:
+      type: object
+      required: [ids, targetId, name, versions, requestKey]
+      properties:
+        ids:
+          type: array
+          minItems: 2
+          maxItems: 100
+          items: {type: integer, format: int64}
+        targetId: {type: integer, format: int64}
+        name: {type: string, minLength: 1, maxLength: 1024}
+        websiteUrl: {type: string, maxLength: 2048}
+        versions:
+          type: array
+          minItems: 2
+          maxItems: 100
+          items: {$ref: '#/components/schemas/FinanceCounterpartyVersion'}
+        requestKey: {type: string, minLength: 1, maxLength: 100}
+    FinanceCounterpartyMergeResult:
+      type: object
+      required: [counterparty, selected, mergedIds, aliases, affectedTransactions, conflicts]
+      properties:
+        counterparty: {$ref: '#/components/schemas/FinanceCounterparty'}
+        selected: {type: array, items: {$ref: '#/components/schemas/FinanceCounterparty'}}
+        mergedIds: {type: array, items: {type: integer, format: int64}}
+        aliases: {type: array, items: {type: string}}
+        affectedTransactions: {type: integer, format: int64}
+        conflicts: {type: array, items: {type: string}}

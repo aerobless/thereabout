@@ -1,4 +1,20 @@
 paths:
+  Search:
+    post:
+      tags: [Finances]
+      operationId: financeSearchTransactions
+      summary: Search the complete visible transaction population with AND/OR calendar-day rules.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FinanceTransactionQuery'}
+      responses:
+        '200':
+          description: Filtered page and complete count.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FinanceTransactionPage'}
   _transactions:
     get:
       operationId: financeListTransactions
@@ -360,6 +376,22 @@ paths:
               $ref: '#/components/schemas/FinanceBulkCategoryInput'
 components:
   schemas:
+    FinanceDateFilter:
+      type: object
+      required: [operator, rules]
+      properties:
+        operator: {type: string, enum: [and, or]}
+        rules:
+          type: array
+          minItems: 1
+          maxItems: 2
+          items: {$ref: '#/components/schemas/FinanceDateRule'}
+    FinanceDateRule:
+      type: object
+      required: [mode, date]
+      properties:
+        mode: {type: string, enum: [dateIs, dateIsNot, dateBefore, dateAfter, dateOnOrBefore, dateOnOrAfter]}
+        date: {type: string, format: date}
     FinanceTransactionType:
       type: string
       enum:
@@ -380,6 +412,8 @@ components:
       type: object
       additionalProperties: false
       properties:
+        sourceCounterpartyId: {type: integer, format: int64}
+        destinationCounterpartyId: {type: integer, format: int64}
         id:
           type: integer
           format: int64
@@ -670,6 +704,9 @@ components:
       type: object
       additionalProperties: false
       properties:
+        counterpartyId: {type: integer, format: int64}
+        dateFilter:
+          $ref: '#/components/schemas/FinanceDateFilter'
         page:
           type: integer
           minimum: 0

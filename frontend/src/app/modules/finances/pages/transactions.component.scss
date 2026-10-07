@@ -2,3 +2,5 @@
 @use "../shared/common";
 
 @include responsive.layout;
+
+.date-filter-footer { display:flex; justify-content:space-between; gap:1rem; padding:1rem; }

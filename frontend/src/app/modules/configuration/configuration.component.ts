@@ -25,6 +25,7 @@ export class ConfigurationComponent {
     {label: 'Connections', path: '/configuration/connections'},
     {label: 'Location & imports', path: '/configuration/location-imports'},
     {label: 'API & access', path: '/configuration/api-access'},
+    {label: 'Finances', path: '/configuration/finances'},
     {label: 'About', path: '/configuration/about'}
   ];
   constructor() {

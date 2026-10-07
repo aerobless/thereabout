@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class FinanceSettingsController {
   private final FinanceMcpKeyService keys;
+  private final McpToolCatalog catalog;
+
+  @GetMapping("/api/finances/configuration/mcp-tools")
+  public com.sixtymeters.thereabout.generated.model.GenFinanceMcpCatalog catalog() { return catalog.catalog(); }
 
   @GetMapping(value = "/api/finances/configuration/mcp-key", produces = "text/plain")
   public ResponseEntity<String> financeGetMcpKey() {

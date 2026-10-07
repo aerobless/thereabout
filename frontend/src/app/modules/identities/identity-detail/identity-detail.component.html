@@ -54,6 +54,8 @@
       </div>
     </p-card>
 
+    @if(identity.isGroup && canManageUsers()) { <p-card><app-group-members [groupId]="identity.id" /></p-card> }
+
     <p-card>
       <ng-template #header><div class="card-header">
         <i class="pi pi-cog card-header-icon" aria-hidden="true"></i>

@@ -1,4 +1,33 @@
 paths:
+  GroupMembers:
+    parameters:
+      - {in: path, name: id, required: true, schema: {type: integer, format: int64}}
+    get:
+      tags: [identity]
+      operationId: getGroupMembers
+      summary: Read explicit group history access; administrator only.
+      responses:
+        '200':
+          description: Membership and current version.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GroupMembers'}
+    put:
+      tags: [identity]
+      operationId: saveGroupMembers
+      summary: Replace group members; membership grants complete group history.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GroupMembers'}
+      responses:
+        '200':
+          description: Updated membership.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GroupMembers'}
+        '409': {description: Membership changed; reload first.}
   Identity:
     get:
       summary: Get all identities.
@@ -361,6 +390,15 @@ paths:
 
 components:
   schemas:
+    GroupMembers:
+      type: object
+      required: [version, userIds]
+      properties:
+        version: {type: integer, format: int64}
+        userIds:
+          type: array
+          maxItems: 100
+          items: {type: integer, format: int64}
     UserRole:
       type: string
       enum: [ADMIN, USER]

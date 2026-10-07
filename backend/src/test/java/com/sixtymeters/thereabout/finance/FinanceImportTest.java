@@ -61,8 +61,14 @@ class FinanceImportTest {
         "INSERT INTO finance_account(id,name,kind,currency,user_id) VALUES(1,'Shared"
             + " cash','CASH','CHF',100051),(2,'Shop','EXPENSE','CHF',NULL),(3,'EUR"
             + " cash','CASH','EUR',100051)");
+    db.update("DELETE FROM finance_counterparty_alias");
+    db.update("UPDATE finance_counterparty SET merged_into_id=NULL");
+    db.update("DELETE FROM finance_counterparty");
+    db.update("INSERT INTO finance_counterparty(id,name) VALUES(2,'Shop')");
+    db.update("INSERT INTO finance_counterparty_alias(counterparty_id,alias) VALUES(2,'Shop')");
+    db.update("UPDATE finance_account SET counterparty_id=2 WHERE id=2");
     db.update("INSERT INTO finance_category(id,name) VALUES(10,'Imported category'),(11,'Food')");
-    when(ai.settings()).thenReturn(new GenOpenAiSettings().configured(true).model("test-model"));
+    when(ai.settings()).thenReturn(new GenOpenAiSettings().configured(true).useCases(com.sixtymeters.thereabout.ai.AiUseCases.metadata()));
     when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList(), anyList()))
         .thenAnswer(
             invocation -> {
@@ -208,6 +214,8 @@ class FinanceImportTest {
   @Test
   void existingCategoryAndCounterpartyNamesResolveBeforePreviewWithoutCreatingDuplicates() {
     db.update("UPDATE finance_account SET name='Zühlke Engineering AG' WHERE id=2");
+    db.update("UPDATE finance_counterparty SET name='Zühlke Engineering AG' WHERE id=2");
+    db.update("INSERT INTO finance_counterparty_alias(counterparty_id,alias) VALUES(2,'Zuehlke engineering A.G.')");
     var proposal = new ImportInterpreter.Proposal();
     proposal.rowId = "row-1";
     proposal.type = "WITHDRAWAL";
@@ -286,6 +294,9 @@ class FinanceImportTest {
     db.update(
         "INSERT INTO finance_account(id,name,kind,currency)"
             + " VALUES(4,'Shop','REVENUE','CHF'),(5,'S.h.o.p','EXPENSE','CHF')");
+    db.update("INSERT INTO finance_counterparty(id,name) VALUES(4,'Shop refunds'),(5,'S.h.o.p')");
+    db.update("INSERT INTO finance_counterparty_alias(counterparty_id,alias) VALUES(4,'Shop'),(5,'Shop')");
+    db.update("UPDATE finance_account SET counterparty_id=id WHERE id IN (4,5)");
     var job = ready(prepare("2026-01-01;Shop;12.12"));
     var row = job.getRows().getFirst().otherAccountId(null).counterpartyName("shop");
     job =

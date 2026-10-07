@@ -4,6 +4,20 @@ info:
   title: Frontend REST API
   version: "1.0"
 paths:
+  /api/finances/configuration/mcp-tools:
+    $ref: 'openapi/finances/settings.yaml#/paths/Catalog'
+  /api/finances/transactions/search:
+    $ref: 'openapi/finances/transactions.yaml#/paths/Search'
+  /api/finances/counterparties:
+    $ref: 'openapi/finances/counterparties.yaml#/paths/Collection'
+  /api/finances/counterparties/{id}:
+    $ref: 'openapi/finances/counterparties.yaml#/paths/Detail'
+  /api/finances/counterparties/merge/preview:
+    $ref: 'openapi/finances/counterparties.yaml#/paths/Preview'
+  /api/finances/counterparties/merge:
+    $ref: 'openapi/finances/counterparties.yaml#/paths/Merge'
+  /backend/api/v1/identity/{id}/members:
+    $ref: 'openapi/communication.yaml#/paths/GroupMembers'
   /api/finances/imports:
     $ref: 'openapi/finances/imports.yaml#/paths/_imports'
   /api/finances/imports/{jobId}:
@@ -206,6 +220,10 @@ components:
       scheme: bearer
       description: Ingestion API key from Configuration, for clients outside Cloudflare Access.
   schemas:
+    FinanceCounterpartyQuery:
+      $ref: 'openapi/finances/counterparties.yaml#/components/schemas/FinanceCounterpartyQuery'
+    FinanceCounterpartyId:
+      $ref: 'openapi/finances/counterparties.yaml#/components/schemas/FinanceCounterpartyId'
     SplitwiseCategorySaveInput:
       $ref: openapi/finances/splitwise.yaml#/components/schemas/SplitwiseCategorySaveInput
     SplitwiseContext:

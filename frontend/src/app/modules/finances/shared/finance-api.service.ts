@@ -51,20 +51,6 @@ export class FinanceApi {
     );
   }
   transactions(q: FinanceTransactionQuery) {
-    return this.client.financeListTransactions(
-      q.page,
-      q.pageSize,
-      q.q,
-      q.accountId,
-      q.categoryId,
-      q.type,
-      q.effect,
-      q.from,
-      q.to,
-      q.includeDeleted,
-      q.operatingOnly,
-      q.categoryIds,
-      q.sort,
-    );
+    return this.client.financeSearchTransactions(q);
   }
 }

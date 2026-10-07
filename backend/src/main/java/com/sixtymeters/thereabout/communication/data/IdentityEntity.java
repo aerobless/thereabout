@@ -44,6 +44,15 @@ public class IdentityEntity {
     public boolean isUser() { return role != null; }
     public boolean isAdmin() { return role == UserRole.ADMIN; }
 
+    @Version
+    private long membershipVersion;
+
+    @ElementCollection
+    @CollectionTable(name = "identity_group_member", joinColumns = @JoinColumn(name = "group_id"))
+    @Column(name = "user_id", nullable = false)
+    @Builder.Default
+    private java.util.Set<Long> memberUserIds = new java.util.HashSet<>();
+
     private String relationship;
 
     @Column(updatable = false)

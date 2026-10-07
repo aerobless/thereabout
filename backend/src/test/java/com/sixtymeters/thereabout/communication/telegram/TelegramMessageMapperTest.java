@@ -40,7 +40,7 @@ class TelegramMessageMapperTest {
     @Test
     void returnsExistingMessageWithUpdatedBodyForBackfillReconciliation() {
         String sourceIdentifier = "telegram-100-500";
-        MessageEntity existing = MessageEntity.builder()
+        MessageEntity existing = MessageEntity.builder().archiveUserIds(new java.util.HashSet<>(java.util.Set.of(1L)))
                 .id(1L)
                 .sourceIdentifier(sourceIdentifier)
                 .body("🐾 Nullpaw is working…")
@@ -62,7 +62,7 @@ class TelegramMessageMapperTest {
     @Test
     void skipsUnchangedExistingMessageDuringBackfill() {
         String sourceIdentifier = "telegram-100-500";
-        MessageEntity existing = MessageEntity.builder()
+        MessageEntity existing = MessageEntity.builder().archiveUserIds(new java.util.HashSet<>(java.util.Set.of(1L)))
                 .id(1L)
                 .sourceIdentifier(sourceIdentifier)
                 .body("Final response")

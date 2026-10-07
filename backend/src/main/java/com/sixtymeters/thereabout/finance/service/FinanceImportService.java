@@ -28,6 +28,7 @@ public class FinanceImportService {
   private final CategoryService categories;
   private final TransactionService transactions;
   private final FinanceReadRepository reads;
+  private final CounterpartyService counterparties;
   private final FinanceAccountRepository accountRepository;
   private final FinanceImportSourceRepository sources;
   private final FinancePostingRepository postings;
@@ -320,10 +321,7 @@ public class FinanceImportService {
                 String key = kind + ":" + nameKey(name);
                 other = newCounters.get(key);
                 if (other == null) {
-                  var existing =
-                      accountRepository
-                          .findFirstByNameAndKindAndCurrencyAndDeletedFalseOrderByIdAsc(
-                              name, AccountKind.valueOf(kind), job.currency);
+                  var existing = counterparties.matchingAccounts(name, AccountKind.valueOf(kind), job.currency).stream().findFirst();
                   other =
                       existing
                           .map(FinanceAccountEntity::getId)
@@ -470,7 +468,7 @@ public class FinanceImportService {
           require(!text(row.getReason()).isEmpty(), "A skip reason is required");
           continue;
         }
-        resolveAssignments(row, knownCategories, knownCounterparties);
+        resolveAssignments(row, knownCategories, job.currency);
         require(row.getType() != null, "Select a transaction type");
         var date = dateTime(row.getDate(), null, false);
         require(date != null, "Enter a date");
@@ -579,7 +577,7 @@ public class FinanceImportService {
   private void resolveAssignments(
       GenFinanceImportRow row,
       List<GenFinanceCategory> knownCategories,
-      List<FinanceAccountEntity> knownCounterparties) {
+      String currency) {
     if (row.getCategoryId() == null || row.getCategoryId() == 0) {
       row.setCategoryId(null);
       if (!text(row.getCategoryName()).isEmpty()) {
@@ -599,13 +597,7 @@ public class FinanceImportService {
           row.getType() == GenFinanceImportRow.TypeEnum.DEPOSIT
               ? AccountKind.REVENUE
               : AccountKind.EXPENSE;
-      var matches =
-          knownCounterparties.stream()
-              .filter(
-                  a ->
-                      a.getKind() == kind
-                          && nameKey(a.getName()).equals(nameKey(row.getCounterpartyName())))
-              .toList();
+      var matches = counterparties.matchingAccounts(row.getCounterpartyName(), kind, currency);
       require(matches.size() <= 1, "Several existing counterparties match; select the correct one");
       if (matches.size() == 1) {
         row.setOtherAccountId(matches.getFirst().getId());

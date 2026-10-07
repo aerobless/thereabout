@@ -1,38 +1,10 @@
-@if (state().error) {
-  <p role="alert" class="alert error">{{ state().error }}</p>
-}
-<div class="editor">
-  <h2>{{ form.description }}</h2>
-  <p>{{ form.sourceName }} → {{ form.destinationName }}</p>
-  <strong>{{ txAmount(form) }}</strong>
-  <p>
-    {{ form.occurredAt | date: "medium" }} ·
-    {{ form.categoryName || "Uncategorized" }}
-  </p>
-  <p class="notes">{{ form.notes || "No notes" }}</p>
-  @if (form.valuationId) {
-    <p>
-      This transaction is linked to a recorded valuation. Record a new total
-      value on the account to make a correction.
-    </p>
-  } @else {
-    <button class="app-button" [disabled]="form.deleted" (click)="openTransaction(form)">
-      Edit transaction
-    </button>
-  }
-  <p>{{ form.externalReference }}</p>
-  <h3>Change history</h3>
-  @for (h of history; track h.id) {
-    <p>
-      {{ h.createdAt | date: "medium" }} ·
-      {{ h.operation.replace("transactions.", "") | titlecase }}
-    </p>
-    <details>
-      <summary>Recorded changes</summary>
-      <pre>{{ h.beforeJson }}</pre>
-      <pre>{{ h.afterJson }}</pre>
-    </details>
-  } @empty {
-    <p>Imported from Firefly. No local changes.</p>
-  }
+@if (state().error) { <p role="alert" class="alert error">{{state().error}}</p> }
+<div class="transaction-detail">
+  <header class="transaction-summary"><div class="badges"><span class="badge">{{form.type | titlecase}}</span><span class="badge" [class.danger]="form.deleted">{{form.deleted ? 'Deleted' : 'Booked'}}</span>@if(form.syncSource) { <span class="badge">{{form.syncManaged ? 'Splitwise' : 'Managed locally'}}</span> }</div><h2>{{form.description}}</h2><strong class="transaction-amount">{{txAmount(form)}}</strong>@if(form.sourceCurrency !== form.destinationCurrency) { <span class="converted-amount">→ {{context.money(form.destinationAmount,form.destinationCurrency)}}</span> }</header>
+  <section class="transaction-flow" aria-label="Account flow"><div><small>From</small>@if(form.sourceCounterpartyId) { <a [routerLink]="['/finances/counterparties',form.sourceCounterpartyId]" (click)="dialogs.close()">{{form.sourceName}}</a> } @else { <strong>{{form.sourceName}}</strong> }</div><i class="pi pi-arrow-right" aria-hidden="true"></i><div><small>To</small>@if(form.destinationCounterpartyId) { <a [routerLink]="['/finances/counterparties',form.destinationCounterpartyId]" (click)="dialogs.close()">{{form.destinationName}}</a> } @else { <strong>{{form.destinationName}}</strong> }</div></section>
+  <dl class="transaction-facts"><div><dt>Date</dt><dd>{{form.occurredAt | date:'medium'}}</dd></div><div><dt>Category</dt><dd><finance-category [name]="form.categoryName" /></dd></div>@if(form.foreignCurrency) { <div><dt>Original amount</dt><dd>{{context.money(form.foreignAmount,form.foreignCurrency)}}</dd></div> }</dl>
+  @if(form.notes) { <section><h3>Notes</h3><p class="notes">{{form.notes}}</p></section> }
+  @if(form.valuationId) { <p class="alert">This transaction belongs to a recorded valuation. Record a new total value on the account to make a correction.</p> } @else { <div class="actions"><button class="app-button" [disabled]="form.deleted" (click)="openTransaction(form)"><i class="pi pi-pencil" aria-hidden="true"></i> Edit transaction</button></div> }
+  @if(form.externalReference) { <details class="technical-details"><summary>Source reference</summary><code>{{form.externalReference}}</code></details> }
+  <section class="history"><h3>Change history</h3>@for(h of history; track h.id) { <article><header><strong>{{h.operation.replace('transactions.','') | titlecase}}</strong><time>{{h.createdAt | date:'medium'}}</time></header><dl class="change-list">@for(change of changes(h.beforeJson,h.afterJson); track change.label) { <div><dt>{{change.label}}</dt><dd><span class="previous">{{change.before}}</span><i class="pi pi-arrow-right" aria-hidden="true"></i><span>{{change.after}}</span></dd></div> }</dl><details class="technical-details"><summary>Raw audit record</summary><pre>{{h.beforeJson}}</pre><pre>{{h.afterJson}}</pre></details></article> } @empty { <p>No local changes recorded.</p> }</section>
 </div>

@@ -17,9 +17,6 @@
       </p>
     </div>
     <div class="actions">
-      @if (!recent()) {
-        <button class="app-button" (click)="openCategories()">Categories</button>
-      }
       @if (recent()) {
         <a routerLink="/finances/transactions">View all →</a>
       }
@@ -31,17 +28,18 @@
       ><p-select
         ariaLabel="New category"
         [(ngModel)]="bulkCategory"
-        [options]="categoryOptions"
+        [options]="categoryOptions()"
         optionLabel="name"
         optionValue="id"
         appendTo="body"
         [filter]="true"
-      /><button class="app-button" [disabled]="saving" (click)="bulk()">Apply category</button>
+      ><ng-template #item let-c><finance-category [name]="c.name" /></ng-template><ng-template #selectedItem let-c><finance-category [name]="c.name" /></ng-template></p-select><button class="app-button" [disabled]="saving" (click)="bulk()">Apply category</button>
     </div>
   }
   <p-table
     styleClass="transactions"
-    [value]="transactions"
+    [value]="transactions()"
+    [filters]="tableFilters"
     [lazy]="true"
     [lazyLoadOnInit]="false"
     [paginator]="!recent()"
@@ -116,41 +114,18 @@
             />
           </th>
           <th>
-            <details class="date-filter">
-              <summary>
-                <i class="pi pi-calendar"></i>
-                {{ useDates ? from + " – " + to : "Any date" }}
-              </summary>
-              <div class="date-controls">
-                <label class="check"
-                  ><input
-                    type="checkbox"
-                    [(ngModel)]="useDates"
-                    (change)="filterTransactions()"
-                  />Filter dates</label
-                >
-                @if (useDates) {
-                  <label
-                    >From<finance-date-input
-                      ariaLabel="Transaction start"
-                      [(ngModel)]="from"
-                      (dateChange)="filterTransactions()" /></label
-                  ><label
-                    >To<finance-date-input
-                      ariaLabel="Transaction end"
-                      [(ngModel)]="to"
-                      (dateChange)="filterTransactions()"
-                  /></label>
-                }
-              </div>
-            </details>
+            <p-columnfilter #dateColumn field="occurredAt" type="date" display="menu" ariaLabel="Filter transaction date"
+              [matchModeOptions]="dateModes" [maxConstraints]="2" [showApplyButton]="false" [showClearButton]="false">
+              <ng-template #filter let-constraint="filterConstraint"><finance-date-input ariaLabel="Date rule" [ngModel]="dateValue(constraint.value)" (dateChange)="setDate(constraint,$event)" /></ng-template>
+              <ng-template #footer><div class="date-filter-footer"><button class="app-button" (click)="clearDates(dateColumn)">Clear</button><button class="app-button primary" [disabled]="!completeDates(dateColumn.fieldConstraints)" (click)="applyDates(dateColumn)">Apply</button></div></ng-template>
+            </p-columnfilter>
           </th>
           <th>
             @if (!accountId()) {
               <p-select
                 ariaLabel="Filter account"
                 [(ngModel)]="accountFilter"
-                [options]="accountOptions"
+                [options]="accountOptions()"
                 optionLabel="name"
                 optionValue="id"
                 [filter]="true"
@@ -163,7 +138,7 @@
             <p-multiselect
               ariaLabel="Filter categories"
               [(ngModel)]="categoryFilters"
-              [options]="categoryOptions"
+              [options]="categoryOptions()"
               optionLabel="name"
               optionValue="id"
               placeholder="All categories"
@@ -172,7 +147,7 @@
               [showClear]="true"
               (onChange)="filterTransactions()"
               appendTo="body"
-            />
+            ><ng-template #item let-c><finance-category [name]="c.name" /></ng-template></p-multiselect>
           </th>
           <th></th>
           @if (accountId()) {
@@ -207,11 +182,11 @@
         </td>
         <td class="date-cell">{{ t.occurredAt | date: "d MMM y" }}</td>
         <td class="flow">
-          <span>{{ t.sourceName }}</span
-          ><small>→ {{ t.destinationName }}</small>
+          @if (t.sourceCounterpartyId) { <a [routerLink]="['/finances/counterparties',t.sourceCounterpartyId]">{{t.sourceName}}</a> } @else { <span>{{t.sourceName}}</span> }
+          <small>→ @if (t.destinationCounterpartyId) { <a [routerLink]="['/finances/counterparties',t.destinationCounterpartyId]">{{t.destinationName}}</a> } @else { {{t.destinationName}} }</small>
         </td>
         <td>
-          <span class="category">{{ t.categoryName || "Uncategorized" }}</span>
+          <span class="category"><finance-category [name]="t.categoryName" /></span>
         </td>
         <td class="numeric" [class.positive]="t.type === 'DEPOSIT'">
           <strong>{{ txAmount(t) }}</strong>

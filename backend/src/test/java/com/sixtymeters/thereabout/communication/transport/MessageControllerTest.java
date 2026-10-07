@@ -38,7 +38,7 @@ class MessageControllerTest {
         senderApplication.getIdentity().setRole(com.sixtymeters.thereabout.communication.data.UserRole.USER);
         receiverApplication.getIdentity().setFirstName("Anna");
         receiverApplication.getIdentity().setLastName("van der Meer");
-        messageRepository.save(MessageEntity.builder().type("text").source(CommunicationApplication.WHATSAPP)
+        messageRepository.save(MessageEntity.builder().archiveUserIds(new java.util.HashSet<>(java.util.Set.of(1L))).type("text").source(CommunicationApplication.WHATSAPP)
                 .sender(senderApplication).receiver(receiverApplication).body("Hello")
                 .timestamp(LocalDate.of(2026,2,10).atTime(10,0)).build());
         for (String name : java.util.List.of("Theo", "Winter", "Theo Winter")) {
@@ -70,8 +70,10 @@ class MessageControllerTest {
     private IdentityInApplicationEntity senderApplication;
     private IdentityInApplicationEntity receiverApplication;
 
+    @Autowired private org.springframework.jdbc.core.JdbcTemplate db;
     @BeforeEach
     void setUp() {
+        com.sixtymeters.thereabout.testing.TestUsers.owner(db);
         messageRepository.deleteAll();
 
         IdentityEntity senderIdentity = IdentityEntity.builder()
@@ -105,7 +107,7 @@ class MessageControllerTest {
     void testGetMessagesByDate_linkedIdentities() throws Exception {
         LocalDate queryDate = LocalDate.of(2026, 2, 10);
 
-        MessageEntity messageOnDate = MessageEntity.builder()
+        MessageEntity messageOnDate = MessageEntity.builder().archiveUserIds(new java.util.HashSet<>(java.util.Set.of(1L)))
                 .type("text")
                 .source(CommunicationApplication.WHATSAPP)
                 .sourceIdentifier("chat-1")
@@ -117,7 +119,7 @@ class MessageControllerTest {
                 .build();
         messageRepository.save(messageOnDate);
 
-        MessageEntity messageDifferentDay = MessageEntity.builder()
+        MessageEntity messageDifferentDay = MessageEntity.builder().archiveUserIds(new java.util.HashSet<>(java.util.Set.of(1L)))
                 .type("text")
                 .source(CommunicationApplication.WHATSAPP)
                 .sourceIdentifier("chat-2")
@@ -159,7 +161,7 @@ class MessageControllerTest {
                 .build();
         unlinkedSender = identityInApplicationRepository.save(unlinkedSender);
 
-        MessageEntity message = MessageEntity.builder()
+        MessageEntity message = MessageEntity.builder().archiveUserIds(new java.util.HashSet<>(java.util.Set.of(1L)))
                 .type("text")
                 .source(CommunicationApplication.TELEGRAM)
                 .sourceIdentifier("chat-3")
@@ -191,7 +193,7 @@ class MessageControllerTest {
 
     @Test
     void testGetMessageList_paginationAndDefaultSort() throws Exception {
-        MessageEntity older = MessageEntity.builder()
+        MessageEntity older = MessageEntity.builder().archiveUserIds(new java.util.HashSet<>(java.util.Set.of(1L)))
                 .type("text")
                 .source(CommunicationApplication.WHATSAPP)
                 .sender(senderApplication)
@@ -199,7 +201,7 @@ class MessageControllerTest {
                 .body("First")
                 .timestamp(LocalDate.of(2026, 2, 1).atTime(10, 0))
                 .build();
-        MessageEntity newer = MessageEntity.builder()
+        MessageEntity newer = MessageEntity.builder().archiveUserIds(new java.util.HashSet<>(java.util.Set.of(1L)))
                 .type("text")
                 .source(CommunicationApplication.WHATSAPP)
                 .sender(senderApplication)
@@ -229,7 +231,7 @@ class MessageControllerTest {
 
     @Test
     void testGetMessageList_searchFiltersByBodyOrSubject() throws Exception {
-        MessageEntity matchBody = MessageEntity.builder()
+        MessageEntity matchBody = MessageEntity.builder().archiveUserIds(new java.util.HashSet<>(java.util.Set.of(1L)))
                 .type("text")
                 .source(CommunicationApplication.WHATSAPP)
                 .sender(senderApplication)
@@ -237,7 +239,7 @@ class MessageControllerTest {
                 .body("UniqueWordInBody")
                 .timestamp(LocalDate.of(2026, 2, 10).atTime(9, 0))
                 .build();
-        MessageEntity matchSubject = MessageEntity.builder()
+        MessageEntity matchSubject = MessageEntity.builder().archiveUserIds(new java.util.HashSet<>(java.util.Set.of(1L)))
                 .type("text")
                 .source(CommunicationApplication.WHATSAPP)
                 .sender(senderApplication)
@@ -246,7 +248,7 @@ class MessageControllerTest {
                 .body("Other")
                 .timestamp(LocalDate.of(2026, 2, 10).atTime(10, 0))
                 .build();
-        MessageEntity noMatch = MessageEntity.builder()
+        MessageEntity noMatch = MessageEntity.builder().archiveUserIds(new java.util.HashSet<>(java.util.Set.of(1L)))
                 .type("text")
                 .source(CommunicationApplication.WHATSAPP)
                 .sender(senderApplication)

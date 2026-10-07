@@ -15,7 +15,7 @@ These instructions extend the repository's root `agents.md` for work in `fronten
 - Place search and filters in the associated table caption or column header area. Keep date ranges, checkboxes and related controls visually grouped and labelled.
 - Prefer existing PrimeNG table functionality when it fits. Server-side search and pagination are compatible with lazy tables; they are not a reason to rebuild the table. If a custom table is justified, explain the concrete trade-off.
 - Filter and sort the full result set on the server when data is paginated, not just the loaded page. Preserve server totals and reset pagination when filters change. Small collections such as own accounts should not have unnecessary pagination; counterparties and transaction histories should remain paginated.
-- Refresh reports automatically when a valid filter value actually changes. Do not require an Apply button for simple date/account filters. Debounce typed searches, ignore incomplete or invalid date ranges, and prevent stale responses from replacing newer results.
+- Refresh reports automatically when a valid filter value actually changes. Do not require an Apply button for simple date/account filters. Advanced transaction date rules use PrimeNG Match All/Any with explicit Apply/Clear; incomplete rules cannot be applied. Debounce typed searches, ignore incomplete or invalid date ranges, and prevent stale responses from replacing newer results.
 - Keep chart data and options stable across unrelated change detection. Derive them with computed signals or equivalent memoization rather than constructing new objects from template-called methods. Focus, blur and unchanged filter values must not reload or redraw charts. Disabling animation is not a substitute for fixing unstable inputs.
 - Use searchable autocomplete for large entity choices such as counterparties. Selecting an existing result must retain its identity; changing the text must not silently retain an unrelated selected ID. Offer an explicit create-new choice when appropriate, without a separate Search button.
 
@@ -26,7 +26,9 @@ These instructions extend the repository's root `agents.md` for work in `fronten
 - Use compact account cards with the logo beside the name, value and details. On account details, show the identity card before the balance card, with a clearly separated back link.
 - Reuse the shared website-icon/account-logo mechanism for configurable bank websites, including a graceful fallback. Do not hardcode bank-specific icon URLs in page templates.
 - Design the mobile composition deliberately rather than stacking every element automatically. The launcher's three day-glance items should remain compact and side by side; separators must not become orphaned lines after wrapping.
-- Keep Recent activity focused on recent transactions; category management belongs in the full transaction view. Do not reintroduce the removed "booked values, not a forecast" copy or "Exchange rates used" disclosure panels. Preserve missing-rate warnings and access to exchange-rate management.
+- Keep Recent activity focused on recent transactions; category and exchange-rate management belong in Configuration → Finances. Do not reintroduce the removed "booked values, not a forecast" copy or "Exchange rates used" disclosure panels. Preserve missing-rate warnings and access to exchange-rate management.
+
+- Use PrimeNG `severity="danger"` or the shared `.app-button.danger` for destructive actions and their final confirmations (Delete, Remove, Disconnect). Restore and Cancel use normal primary/secondary styling. Never add feature-specific red button CSS.
 
 ## Money, dates and secrets
 

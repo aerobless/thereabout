@@ -1,27 +1,37 @@
-// Native actions opt in explicitly; PrimeNG buttons use the same theme tokens.
+// PrimeNG loads component tokens on demand. Semantic fallbacks keep native actions
+// consistent even on routes with no mounted p-button.
 .app-button {
   font: inherit;
-  font-size: var(--p-button-font-size);
-  border: 1px solid var(--p-button-secondary-border-color);
-  background: var(--p-button-secondary-background);
-  border-radius: var(--p-button-border-radius);
-  padding: var(--p-button-padding-y) var(--p-button-padding-x);
-  color: var(--p-button-secondary-color);
+  font-size: var(--p-button-font-size, 13px);
+  border: 1px solid var(--p-button-secondary-border-color, var(--app-border));
+  background: var(--p-button-secondary-background, var(--app-surface));
+  border-radius: var(--p-button-border-radius, 7px);
+  padding: var(--p-button-padding-y, 9px) var(--p-button-padding-x, 13px);
+  color: var(--p-button-secondary-color, var(--app-ink));
   cursor: pointer;
   white-space: nowrap;
   transition: background-color 120ms, border-color 120ms;
 
-  &:not(:disabled):hover { background: var(--p-button-secondary-hover-background); }
-  &:not(:disabled):active { background: var(--p-button-secondary-active-background); }
+  &:not(:disabled):hover { background: var(--p-button-secondary-hover-background, var(--app-hover)); }
+  &:not(:disabled):active { background: var(--p-button-secondary-active-background, var(--app-selection)); }
   &:disabled { opacity: var(--p-disabled-opacity, .45); cursor: default; }
   &:focus-visible { outline: 2px solid var(--app-accent); outline-offset: 2px; }
 
   &.primary {
-    background: var(--p-button-primary-background);
-    border-color: var(--p-button-primary-border-color);
-    color: var(--p-button-primary-color);
-    &:not(:disabled):hover { background: var(--p-button-primary-hover-background); border-color: var(--p-button-primary-hover-border-color); }
-    &:not(:disabled):active { background: var(--p-button-primary-active-background); border-color: var(--p-button-primary-active-border-color); }
+    background: var(--p-button-primary-background, var(--p-primary-color));
+    border-color: var(--p-button-primary-border-color, var(--p-primary-color));
+    color: var(--p-button-primary-color, var(--p-primary-contrast-color));
+    &:not(:disabled):hover { background: var(--p-button-primary-hover-background, var(--p-primary-hover-color)); border-color: var(--p-button-primary-hover-border-color, var(--p-primary-hover-color)); }
+    &:not(:disabled):active { background: var(--p-button-primary-active-background, var(--p-primary-active-color)); border-color: var(--p-button-primary-active-border-color, var(--p-primary-active-color)); }
+  }
+
+  &.danger {
+    background: var(--p-button-danger-background, var(--p-feedback-danger-color));
+    border-color: var(--p-button-danger-border-color, var(--p-feedback-danger-color));
+    color: var(--p-button-danger-color, var(--p-primary-contrast-color));
+    &:not(:disabled):hover { background: var(--p-button-danger-hover-background, var(--p-feedback-danger-hover-color)); border-color: var(--p-button-danger-hover-border-color, var(--p-feedback-danger-hover-color)); }
+    &:not(:disabled):active { background: var(--p-button-danger-active-background, var(--p-feedback-danger-hover-color)); border-color: var(--p-button-danger-active-border-color, var(--p-feedback-danger-hover-color)); }
+    &:focus-visible { outline-color: var(--p-button-danger-focus-ring-color, var(--p-feedback-danger-color)); }
   }
 
   &.secondary { background: transparent; }

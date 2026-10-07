@@ -25,11 +25,11 @@ public class MessageService {
     private static final String DEFAULT_SORT = "timestamp,desc";
 
     private final MessageRepository messageRepository;
+    private final com.sixtymeters.thereabout.access.UserContext users;
 
     public List<MessageEntity> getMessagesByDate(LocalDate date) {
-        LocalDateTime from = date.atStartOfDay();
-        LocalDateTime to = date.atTime(23, 59, 59, 999999999);
-        return messageRepository.findAllByTimestampBetween(from, to);
+        return messageRepository.findAll(MessageSpecification.visibleTo(users.current().value())
+                .and(MessageSpecification.timestampBetween(date, date)), Sort.by("timestamp").ascending());
     }
 
     public Page<MessageEntity> getMessagePage(int page, int size, String sort, String search,
@@ -37,7 +37,8 @@ public class MessageService {
                                                String sender, String receiver) {
         Sort sortObj = parseSort(sort != null && !sort.isBlank() ? sort.trim() : DEFAULT_SORT);
         Pageable pageable = PageRequest.of(page, size, sortObj);
-        Specification<MessageEntity> spec = Specification.where(MessageSpecification.searchInBodyOrSubject(search))
+        Specification<MessageEntity> spec = Specification.where(MessageSpecification.visibleTo(users.current().value()))
+                .and(MessageSpecification.searchInBodyOrSubject(search))
                 .and(MessageSpecification.timestampBetween(dateFrom, dateTo))
                 .and(MessageSpecification.sourceEquals(parseSource(source)))
                 .and(MessageSpecification.senderNameContains(sender))

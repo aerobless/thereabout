@@ -27,6 +27,8 @@ public interface IdentityMapper {
     @Mapping(target = "identityInApplications", source = "identityInApplications")
     @Mapping(source = "isGroup", target = "isGroup")
     @Mapping(target = "role", ignore = true)
+    @Mapping(target = "membershipVersion", ignore = true)
+    @Mapping(target = "memberUserIds", ignore = true)
     IdentityEntity mapToIdentityEntity(GenIdentity genIdentity);
 
     @Mapping(source = "application", target = "application", qualifiedByName = "enumToDisplayName")

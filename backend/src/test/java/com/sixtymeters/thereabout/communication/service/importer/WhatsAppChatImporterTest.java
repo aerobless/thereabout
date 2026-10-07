@@ -55,8 +55,10 @@ class WhatsAppChatImporterTest {
     @Autowired
     private IdentityRepository identityRepository;
 
+    @Autowired private org.springframework.jdbc.core.JdbcTemplate db;
     @BeforeEach
     void setUp() {
+        com.sixtymeters.thereabout.testing.TestUsers.owner(db);
         messageRepository.deleteAll();
         identityInApplicationRepository.deleteAll();
     }

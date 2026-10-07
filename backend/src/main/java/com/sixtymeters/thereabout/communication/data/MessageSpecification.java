@@ -17,6 +17,23 @@ public final class MessageSpecification {
     private MessageSpecification() {
     }
 
+    /** Group senders do not gain access to the rest of the group archive. */
+    public static Specification<MessageEntity> visibleTo(long userId) {
+        return (root, query, cb) -> {
+            var sender = root.join("sender", JoinType.LEFT).join("identity", JoinType.LEFT);
+            var receiverApp = root.join("receiver", JoinType.LEFT);
+            var receiver = receiverApp.join("identity", JoinType.LEFT);
+            var group = cb.or(cb.isTrue(cb.coalesce(receiverApp.get("isGroup"), false)), cb.isTrue(cb.coalesce(receiver.get("isGroup"), false)));
+            var direct = cb.and(cb.not(group),
+                    cb.or(cb.equal(sender.get("id"), userId), cb.equal(receiver.get("id"), userId)));
+            var membership = query.subquery(Long.class);
+            var identity = membership.from(IdentityEntity.class);
+            membership.select(identity.get("id")).where(cb.equal(identity.get("id"), receiver.get("id")),
+                    cb.isMember(userId, identity.get("memberUserIds")));
+            return cb.or(cb.isMember(userId, root.get("archiveUserIds")), direct, cb.and(group, cb.exists(membership)));
+        };
+    }
+
     public static Specification<MessageEntity> searchInBodyOrSubject(String search) {
         if (!StringUtils.hasText(search)) {
             return (root, query, cb) -> cb.conjunction();

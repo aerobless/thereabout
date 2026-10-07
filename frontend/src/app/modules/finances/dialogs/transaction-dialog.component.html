@@ -172,7 +172,7 @@
         optionLabel="name"
         optionValue="id"
         appendTo="body"
-        [filter]="true" /></label
+        [filter]="true"><ng-template #item let-c><finance-category [name]="c.name" /></ng-template><ng-template #selectedItem let-c><finance-category [name]="c.name" /></ng-template></p-select></label
     ><label
       >Original currency (optional)<p-select
         ariaLabel="Original currency"

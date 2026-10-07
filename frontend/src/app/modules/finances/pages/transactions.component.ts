@@ -1,3 +1,8 @@
+import {CategoryLabelComponent} from '../shared/category-label.component';
+import {localDateString, parseLocalDate} from '../../../shared/dates/local-date';
+import {FilterMetadata} from 'primeng/api';
+import {ColumnFilter} from 'primeng/table';
+import {FinanceDateFilter, FinanceDateRule} from '../../../../../generated/backend-api/thereabout';
 import { FinanceDateInputComponent } from "../shared/finance-date-input.component";
 import { SelectModule } from "primeng/select";
 import { MultiSelectModule } from "primeng/multiselect";
@@ -12,6 +17,7 @@ import {
   inject,
   input,
   signal,
+  untracked,
 } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { CommonModule } from "@angular/common";
@@ -32,6 +38,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FinanceDateInputComponent,
+    CategoryLabelComponent,
     SelectModule,
     MultiSelectModule,
     TableModule,
@@ -46,6 +53,7 @@ export class TransactionsComponent {
   readonly context = inject(FinanceContext);
   private dialogs = inject(FinanceDialogs);
   readonly accountId = input(0);
+  readonly counterpartyId = input(0);
   readonly recent = input(false);
   private readonly route = inject(ActivatedRoute);
   private readonly routeParams = toSignal(this.route.queryParamMap);
@@ -65,12 +73,8 @@ export class TransactionsComponent {
     { label: "Income", value: "DEPOSIT" },
     { label: "Transfers", value: "TRANSFER" },
   ];
-  get accountOptions() {
-    return [{ id: 0, name: "All accounts" }, ...this.ownAccounts];
-  }
-  get categoryOptions() {
-    return [{ id: 0, name: "Uncategorized" }, ...this.categories];
-  }
+  readonly accountOptions = computed(() => [{ id: 0, name: "All accounts" }, ...this.context.accounts()]);
+  readonly categoryOptions = computed(() => [{ id: 0, name: "Uncategorized" }, ...this.context.categories()]);
   readonly searchChanges = new Subject<void>();
 
   typeFilter: FinanceTransactionType | "" = "";
@@ -83,6 +87,27 @@ export class TransactionsComponent {
   bulkCategory = 0;
   readonly selected = new Map<number, number>();
   private readonly filters = signal<FinanceTransactionQuery | null>(null);
+  readonly dateFilter = signal<FinanceDateFilter | undefined>(undefined);
+  tableFilters: Record<string, FilterMetadata | FilterMetadata[]> = {};
+  readonly dateModes = [
+    {label:'Date is',value:'dateIs'}, {label:'Date is not',value:'dateIsNot'},
+    {label:'Date is before',value:'dateBefore'}, {label:'Date is after',value:'dateAfter'},
+    {label:'Date is on or before',value:'dateOnOrBefore'}, {label:'Date is on or after',value:'dateOnOrAfter'}
+  ];
+  dateValue(value: unknown): string { return value instanceof Date ? localDateString(value) : ''; }
+  setDate(constraint: FilterMetadata, date: string) { constraint.value = parseLocalDate(date); }
+  completeDates(constraints: FilterMetadata | FilterMetadata[] | null | undefined): boolean {
+    const rules = Array.isArray(constraints) ? constraints : constraints ? [constraints] : [];
+    return rules.length > 0 && rules.every(rule => rule.value instanceof Date && Number.isFinite(rule.value.getTime()));
+  }
+  applyDates(column: ColumnFilter): void {
+    const constraints = column.fieldConstraints;
+    if (!this.completeDates(constraints)) return;
+    const rules = (Array.isArray(constraints) ? constraints : [constraints]).filter((rule): rule is FilterMetadata => !!rule);
+    this.dateFilter.set({operator:rules[0].operator === 'or' ? 'or' : 'and', rules:rules.map(rule => ({mode:rule.matchMode as FinanceDateRule.ModeEnum, date:this.dateValue(rule.value)}))});
+    this.useDates=false; column.setHasFilter(true); column.hide(); this.filterTransactions();
+  }
+  clearDates(column: ColumnFilter): void { this.dateFilter.set(undefined); this.useDates=false; column.clearFilter(); column.hide(); this.filterTransactions(); }
   constructor() {
     effect(() => {
       const detail = this.linkedTransaction();
@@ -103,22 +128,26 @@ export class TransactionsComponent {
       this.useDates = !!(params?.has("from") || params?.has("to"));
       this.from = params?.get("from") ?? today().slice(0, 4) + "-01-01";
       this.to = params?.get("to") ?? today();
+      this.dateFilter.set(undefined);
+      this.tableFilters = this.useDates ? {occurredAt:[
+        ...(params?.has('from') ? [{value:parseLocalDate(this.from.slice(0,10)),matchMode:'dateOnOrAfter',operator:'and'}] : []),
+        ...(params?.has('to') ? [{value:parseLocalDate(this.to.slice(0,10)),matchMode:'dateOnOrBefore',operator:'and'}] : [])
+      ]} : {};
       this.selected.clear();
-      this.load();
+      untracked(() => this.load());
     });
   }
   private readonly query = computed(() => ({
     ...this.filters(),
     accountId: this.accountId() || this.filters()?.accountId,
+    counterpartyId: this.counterpartyId() || undefined,
     pageSize: this.recent() ? 8 : 50,
     revision: this.context.revision(),
   }));
   readonly state = loadResource(this.query, (q) =>
     this.context.api.transactions(q),
   );
-  get transactions() {
-    return this.state().data?.items ?? [];
-  }
+  readonly transactions = computed(() => this.state().data?.items ?? []);
   get total() {
     return this.state().data?.total ?? 0;
   }
@@ -146,7 +175,7 @@ export class TransactionsComponent {
     this.load();
   }
   private load() {
-    this.filters.set({
+    const next: FinanceTransactionQuery = {
       page: this.page,
       pageSize: 50,
       q: this.q,
@@ -157,8 +186,9 @@ export class TransactionsComponent {
       type: this.typeFilter || undefined,
       includeDeleted: this.showDeleted,
       operatingOnly: this.operatingOnly,
-      ...(this.useDates ? { from: this.from, to: this.to } : {}),
-    });
+      ...(this.useDates ? { from: this.from, to: this.to } : {dateFilter:this.dateFilter()}),
+    };
+    if (JSON.stringify(next) !== JSON.stringify(this.filters())) this.filters.set(next);
   }
   tableChanged(event: TableLazyLoadEvent) {
     this.page = Math.floor((event.first ?? 0) / 50);
@@ -185,9 +215,6 @@ export class TransactionsComponent {
       (p) => this.context.api.client.financeCategorizeTransactions(p),
     );
     if (result) this.selected.clear();
-  }
-  openCategories() {
-    this.dialogs.open({ kind: "categories" });
   }
   openTransaction(transaction: FinanceTransaction) {
     this.dialogs.open({ kind: "transaction", transaction });

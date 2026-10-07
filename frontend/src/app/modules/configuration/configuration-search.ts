@@ -1,6 +1,8 @@
 export interface ConfigurationSearchResult {label: string; category: string; path: string; anchor: string; keywords: string;}
 const connection = '/configuration/connections/';
 export const configurationSearchIndex: readonly ConfigurationSearchResult[] = [
+  {label: 'Finance categories', category: 'Finances', path: '/configuration/finances', anchor: 'finance-categories', keywords: 'category name add edit'},
+  {label: 'Exchange rates', category: 'Finances', path: '/configuration/finances', anchor: 'finance-rates', keywords: 'currency ecb manual dated rate'},
   {label: 'Google credentials', category: 'Google Calendar', path: connection + 'google-calendar', anchor: 'google-credentials', keywords: 'oauth client id secret refresh token'},
   {label: 'Calendars and synchronization', category: 'Google Calendar', path: connection + 'google-calendar', anchor: 'google-sync', keywords: 'calendar selection users full import sync now'},
   {label: 'Google webhook setup', category: 'Google Calendar', path: connection + 'google-calendar', anchor: 'google-webhook-setup', keywords: 'automatic updates public origin callback push'},

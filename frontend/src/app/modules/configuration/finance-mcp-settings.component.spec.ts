@@ -33,6 +33,7 @@ describe("FinanceMcpSettingsComponent", () => {
     expect(input.type).toBe("password");
     expect(fixture.componentInstance.key()).toBe("");
     expect(input.value).not.toContain("test-credential");
+    http.match('http://localhost/api/finances/configuration/mcp-tools').forEach(request => { if(!request.cancelled) request.flush({endpoints:[]}); });
     http.verify();
   });
 
@@ -45,6 +46,7 @@ describe("FinanceMcpSettingsComponent", () => {
     expect(request.cancelled).toBe(true);
     expect(fixture.componentInstance.revealed()).toBe(false);
     expect(fixture.componentInstance.key()).toBe("");
+    http.match('http://localhost/api/finances/configuration/mcp-tools').forEach(request => { if(!request.cancelled) request.flush({endpoints:[]}); });
     http.verify();
   });
   it("clears a revealed key and cancels pending reveals when its panel is destroyed", () => {
@@ -61,6 +63,7 @@ describe("FinanceMcpSettingsComponent", () => {
     second.destroy();
     expect(pending.cancelled).toBe(true);
     expect(second.componentInstance.key()).toBe("");
+    http.match('http://localhost/api/finances/configuration/mcp-tools').forEach(request => { if(!request.cancelled) request.flush({endpoints:[]}); });
     http.verify();
   });
 });

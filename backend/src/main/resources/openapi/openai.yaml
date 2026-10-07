@@ -50,11 +50,18 @@ components:
       properties:
         configured:
           type: boolean
-        model:
-          type: string
-      required:
-      - configured
-      - model
+        useCases:
+          type: array
+          items: {$ref: '#/components/schemas/OpenAiUseCase'}
+      required: [configured, useCases]
+    OpenAiUseCase:
+      type: object
+      required: [id, name, model, reasoning]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        model: {type: string}
+        reasoning: {type: string}
     OpenAiSettingsInput:
       type: object
       properties:
@@ -63,11 +70,7 @@ components:
           maxLength: 2048
         removeKey:
           type: boolean
-        model:
-          type: string
-          maxLength: 100
-      required:
-      - model
+      additionalProperties: false
     OpenAiTestResult:
       type: object
       properties:

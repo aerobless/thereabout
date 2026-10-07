@@ -79,7 +79,7 @@ describe('Configuration navigation', () => {
 
   it('opens every deep link with its existing controls and keeps API keys masked', async () => {
     for (const [path, selector] of [
-      ['connections/splitwise', '#splitwise-key'], ['connections/openai', '#openai-model'],
+      ['connections/splitwise', '#splitwise-key'], ['connections/openai', '#openai-key'],
       ['connections/telegram', '#telegram-settings'], ['location-imports', 'app-file-import'],
       ['api-access', '#finance-mcp-key'], ['about', '#version-settings']
     ]) {
@@ -143,7 +143,7 @@ describe('Configuration navigation', () => {
     const panel = harness.fixture.debugElement.query(By.directive(OpenAiSettingsComponent)).injector.get(OpenAiSettingsComponent);
     const saved = new Subject<{configured: boolean; model: string}>();
     openai.openAiSaveSettings.mockReturnValue(saved);
-    panel.model.set('saved-model');
+    panel.key.set('synthetic-new-key');
     const saving = panel.save();
     expect(await router().navigateByUrl('/configuration/about')).toBe(false);
     expect(shell().navigation.confirming()).toBe(false);
@@ -169,7 +169,7 @@ describe('Configuration navigation', () => {
     await harness.navigateByUrl('/configuration/connections/openai');
     const panel = harness.fixture.debugElement.query(By.directive(OpenAiSettingsComponent)).injector.get(OpenAiSettingsComponent);
     const connections = harness.fixture.debugElement.query(By.directive(ConnectionsComponent)).injector.get(ConnectionsComponent);
-    panel.model.set('unsaved-model');
+    panel.key.set('synthetic-unsaved-key');
     const switching = connections.choose('telegram');
     await vi.waitFor(() => expect(shell().navigation.confirming()).toBe(true));
     shell().navigation.answer(false); await switching;
@@ -179,6 +179,6 @@ describe('Configuration navigation', () => {
     await vi.waitFor(() => expect(shell().navigation.confirming()).toBe(true));
     shell().navigation.answer(false); await cancelled;
     expect(router().url).toBe('/configuration/connections/openai');
-    expect(panel.model()).toBe('unsaved-model');
+    expect(panel.key()).toBe('synthetic-unsaved-key');
   });
 });

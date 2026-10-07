@@ -1,3 +1,4 @@
+import {CounterpartyListComponent} from './counterparty-list.component';
 import { CurrentUserService } from "../../../shared/current-user/current-user.service";
 import { TableModule } from "primeng/table";
 import { SelectModule } from "primeng/select";
@@ -13,7 +14,7 @@ import {
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { RouterLink } from "@angular/router";
+import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import {
   FinanceContext,
   FinanceDialogs,
@@ -28,6 +29,7 @@ import {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    CounterpartyListComponent,
     TableModule,
     SelectModule,
     AccountLogoComponent,
@@ -41,7 +43,9 @@ import {
 export class AccountsComponent {
   readonly context = inject(FinanceContext);
   private dialogs = inject(FinanceDialogs);
-  counterparties = false;
+  readonly counterparties = signal(false);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   readonly selectedUserId = signal<number | null>(null);
   private readonly currentUser = inject(CurrentUserService);
   readonly users = loadResource(this.context.revision, () => this.context.api.client.financeUsers());
@@ -50,25 +54,26 @@ export class AccountsComponent {
     return (this.users().data ?? []).filter(user => current.status !== "loading" && user.id !== current.identityId);
   });
   selectUser(id: number | null) {
-    this.counterparties = false;
+    this.counterparties.set(false);
+    void this.router.navigate([], {relativeTo: this.route, queryParams: {view: null}, queryParamsHandling: "merge"});
     this.selectedUserId.set(id);
     this.ownSearch = "";
     this.page = 0;
     this.loadAccounts();
   }
   selectCounterparties() {
-    this.counterparties = true;
+    this.counterparties.set(true);
+    void this.router.navigate([], {relativeTo: this.route, queryParams: {view: "counterparties"}, queryParamsHandling: "merge"});
     this.page = 0;
-    this.loadAccounts();
   }
   page = 0;
   private ownSearch = "";
   private counterpartySearch = "";
   get accountSearch() {
-    return this.counterparties ? this.counterpartySearch : this.ownSearch;
+    return this.counterparties() ? this.counterpartySearch : this.ownSearch;
   }
   set accountSearch(value: string) {
-    if (this.counterparties) this.counterpartySearch = value;
+    if (this.counterparties()) this.counterpartySearch = value;
     else this.ownSearch = value;
   }
   kindFilter: FinanceAccountKind | null = null;
@@ -85,6 +90,9 @@ export class AccountsComponent {
   ];
   readonly searchChanges = new Subject<void>();
   constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params =>
+      this.counterparties.set(params.get("view") === "counterparties"),
+    );
     this.searchChanges
       .pipe(debounceTime(250), takeUntilDestroyed())
       .subscribe(() => this.filterAccounts());
@@ -130,13 +138,13 @@ export class AccountsComponent {
   }
   loadAccounts() {
     this.filters.set({
-      scope: this.counterparties ? "COUNTERPARTY" : "OWN",
-      userId: this.counterparties ? undefined : (this.selectedUserId() ?? undefined),
+      scope: this.counterparties() ? "COUNTERPARTY" : "OWN",
+      userId: this.counterparties() ? undefined : (this.selectedUserId() ?? undefined),
       page: this.page,
       pageSize: 50,
       q: this.accountSearch,
-      kind: this.counterparties ? (this.kindFilter ?? undefined) : undefined,
-      active: this.counterparties
+      kind: this.counterparties() ? (this.kindFilter ?? undefined) : undefined,
+      active: this.counterparties()
         ? (this.activeFilter ?? undefined)
         : undefined,
       includeInactive: true,
@@ -146,8 +154,8 @@ export class AccountsComponent {
     this.dialogs.open({
       kind: "account",
       account,
-      counterparty: this.counterparties,
-      userId: this.counterparties ? undefined : (this.selectedUserId() ?? undefined),
+      counterparty: this.counterparties(),
+      userId: this.counterparties() ? undefined : (this.selectedUserId() ?? undefined),
     });
   }
 }

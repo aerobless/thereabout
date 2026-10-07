@@ -17,6 +17,8 @@ public interface MessageRepository extends JpaRepository<MessageEntity, Long>, J
     @Query("SELECT m FROM MessageEntity m JOIN FETCH m.sender JOIN FETCH m.receiver WHERE m.timestamp BETWEEN ?1 AND ?2 ORDER BY m.timestamp")
     List<MessageEntity> findAllByTimestampBetween(LocalDateTime from, LocalDateTime to);
 
+    Optional<MessageEntity> findFirstBySourceIdentifierAndReceiverIdOrderByIdAsc(String sourceIdentifier, Long receiverId);
+
     boolean existsBySourceIdentifier(String sourceIdentifier);
 
     Optional<MessageEntity> findFirstBySourceIdentifierOrderByIdAsc(String sourceIdentifier);

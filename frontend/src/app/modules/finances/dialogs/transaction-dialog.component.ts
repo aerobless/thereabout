@@ -1,3 +1,4 @@
+import {CategoryLabelComponent} from "../shared/category-label.component";
 import { FinanceDateInputComponent } from "../shared/finance-date-input.component";
 import { SelectModule } from "primeng/select";
 import { AutoCompleteModule } from "primeng/autocomplete";
@@ -36,7 +37,7 @@ import {
   selector: "finance-transaction-dialog",
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [CategoryLabelComponent,
     FinanceDateInputComponent,
     SelectModule,
     AutoCompleteModule,

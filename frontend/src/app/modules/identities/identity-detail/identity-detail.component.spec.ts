@@ -13,7 +13,7 @@ describe('IdentityDetailComponent impersonation', () => {
     await TestBed.configureTestingModule({imports: [IdentityDetailComponent], providers: [
       provideZonelessChangeDetection(), provideRouter([]), MessageService,
       {provide: ActivatedRoute, useValue: {snapshot: {paramMap: convertToParamMap({id: String(identity.id)})}}},
-      {provide: IdentityService, useValue: {getIdentities: () => of([identity])}},
+      {provide: IdentityService, useValue: {getIdentities: () => of([identity]), getGroupMembers: () => of({version: 0, userIds: []})}},
       {provide: CurrentUserService, useValue: currentUser}
     ]}).compileComponents();
     const fixture = TestBed.createComponent(IdentityDetailComponent);

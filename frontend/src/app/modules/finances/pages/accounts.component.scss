@@ -66,3 +66,12 @@
   flex-wrap: wrap;
   max-width: 100%;
 }
+
+.counterparty-name { display:flex; align-items:center; gap:.75rem; text-decoration:none; }
+.counterparty-merge { display:grid; gap:1rem; padding:.5rem 0; }
+.counterparty-merge label { display:grid; gap:.4rem; }
+.counterparty-merge .form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+.alias-chips { display:flex; flex-wrap:wrap; gap:.4rem; }
+.merge-selection { display:grid; gap:.75rem; margin:0; padding:0; list-style:none; }
+.merge-selection li { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:.4rem 1rem; }
+@media(max-width:640px) { .counterparty-merge .form-grid { grid-template-columns:1fr; } }

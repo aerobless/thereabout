@@ -51,12 +51,12 @@ class FinanceMcpTest {
     try (var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(15)).build()) {
       assertThat(client.initialize().serverInfo().name()).isEqualTo("thereabout-finances");
       var tools = client.listTools().tools();
-      assertThat(tools).hasSize(37);
+      assertThat(tools).hasSize(39);
       assertThat(tools)
           .extracting(McpSchema.Tool::name)
           .contains("finance_splitwise_get", "finance_splitwise_sources_list", "finance_splitwise_sources_get",
               "finance_splitwise_resolve", "finance_splitwise_categories_save", "finance_splitwise_sync",
-              "finance_transactions_save", "finance_valuations_preview",
+              "finance_transactions_save", "finance_valuations_preview", "finance_valuations_delete", "finance_valuations_restore",
               "finance_import_hints_list", "finance_import_hints_add", "finance_import_hints_remove");
       var read =
           client.callTool(
@@ -326,6 +326,52 @@ class FinanceMcpTest {
     assertThat(client.send(req.build(), HttpResponse.BodyHandlers.ofString()).statusCode())
         .isEqualTo(403);
   }
+  @Test void valuationAmendmentsAndReversibleDeletionHaveRestAndMcpParity() throws Exception {
+    db.update("INSERT IGNORE INTO finance_currency(code,name,decimal_places) VALUES('CHF','Franc',2)");
+    long account = accounts.save(new UserId(1), new GenFinanceAccountInput().name("Valuation protocol " + UUID.randomUUID())
+        .kind(GenFinanceAccountKind.INVESTMENT).currency("CHF").requestKey(UUID.randomUUID().toString())).getAccount().getId();
+    var transport = HttpClientStreamableHttpTransport.builder("http://127.0.0.1:" + port).endpoint("/mcp/finances")
+        .requestBuilder(HttpRequest.newBuilder().header("Authorization", "Bearer " + keys.getKey())).build();
+    try (var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(15)).build()) {
+      client.initialize();
+      var created = call(client, "finance_valuations_save", Map.of("accountId", account, "date", "1900-01-02T12:00:00",
+          "reportedValue", "100", "expectedBalance", "0", "reference", "Protocol statement", "requestKey", UUID.randomUUID().toString()));
+      var original = (Map<?, ?>) created.get("valuation");
+      var amendment = new LinkedHashMap<String, Object>();
+      amendment.put("id", original.get("id")); amendment.put("version", original.get("version"));
+      amendment.put("accountId", account); amendment.put("date", "1900-01-02T12:00:00"); amendment.put("reportedValue", "90");
+      var preview = call(client, "finance_valuations_preview", amendment);
+      var http = HttpClient.newHttpClient();
+      var restPreview = http.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/finances/valuations/preview"))
+          .header("Content-Type", "application/json").header("Cookie", "XSRF-TOKEN=" + CSRF).header("X-XSRF-TOKEN", CSRF)
+          .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(amendment))).build(), HttpResponse.BodyHandlers.ofString());
+      assertThat(restPreview.statusCode()).isEqualTo(200);
+      assertThat(json.readTree(restPreview.body())).isEqualTo(json.valueToTree(preview));
+      assertThat(preview.get("previousBalance")).isEqualTo("0");
+      amendment.put("expectedBalance", preview.get("previousBalance")); amendment.put("reference", "Corrected statement");
+      amendment.put("requestKey", UUID.randomUUID().toString());
+      var amended = call(client, "finance_valuations_save", amendment);
+      assertThat(call(client, "finance_valuations_save", amendment)).isEqualTo(amended);
+      var value = (Map<?, ?>) amended.get("valuation");
+      assertThat(value.get("transactionId")).isEqualTo(original.get("transactionId"));
+      amendment.put("requestKey", UUID.randomUUID().toString());
+      assertThat(client.callTool(McpSchema.CallToolRequest.builder("finance_valuations_save").arguments(amendment).build()).isError()).isTrue();
+      var deletion = Map.<String, Object>of("id", value.get("id"), "version", value.get("version"), "requestKey", UUID.randomUUID().toString());
+      var deleted = call(client, "finance_valuations_delete", deletion);
+      var retry = http.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/finances/valuations/" + value.get("id") + "/delete"))
+          .header("Content-Type", "application/json").header("Cookie", "XSRF-TOKEN=" + CSRF).header("X-XSRF-TOKEN", CSRF)
+          .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(deletion))).build(), HttpResponse.BodyHandlers.ofString());
+      assertThat(retry.statusCode()).isEqualTo(200);
+      assertThat(json.readTree(retry.body())).isEqualTo(json.valueToTree(deleted));
+      assertThat(deleted.get("deleted")).isEqualTo(true);
+      var restored = call(client, "finance_valuations_restore", Map.of("id", deleted.get("id"), "version", deleted.get("version"), "requestKey", UUID.randomUUID().toString()));
+      assertThat(restored.get("deleted")).isEqualTo(false);
+      var listed = call(client, "finance_valuations_list", Map.of("id", restored.get("id")));
+      assertThat(listed.get("items")).isEqualTo(List.of(restored));
+      assertThat(reads.balance(new UserId(1), account, java.time.LocalDateTime.of(1901, 1, 1, 0, 0))).isEqualByComparingTo("90");
+    }
+  }
+
   @Test void counterpartyPreviewAndMergeHaveRestParityVersionChecksAndIdempotentReceipts() throws Exception {
     String marker=UUID.randomUUID().toString();
     db.update("INSERT IGNORE INTO finance_currency(code,name,decimal_places) VALUES('CHF','Franc',2)");

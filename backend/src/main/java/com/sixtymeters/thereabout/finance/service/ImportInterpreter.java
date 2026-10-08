@@ -81,6 +81,11 @@ public class ImportInterpreter {
         empty type and empty amount. They are not transactions and will be discarded from review.
         For actual transactions, including skipped FX/security activity, nonTransaction MUST be false.
         Use decimal STRINGS without rounding, ISO local Europe/Zurich date/time, and positive amounts.
+        amount, foreignAmount and otherAmount are positive magnitudes for both expenses and income.
+        Determine direction from type and transfer notes, never from a minus sign in these fields.
+        For example, a withdrawal with booked -3.85 CHF and original -4.05 EUR uses amount="3.85",
+        foreignAmount="4.05", foreignCurrency="EUR" and type="WITHDRAWAL". Preserve the original
+        signed cells verbatim in amountEvidence and foreignAmountEvidence; do not change their signs.
         Empty strings/null IDs indicate unavailable values. Never invent missing booked amounts or FX rates.
         amountEvidence MUST be the exact complete source cell containing the booked amount.
         dateEvidence, foreignAmountEvidence and otherAmountEvidence must also be exact complete source cells.

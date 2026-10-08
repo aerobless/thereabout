@@ -7,7 +7,14 @@ import {FinanceCounterparty} from '../../../../../generated/backend-api/thereabo
   styles: `:host { display:grid; place-items:center; width:2.5rem; height:2.5rem; flex:0 0 2.5rem; border-radius:.65rem; background:var(--app-hover); color:var(--app-link); overflow:hidden; } img { width:100%; height:100%; object-fit:contain; padding:.3rem; }`
 })
 export class CounterpartyLogoComponent {
-  readonly counterparty = input.required<FinanceCounterparty>();
-  readonly url = computed(() => { const c = this.counterparty(); return c.websiteUrl ? '/api/finances/counterparties/' + c.id + '/icon?v=' + c.version : undefined; });
+  readonly counterparty = input<FinanceCounterparty>();
+  readonly counterpartyId = input<number>();
+  readonly iconRevision = input(0);
+  readonly url = computed(() => {
+    const c = this.counterparty();
+    if (c) return c.websiteUrl ? '/api/finances/counterparties/' + c.id + '/icon?v=' + c.version : undefined;
+    const id = this.counterpartyId();
+    return id ? '/api/finances/counterparties/' + id + '/icon?revision=' + this.iconRevision() : undefined;
+  });
   readonly failed = signal<string | undefined>(undefined);
 }

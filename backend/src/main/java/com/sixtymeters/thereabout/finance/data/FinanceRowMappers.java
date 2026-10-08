@@ -90,6 +90,8 @@ public final class FinanceRowMappers {
               .occurredAt(r.getString("occurred_at"))
               .reportedValue(money(r.getBigDecimal("reported_value")))
               .previousBalance(money(r.getBigDecimal("previous_balance")))
+              .version(r.getLong("version"))
+              .deleted(r.getBoolean("deleted"))
               .transactionId(r.getObject("transaction_id", Long.class))
               .reference(r.getString("reference"))
               .origin(r.getString("origin"));

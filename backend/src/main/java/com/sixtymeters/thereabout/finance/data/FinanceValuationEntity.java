@@ -28,4 +28,6 @@ public class FinanceValuationEntity {
   private Long transactionId;
   private String reference;
   private String origin;
+  @Version private long version;
+  private boolean deleted;
 }

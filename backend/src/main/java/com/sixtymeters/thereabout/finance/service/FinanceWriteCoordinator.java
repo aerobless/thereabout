@@ -67,6 +67,7 @@ public class FinanceWriteCoordinator {
               if (result instanceof com.sixtymeters.thereabout.generated.model.GenFinanceTransactionResult tx) reads.transaction(user,tx.getTransaction().getId());
               if (result instanceof com.sixtymeters.thereabout.generated.model.GenFinanceAccountResult account) reads.account(user,account.getAccount().getId());
               if (result instanceof com.sixtymeters.thereabout.generated.model.GenFinanceValuationResult valuation) reads.valuation(user,valuation.getValuation().getId());
+              if (result instanceof com.sixtymeters.thereabout.generated.model.GenFinanceValuation valuation) reads.valuation(user,valuation.getId());
               return result;
             });
   }

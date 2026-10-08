@@ -121,11 +121,13 @@ public class FinanceMcpConfiguration {
         tools.tool(
             "valuations.preview", true, GenFinanceValuationPreviewInput.class, input -> valuations.preview(users.integration(), input)),
         tools.tool("valuations.save", false, GenFinanceValuationInput.class, input -> valuations.save(users.integration(), input)),
+        tools.tool("valuations.delete", false, GenFinanceVersionedInput.class, input -> valuations.setDeleted(users.integration(), input, true)),
+        tools.tool("valuations.restore", false, GenFinanceVersionedInput.class, input -> valuations.setDeleted(users.integration(), input, false)),
         tools.tool(
             "valuations.list",
             true,
             GenFinanceValuationQuery.class,
-            input -> reads.valuations(users.integration(), input.getAccountId())),
+            input -> reads.valuations(users.integration(), input)),
         tools.tool("reports", true, GenFinancePeriodQuery.class, input -> reports.report(users.integration(), input)),
         tools.tool("rates.list", true, GenFinanceRateQuery.class, reads::rates),
         tools.tool("rates.save", false, GenFinanceRateInput.class, input -> rates.save(users.integration(), input)),
@@ -209,8 +211,9 @@ public class FinanceMcpConfiguration {
         case "transactions.delete" -> "Reversibly delete a transaction and its postings; requires id, version and requestKey.";
         case "transactions.restore" -> "Restore a deleted transaction and its postings; requires id, version and requestKey.";
         case "transactions.categorize" -> "Assign a category to selected transactions with expected versions and requestKey.";
-        case "valuations.preview" -> "Preview a reported account valuation and derived correction without changing the ledger.";
-        case "valuations.save" -> "Record a valuation and its linked correction atomically; requires requestKey.";
+        case "valuations.preview" -> "Preview a reported account valuation or amendment. Supply id/version to exclude its old correction. Later valuations remain unchanged.";
+        case "valuations.save" -> "Record or amend a valuation and its linked correction atomically. Amendments require id/version; all writes require expectedBalance from a fresh preview and requestKey. Zero differences remove the active correction; later valuations are not rebased.";
+        case "valuations.delete", "valuations.restore" -> "Reversibly delete or restore a reported valuation and its correction atomically. Requires valuation id, version and requestKey. Later valuations remain unchanged.";
         case "valuations.list" -> "List reported account valuations and linked corrections.";
         case "overview" -> "Read account balances, net worth and completeness warnings for the selected period.";
         case "reports" -> "Read income, expenses, categories and investment reporting for a selected period.";

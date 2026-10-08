@@ -29,6 +29,9 @@ class SplitwiseLedgerTest {
   @Autowired SplitwiseConnectionRepository connections;
   @Autowired FinanceReadRepository reads;
   @Autowired TransactionService transactions;
+  @Autowired AccountService accounts;
+  @Autowired CounterpartyService counterparties;
+  @Autowired FinanceAccountRepository accountRepository;
   @Autowired ReportService reports;
   @MockitoBean SplitwiseClient client;
   GenSplitwiseSettings settings;
@@ -57,6 +60,79 @@ class SplitwiseLedgerTest {
     return new GenFinanceTransactionInput().id(t.getId()).version(t.getVersion()).requestKey(UUID.randomUUID().toString()).type(t.getType()).effect(t.getEffect()).description(t.getDescription()).date(t.getOccurredAt()).categoryId(t.getCategoryId()).notes(t.getNotes()).externalReference(t.getExternalReference()).sourceId(t.getSourceAccountId()).destinationId(t.getDestinationAccountId()).sourceAmount(t.getSourceAmount()).destinationAmount(t.getDestinationAmount()).sourceCurrency(t.getSourceCurrency()).destinationCurrency(t.getDestinationCurrency());
   }
   GenFinanceVersionedInput versioned(GenFinanceTransaction t) { return new GenFinanceVersionedInput().id(t.getId()).version(t.getVersion()).requestKey(UUID.randomUUID().toString()); }
+  SplitwiseExpense named(SplitwiseExpense e, String description) {
+    return new SplitwiseExpense(e.id(), e.groupId(), description, e.details(), e.date(), e.currency(), e.updatedAt(), e.deletedAt(), e.payment(), e.category(), e.users());
+  }
+  GenFinanceAccount merchant(String name, AccountKind kind, String currency) {
+    return accounts.save(new UserId(1), new GenFinanceAccountInput().requestKey(UUID.randomUUID().toString())
+        .name(name).kind(GenFinanceAccountKind.valueOf(kind.name())).currency(currency)).getAccount();
+  }
+  @Test void descriptionsReuseCanonicalAliasesAcrossDirectionsAndCombinedAccounts() {
+    var expense = merchant("Regression merchant", AccountKind.EXPENSE, "CHF");
+    var canonical = counterparties.get(new UserId(1), accountRepository.findById(expense.getId()).orElseThrow().getCounterpartyId());
+    counterparties.save(new UserId(1), canonical.getId(), new GenFinanceCounterpartyInput().requestKey("merchant-alias")
+        .version(canonical.getVersion()).name(canonical.getName()).aliases(List.of("Regression shop")));
+    merchant("Regression shop", AccountKind.EXPENSE, "CHF");
+    var e = named(expense(100,"25.1234"), "  rEgReSsIoN ShOp  "); apply(e);
+    assertThat(tx(100,22).getDestinationAccountId()).isEqualTo(expense.getId());
+    assertThat(tx(100,11).getSourceCounterpartyId()).isEqualTo(canonical.getId());
+    assertThat(tx(100,22).getDestinationCounterpartyId()).isEqualTo(canonical.getId());
+    assertThat(tx(100,11).getEffect()).isEqualTo(GenFinanceEffect.EXPENSE_REIMBURSEMENT);
+    assertThat(balance(1,1)).isEqualByComparingTo("25.1234");
+    assertThat(balance(2,2)).isEqualByComparingTo("-25.1234");
+    assertThat(tx(100,11).getSyncManaged()).isTrue();
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_account WHERE name LIKE 'Splitwise %'", Integer.class)).isZero();
+  }
+  @Test void merchantChangesUpdateManagedTransactionsWithoutDuplicatesOrBalanceChanges() {
+    apply(named(expense(100,"12.3456"),"Regression first shop"));
+    var first = tx(100,11); var count = db.queryForObject("SELECT COUNT(*) FROM finance_account", Integer.class);
+    apply(named(expense(100,"12.3456"),"Regression first shop"));
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_account", Integer.class)).isEqualTo(count);
+    var changed = named(expense(100,"12.3456"),"Regression next shop"); apply(changed);
+    var after = tx(100,11);
+    assertThat(after.getId()).isEqualTo(first.getId());
+    assertThat(after.getSourceCounterpartyId()).isNotEqualTo(first.getSourceCounterpartyId());
+    assertThat(after.getSourceName()).isEqualTo(changed.description());
+    assertThat(after.getExternalReference()).isEqualTo(first.getExternalReference());
+    assertThat(after.getSyncManaged()).isTrue();
+    assertThat(balance(1,1)).isEqualByComparingTo("12.3456");
+    assertThat(balance(2,2)).isEqualByComparingTo("-12.3456");
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_transaction", Integer.class)).isEqualTo(2);
+  }
+  @Test void ambiguousAliasesRequireReviewWithoutCreatingOrMisassigningAccounts() {
+    var expense = merchant("Regression ambiguous expense", AccountKind.EXPENSE, "CHF");
+    var other = merchant("Regression ambiguous other expense", AccountKind.EXPENSE, "CHF");
+    for (var account : List.of(expense,other)) {
+      var c = counterparties.get(new UserId(1), accountRepository.findById(account.getId()).orElseThrow().getCounterpartyId());
+      counterparties.save(new UserId(1),c.getId(),new GenFinanceCounterpartyInput().requestKey(UUID.randomUUID().toString())
+          .version(c.getVersion()).name(c.getName()).aliases(List.of("Regression ambiguous alias")));
+    }
+    apply(named(expense(100,"25"),"Regression ambiguous alias"));
+    assertThat(sources.findAll()).allSatisfy(source -> {
+      assertThat(source.getState()).isEqualTo("PENDING");
+      assertThat(source.getMessage()).contains("Several existing counterparties match");
+      assertThat(source.getTransactionId()).isNull();
+    });
+    assertThat(balance(1,1)).isZero(); assertThat(balance(2,2)).isZero();
+  }
+  @Test void missingDescriptionsGetAnExpenseSpecificNameInsteadOfTheCatchAll() {
+    apply(named(expense(100,"25")," "));
+    assertThat(tx(100,11).getSourceName()).isEqualTo("Splitwise expense 100");
+    assertThat(tx(100,22).getDestinationName()).isEqualTo("Splitwise expense 100");
+  }
+  @Test void merchantIdentityIsSharedButItsLedgerAccountsKeepTheirCurrency() {
+    var chf = merchant("Regression currency shop", AccountKind.REVENUE, "CHF");
+    var bank = merchant("Regression euro bank", AccountKind.CASH, "EUR");
+    settings.setMembers(List.of(member(11,7,bank.getId(),null)));
+    var e = named(expense(100,"15.1234"),"Regression currency shop");
+    apply(new SplitwiseExpense(e.id(),e.groupId(),e.description(),e.details(),e.date(),"EUR",e.updatedAt(),e.deletedAt(),e.payment(),e.category(),e.users()));
+    var after = tx(100,11);
+    assertThat(after.getSourceAccountId()).isNotEqualTo(chf.getId());
+    assertThat(after.getSourceCounterpartyId()).isEqualTo(accountRepository.findById(chf.getId()).orElseThrow().getCounterpartyId());
+    assertThat(after.getSourceCurrency()).isEqualTo("EUR");
+    assertThat(after.getDestinationCurrency()).isEqualTo("EUR");
+    assertThat(balance(1,7)).isEqualByComparingTo("15.1234");
+  }
   @Test void pairedSharesReduceExpensesAndPayerChangesWithoutDuplicating() {
     apply(expense(100,"25.1234"));
     assertThat(balance(1,1)).isEqualByComparingTo("25.1234"); assertThat(balance(2,2)).isEqualByComparingTo("-25.1234");

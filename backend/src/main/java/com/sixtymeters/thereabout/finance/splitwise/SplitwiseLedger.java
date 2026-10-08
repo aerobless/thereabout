@@ -2,6 +2,7 @@ package com.sixtymeters.thereabout.finance.splitwise;
 
 import static com.sixtymeters.thereabout.finance.domain.FinanceRules.*;
 import com.sixtymeters.thereabout.access.UserId;
+import com.sixtymeters.thereabout.config.ThereaboutException;
 import com.sixtymeters.thereabout.finance.data.*;
 import com.sixtymeters.thereabout.finance.service.*;
 import com.sixtymeters.thereabout.generated.model.*;
@@ -71,7 +72,7 @@ public class SplitwiseLedger {
     var source = sources.findById(SplitwiseExpense.reference(e.id(), m.getMemberId())).orElse(null);
     var amount = e.amount(m.getMemberId());
     var row = new GenSplitwiseRow().expenseId(e.id()).memberId(m.getMemberId()).accountId(m.getAccountId())
-        .description(Objects.toString(e.description(), "Splitwise expense " + e.id())).date(e.occurredAt().toString())
+        .description(e.description() == null || e.description().isBlank() ? "Splitwise expense " + e.id() : e.description()).date(e.occurredAt().toString())
         .amount(money(amount)).currency(e.currency()).sourceCategoryId(e.category() == null ? null : e.category().id())
         .future(e.occurredAt().isAfter(LocalDateTime.now(financeClock)))
         .requiresClassification(!e.payment() && (source == null || source.getClassification() == null) && SETTLEMENT.matcher(Objects.toString(e.description(), "")).find()).action("CREATE");
@@ -124,6 +125,8 @@ public class SplitwiseLedger {
     if (mapping.isEmpty()) return action(row, "PENDING", "Map the Splitwise category before importing.");
     try { categories.validate(mapping.get().getCategoryId()); }
     catch (RuntimeException failure) { return action(row, "PENDING", "The mapped category is no longer available."); }
+    try { counterparties.matchingAccounts(row.getDescription(), amount.signum() > 0 ? AccountKind.REVENUE : AccountKind.EXPENSE, e.currency()); }
+    catch (ThereaboutException failure) { return action(row, "PENDING", failure.getReason()); }
     return action(row, source != null && source.getTransactionId() != null ? "UPDATE" : "CREATE", null);
   }
   private GenSplitwiseRow action(GenSplitwiseRow row, String action, String message) { return row.action(action).message(message); }
@@ -171,7 +174,7 @@ public class SplitwiseLedger {
         var t = source.getTransactionId() == null ? null : transactions.findById(source.getTransactionId()).orElseThrow();
         if (t != null && t.isDeleted()) ledger.syncSetDeleted(user, versioned(t), false);
         boolean settlement = isSettlement(e, source);
-        long other = settlement ? m.getBankAccountId() : counter(amount.signum() > 0 ? AccountKind.REVENUE : AccountKind.EXPENSE, e.currency());
+        long other = settlement ? m.getBankAccountId() : expenseCounterparty(row.getDescription(), amount.signum() > 0 ? AccountKind.REVENUE : AccountKind.EXPENSE, e.currency());
         var input = input(m.getAccountId(), other, amount, e.currency(), e.occurredAt(), row.getDescription(), settlement);
         input.externalReference(t != null && t.getExternalReference() != null && !t.getExternalReference().isBlank() ? t.getExternalReference() : id)
             .notes(Objects.toString(e.details(), ""));
@@ -191,7 +194,16 @@ public class SplitwiseLedger {
   }
   private UserId owner(GenSplitwiseMemberMapping m) { return new UserId(accountRepository.findById(m.getAccountId()).orElseThrow(() -> missing("Account")).getUserId()); }
   private GenFinanceVersionedInput versioned(FinanceTransactionEntity t) { return new GenFinanceVersionedInput().id(t.getId()).version(t.getVersion()).requestKey(UUID.randomUUID().toString()); }
-  private long counter(AccountKind kind, String currency) {
+  private long expenseCounterparty(String description, AccountKind kind, String currency) {
+    return counterparties.matchingAccounts(description, kind, currency).stream().findFirst().map(FinanceAccountEntity::getId)
+        .orElseGet(() -> {
+          var account = new FinanceAccountEntity(); account.setName(required(description, "counterparty"));
+          account.setKind(kind); account.setCurrency(currency); counterparties.attach(account);
+          return accountRepository.saveAndFlush(account).getId();
+        });
+  }
+  // Starting-balance corrections have no merchant; ordinary expenses use their descriptions.
+  private long startingBalanceCounterparty(AccountKind kind, String currency) {
     String name = kind == AccountKind.REVENUE ? "Splitwise reimbursements" : "Splitwise shared expenses";
     return accountRepository.findFirstByNameAndKindAndCurrencyAndDeletedFalseOrderByIdAsc(name, kind, currency).map(FinanceAccountEntity::getId).orElseGet(() -> {
       var a = new FinanceAccountEntity(); a.setName(name); a.setKind(kind); a.setCurrency(currency); counterparties.attach(a); return accountRepository.saveAndFlush(a).getId();
@@ -274,7 +286,7 @@ public class SplitwiseLedger {
     if (delta.signum() == 0) return;
     require(Boolean.TRUE.equals(balance.getCanCorrect()), "The starting balance cannot be corrected until its coverage is clear");
     var date = LocalDate.parse(member.getStartDate()).atStartOfDay().minusNanos(1000);
-    var input = input(member.getAccountId(), counter(delta.signum() > 0 ? AccountKind.REVENUE : AccountKind.EXPENSE, balance.getCurrency()),
+    var input = input(member.getAccountId(), startingBalanceCounterparty(delta.signum() > 0 ? AccountKind.REVENUE : AccountKind.EXPENSE, balance.getCurrency()),
         delta, balance.getCurrency(), date, "Splitwise starting balance correction", false)
         .effect(GenFinanceEffect.RECONCILIATION).externalReference("splitwise-start:" + initializationKey + ":" + member.getMemberId())
         .requestKey("sw-start:" + hash(initializationKey + ":" + member.getMemberId()).substring(0, 40));

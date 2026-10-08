@@ -91,6 +91,10 @@ paths:
     $ref: 'openapi/finances/transactions.yaml#/paths/_transactions_categories'
   /api/finances/valuations/preview:
     $ref: 'openapi/finances/valuations.yaml#/paths/_valuations_preview'
+  /api/finances/valuations/{id}/delete:
+    $ref: 'openapi/finances/valuations.yaml#/paths/Delete'
+  /api/finances/valuations/{id}/restore:
+    $ref: 'openapi/finances/valuations.yaml#/paths/Restore'
   /api/finances/valuations:
     $ref: 'openapi/finances/valuations.yaml#/paths/_valuations'
   /api/finances/rates:

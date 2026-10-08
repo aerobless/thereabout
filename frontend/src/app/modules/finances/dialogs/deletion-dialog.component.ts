@@ -23,6 +23,9 @@ import {
     @if (!transaction().deleted) {
       <p>The transaction can be restored from the deleted entries view.</p>
     }
+    @if (transaction().valuationId) {
+      <p>This also {{ transaction().deleted ? "restores" : "deletes" }} the recorded total value. Later valuations stay unchanged; their ledger balances may differ.</p>
+    }
     <div class="dialog-footer">
       <button class="app-button" [disabled]="context.saving()" (click)="dialogs.close()">
         Cancel</button

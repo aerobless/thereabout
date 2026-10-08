@@ -1,3 +1,11 @@
+@if (loaded().error) { <p role="alert" class="alert error">{{ loaded().error }}</p> }
+@if (valuationId() && loaded().loading) { <p role="status">Loading valuation…</p> }
+@if (editing(); as valuation) {
+  <p><strong>{{ currentAccount?.name }}</strong> · {{ valuation.deleted ? "Deleted valuation" : "Correct recorded total value" }}</p>
+  @if (valuation.deleted) {
+    <button class="app-button primary" [disabled]="saving" (click)="deletion.set(valuation)">Restore valuation</button>
+  }
+}
 @if (history().error) {
   <p role="alert" class="alert error">{{ history().error }}</p>
 }
@@ -5,6 +13,7 @@
   <p>
     Record a statement’s total account value. Only the difference from the
     ledger becomes a gain or loss.
+    @if (editing()) { The preview replaces this valuation’s previous adjustment. }
   </p>
   <div class="form-grid">
     <label
@@ -32,7 +41,7 @@
         placeholder="e.g. Monthly statement 2026-09"
     /></label>
   </div>
-  <button class="app-button" [disabled]="saving || form.invalid">Preview adjustment</button>
+  <button class="app-button" [disabled]="saving || form.invalid || !currentAccount || !!editing()?.deleted">Preview adjustment</button>
   @if (preview) {
     <div class="valuation-preview">
       <span
@@ -50,13 +59,16 @@
         <strong>{{ money(preview.difference, preview.currency) }}</strong></span
       >
     </div>
+    @if (preview.laterValuations) {
+      <p role="status" class="alert">Later recorded valuations stay unchanged. This correction changes their ledger history, so their recorded totals may differ from the recalculated balance.</p>
+    }
     <button
       type="button"
       class="app-button primary"
-      [disabled]="saving || form.invalid"
+      [disabled]="saving || form.invalid || !currentAccount || !!editing()?.deleted"
       (click)="saveValuation()"
     >
-      Confirm reported value
+      {{ editing() ? "Save correction" : "Confirm reported value" }}
     </button>
   }
 </form>
@@ -72,6 +84,22 @@
           ? "Reconstructed from imported adjustment"
           : v.reference
       }}</small>
+      @if (v.deleted) { <small>Deleted</small> }
+      <span class="actions">
+        <button class="app-button" [disabled]="saving || v.deleted" (click)="edit(v)" [attr.aria-label]="'Edit valuation ' + v.reference">Edit</button>
+        <button class="app-button" [class.danger]="!v.deleted" [disabled]="saving" (click)="deletion.set(v)">{{ v.deleted ? "Restore" : "Delete" }}</button>
+      </span>
     </div>
   }
 </div>
+
+@if (deletion(); as valuation) {
+  <app-modal [visible]="true" (visibleChange)="deletion.set(null)" [header]="valuation.deleted ? 'Restore valuation' : 'Delete valuation'" [dismissible]="!saving">
+    <p>{{ valuation.deleted ? "Restore" : "Delete" }} the reported value of {{ money(valuation.reportedValue, valuation.currency) }} from {{ valuation.occurredAt | date: "d MMM y" }} and its gain or loss?</p>
+    <p>Later recorded valuations stay unchanged; their ledger balances may differ. Deletion can be undone.</p>
+    <div class="dialog-footer">
+      <button class="app-button" [disabled]="saving" (click)="deletion.set(null)">Cancel</button>
+      <button class="app-button" [class.danger]="!valuation.deleted" [class.primary]="valuation.deleted" [disabled]="saving" (click)="confirmDeletion()">{{ valuation.deleted ? "Restore valuation" : "Delete valuation" }}</button>
+    </div>
+  </app-modal>
+}

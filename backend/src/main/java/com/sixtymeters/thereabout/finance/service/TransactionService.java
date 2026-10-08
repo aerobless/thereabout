@@ -202,7 +202,7 @@ public class TransactionService {
   private void requireUnlinked(long id) {
     require(
         !valuations.existsByTransactionId(id),
-        "Valuation-linked transactions cannot be edited or deleted; add a new dated valuation");
+        "Edit this recorded valuation through valuations.preview and valuations.save using its id and version");
   }
 
   public GenFinanceTransactionResult setDeleted(UserId user, GenFinanceVersionedInput input, boolean deleted) {
@@ -224,8 +224,11 @@ public class TransactionService {
           var transaction = existing(user, input.getId());
           var before = reads.transaction(user, input.getId());
           version(input.getVersion(), transaction.getVersion());
-          requireUnlinked(input.getId());
-          if (!deleted)
+          var valuation = valuations.findByTransactionId(input.getId()).orElse(null);
+          var valuationBefore = valuation == null ? null : reads.valuation(user, valuation.getId());
+          boolean transactionDeleted = deleted || (valuation != null
+              && valuation.getReportedValue().compareTo(valuation.getPreviousBalance()) == 0);
+          if (!transactionDeleted)
             for (var posting : transaction.getPostings()) {
               var account = accounts.transactionAccount(posting.getAccountId());
               require(
@@ -235,9 +238,14 @@ public class TransactionService {
                   "Cannot restore historical postings incompatible with current accounts");
               posting.setDeleted(false);
             }
-          transaction.setDeleted(deleted);
+          transaction.setDeleted(transactionDeleted);
           transaction.touch(financeClock);
           transactions.saveAndFlush(transaction);
+          if (valuation != null) {
+            valuation.setDeleted(deleted); valuations.saveAndFlush(valuation);
+            writes.audit(user, deleted ? "valuations.delete" : "valuations.restore", valuation.getAccountId(),
+                valuationBefore, reads.valuation(user, valuation.getId()));
+          }
           var after = reads.transaction(user, transaction.getId());
           if (!synchronizedWrite) { splitwiseChanges.changed(before, after); after = reads.transaction(user, transaction.getId()); }
           writes.audit(user, operation, transaction.getId(), before, after);
@@ -288,16 +296,37 @@ public class TransactionService {
       BigDecimal reported,
       BigDecimal delta,
       String reference) {
+    return valuationAdjustment(user, account, currency, date, reported, delta, reference, null);
+  }
+
+  public Long valuationAdjustment(UserId user, long account, String currency, LocalDateTime date,
+      BigDecimal reported, BigDecimal delta, String reference, Long previousId) {
     accounts.requireAccount(user, account);
+    if (delta.signum() == 0 && previousId == null) return null;
+    var transaction = previousId == null ? new FinanceTransactionEntity() : existing(user, previousId);
+    var before = previousId == null ? null : reads.transaction(user, previousId);
+    // Keep the historical link when an amendment removes the correction, so restoring the
+    // old transaction cannot accidentally book its superseded non-zero amount again.
+    if (delta.signum() == 0) {
+      transaction.setDeleted(true); transaction.touch(financeClock); transactions.saveAndFlush(transaction);
+      writes.audit(user, "transactions.valuation", transaction.getId(), before, reads.transaction(user, transaction.getId()));
+      return transaction.getId();
+    }
     boolean gain = delta.signum() > 0;
-    var counter =
-        accounts.valuationCounter(gain ? AccountKind.REVENUE : AccountKind.EXPENSE, currency);
-    var transaction = new FinanceTransactionEntity();
+    var counterKind = gain ? AccountKind.REVENUE : AccountKind.EXPENSE;
+    var counter = before == null ? null : accounts.transactionAccount(
+        before.getSourceAccountId().equals(account) ? before.getDestinationAccountId() : before.getSourceAccountId());
+    if (counter == null || counter.getKind() != counterKind || !counter.getCurrency().equals(currency)
+        || !counter.isActive() || counter.isDeleted())
+      counter = accounts.valuationCounter(counterKind, currency);
+    transaction.setDeleted(false);
     transaction.setType(gain ? TransactionType.DEPOSIT : TransactionType.WITHDRAWAL);
     transaction.setEffect(FinancialEffect.VALUATION);
-    transaction.setDescription(gain ? "Valuation gain" : "Valuation loss");
+    if (before == null || Set.of("Valuation gain", "Valuation loss").contains(transaction.getDescription()))
+      transaction.setDescription(gain ? "Valuation gain" : "Valuation loss");
     transaction.setOccurredAt(date);
-    transaction.setNotes("Reported total: " + money(reported) + " " + currency);
+    if (before == null || Objects.toString(transaction.getNotes(), "").startsWith("Reported total:"))
+      transaction.setNotes("Reported total: " + money(reported) + " " + currency);
     transaction.setExternalReference(reference);
     setPosting(
         transaction,
@@ -320,7 +349,7 @@ public class TransactionService {
     writes.audit(user,
         "transactions.valuation",
         transaction.getId(),
-        null,
+        before,
         reads.transaction(user, transaction.getId()));
     return transaction.getId();
   }

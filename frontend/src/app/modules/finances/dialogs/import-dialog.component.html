@@ -13,7 +13,7 @@
   <div class="import-summary-header">
     <div class="import-file">
       <strong>{{ account()?.userName }} · {{ account()?.name }}</strong>
-      <span>{{ draft.fileName }}</span>
+      <span [title]="draft.fileName">{{ draft.fileName }}</span>
     </div>
     @if (draft.status === 'READY' && account()) {
       <button class="app-button" type="button" (click)="dialogs.openImportHints(account()!.id)" [disabled]="busy() || !!editor()">Import hints</button>

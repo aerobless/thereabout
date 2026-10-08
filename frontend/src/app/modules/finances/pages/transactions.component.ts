@@ -1,4 +1,5 @@
 import {CategoryLabelComponent} from '../shared/category-label.component';
+import {TransactionAccountComponent} from '../shared/transaction-account.component';
 import {localDateString, parseLocalDate} from '../../../shared/dates/local-date';
 import {FilterMetadata} from 'primeng/api';
 import {ColumnFilter} from 'primeng/table';
@@ -39,6 +40,7 @@ import {
   imports: [
     FinanceDateInputComponent,
     CategoryLabelComponent,
+    TransactionAccountComponent,
     SelectModule,
     MultiSelectModule,
     TableModule,
@@ -74,6 +76,7 @@ export class TransactionsComponent {
     { label: "Transfers", value: "TRANSFER" },
   ];
   readonly accountOptions = computed(() => [{ id: 0, name: "All accounts" }, ...this.context.accounts()]);
+  readonly accountsById = computed(() => new Map(this.context.accounts().map(account => [account.id, account])));
   readonly categoryOptions = computed(() => [{ id: 0, name: "Uncategorized" }, ...this.context.categories()]);
   readonly searchChanges = new Subject<void>();
 

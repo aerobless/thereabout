@@ -11,6 +11,8 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -403,6 +405,68 @@ class FinanceImportTest {
                 "SELECT amount FROM finance_posting WHERE account_id=3",
                 java.math.BigDecimal.class))
         .isEqualByComparingTo("10.987654321");
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "WITHDRAWAL,-4.050000000000000000000001,-3.85,-4.050000000000000000000001",
+    "WITHDRAWAL,4.05,-3.85,-4.05",
+    "DEPOSIT,-4.05,3.85,4.05",
+    "DEPOSIT,4.05,3.85,4.05"
+  })
+  void signedOriginalAmountsBecomeMagnitudesWithoutChangingEvidencePrecisionOrLedgerDirection(
+      String type, String original, String bookedPosting, String foreignPosting) {
+    db.update("INSERT INTO finance_account(id,name,kind,currency) VALUES(4,'Refund','REVENUE','CHF')");
+    var proposal = new ImportInterpreter.Proposal();
+    proposal.rowId = "row-1";
+    proposal.type = type;
+    proposal.date = proposal.dateEvidence = "2026-09-11";
+    proposal.description = "Europa-Park";
+    proposal.amount = proposal.amountEvidence = "3.85";
+    proposal.foreignAmount = proposal.foreignAmountEvidence = original;
+    proposal.foreignCurrency = "EUR";
+    proposal.otherAccountId = Optional.of(type.equals("DEPOSIT") ? 4L : 2L);
+    var response = new ImportInterpreter.Result();
+    response.rows = List.of(proposal);
+    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList(), anyList()))
+        .thenReturn(response);
+
+    var job = ready(prepare("2026-09-11;Europa-Park;3.85;" + original));
+    var row = job.getRows().getFirst();
+    assertThat(row.getSource()).contains(original);
+    assertThat(row.getForeignAmount()).isEqualTo(original.startsWith("-") ? original.substring(1) : original);
+    assertThat(row.getIssues()).isEmpty();
+    assertThat(job.getReadyToApprove()).isTrue();
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_transaction", Long.class)).isZero();
+    imports.approve(USER, approval(job));
+    assertThat(db.queryForObject("SELECT amount FROM finance_posting WHERE account_id=1", java.math.BigDecimal.class))
+        .isEqualByComparingTo(bookedPosting);
+    assertThat(db.queryForObject("SELECT foreign_amount FROM finance_posting WHERE account_id=1", java.math.BigDecimal.class))
+        .isEqualByComparingTo(foreignPosting);
+  }
+
+  @Test
+  void unsupportedOriginalAmountsRemainUnresolvedInsteadOfBeingNormalisedIntoValidRows() {
+    var proposal = new ImportInterpreter.Proposal();
+    proposal.rowId = "row-1";
+    proposal.type = "WITHDRAWAL";
+    proposal.date = proposal.dateEvidence = "2026-09-11";
+    proposal.description = "Europa-Park";
+    proposal.amount = proposal.amountEvidence = "3.85";
+    proposal.foreignAmount = "-99";
+    proposal.foreignAmountEvidence = "-4.05";
+    proposal.foreignCurrency = "EUR";
+    proposal.otherAccountId = Optional.of(2L);
+    var response = new ImportInterpreter.Result();
+    response.rows = List.of(proposal);
+    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList(), anyList()))
+        .thenReturn(response);
+    var job = ready(prepare("2026-09-11;Europa-Park;3.85;-4.05"));
+    assertThat(job.getRows().getFirst().getForeignAmount()).isEmpty();
+    assertThat(job.getRows().getFirst().getReason()).isEqualTo("Confirm the original amount from the source.");
+    assertThat(job.getReadyToApprove()).isFalse();
+    assertThatThrownBy(() -> imports.approve(USER, approval(job))).hasMessageContaining("Resolve every row");
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_transaction", Long.class)).isZero();
   }
 
   @Test

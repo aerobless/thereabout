@@ -91,7 +91,12 @@
         <th pSortableColumn="occurredAt">
           Date <p-sorticon field="occurredAt" />
         </th>
-        <th>From → To</th>
+        @if (accountId()) {
+          <th>Counterparty</th>
+        } @else {
+          <th>From</th>
+          <th>To</th>
+        }
         <th>Category</th>
         <th class="numeric">Amount</th>
         @if (accountId()) {
@@ -120,7 +125,7 @@
               <ng-template #footer><div class="date-filter-footer"><button class="app-button" (click)="clearDates(dateColumn)">Clear</button><button class="app-button primary" [disabled]="!completeDates(dateColumn.fieldConstraints)" (click)="applyDates(dateColumn)">Apply</button></div></ng-template>
             </p-columnfilter>
           </th>
-          <th>
+          <th [attr.colspan]="accountId() ? 1 : 2">
             @if (!accountId()) {
               <p-select
                 ariaLabel="Filter account"
@@ -181,10 +186,16 @@
           }
         </td>
         <td class="date-cell">{{ t.occurredAt | date: "d MMM y" }}</td>
-        <td class="flow">
-          @if (t.sourceCounterpartyId) { <a [routerLink]="['/finances/counterparties',t.sourceCounterpartyId]">{{t.sourceName}}</a> } @else { <span>{{t.sourceName}}</span> }
-          <small>→ @if (t.destinationCounterpartyId) { <a [routerLink]="['/finances/counterparties',t.destinationCounterpartyId]">{{t.destinationName}}</a> } @else { {{t.destinationName}} }</small>
-        </td>
+        @if (accountId()) {
+          @let outgoing = t.sourceAccountId === accountId();
+          <td><finance-transaction-account
+            [account]="accountsById().get(outgoing ? t.destinationAccountId : t.sourceAccountId)"
+            [counterpartyId]="outgoing ? t.destinationCounterpartyId : t.sourceCounterpartyId"
+            [name]="outgoing ? t.destinationName : t.sourceName" /></td>
+        } @else {
+          <td><finance-transaction-account [account]="accountsById().get(t.sourceAccountId)" [counterpartyId]="t.sourceCounterpartyId" [name]="t.sourceName" /></td>
+          <td><finance-transaction-account [account]="accountsById().get(t.destinationAccountId)" [counterpartyId]="t.destinationCounterpartyId" [name]="t.destinationName" /></td>
+        }
         <td>
           <span class="category"><finance-category [name]="t.categoryName" /></span>
         </td>
@@ -207,13 +218,12 @@
         <td class="row-actions">
           <button class="app-button"
             (click)="openTransaction(t)"
-            [disabled]="t.deleted || !!t.valuationId"
+            [disabled]="t.deleted && !t.valuationId"
             [attr.aria-label]="'Edit ' + t.description"
           >
             <i class="pi pi-pencil"></i></button
           ><button class="app-button"
             (click)="deletion(t)"
-            [disabled]="!!t.valuationId"
             [attr.aria-label]="
               (t.deleted ? 'Restore ' : 'Delete ') + t.description
             "

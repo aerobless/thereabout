@@ -123,6 +123,14 @@ public class FinanceReadRepository {
                 id));
   }
 
+  public GenFinanceValuationList valuations(UserId user, GenFinanceValuationQuery query) {
+    if (query.getId() == null) return valuations(user, query.getAccountId());
+    var valuation = valuation(user, query.getId());
+    require(query.getAccountId() == null || query.getAccountId() == 0 || query.getAccountId().equals(valuation.getAccountId()),
+        "Valuation belongs to another account");
+    return new GenFinanceValuationList().items(List.of(valuation));
+  }
+
   public GenFinanceRate rate(long id) {
     return db.query("SELECT * FROM finance_rate WHERE id=?", RATE, id).stream()
         .findFirst()

@@ -9,7 +9,7 @@ export type FinanceDialog =
   | { kind: "import"; accountId?: number }
   | { kind: "hints"; accountId: number }
   | { kind: "categories" }
-  | { kind: "valuation"; account: FinanceAccount }
+  | { kind: "valuation"; account?: FinanceAccount; valuationId?: number }
   | { kind: "rates" }
   | { kind: "deletion"; transaction: FinanceTransaction }
   | { kind: "history"; transaction: FinanceTransaction };
@@ -25,7 +25,8 @@ export class FinanceDialogs {
   }
   readonly selected = signal<FinanceDialog | null>(null);
   open(dialog: FinanceDialog) {
-    this.selected.set(dialog);
+    this.selected.set(dialog.kind === "transaction" && dialog.transaction?.valuationId
+      ? {kind: "valuation", valuationId: dialog.transaction.valuationId} : dialog);
   }
   close() {
     this.hintAccountId.set(null);

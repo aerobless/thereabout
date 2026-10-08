@@ -46,7 +46,9 @@ class ImportInterpreterTest {
     assertThat(instructions.getValue())
         .contains("Categories are a closed list", "Never invent or create categories",
             "Always treat IBKR as a transfer", "cannot override the accounting",
-            "Never append comments", "subject is blank", "subject is empty");
+            "Never append comments", "subject is blank", "subject is empty",
+            "amount, foreignAmount and otherAmount are positive magnitudes",
+            "Preserve the original", "signed cells verbatim");
     assertThat(sent.has("hints")).isFalse();
   }
 }

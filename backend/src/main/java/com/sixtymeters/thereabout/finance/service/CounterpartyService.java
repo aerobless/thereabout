@@ -133,12 +133,13 @@ public class CounterpartyService {
 
   @Transactional(readOnly = true)
   public List<FinanceAccountEntity> matchingAccounts(String name, AccountKind kind, String currency) {
-    var candidates = counterparties.matching(normalize(name)).stream()
+    var matches = counterparties.matching(normalize(name));
+    var candidates = matches.stream()
         .map(c -> accounts.findByCounterpartyIdOrderByIdAsc(c.getId()).stream()
             .filter(a -> !a.isDeleted() && a.isActive() && a.getKind() == kind && a.getCurrency().equals(currency))
             .toList())
         .filter(linked -> !linked.isEmpty()).toList();
-    require(candidates.size() <= 1, "Several existing counterparties match; select the correct one");
+    require(candidates.size() <= 1 && (!candidates.isEmpty() || matches.size() <= 1), "Several existing counterparties match; select the correct one");
     // Accounts of an already combined identity are equivalent within a direction and currency.
     return candidates.isEmpty() ? List.of() : List.of(candidates.getFirst().getFirst());
   }

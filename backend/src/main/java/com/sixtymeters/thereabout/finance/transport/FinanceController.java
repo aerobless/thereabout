@@ -156,7 +156,19 @@ public class FinanceController {
   @GetMapping("/valuations")
   public GenFinanceValuationList financeListValuations(
       @Valid @ModelAttribute GenFinanceValuationQuery query) {
-    return reads.valuations(users.current(), query.getAccountId());
+    return reads.valuations(users.current(), query);
+  }
+
+  @PostMapping("/valuations/{id}/delete")
+  public GenFinanceValuation financeDeleteValuation(@PathVariable Long id, @Valid @RequestBody GenFinanceVersionedInput input) {
+    require(id.equals(input.getId()), "Valuation ID differs from request");
+    return valuations.setDeleted(users.current(), input, true);
+  }
+
+  @PostMapping("/valuations/{id}/restore")
+  public GenFinanceValuation financeRestoreValuation(@PathVariable Long id, @Valid @RequestBody GenFinanceVersionedInput input) {
+    require(id.equals(input.getId()), "Valuation ID differs from request");
+    return valuations.setDeleted(users.current(), input, false);
   }
 
   @GetMapping("/rates")

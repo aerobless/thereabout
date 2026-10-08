@@ -30,7 +30,7 @@ import { DeletionDialogComponent } from "./deletion-dialog.component";
     <app-modal
       [visible]="true"
       (visibleChange)="close()"
-      [header]="titles[dialog.kind]"
+      [header]="dialog.kind === 'valuation' && dialog.valuationId ? 'Edit valuation' : titles[dialog.kind]"
       [dialogStyle]="{
         width: dialog.kind === 'import' ? '1200px' : dialog.kind === 'categories' ? '900px' : '720px',
         maxWidth: '94vw',
@@ -58,7 +58,7 @@ import { DeletionDialogComponent } from "./deletion-dialog.component";
           <finance-categories-dialog />
         }
         @case ("valuation") {
-          <finance-valuation-dialog [account]="dialog.account" />
+          <finance-valuation-dialog [account]="dialog.account" [valuationId]="dialog.valuationId" />
         }
         @case ("rates") {
           <finance-rates-dialog />

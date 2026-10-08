@@ -205,10 +205,14 @@ public class FinanceImportService {
               row.setReason("Date is not supported by the source. Enter the date or skip.");
             } else if (dateCandidates.size() > 1)
               row.setReason("Ambiguous source date; confirm the date.");
-            if (!text(p.foreignAmount).isEmpty()
-                && !supportedAmount(source, p.foreignAmountEvidence, p.foreignAmount)) {
-              row.setForeignAmount("");
-              row.setReason("Confirm the original amount from the source.");
+            if (!text(p.foreignAmount).isEmpty()) {
+              if (supportedAmount(source, p.foreignAmountEvidence, p.foreignAmount)) {
+                // Statement signs express direction; the draft stores magnitudes and keeps raw evidence.
+                row.setForeignAmount(money(decimal(p.foreignAmount).abs()));
+              } else {
+                row.setForeignAmount("");
+                row.setReason("Confirm the original amount from the source.");
+              }
             }
             if (row.getType() == GenFinanceImportRow.TypeEnum.TRANSFER
                 && known.stream()

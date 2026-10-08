@@ -68,9 +68,18 @@ input[type=checkbox] { width:auto; }
 .row-counts div { display: grid; gap: 7px; }
 @media (max-width: 900px) { .import-summary-cards { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 600px) {
-  .import-summary-header { align-items: flex-start; gap: 10px; }
-  .import-summary-card { padding: 10px; }
-  .import-summary-card strong { font-size: 16px; }
-  .import-summary-card.row-counts { grid-column: 1 / -1; justify-content: space-around; }
-  .import-summary-card:last-child { grid-column: 1 / -1; }
+  .import-summary-header { align-items: center; gap: 8px; margin-bottom: 8px; }
+  .import-file { gap: 2px; }
+  .import-file strong { font-size: 14px; }
+  .import-file span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .import-summary-header button { padding: 6px 8px; font-size: 12px; }
+  .import-summary-cards { gap: 6px; margin-bottom: 10px; }
+  .import-summary-card { padding: 7px 9px; gap: 2px; }
+  .import-summary-card span, .import-summary-card small { font-size: 11px; }
+  .import-summary-card strong { font-size: 14px; }
+  .import-summary-card.row-counts { grid-column: 1 / -1; gap: 6px; }
+  .row-counts div { display: flex; align-items: baseline; gap: 4px; }
+  .import-summary-card:last-child { display: grid; grid-column: 1 / -1; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 8px; }
+  .import-summary-card:last-child strong { text-align: right; }
+  .import-summary-card:last-child small { grid-column: 1 / -1; }
 }

@@ -44,6 +44,23 @@ describe("Transaction counterparty selection", () => {
     else Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
   });
 
+  it("keeps decimal strings and marks original-amount edits for submission", async () => {
+    const fixture = TestBed.createComponent(Host);
+    await fixture.whenStable();
+    const component = fixture.debugElement.query(By.directive(TransactionDialogComponent)).componentInstance as TransactionDialogComponent;
+    const input = document.querySelector<HTMLInputElement>('input[aria-label="Original amount"]')!;
+    input.value = '12.123456789012345678901234';
+    input.dispatchEvent(new Event('input', {bubbles:true}));
+    await fixture.whenStable();
+    expect(component.form.controls.foreignAmount.value).toBe('12.123456789012345678901234');
+    expect(component.form.controls.foreignAmount.dirty).toBe(true);
+    component.originalAmountChanged('foreignCurrency', 'CHF');
+    expect(component.form.controls.foreignCurrency.dirty).toBe(true);
+    component.originalAmountChanged('foreignCurrency', '');
+    expect(component.form.controls.foreignAmount.value).toBe('');
+    fixture.destroy();
+  });
+
   it("keeps a hovered suggestion clickable and explains missing fields until the form is complete", async () => {
     const fixture = TestBed.createComponent(Host);
     fixture.detectChanges();

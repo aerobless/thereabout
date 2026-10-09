@@ -60,7 +60,7 @@ public class IdentityEntity {
 
     private Instant updatedAt;
 
-    @OneToMany(mappedBy = "identity", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "identity", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @Builder.Default
     private List<IdentityInApplicationEntity> identityInApplications = new ArrayList<>();
 

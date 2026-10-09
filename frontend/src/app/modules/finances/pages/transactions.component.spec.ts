@@ -32,19 +32,30 @@ describe('Transaction account columns', () => {
       transaction({id:3,type:'TRANSFER',destinationAccountId:2,destinationName:'Revolut',destinationCounterpartyId:undefined}),
       transaction({id:4,type:'TRANSFER',sourceAccountId:2,sourceName:'Revolut',destinationAccountId:1,destinationName:'Neon',destinationCounterpartyId:undefined}),
     ];
+    const searches = vi.fn(()=>of({items,total:items.length,page:0,pageSize:50}));
     TestBed.configureTestingModule({providers:[
       provideZonelessChangeDetection(), provideRouter([]),
       {provide:ProtectedImageCache,useValue:images},
       {provide:FinanceDialogs,useValue:{open:vi.fn()}},
       {provide:FinanceContext,useValue:{
         accounts:signal([account(1,'Neon'),account(2,'Revolut')]), categories:signal([]), revision, saving:signal(false),
-        api:{transactions:vi.fn(()=>of({items,total:items.length,page:0,pageSize:50}))}, money:(value:string)=>value,
+        api:{transactions:searches}, money:(value:string)=>value,
       }},
     ]});
     const fixture = TestBed.createComponent(TransactionsComponent);
     await fixture.whenStable();
     const root:HTMLElement = fixture.nativeElement;
     expect([...root.querySelectorAll('thead tr:first-child th')].map(cell=>cell.textContent?.trim())).toEqual(['','Description','Date','From','To','Category','Amount','']);
+    const desc = root.querySelector<HTMLInputElement>('input[aria-label="Search description"]')!;
+    const from = root.querySelector<HTMLInputElement>('input[aria-label="Search from"]')!;
+    const to = root.querySelector<HTMLInputElement>('input[aria-label="Search to"]')!;
+    fixture.componentInstance.page = 3;
+    for (const [input, text] of [[desc,'Purchase'], [from,'Neon'], [to,'Shop']] as const) {
+      input.value = text; input.dispatchEvent(new Event('input'));
+    }
+    await vi.waitFor(() => expect(searches).toHaveBeenLastCalledWith(expect.objectContaining({descriptionQ:'Purchase',fromQ:'Neon',toQ:'Shop',page:0})));
+    expect(root.textContent).not.toContain('Operating only');
+    expect(root.textContent).not.toContain('Include deleted');
     const rows = [...root.querySelectorAll('tbody tr')];
     expect(rows.map(row=>[row.children[3].textContent?.trim(),row.children[4].textContent?.trim()])).toEqual([
       ['Neon','Shop'],['Shop','Neon'],['Neon','Revolut'],['Revolut','Neon'],
@@ -65,6 +76,9 @@ describe('Transaction account columns', () => {
     fixture.componentRef.setInput('accountId',1);
     await fixture.whenStable();
     expect([...root.querySelectorAll('thead tr:first-child th')].map(cell=>cell.textContent?.trim())).toEqual(['','Description','Date','Counterparty','Category','Amount','Running balance','']);
+    const counterpart = root.querySelector<HTMLInputElement>('input[aria-label="Search counterparty"]')!;
+    counterpart.value = 'Refund merchant'; counterpart.dispatchEvent(new Event('input'));
+    await vi.waitFor(() => expect(searches).toHaveBeenLastCalledWith(expect.objectContaining({accountId:1,counterpartQ:'Refund merchant',page:0})));
     const accountRows = [...root.querySelectorAll('tbody tr')];
     expect(accountRows.map(row=>row.children[3].textContent?.trim())).toEqual(['Shop','Shop','Revolut','Revolut']);
     expect(root.querySelectorAll('tbody finance-transaction-account')).toHaveLength(4);

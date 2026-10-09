@@ -54,7 +54,7 @@ public class ImportInterpreter {
             "id", account.getId(), "currency", account.getCurrency(), "name", account.getName()));
     data.put(
         "accounts",
-        accounts.stream()
+        accounts.stream().filter(a -> a.getKind() != GenFinanceAccountKind.EXPENSE && a.getKind() != GenFinanceAccountKind.REVENUE)
             .map(
                 a ->
                     Map.of(
@@ -99,9 +99,9 @@ public class ImportInterpreter {
         Categories are a closed list: use ONLY a categoryId from categories, or null for uncategorised.
         Never invent or create categories; leave categoryName empty. Choose the best existing category
         for the transaction's purpose, using reason to explain uncertainty when necessary.
-        Use existing account IDs for matching counterparties, including spelling/case/umlaut variations.
-        Propose a named new counterparty ONLY when no supplied account fits its identity and direction.
-        Match IDs by identity and direction; counterparties cannot be used as main transfer accounts.
+        Supplied accounts are main accounts for transfers only. Use their IDs ONLY for TRANSFER.
+        For WITHDRAWAL/DEPOSIT, leave otherAccountId null and extract the merchant/person name
+        into counterpartyName from CSV evidence. Existing counterparties are matched separately.
         Skip internal currency exchanges and security buys/sells/positions; explain why. Import separate fees,
         dividends, interest, external funding and ordinary payments. Never create openings, valuations or
         balance corrections. Statement balance columns are context, never amounts to book.

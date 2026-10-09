@@ -177,6 +177,8 @@ paths:
         - identity
       operationId: deleteIdentity
       parameters:
+        - {in: query, name: version, schema: {type: integer, format: int64, minimum: 0}}
+        - {in: query, name: requestKey, schema: {type: string, minLength: 1, maxLength: 100}}
         - in: path
           name: id
           schema:
@@ -238,6 +240,9 @@ paths:
         - identity-in-application
       operationId: linkIdentityInApplication
       parameters:
+        - {in: query, name: identityVersion, schema: {type: integer, format: int64, minimum: 0}}
+        - {in: query, name: version, schema: {type: integer, format: int64, minimum: 0}}
+        - {in: query, name: requestKey, schema: {type: string, minLength: 1, maxLength: 100}}
         - in: path
           name: id
           schema:
@@ -270,6 +275,8 @@ paths:
         - identity-in-application
       operationId: unlinkIdentityInApplication
       parameters:
+        - {in: query, name: version, schema: {type: integer, format: int64, minimum: 0}}
+        - {in: query, name: requestKey, schema: {type: string, minLength: 1, maxLength: 100}}
         - in: path
           name: id
           schema:
@@ -394,6 +401,7 @@ components:
       type: object
       required: [version, userIds]
       properties:
+        requestKey: {type: string, minLength: 1, maxLength: 100}
         version: {type: integer, format: int64}
         userIds:
           type: array
@@ -444,6 +452,8 @@ components:
           type: number
           description: The unique identifier of the identity
           example: 1
+        version: {type: integer, format: int64, minimum: 0}
+        requestKey: {type: string, minLength: 1, maxLength: 100}
         firstName:
           type: string
           description: First name for a person, or the complete group name
@@ -468,6 +478,7 @@ components:
           example: false
         relationship:
           type: string
+          maxLength: 255
           description: The relationship to the user
           example: "friend"
         identityInApplications:
@@ -486,6 +497,8 @@ components:
           type: number
           description: The unique identifier
           example: 1
+        version: {type: integer, format: int64, minimum: 0}
+        identityId: {type: integer, format: int64}
         application:
           type: string
           description: The application name
@@ -577,3 +590,87 @@ components:
           type: integer
           description: Total number of messages matching the request
           example: 42
+
+    IdentityQuery:
+      type: object
+      additionalProperties: false
+      properties:
+        q: {type: string, maxLength: 1024}
+        isGroup: {type: boolean}
+        application: {type: string}
+        linked: {type: boolean}
+        identityId: {type: integer, format: int64, minimum: 1}
+        page: {type: integer, minimum: 0, maximum: 99999, default: 0}
+        pageSize: {type: integer, minimum: 1, maximum: 200, default: 50}
+    IdentityId:
+      type: object
+      additionalProperties: false
+      required: [id]
+      properties:
+        id: {type: integer, format: int64, minimum: 1}
+    IdentityCreateInput:
+      type: object
+      additionalProperties: false
+      required: [requestKey, firstName, isGroup]
+      properties:
+        requestKey: {type: string, minLength: 1, maxLength: 100}
+        firstName: {type: string, minLength: 1, maxLength: 255}
+        lastName: {type: string, maxLength: 255}
+        isGroup: {type: boolean}
+        relationship: {type: string, maxLength: 255}
+    IdentityUpdateInput:
+      type: object
+      additionalProperties: false
+      required: [id, version, requestKey, firstName, isGroup]
+      properties:
+        id: {type: integer, format: int64, minimum: 1}
+        version: {type: integer, format: int64, minimum: 0}
+        requestKey: {type: string, minLength: 1, maxLength: 100}
+        firstName: {type: string, minLength: 1, maxLength: 255}
+        lastName: {type: string, maxLength: 255}
+        isGroup: {type: boolean}
+        relationship: {type: string, maxLength: 255}
+    IdentityVersionedInput:
+      type: object
+      additionalProperties: false
+      required: [id, version, requestKey]
+      properties:
+        id: {type: integer, format: int64, minimum: 1}
+        version: {type: integer, format: int64, minimum: 0}
+        requestKey: {type: string, minLength: 1, maxLength: 100}
+    IdentityLinkInput:
+      type: object
+      additionalProperties: false
+      required: [id, identityId, version, identityVersion, requestKey]
+      properties:
+        id: {type: integer, format: int64, minimum: 1}
+        identityId: {type: integer, format: int64, minimum: 1}
+        identityVersion: {type: integer, format: int64, minimum: 0}
+        version: {type: integer, format: int64, minimum: 0}
+        requestKey: {type: string, minLength: 1, maxLength: 100}
+    IdentityMembershipInput:
+      type: object
+      additionalProperties: false
+      required: [id, version, requestKey, userIds]
+      properties:
+        id: {type: integer, format: int64, minimum: 1}
+        version: {type: integer, format: int64, minimum: 0}
+        requestKey: {type: string, minLength: 1, maxLength: 100}
+        userIds:
+          type: array
+          maxItems: 100
+          items: {type: integer, format: int64, minimum: 1}
+    IdentityPage:
+      type: object
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/Identity'}}
+        total: {type: integer, format: int64}
+        page: {type: integer}
+        pageSize: {type: integer}
+    ApplicationIdentityPage:
+      type: object
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/IdentityInApplication'}}
+        total: {type: integer, format: int64}
+        page: {type: integer}
+        pageSize: {type: integer}

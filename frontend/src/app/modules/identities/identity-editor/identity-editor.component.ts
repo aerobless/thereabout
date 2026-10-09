@@ -1,5 +1,6 @@
+import {IdentityWriteKeys} from "../identity-write-keys";
 import {fullName, splitName} from '../../../shared/identity-names';
-import {Component, Input, OnInit, inject, output, signal} from '@angular/core';
+import {Component, Input, OnInit, ChangeDetectionStrategy, input, inject, output, signal} from '@angular/core';
 import {SelectModule} from 'primeng/select';
 import {switchMap, of} from 'rxjs';
 import {CurrentUserService} from '../../../shared/current-user/current-user.service';
@@ -16,13 +17,16 @@ import {Identity, IdentityInApplication, IdentityService, IdentityInApplicationS
 
 @Component({
   selector: 'app-identity-editor',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [SelectModule, FormsModule, AppModalComponent, ButtonModule, InputTextModule, FloatLabelModule, CheckboxModule, TableModule, TooltipModule],
   templateUrl: './identity-editor.component.html',
   styles: [`.dialog-form {display: flex; flex-direction: column; gap: 1.5rem; padding-top: .5rem;}
     td {overflow-wrap: anywhere;} h4 {margin-top: 0;} [role=alert] {color: var(--p-red-600);}`]
 })
 export class IdentityEditorComponent implements OnInit {
+  private readonly writeKeys = new IdentityWriteKeys();
   @Input() identity: Identity | null = null;
+  readonly newGroup = input(false);
   readonly closed = output<void>();
   readonly saved = output<void>();
   readonly changed = output<void>();
@@ -37,6 +41,7 @@ export class IdentityEditorComponent implements OnInit {
   private readonly links = inject(IdentityInApplicationService);
   private readonly messages = inject(MessageService);
   ngOnInit(): void {
+    this.editingIdentity.isGroup = this.newGroup();
     this.selectedRole = this.identity?.role ?? null;
     if (this.identity) this.editingIdentity = {...this.identity, identityInApplications: [...(this.identity.identityInApplications ?? [])]};
   }
@@ -52,6 +57,8 @@ export class IdentityEditorComponent implements OnInit {
     this.editingIdentity.firstName = this.editingIdentity.firstName.trim();
     this.editingIdentity.lastName = this.editingIdentity.lastName?.trim() ?? '';
     this.busy.set(true); this.error.set('');
+    const {requestKey: ignoredKey, ...metadata} = this.editingIdentity;
+    this.editingIdentity.requestKey = this.writeKeys.key("save", metadata);
     const request = this.isNewIdentity ? this.api.createIdentity(this.editingIdentity)
       : this.api.updateIdentity(this.editingIdentity.id, this.editingIdentity);
     request.pipe(switchMap(saved => this.identity?.role && this.selectedRole && this.identity.role !== this.selectedRole
@@ -61,13 +68,13 @@ export class IdentityEditorComponent implements OnInit {
         if (this.identity?.role) this.currentUser.load(true);
         this.messages.add({severity: 'success', summary: 'Saved', detail: 'Identity saved successfully'});
       },
-      error: error => { this.busy.set(false); this.error.set(error.status === 409 ? 'The last administrator cannot be demoted.' : 'Unable to save identity. Please try again.'); }
+      error: error => { this.busy.set(false); this.error.set(error.status === 409 ? 'Identity changed or the last administrator cannot be demoted. Reload before saving.' : 'Unable to save identity. Please try again.'); }
     });
   }
   unlinkAppIdentity(app: IdentityInApplication): void {
     if (this.busy() || app.application === 'Cloudflare') return;
     this.busy.set(true); this.error.set('');
-    this.links.unlinkIdentityInApplication(app.id).subscribe({
+    this.links.unlinkIdentityInApplication(app.id, app.version, this.writeKeys.key("unlink", {id: app.id, version: app.version})).subscribe({
       next: () => {
         this.editingIdentity.identityInApplications = this.editingIdentity.identityInApplications?.filter(item => item.id !== app.id);
         this.busy.set(false); this.changed.emit();

@@ -14,7 +14,7 @@
   <div class="counterparty-merge">
     <p>Selected accounts will share one name and aliases. Transaction descriptions and booked amounts stay unchanged.</p>
     <div class="form-grid"><label>Display name<input [(ngModel)]="name" (ngModelChange)="changed()" [disabled]="context.saving() || loadingPreview()" /></label><label>Website<input [(ngModel)]="websiteUrl" (ngModelChange)="changed()" placeholder="https://example.com" [disabled]="context.saving() || loadingPreview()" /></label></div>
-    <label>Keep this identity<p-select [options]="selected()" optionLabel="name" optionValue="id" [(ngModel)]="targetId" (onChange)="changed()" [disabled]="context.saving() || loadingPreview()" appendTo="body" /></label>
+    <label>Keep this identity<p-select [options]="selected()" optionLabel="name" optionValue="id" [(ngModel)]="targetId" (onChange)="targetChanged()" [disabled]="context.saving() || loadingPreview()" appendTo="body" /></label>
     @if (loadingPreview()) { <p role="status">Preparing preview…</p> }
     @if (preview(); as p) {
       <p><strong>{{p.selected.length}} counterparties</strong> · {{p.affectedTransactions}} affected transactions</p>

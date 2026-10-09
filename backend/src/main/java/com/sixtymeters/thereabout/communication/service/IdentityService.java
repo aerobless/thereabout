@@ -69,7 +69,11 @@ public class IdentityService {
                     throw new ThereaboutException(HttpStatusCode.valueOf(400), "Cloudflare identities are managed by Create User.");
                 }
             }
-            existingApps.removeIf(app -> !isCloudflare(app) && app.getId() != null && !updatedIds.contains(app.getId()));
+            existingApps.removeIf(app -> {
+                boolean unlink = !isCloudflare(app) && app.getId() != null && !updatedIds.contains(app.getId());
+                if (unlink) app.setIdentity(null);
+                return unlink;
+            });
 
             for (IdentityInApplicationEntity app : updatedApps) {
                 if (app.getId() == null || app.getId() == 0) {
@@ -94,6 +98,9 @@ public class IdentityService {
             throw new ThereaboutException(HttpStatusCode.valueOf(400),
                     "Enter a first name or group name of at most 255 characters. Groups cannot have a last name.");
         }
+        if (identity.getRelationship() != null && identity.getRelationship().length() > 255) {
+            throw new ThereaboutException(HttpStatusCode.valueOf(400), "Relationship must be at most 255 characters.");
+        }
         identity.setFirstName(first);
         identity.setLastName(last);
     }
@@ -105,6 +112,9 @@ public class IdentityService {
         if (existing.isUser()) {
             throw new ThereaboutException(HttpStatusCode.valueOf(400), "User deletion is not supported.");
         }
-        identityRepository.deleteById(id);
+        // Imported application IDs own message history and survive deletion of their contact/group.
+        existing.getIdentityInApplications().forEach(app -> app.setIdentity(null));
+        existing.getIdentityInApplications().clear();
+        identityRepository.delete(existing);
     }
 }

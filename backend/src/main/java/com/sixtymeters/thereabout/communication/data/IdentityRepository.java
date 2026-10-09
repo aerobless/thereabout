@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface IdentityRepository extends JpaRepository<IdentityEntity, Long> {
+public interface IdentityRepository extends JpaRepository<IdentityEntity, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<IdentityEntity> {
 
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @org.springframework.data.jpa.repository.Query("select i from IdentityEntity i where i.id = :id")

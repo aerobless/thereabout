@@ -14,19 +14,20 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /** Loads bundled OpenAPI schemas as self-contained MCP JSON schemas at startup. */
-final class FinanceOpenApiSchemas {
-  private static final Path INDEX = Path.of("openapi/finances.yaml");
+public final class FinanceOpenApiSchemas {
   private final ObjectMapper json;
   private final Map<Path, JsonNode> documents = new HashMap<>();
   private final Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
 
-  FinanceOpenApiSchemas(ObjectMapper json) {
+  public FinanceOpenApiSchemas(ObjectMapper json) {
     this.json = json;
   }
 
-  JsonNode load() throws IOException {
-    return resolve(
-        document(INDEX).required("components").required("schemas"), INDEX, new HashSet<>());
+  public JsonNode load() throws IOException { return load("openapi/finances.yaml"); }
+
+  public JsonNode load(String resource) throws IOException {
+    var source = Path.of(resource);
+    return resolve(document(source).required("components").required("schemas"), source, new HashSet<>());
   }
 
   private JsonNode document(Path path) throws IOException {

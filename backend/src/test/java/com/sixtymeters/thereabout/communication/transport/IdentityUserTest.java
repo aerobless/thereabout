@@ -31,7 +31,12 @@ class IdentityUserTest {
                 .content("{\"email\":\"" + email + "\",\"role\":\"USER\"}")).andReturn().getResponse().getStatus();
     }
     int edit(long id, String body) throws Exception {
+        body = metadata(id, body);
         return mvc.perform(put("/backend/api/v1/identity/{id}", id).contentType(MediaType.APPLICATION_JSON).content(body)).andReturn().getResponse().getStatus();
+    }
+    String metadata(long id, String body) {
+        long version = jdbc.queryForObject("select membership_version from identity where id=?", Long.class, id);
+        return body.replaceFirst("\\{", "{\"requestKey\":\"" + UUID.randomUUID() + "\",\"version\":" + version + ",");
     }
     long link(long id) {
         return jdbc.queryForObject("select id from identity_in_application where identity_id=? and application='CLOUDFLARE'", Long.class, id);
@@ -109,9 +114,9 @@ class IdentityUserTest {
         assertThat(identities.findById(id).orElseThrow().isUser()).isTrue();
         assertThat(edit(id, "{\"id\":" + id + ",\"firstName\":\"Group\",\"isGroup\":true}")).isEqualTo(400);
         assertThat(identities.findById(id).orElseThrow().getFirstName()).isEqualTo("Heidi");
-        assertThat(mvc.perform(put("/backend/api/v1/identity-in-application/{id}/unlink", link)).andReturn().getResponse().getStatus()).isEqualTo(400);
-        assertThat(mvc.perform(put("/backend/api/v1/identity-in-application/{id}/link/{identityId}", link, person(false))).andReturn().getResponse().getStatus()).isEqualTo(400);
-        assertThat(mvc.perform(delete("/backend/api/v1/identity/{id}", id)).andReturn().getResponse().getStatus()).isEqualTo(400);
+        assertThat(mvc.perform(put("/backend/api/v1/identity-in-application/{id}/unlink", link).param("version", "0").param("requestKey", UUID.randomUUID().toString())).andReturn().getResponse().getStatus()).isEqualTo(400);
+        assertThat(mvc.perform(put("/backend/api/v1/identity-in-application/{id}/link/{identityId}", link, person(false)).param("version", "0").param("identityVersion", "0").param("requestKey", UUID.randomUUID().toString())).andReturn().getResponse().getStatus()).isEqualTo(400);
+        assertThat(mvc.perform(delete("/backend/api/v1/identity/{id}", id).param("version", Long.toString(identities.findById(id).orElseThrow().getMembershipVersion())).param("requestKey", UUID.randomUUID().toString())).andReturn().getResponse().getStatus()).isEqualTo(400);
         assertThat(edit(id, """
                 {"id":%d,"firstName":"Heidi","identityInApplications":[{"id":%d,"application":"Cloudflare","identifier":"changed@example.test"}]}
                 """.formatted(id, link))).isEqualTo(400);
@@ -123,7 +128,7 @@ class IdentityUserTest {
                 {"id":%d,"firstName":"Forged","role":"ADMIN","identityInApplications":[{"id":0,"application":"Cloudflare","identifier":"%s"}]}
                 """.formatted(id, email());
         assertThat(edit(id, payload)).isEqualTo(400);
-        assertThat(mvc.perform(post("/backend/api/v1/identity").contentType(MediaType.APPLICATION_JSON).content(payload)).andReturn().getResponse().getStatus()).isEqualTo(400);
+        assertThat(mvc.perform(post("/backend/api/v1/identity").contentType(MediaType.APPLICATION_JSON).content(metadata(id, payload))).andReturn().getResponse().getStatus()).isEqualTo(400);
         assertThat(edit(id, "{\"id\":" + id + ",\"firstName\":\"Still contact\",\"role\":\"ADMIN\"}")).isEqualTo(200);
         assertThat(identities.findById(id).orElseThrow().isUser()).isFalse();
     }

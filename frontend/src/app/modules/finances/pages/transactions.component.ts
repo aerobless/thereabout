@@ -65,6 +65,7 @@ export class TransactionsComponent {
       ? this.context.api.client.financeTransactionDetail(id).pipe(catchError(() => of(null))) : of(null)),
   ));
   q = "";
+  descriptionQ = ""; fromQ = ""; toQ = ""; counterpartQ = "";
   accountFilter = 0;
   categoryFilter = "";
   categoryFilters: number[] = [];
@@ -122,6 +123,7 @@ export class TransactionsComponent {
     effect(() => {
       const params = this.routeParams();
       this.q = "";
+      this.descriptionQ = ""; this.fromQ = ""; this.toQ = ""; this.counterpartQ = "";
       this.page = 0;
       this.accountFilter = Number(params?.get("account") ?? 0);
       this.categoryFilter = params?.get("category") ?? "";
@@ -182,6 +184,8 @@ export class TransactionsComponent {
       page: this.page,
       pageSize: 50,
       q: this.q,
+      descriptionQ: this.descriptionQ || undefined, fromQ: this.fromQ || undefined, toQ: this.toQ || undefined,
+      counterpartQ: this.accountId() ? this.counterpartQ || undefined : undefined,
       accountId: this.accountFilter || undefined,
 
       categoryIds: this.categoryFilters,

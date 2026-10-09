@@ -1,3 +1,4 @@
+import {OriginalAmountComponent} from "../shared/original-amount.component";
 import {CategoryLabelComponent} from "../shared/category-label.component";
 import { FinanceDateInputComponent } from "../shared/finance-date-input.component";
 import { SelectModule } from "primeng/select";
@@ -37,7 +38,7 @@ import {
   selector: "finance-transaction-dialog",
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CategoryLabelComponent,
+  imports: [OriginalAmountComponent, CategoryLabelComponent,
     FinanceDateInputComponent,
     SelectModule,
     AutoCompleteModule,
@@ -225,6 +226,14 @@ export class TransactionDialogComponent implements OnInit {
       this.form.controls.type.value === "DEPOSIT" ? "sourceId" : "destinationId"
     ].setValue(account.id);
     this.alignCurrency(false);
+  }
+  originalAmountChanged(field: "foreignAmount" | "foreignCurrency", value: string): void {
+    this.form.controls[field].setValue(value);
+    this.form.controls[field].markAsDirty();
+    if (field === "foreignCurrency" && !value) {
+      this.form.controls.foreignAmount.setValue("");
+      this.form.controls.foreignAmount.markAsDirty();
+    }
   }
   formatAmount(field: "sourceAmount" | "destinationAmount" | "foreignAmount") {
     const currency =

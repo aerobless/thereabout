@@ -39,6 +39,9 @@ public class IdentityInApplicationService {
         if (appIdentity.getApplication() == CommunicationApplication.CLOUDFLARE) {
             throw new ThereaboutException(HttpStatusCode.valueOf(400), "Cloudflare identities are managed by Create User.");
         }
+        if (appIdentity.isGroup() != identity.isGroup()) {
+            throw new ThereaboutException(HttpStatusCode.valueOf(400), "People and groups cannot be linked across identity kinds.");
+        }
         appIdentity.setIdentity(identity);
         return identityInApplicationRepository.save(appIdentity);
     }

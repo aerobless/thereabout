@@ -20,7 +20,7 @@
     }
   </div>
   @if (running()) {
-    <div class="preparing" role="status"><p-progress-spinner [style]="{width: '40px', height: '40px'}" strokeWidth="4" ariaLabel="Preparing transactions" /><span>Preparing transactions…</span></div>
+    <div class="preparing" role="status"><p-progress-spinner [style]="{width: '40px', height: '40px'}" strokeWidth="4" ariaLabel="Preparing transactions" /><span>{{ progress(draft) }}</span></div>
   } @else if (draft.status === 'FAILED') {
     <p role="alert">{{ draft.error }}</p>
   } @else if (draft.status === 'READY') {
@@ -36,15 +36,17 @@
     </div>
       <p-table [value]="draft.rows" [lazy]="true" [paginator]="true" [rows]="50" [totalRecords]="draft.total" [first]="page() * 50" (onPage)="paginate($event)" [loading]="busy()" [scrollable]="true" scrollHeight="flex" [tableStyle]="{width: '100%', tableLayout: 'fixed'}">
         <ng-template #header><tr class="import-header"><th>Row / Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Counterparty</th><th>Category</th><th>Review</th></tr></ng-template>
-        <ng-template #body let-row><tr class="import-row" [class.skipped]="row.skip" [class.requires-review]="!row.skip && row.issues?.length">
-          <td class="date-cell">{{ row.rowId }}<br>{{ row.date }}</td><td class="description-cell">{{ row.description || row.reason }}</td><td class="type-cell"><p-tag [value]="typeLabel(row)" [severity]="typeSeverity(row)" /></td>
-          <td class="amount-cell">{{ row.amount }} {{ account()?.currency }}@if (row.foreignAmount) { <small>Original: {{ row.foreignAmount }} {{ row.foreignCurrency }}</small> }</td>
-          <td class="counter-cell"><span class="cell-label">Counterparty</span>{{ counterName(row) }}</td><td class="category-cell"><span class="cell-label">Category</span>{{ categoryName(row) }}</td>
+        <ng-template #body let-row>
+          @let review = reviewNotes(row).join(' ').toLowerCase();
+          <tr class="import-row" [class.skipped]="row.skip" [class.requires-review]="!row.skip && row.issues?.length">
+          <td class="date-cell" [class.needs-review]="!row.skip && review.includes('date')">{{ row.rowId }}<br>{{ row.date }}</td><td class="description-cell" [class.needs-review]="!row.skip && review.includes('description')">{{ row.description || row.reason }}</td><td class="type-cell" [class.needs-review]="!row.skip && review.includes('transaction type')"><p-tag [value]="typeLabel(row)" [severity]="typeSeverity(row)" /></td>
+          <td class="amount-cell" [class.needs-review]="!row.skip && (review.includes('amount') || review.includes('currency'))">{{ row.amount }} {{ account()?.currency }}@if (row.foreignAmount) { <small>Original: {{ row.foreignAmount }} {{ row.foreignCurrency }}</small> }</td>
+          <td class="counter-cell" [class.needs-review]="!row.skip && (review.includes('counterparty') || review.includes('merchant') || review.includes('main account') || review.includes('active account'))"><span class="cell-label">Counterparty</span>{{ counterName(row) }}</td><td class="category-cell" [class.needs-review]="!row.skip && review.includes('categor')"><span class="cell-label">Category</span>{{ categoryName(row) }}</td>
           <td class="review-cell">
             @for (note of reviewNotes(row); track $index) { <p class="review-note">{{ note }}</p> }
             @if (duplicateDetails(row); as duplicate) { <p-tag class="duplicate-tag" value="Duplicate" severity="danger" [title]="duplicate" /> }
             <div class="import-row-actions">
-              <button class="app-button row-action accept" [class.accepted]="row.reviewed && !row.skip && !row.issues?.length" (click)="accept(row)" [disabled]="busy() || needsEdit(row)" [attr.aria-label]="'Accept ' + row.rowId" [title]="needsEdit(row) ? 'Edit the required fields first' : duplicateDetails(row) ? 'Keep this duplicate' : 'Accept as suggested'"><i class="pi pi-check" aria-hidden="true"></i></button>
+              <button class="app-button row-action accept" [class.accepted]="row.reviewed && !row.skip && !row.issues?.length" (click)="accept(row)" [disabled]="busy() || needsEdit(row)" [attr.aria-label]="'Accept ' + row.rowId" [title]="needsEdit(row) ? 'Edit the required fields first' : duplicateDetails(row) ? 'Keep this duplicate' : row.counterpartyId ? 'Confirm the suggested counterparty' : 'Confirm creating this counterparty'"><i class="pi pi-check" aria-hidden="true"></i></button>
               <button class="app-button row-action" (click)="edit(row)" [disabled]="busy()" [attr.aria-label]="'Edit ' + row.rowId" [title]="reviewTitle(row)"><i class="pi pi-pencil" aria-hidden="true"></i></button>
               <button class="app-button row-action skip" (click)="skip(row)" [disabled]="busy() || row.skip" [attr.aria-label]="'Skip ' + row.rowId" title="Skip transaction"><i class="pi pi-times" aria-hidden="true"></i></button>
             </div>
@@ -71,7 +73,7 @@
           @if (row.skip) {
             <label class="span">Skip reason <input [ngModel]="row.reason" (ngModelChange)="patch({reason: $event})" /></label>
           } @else {
-            <label>Type <p-select [options]="types" optionLabel="label" optionValue="value" [ngModel]="row.type" (ngModelChange)="patch({type: $event, otherAccountId: undefined, counterpartyName: ''}); counterValue.set('')" appendTo="body" /></label>
+            <label>Type <p-select [options]="types" optionLabel="label" optionValue="value" [ngModel]="row.type" (ngModelChange)="patch({type: $event, otherAccountId: undefined, counterpartyId: undefined, counterpartyConfirmed:false, counterpartyName: ''}); counterValue.set('')" appendTo="body" /></label>
             <label>Date & time <finance-date-input [dateTime]="true" [ngModel]="row.date" (ngModelChange)="patch({date: $event})" /></label>
             <label class="span">Description <input [ngModel]="row.description" (ngModelChange)="patch({description: $event})" maxlength="1024" /></label>
             <label>Booked amount · {{ account()?.currency }} <input inputmode="decimal" [ngModel]="row.amount" (ngModelChange)="patch({amount: $event})" /></label>
@@ -82,12 +84,13 @@
                 <label>Other account amount · {{ otherAccount()?.currency }} <input aria-label="Other account amount" inputmode="decimal" [ngModel]="row.otherAmount" (ngModelChange)="patch({otherAmount: $event})" /></label>
               }
             } @else {
-              <label>Counterparty <p-autocomplete [ngModel]="counterValue()" (ngModelChange)="counterChange($event)" [suggestions]="counterSuggestions()" (completeMethod)="counterSearch($event)" (onSelect)="counterSelect($event)" optionLabel="name" [dropdown]="true" appendTo="body" /></label>
-              @if (!row.otherAccountId && row.counterpartyName) { <small>A new counterparty will be created: {{ row.counterpartyName }}</small> }
+              <label>Counterparty <p-autocomplete [ngModel]="counterValue()" (ngModelChange)="counterChange($event)" [suggestions]="counterSuggestions()" (completeMethod)="counterSearch($event)" (onSelect)="counterSelect($event)" optionLabel="label" [dropdown]="true" appendTo="body" /></label>
+              @if (!row.counterpartyId && !row.otherAccountId && row.counterpartyName) { <small>A new counterparty will be created: {{ row.counterpartyName }}</small>
+                @if (row.candidates?.length) { <label class="checkbox-field"><input type="checkbox" [ngModel]="row.counterpartyConfirmed" (ngModelChange)="patch({counterpartyConfirmed:$event})" /> Confirm creating this counterparty instead of the existing matches</label> } }
             }
             <label>Category <p-select ariaLabel="Category" [options]="context.categories()" optionLabel="name" optionValue="id" [filter]="true" [showClear]="true" [ngModel]="row.categoryId" (ngModelChange)="patch({categoryId: $event ?? undefined, categoryName: ''})" placeholder="Uncategorised" appendTo="body" /></label>
-            <label>Original currency <p-select [options]="context.currencies()" optionLabel="code" optionValue="code" [showClear]="true" [filter]="true" [ngModel]="row.foreignCurrency" (ngModelChange)="patch({foreignCurrency: $event ?? '', foreignAmount: $event ? row.foreignAmount : ''})" placeholder="None" appendTo="body" /></label>
-            <label>Original amount <input inputmode="decimal" [ngModel]="row.foreignAmount" (ngModelChange)="patch({foreignAmount: $event})" /></label>
+            <label>Original amount (optional) <finance-original-amount [amount]="row.foreignAmount ?? ''" [currency]="row.foreignCurrency ?? ''" [currencies]="context.currencies()"
+              (amountChange)="patch({foreignAmount: $event})" (currencyChange)="patch({foreignCurrency: $event, foreignAmount: $event ? row.foreignAmount : ''})" /></label>
             <label class="span">Notes <textarea [ngModel]="row.notes" (ngModelChange)="patch({notes: $event})"></textarea></label>
             <label class="span">External reference <input [ngModel]="row.externalReference" (ngModelChange)="patch({externalReference: $event})" maxlength="1024" /></label>
             @if (row.duplicate) { <label class="span checkbox-field"><input type="checkbox" [ngModel]="row.duplicateOverride" (ngModelChange)="patch({duplicateOverride: $event})" /> Keep this transaction despite the duplicate warning</label> }

@@ -72,6 +72,11 @@ class IdentityInApplicationControllerTest {
         linkedAppIdentity = identityInApplicationRepository.save(linkedAppIdentity);
     }
 
+    private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder write(String path, Object... ids) {
+        return put(path, ids).param("requestKey", java.util.UUID.randomUUID().toString())
+                .param("version", "0").param("identityVersion", Long.toString(identity.getMembershipVersion()));
+    }
+
     @Test
     void testGetUnlinkedReturnsOnlyUnlinkedAppIdentities() throws Exception {
         String responseContent = mockMvc.perform(get("/backend/api/v1/identity-in-application/unlinked"))
@@ -90,7 +95,7 @@ class IdentityInApplicationControllerTest {
     @Test
     void testLinkAppIdentityToIdentity() throws Exception {
         String responseContent = mockMvc.perform(
-                        put("/backend/api/v1/identity-in-application/{id}/link/{identityId}",
+                        write("/backend/api/v1/identity-in-application/{id}/link/{identityId}",
                                 unlinkedAppIdentity.getId(), identity.getId()))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -116,7 +121,7 @@ class IdentityInApplicationControllerTest {
     @Test
     void testUnlinkAppIdentityFromIdentity() throws Exception {
         String responseContent = mockMvc.perform(
-                        put("/backend/api/v1/identity-in-application/{id}/unlink",
+                        write("/backend/api/v1/identity-in-application/{id}/unlink",
                                 linkedAppIdentity.getId()))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -141,19 +146,19 @@ class IdentityInApplicationControllerTest {
 
     @Test
     void testLinkNonExistentAppIdentityReturns404() throws Exception {
-        mockMvc.perform(put("/backend/api/v1/identity-in-application/{id}/link/{identityId}", 99999, identity.getId()))
+        mockMvc.perform(write("/backend/api/v1/identity-in-application/{id}/link/{identityId}", 99999, identity.getId()))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void testLinkToNonExistentIdentityReturns404() throws Exception {
-        mockMvc.perform(put("/backend/api/v1/identity-in-application/{id}/link/{identityId}", unlinkedAppIdentity.getId(), 99999))
+        mockMvc.perform(write("/backend/api/v1/identity-in-application/{id}/link/{identityId}", unlinkedAppIdentity.getId(), 99999))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void testUnlinkNonExistentAppIdentityReturns404() throws Exception {
-        mockMvc.perform(put("/backend/api/v1/identity-in-application/{id}/unlink", 99999))
+        mockMvc.perform(write("/backend/api/v1/identity-in-application/{id}/unlink", 99999))
                 .andExpect(status().isNotFound());
     }
 }

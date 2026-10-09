@@ -224,10 +224,32 @@ components:
       scheme: bearer
       description: Ingestion API key from Configuration, for clients outside Cloudflare Access.
   schemas:
+    FinanceImportCandidate:
+      $ref: './openapi/finances/imports.yaml#/components/schemas/FinanceImportCandidate'
+    IdentityQuery:
+      $ref: './openapi/communication.yaml#/components/schemas/IdentityQuery'
+    IdentityId:
+      $ref: './openapi/communication.yaml#/components/schemas/IdentityId'
+    IdentityCreateInput:
+      $ref: './openapi/communication.yaml#/components/schemas/IdentityCreateInput'
+    IdentityUpdateInput:
+      $ref: './openapi/communication.yaml#/components/schemas/IdentityUpdateInput'
+    IdentityVersionedInput:
+      $ref: './openapi/communication.yaml#/components/schemas/IdentityVersionedInput'
+    IdentityLinkInput:
+      $ref: './openapi/communication.yaml#/components/schemas/IdentityLinkInput'
+    IdentityMembershipInput:
+      $ref: './openapi/communication.yaml#/components/schemas/IdentityMembershipInput'
+    IdentityPage:
+      $ref: './openapi/communication.yaml#/components/schemas/IdentityPage'
+    ApplicationIdentityPage:
+      $ref: './openapi/communication.yaml#/components/schemas/ApplicationIdentityPage'
     FinanceCounterpartyQuery:
       $ref: 'openapi/finances/counterparties.yaml#/components/schemas/FinanceCounterpartyQuery'
     FinanceCounterpartyId:
       $ref: 'openapi/finances/counterparties.yaml#/components/schemas/FinanceCounterpartyId'
+    FinanceCounterpartySaveInput:
+      $ref: 'openapi/finances/counterparties.yaml#/components/schemas/FinanceCounterpartySaveInput'
     SplitwiseCategorySaveInput:
       $ref: openapi/finances/splitwise.yaml#/components/schemas/SplitwiseCategorySaveInput
     SplitwiseContext:

@@ -1,6 +1,5 @@
 package com.sixtymeters.thereabout.communication.transport;
 
-import com.sixtymeters.thereabout.communication.data.IdentityEntity;
 import com.sixtymeters.thereabout.communication.service.IdentityService;
 import com.sixtymeters.thereabout.communication.transport.mapper.IdentityMapper;
 import com.sixtymeters.thereabout.generated.api.IdentityApi;
@@ -21,6 +20,7 @@ public class IdentityController implements IdentityApi {
 
     private static final IdentityMapper IDENTITY_MAPPER = IdentityMapper.INSTANCE;
     private final IdentityService identityService;
+    private final com.sixtymeters.thereabout.communication.service.IdentityOperations operations;
     private final com.sixtymeters.thereabout.communication.service.GroupMembershipService memberships;
 
     @Override
@@ -31,7 +31,8 @@ public class IdentityController implements IdentityApi {
     @Override
     public ResponseEntity<com.sixtymeters.thereabout.generated.model.GenGroupMembers> saveGroupMembers(Long id,
             com.sixtymeters.thereabout.generated.model.GenGroupMembers input) {
-        return ResponseEntity.ok(memberships.save(id, input));
+        return ResponseEntity.ok(operations.saveMembers(new com.sixtymeters.thereabout.generated.model.GenIdentityMembershipInput()
+            .id(id).version(input.getVersion()).requestKey(input.getRequestKey()).userIds(input.getUserIds())));
     }
 
     private final com.sixtymeters.thereabout.communication.service.IdentityUserService identityUserService;
@@ -65,21 +66,17 @@ public class IdentityController implements IdentityApi {
 
     @Override
     public ResponseEntity<GenIdentity> createIdentity(GenIdentity genIdentity) {
-        IdentityEntity entity = IDENTITY_MAPPER.mapToIdentityEntity(genIdentity);
-        IdentityEntity saved = identityService.createIdentity(entity);
-        return ResponseEntity.ok(IDENTITY_MAPPER.mapToGenIdentity(saved));
+        return ResponseEntity.ok(operations.create(genIdentity));
     }
 
     @Override
     public ResponseEntity<GenIdentity> updateIdentity(BigDecimal id, GenIdentity genIdentity) {
-        IdentityEntity entity = IDENTITY_MAPPER.mapToIdentityEntity(genIdentity);
-        IdentityEntity updated = identityService.updateIdentity(id.longValue(), entity);
-        return ResponseEntity.ok(IDENTITY_MAPPER.mapToGenIdentity(updated));
+        return ResponseEntity.ok(operations.update(id.longValueExact(), genIdentity));
     }
 
     @Override
-    public ResponseEntity<Void> deleteIdentity(BigDecimal id) {
-        identityService.deleteIdentity(id.longValue());
+    public ResponseEntity<Void> deleteIdentity(BigDecimal id, java.util.Optional<Long> version, java.util.Optional<String> requestKey) {
+        operations.delete(new com.sixtymeters.thereabout.generated.model.GenIdentityVersionedInput().id(id.longValueExact()).version(version.orElse(null)).requestKey(requestKey.orElse(null)));
         return ResponseEntity.noContent().build();
     }
 }

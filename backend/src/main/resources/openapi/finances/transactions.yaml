@@ -46,6 +46,10 @@ paths:
               schema:
                 $ref: shared.yaml#/components/schemas/FinanceError
       parameters:
+      - {in: query, name: descriptionQ, schema: {type: string, maxLength: 1024}}
+      - {in: query, name: fromQ, schema: {type: string, maxLength: 1024}}
+      - {in: query, name: toQ, schema: {type: string, maxLength: 1024}}
+      - {in: query, name: counterpartQ, schema: {type: string, maxLength: 1024}}
       - name: page
         in: query
         required: false
@@ -704,6 +708,10 @@ components:
       type: object
       additionalProperties: false
       properties:
+        descriptionQ: {type: string, maxLength: 1024}
+        fromQ: {type: string, maxLength: 1024}
+        toQ: {type: string, maxLength: 1024}
+        counterpartQ: {type: string, maxLength: 1024, description: Opposite side of the fixed accountId.}
         counterpartyId: {type: integer, format: int64}
         dateFilter:
           $ref: '#/components/schemas/FinanceDateFilter'

@@ -34,7 +34,7 @@ public class FinanceMcpConfiguration {
 
   @Bean
   public ServletRegistrationBean<HttpServletStreamableServerTransportProvider> financeMcpServlet(
-      HttpServletStreamableServerTransportProvider transport) {
+      @org.springframework.beans.factory.annotation.Qualifier("financeTransport") HttpServletStreamableServerTransportProvider transport) {
     var bean = new ServletRegistrationBean<>(transport, "/mcp/finances");
     bean.setAsyncSupported(true);
     return bean;
@@ -42,7 +42,7 @@ public class FinanceMcpConfiguration {
 
   @Bean(destroyMethod = "close")
   public McpSyncServer financeMcpServer(
-      HttpServletStreamableServerTransportProvider transport,
+      @org.springframework.beans.factory.annotation.Qualifier("financeTransport") HttpServletStreamableServerTransportProvider transport,
       com.sixtymeters.thereabout.access.UserContext users,
       FinanceReadRepository reads,
       AccountService accounts,
@@ -84,6 +84,7 @@ public class FinanceMcpConfiguration {
         tools.tool("overview", true, GenFinancePeriodQuery.class, input -> reports.overview(users.integration(), input)),
         tools.tool("counterparties.list", true, GenFinanceCounterpartyQuery.class, input -> counterparties.list(users.integration(), input)),
         tools.tool("counterparties.get", true, GenFinanceCounterpartyId.class, input -> counterparties.get(users.integration(), input.getId())),
+        tools.tool("counterparties.save", false, GenFinanceCounterpartySaveInput.class, input -> counterparties.save(users.integration(), input.getId(), input.getInput())),
         tools.tool("counterparties.merge_preview", true, GenFinanceCounterpartyMergePreviewInput.class, input -> counterparties.preview(users.integration(), input)),
         tools.tool("counterparties.merge", false, GenFinanceCounterpartyMergeInput.class, input -> counterparties.merge(users.integration(), input)),
         tools.tool("accounts.list", true, GenFinanceAccountQuery.class, input -> reads.accounts(users.integration(), input)),
@@ -198,6 +199,7 @@ public class FinanceMcpConfiguration {
       return switch (operation) {
         case "counterparties.list" -> "Search canonical counterparties and aliases, with pagination and direction/status filters.";
         case "counterparties.get" -> "Read canonical name, website, aliases, associated ledger accounts and current version. Follows combined IDs.";
+        case "counterparties.save" -> "Update an existing counterparty through the same service as REST. Supply id and input containing name, the complete aliases list, current version and requestKey; websiteUrl is normalized to an HTTPS origin, and omission or an empty value clears it. For website-only edits, first call counterparties.get and preserve its name and aliases. Rejects stale versions and combined IDs; idempotent retries. Preserves ledger accounts and financial history.";
         case "counterparties.merge_preview" -> "Preview combining 2–100 counterparties: surviving identity, aliases, directions/currencies, affected transaction count and all current versions. Read-only; preserves financial history.";
         case "counterparties.merge" -> "Atomically combine the reviewed counterparties. Supply ids, targetId, name, websiteUrl, versions for every selected identity and requestKey. Rejects stale versions and own accounts; idempotent retries. Preserves postings, balances, descriptions, source IDs and Splitwise state.";
         case "accounts.list" -> "Search ledger accounts by owner, name, direction and status; returns exact balances and versions.";

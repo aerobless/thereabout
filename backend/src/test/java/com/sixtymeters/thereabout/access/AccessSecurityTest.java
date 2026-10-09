@@ -111,7 +111,7 @@ class AccessSecurityTest {
     @Test
     void browserWritesRequireTheCsrfToken() throws Exception {
         String login = token("app", admin, false);
-        String body = "{\"id\":0,\"firstName\":\"csrf-" + UUID.randomUUID().toString().substring(0, 8) + "\"}";
+        String body = "{\"id\":0,\"requestKey\":\"" + UUID.randomUUID() + "\",\"firstName\":\"csrf-" + UUID.randomUUID().toString().substring(0, 8) + "\"}";
         assertThat(send(json("/backend/api/v1/identity", body).header(CloudflareAccessFilter.HEADER, login)).statusCode()).isEqualTo(403);
         String csrf = send(get("/backend/api/v1/current-user")).headers().allValues("Set-Cookie").stream()
                 .filter(cookie -> cookie.startsWith("XSRF-TOKEN=")).findFirst().orElseThrow()
@@ -171,7 +171,8 @@ class AccessSecurityTest {
     void mcpRequiresCloudflareAndItsOwnKey() throws Exception {
         String initialize = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-06-18\","
                 + "\"capabilities\":{},\"clientInfo\":{\"name\":\"test\",\"version\":\"1\"}}}";
-        var mcp = json("/mcp/finances", initialize).header("Accept", "application/json, text/event-stream");
+        for (String endpoint : List.of("/mcp/finances", "/mcp/identities")) {
+        var mcp = json(endpoint, initialize).header("Accept", "application/json, text/event-stream");
         String bearer = "Bearer " + mcpKeys.getKey();
         var withoutCloudflare = send(mcp.copy().header("Authorization", bearer));
         assertThat(withoutCloudflare.statusCode()).isEqualTo(401);
@@ -182,6 +183,24 @@ class AccessSecurityTest {
         assertThat(send(mcp.copy().header(CloudflareAccessFilter.HEADER, serviceToken).header("Authorization", bearer)).statusCode()).isEqualTo(200);
         assertThat(send(mcp.copy().header(CloudflareAccessFilter.HEADER, token("app",user,false)).header("Authorization",bearer)).statusCode()).isEqualTo(200);
         assertThat(send(mcp.copy().header(CloudflareAccessFilter.HEADER, token("app",UUID.randomUUID()+"@example.test",false)).header("Authorization",bearer)).statusCode()).isEqualTo(401);
+        }
+    }
+
+    @Test
+    void nonAdminIdentityMcpClientCanWriteWithoutRoleToolsAndAuditRetainsActor() throws Exception {
+        var transport=io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport.builder("http://127.0.0.1:"+port)
+            .endpoint("/mcp/identities").requestBuilder(HttpRequest.newBuilder().header("Authorization","Bearer "+mcpKeys.getKey())
+            .header(CloudflareAccessFilter.HEADER,token("app",user,false))).build();
+        try(var client=io.modelcontextprotocol.client.McpClient.sync(transport).build()) {
+            client.initialize();
+            assertThat(client.listTools().tools()).extracting(io.modelcontextprotocol.spec.McpSchema.Tool::name).doesNotContain("identity_create_user","identity_role_save");
+            var result=client.callTool(io.modelcontextprotocol.spec.McpSchema.CallToolRequest.builder("identity_create")
+                .arguments(java.util.Map.of("firstName","Non-admin MCP "+UUID.randomUUID(),"isGroup",false,"requestKey",UUID.randomUUID().toString())).build());
+            assertThat(result.isError()).isFalse();
+            var identity=new tools.jackson.databind.ObjectMapper().convertValue(result.structuredContent(),com.sixtymeters.thereabout.generated.model.GenIdentity.class);
+            long actor=jdbc.queryForObject("SELECT identity_id FROM identity_in_application WHERE application='CLOUDFLARE' AND identifier=?",Long.class,user);
+            assertThat(jdbc.queryForObject("SELECT actor_id FROM finance_audit WHERE operation='identities.create' AND entity_id=? ORDER BY id DESC LIMIT 1",Long.class,identity.getId())).isEqualTo(actor);
+        }
     }
 
     @Test

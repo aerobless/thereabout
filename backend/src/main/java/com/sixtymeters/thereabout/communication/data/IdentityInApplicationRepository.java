@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface IdentityInApplicationRepository extends JpaRepository<IdentityInApplicationEntity, Long> {
+public interface IdentityInApplicationRepository extends JpaRepository<IdentityInApplicationEntity, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<IdentityInApplicationEntity> {
 
     Optional<IdentityInApplicationEntity> findByApplicationAndIdentifier(CommunicationApplication application, String identifier);
 

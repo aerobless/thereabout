@@ -31,7 +31,7 @@ import { FinancesService, FinanceMcpEndpoint } from "../../../../generated/backe
     </p>
     <p>
       Connect your MCP client with <code>Authorization: Bearer &lt;key&gt;</code>.
-      Available endpoint: <code>/mcp/finances</code>.
+      Available endpoints: <code>/mcp/finances</code> and <code>/mcp/identities</code>.
     </p>
     <h3>Available tools</h3>
     @if (catalogLoading()) { <p role="status">Loading tools…</p> }

@@ -102,4 +102,30 @@ class CounterpartyTest {
     filter.setOperator(GenFinanceDateFilter.OperatorEnum.OR);assertThat(reads.transactions(user,query).getTotal()).isEqualTo(4);
     assertThat(reads.transactions(user,new GenFinanceTransactionQuery().accountId(own).from("1903-02-10").to("1903-02-10")).getTotal()).isEqualTo(2);
   }
+  @Test void columnSearchesUseAndAcrossPagesAndMatchAliasesOnTheCorrectSide() {
+    var canonical = counterparties.merge(user, mergeInput(counterparties.preview(user, previewInput()))).getCounterparty();
+    var first = transactions.save(user, transaction("1903-02-10T12:00:00", "Needle first")).getTransaction();
+    var second = transactions.save(user, transaction("1903-02-11T12:00:00", "Needle second")).getTransaction();
+    transactions.save(user, transaction("1903-02-12T12:00:00", "Different description"));
+    var refund = transactions.save(user, transaction("1903-02-13T12:00:00", "Needle refund")
+        .type(GenFinanceTransactionType.DEPOSIT).sourceId(revenue).destinationId(own)).getTransaction();
+    var query = new GenFinanceTransactionQuery().descriptionQ("Needle").fromQ("Own " + marker)
+        .toQ("Refund variant " + marker).pageSize(1);
+    assertThat(reads.transactions(user, query).getTotal()).isEqualTo(2);
+    assertThat(reads.transactions(user, query).getItems()).hasSize(1);
+    var page0 = reads.transactions(user, query).getItems().getFirst().getId();
+    var page1 = reads.transactions(user, query.page(1)).getItems().getFirst().getId();
+    assertThat(List.of(page0, page1)).containsExactlyInAnyOrder(first.getId(), second.getId());
+    assertThat(reads.transactions(user, query.page(0).toQ("Own " + marker)).getTotal()).isZero();
+    var scoped = new GenFinanceTransactionQuery().accountId(own).descriptionQ("Needle")
+        .counterpartQ("Euro variant " + marker).operatingOnly(true).from("1903-02-10").to("1903-02-13");
+    assertThat(reads.transactions(user, scoped).getItems()).extracting(GenFinanceTransaction::getId)
+        .containsExactlyInAnyOrder(first.getId(), second.getId(), refund.getId());
+    assertThat(reads.transactions(user, scoped.q("second")).getItems()).extracting(GenFinanceTransaction::getId).containsExactly(second.getId());
+    assertThat(reads.transactions(user, new GenFinanceTransactionQuery().accountId(own).toQ(canonical.getName()).descriptionQ("Needle"))
+        .getTotal()).isEqualTo(2);
+    assertThat(reads.transactions(user, new GenFinanceTransactionQuery().accountId(own).descriptionQ("Needle%"))
+        .getTotal()).isZero();
+  }
+
 }

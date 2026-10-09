@@ -1,3 +1,4 @@
+import {PopoverModule} from "primeng/popover";
 import { FinanceDateInputComponent } from "../shared/finance-date-input.component";
 import { SelectModule } from "primeng/select";
 import {
@@ -23,6 +24,7 @@ import {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    PopoverModule,
     FinanceDateInputComponent,
     SelectModule,
     CommonModule,
@@ -52,6 +54,15 @@ export class ReportsComponent {
       q.accountId || undefined,
     ),
   );
+  readonly investmentSections = computed(() => ["INVESTMENT", "REAL_ESTATE", "OTHER_ASSET"].map(kind => ({kind,
+    rows: (this.state().data?.investments ?? []).filter(row => row.kind === kind)})).filter(section => section.rows.length > 0));
+  readonly presets = [{label:'YTD', years:1}, {label:'Last year', years:0}, {label:'Last 2 YTD', years:2}, {label:'Last 5 YTD', years:5}];
+  preset(years: number) {
+    const end = today(); const year = Number(end.slice(0,4));
+    this.from = `${years === 0 ? year - 1 : year - years + 1}-01-01`;
+    this.to = years === 0 ? `${year - 1}-12-31` : end;
+    this.loadReport();
+  }
   readonly money = this.context.money.bind(this.context);
   readonly label = kindLabel;
   get ownAccounts() {

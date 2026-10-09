@@ -58,6 +58,46 @@ class OpenAiServiceTest {
   }
 
   @Test
+  void readsDecisionsConfidenceAndSelectedProbabilityUsingTheOfficialSdk() throws Exception {
+    var ai = service(); ai.save(new GenOpenAiSettingsInput().apiKey("synthetic-key"));
+    var request = new AtomicReference<String>();
+    var response = new AtomicReference<String>("""
+        {"model":"gpt-6-luna","usage":{"input_tokens":100},"answers":[
+          {"type":"choice","name":"counterparty","choice":"2","confidence":0.98,
+           "probabilities":[{"value":"2","probability":0.97},{"value":"none","probability":0.03}]}]}
+        """);
+    var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    server.createContext("/v1/decisions", exchange -> {
+      request.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+      byte[] body = response.get().getBytes(StandardCharsets.UTF_8);
+      exchange.getResponseHeaders().set("Content-Type", "application/json");
+      exchange.sendResponseHeaders(200, body.length);
+      try (var out = exchange.getResponseBody()) { out.write(body); }
+    });
+    server.start();
+    try {
+      when(clients.create(anyString())).thenAnswer(i -> OpenAIOkHttpClient.builder()
+          .apiKey(i.getArgument(0, String.class)).baseUrl("http://127.0.0.1:" + server.getAddress().getPort() + "/v1")
+          .maxRetries(0).build());
+      var choices = List.of(new OpenAiService.MerchantChoice("2", "Europa-Park GmbH"));
+      assertThat(ai.chooseMerchant("Europa-Park tickets", choices))
+          .isEqualTo(new OpenAiService.MerchantDecision("2", .98, .97));
+      var sent = new ObjectMapper().readTree(request.get());
+      assertThat(sent.path("model").asString()).isEqualTo("gpt-6-luna");
+      assertThat(sent.at("/questions/0/name").asString()).isEqualTo("counterparty");
+      assertThat(sent.at("/questions/0/choices/1/value").asString()).isEqualTo("none");
+      response.set("""
+          {"answers":[{"type":"refusal","name":"counterparty"}]}
+          """);
+      assertThatThrownBy(() -> ai.chooseMerchant("Tickets", choices)).hasMessageContaining("unavailable or refused");
+      response.set("""
+          {"answers":[{"type":"choice","name":"counterparty","choice":"2","confidence":0.98,"probabilities":[]}]}
+          """);
+      assertThatThrownBy(() -> ai.chooseMerchant("Tickets", choices)).hasMessageContaining("probability unavailable");
+    } finally { server.stop(0); }
+  }
+
+  @Test
   void exercisesOfficialSdkWireFormatAndTypedResponseWithoutExternalApiCalls() throws Exception {
     var ai = service();
     ai.save(new GenOpenAiSettingsInput().apiKey("synthetic-key"));

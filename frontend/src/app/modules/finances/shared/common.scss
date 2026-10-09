@@ -350,3 +350,9 @@ pre {
   overflow-wrap: anywhere;
   font-size: 11px;
 }
+
+.transactions .description {display:block; width:100%; max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left;}
+.transactions .description-col {width:30%; max-width:320px;}
+.transactions .column-search {width:100%; min-width:0; box-sizing:border-box;}
+.transactions .column-filters th {max-width:320px;}
+.transactions .column-filters p-select {width:100%; min-width:0;}

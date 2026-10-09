@@ -1,6 +1,6 @@
 <!-- Identity Edit/Create Dialog -->
 <app-modal
-  [header]="isNewIdentity ? 'New Identity' : 'Edit Identity'"
+  [header]="isNewIdentity ? (editingIdentity.isGroup ? 'New Group' : 'New Identity') : (editingIdentity.isGroup ? 'Edit Group' : 'Edit Identity')"
   [visible]="true" (visibleChange)="close()"
   [dialogStyle]="{width: '550px', maxWidth: 'calc(100vw - 2rem)'}" [dismissible]="!busy()">
   <div class="dialog-form">
@@ -16,7 +16,7 @@
       </p-floatlabel>
     }
     <p-floatlabel>
-      <input pInputText id="relationship" [(ngModel)]="editingIdentity.relationship" style="width: 100%" />
+      <input pInputText id="relationship" maxlength="255" [(ngModel)]="editingIdentity.relationship" style="width: 100%" />
       <label for="relationship">Relationship</label>
     </p-floatlabel>
 

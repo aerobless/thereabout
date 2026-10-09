@@ -31,6 +31,9 @@ public class IdentityInApplicationEntity {
 
     private String usernameHint;
 
+    @Version
+    private long version;
+
     private boolean isGroup;
 
     @Column(updatable = false)

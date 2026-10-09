@@ -1,3 +1,5 @@
+import {IdentityWriteKeys} from "../identity-write-keys";
+import {IdentityNavigation} from "../identity-navigation";
 import {GroupMembersComponent} from './group-members.component';
 import {fullName} from '../../../shared/identity-names';
 import {IdentityEditorComponent} from '../identity-editor/identity-editor.component';
@@ -25,10 +27,11 @@ import {Identity, IdentityService} from '../../../../../generated/backend-api/th
         TableModule,
     ],
     templateUrl: './identity-detail.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './identity-detail.component.scss'
 })
 export class IdentityDetailComponent implements OnInit {
+  private readonly writeKeys = new IdentityWriteKeys();
   readonly fullName = fullName;
   private readonly changeDetector = inject(ChangeDetectorRef);
   readonly currentUser = inject(CurrentUserService);
@@ -37,7 +40,10 @@ export class IdentityDetailComponent implements OnInit {
 
     editing = false;
     creatingUser: Identity | null = null;
-    identity: Identity | null = null;
+    private readonly identityState = signal<Identity | null>(null);
+    private readonly navigation = inject(IdentityNavigation, {optional:true});
+    get identity() {return this.identityState();}
+    set identity(value: Identity | null) {this.identityState.set(value); this.navigation?.group.set(!!value?.isGroup);}
 
     constructor(
         private readonly route: ActivatedRoute,
@@ -61,12 +67,12 @@ export class IdentityDetailComponent implements OnInit {
         const identity = this.identity;
         if (!identity || identity.role || this.deleting()) return;
         this.deleting.set(true);
-        this.identityService.deleteIdentity(identity.id).subscribe({
+        this.identityService.deleteIdentity(identity.id, identity.version, this.writeKeys.key("delete", {id:identity.id, version:identity.version})).subscribe({
             next: () => {
                 this.deleting.set(false);
                 this.deleteVisible.set(false);
                 this.messages.add({severity: 'success', summary: 'Deleted', detail: 'Identity deleted successfully'});
-                void this.router.navigate(['/identities']);
+                void this.router.navigate([identity.isGroup ? '/identities/groups' : '/identities']);
             },
             error: () => {
                 this.deleting.set(false);

@@ -1,6 +1,6 @@
 <p-toast></p-toast>
 @if (identityDialogVisible) {
-  <app-identity-editor (closed)="identityDialogVisible = false" (saved)="loadIdentities()" />
+  <app-identity-editor [newGroup]="isGroup()" (closed)="identityDialogVisible = false" (saved)="loadIdentities()" />
 }
 
 <div class="identities-container">
@@ -10,7 +10,7 @@
     <ng-template #header>
       <div class="card-header">
         <i class="pi pi-users card-header-icon"></i>
-        <span class="card-header-title">Identities</span>
+        <span class="card-header-title">{{ isGroup() ? "Groups" : "Identities" }}</span>
       </div>
     </ng-template>
     <p-table #identityTable
@@ -28,32 +28,24 @@
           <p-iconfield class="flex-1 min-w-0 max-w-16rem">
             <p-inputicon styleClass="pi pi-search" />
             <input pInputText class="w-full" [(ngModel)]="identityFilter" (ngModelChange)="identityTable.filterGlobal(identityFilter, 'contains')"
-                   placeholder="Find an identity..." aria-label="Search identities" />
+                   [placeholder]="isGroup() ? 'Find a group...' : 'Find an identity...'" aria-label="Search identities" />
           </p-iconfield>
-          <p-button class="flex-shrink-0" label="New Identity" icon="pi pi-plus" (onClick)="showNewIdentityDialog()"></p-button>
+          <p-button class="flex-shrink-0" [label]="isGroup() ? 'New Group' : 'New Identity'" icon="pi pi-plus" (onClick)="showNewIdentityDialog()"></p-button>
         </div>
       </ng-template>
       <ng-template #header>
         <tr>
           <th pSortableColumn="firstName">Name <p-sorticon field="firstName"/></th>
-          <th>Role</th>
+          @if (!isGroup()) { <th>Role</th> }
           <th pSortableColumn="relationship">Relationship <p-sorticon field="relationship"/></th>
-          <th style="text-align: center">Group</th>
           <th pSortableColumn="appIdentityCount" style="text-align: center">App Identities <p-sorticon field="appIdentityCount"/></th>
         </tr>
       </ng-template>
       <ng-template #body let-identity>
         <tr>
           <td><a [routerLink]="['/identities', identity.id]">{{ identity.fullName }}</a></td>
-          <td data-label="Role">@if (identity.role) { <p-tag [value]="identity.role === 'ADMIN' ? 'Admin' : 'User'" severity="success" /> } @else { <span>—</span> }</td>
+          @if (!isGroup()) { <td data-label="Role">@if (identity.role) { <p-tag [value]="identity.role === 'ADMIN' ? 'Admin' : 'User'" severity="success" /> } @else { <span>—</span> }</td> }
           <td data-label="Relationship">{{ identity.relationship || '—' }}</td>
-          <td data-label="Group" style="text-align: center">
-            @if (identity.isGroup) {
-              <p-tag value="Group" severity="info"></p-tag>
-            } @else {
-              <span>—</span>
-            }
-          </td>
           <td data-label="App identities" style="text-align: center">
             <p-tag [value]="'' + identity.appIdentityCount"
                    [severity]="identity.appIdentityCount > 0 ? 'info' : 'secondary'"
@@ -65,12 +57,13 @@
       </ng-template>
       <ng-template #emptymessage>
         <tr>
-          <td colspan="5" style="text-align: center">No identities found.</td>
+          <td [attr.colspan]="isGroup() ? 3 : 4" style="text-align: center">{{ isGroup() ? "No groups found." : "No identities found." }}</td>
         </tr>
       </ng-template>
     </p-table>
   </p-card>
 
+  @if (!isGroup()) {
   <!-- Section 2: Unlinked Application Identities (persons only) -->
   <p-card>
     <ng-template #header>
@@ -124,6 +117,7 @@
     </p-table>
   </p-card>
 
+  } @else {
   <!-- Section 3: Unlinked Group Application Identities -->
   <p-card>
     <ng-template #header>
@@ -176,6 +170,7 @@
       </ng-template>
     </p-table>
   </p-card>
+  }
 </div>
 
 <!-- Link Application Identity Dialog -->

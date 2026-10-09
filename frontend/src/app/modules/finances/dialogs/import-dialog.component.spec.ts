@@ -25,6 +25,58 @@ describe('Finance import review', () => {
     } }] });
   });
   afterEach(() => { TestBed.resetTestingModule(); vi.unstubAllGlobals(); });
+  it('shows the transaction checking counter and requires explicit confirmation of a suggestion', async () => {
+    const fixture = TestBed.createComponent(ImportDialogComponent);
+    const component = fixture.componentInstance;
+    component.job.set({...draft, status:'RUNNING', stage:'CHECKING_COUNTERPARTIES', stageProcessed:11, stageTotal:43, rows:[]});
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('Checking transaction 12 of 43');
+    const row = {...draft.rows[0], amount:'12.123456789', counterpartyId:23, counterpartyConfirmed:false,
+      matchStatus:'REVIEW' as const, issues:['Confirm the counterparty selection or explicitly confirm creating a new one.'], candidates:[{id:23,name:'Coffee shop',version:2}]};
+    component.job.set({...draft, rows:[row]});
+    await fixture.whenStable();
+    const accept = fixture.nativeElement.querySelector('button[aria-label="Accept row-1"]') as HTMLButtonElement;
+    expect(accept.disabled).toBe(false);
+    review.mockReturnValue(of({...draft, revision:2, readyToApprove:true}));
+    get.mockReturnValue(of({...draft, revision:2, readyToApprove:true}));
+    accept.click(); await fixture.whenStable();
+    expect(review).toHaveBeenCalledWith(expect.objectContaining({rows:[expect.objectContaining({counterpartyId:23,counterpartyConfirmed:true,amount:'12.123456789'})]}));
+    component.edit(row); component.counterChange('Different merchant');
+    expect(component.editor()?.counterpartyId).toBeUndefined();
+    expect(component.editor()?.counterpartyConfirmed).toBe(false);
+    fixture.destroy();
+  });
+
+  it('highlights the affected counterparty cell and clears highlights for resolved or skipped rows', async () => {
+    const fixture = TestBed.createComponent(ImportDialogComponent);
+    const component = fixture.componentInstance;
+    const row = {...draft.rows[0], amount:'12.12', counterpartyId:23, counterpartyConfirmed:false,
+      issues:['Confirm the counterparty selection or explicitly confirm creating a new one.']};
+    component.job.set({...draft, rows:[row]}); await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelectorAll('td.needs-review')).toHaveLength(1);
+    expect(element.querySelector('.counter-cell')?.classList.contains('needs-review')).toBe(true);
+    expect(element.querySelector('.review-note')?.textContent).toContain('Confirm the counterparty');
+    component.job.set({...draft, rows:[{...row, skip:true}]}); await fixture.whenStable();
+    expect(element.querySelectorAll('td.needs-review')).toHaveLength(0);
+    component.job.set({...draft, rows:[{...row, counterpartyConfirmed:true, issues:[]}]}); await fixture.whenStable();
+    expect(element.querySelectorAll('td.needs-review')).toHaveLength(0);
+    fixture.destroy();
+  });
+  it.each([
+    ['Enter a date', '.date-cell'], ['description is required', '.description-cell'],
+    ['Select a transaction type', '.type-cell'], ['Enter original amount', '.amount-cell'],
+    ['Select original currency', '.amount-cell'], ['Category is tentative', '.category-cell'],
+    ['Select the other main account', '.counter-cell'], ['Selected counterparty changed. Review and confirm it again.', '.counter-cell'],
+  ])('highlights the field for %s', async (issue, selector) => {
+    const fixture = TestBed.createComponent(ImportDialogComponent);
+    fixture.componentInstance.job.set({...draft, rows:[{...draft.rows[0], issues:[issue]}]});
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector(selector)?.classList.contains('needs-review')).toBe(true);
+    fixture.destroy();
+  });
+
   it('preselects an account, renders a delayed preview without a click and sends exact corrections', async () => {
     const pending = new Subject<FinanceImportJob>(); prepare.mockReturnValue(pending);
     const fixture = TestBed.createComponent(ImportDialogComponent); fixture.componentRef.setInput('accountId', 7); fixture.detectChanges(); await fixture.whenStable();

@@ -53,12 +53,13 @@ export const routes: Routes = [
     {
         path: 'identities',
         canActivate: [adminOnly],
-        loadComponent: () => import('./modules/identities/identities.component').then(m => m.IdentitiesComponent)
-    },
-    {
-        path: 'identities/:id',
-        canActivate: [adminOnly],
-        loadComponent: () => import('./modules/identities/identity-detail/identity-detail.component').then(m => m.IdentityDetailComponent)
+        canActivateChild: [adminOnly],
+        loadComponent: () => import('./modules/identities/identities-shell.component').then(m => m.IdentitiesShellComponent),
+        children: [
+            {path:'', pathMatch:'full', loadComponent: () => import('./modules/identities/identities.component').then(m => m.IdentitiesComponent)},
+            {path:'groups', data:{isGroup:true}, loadComponent: () => import('./modules/identities/identities.component').then(m => m.IdentitiesComponent)},
+            {path:':id', loadComponent: () => import('./modules/identities/identity-detail/identity-detail.component').then(m => m.IdentityDetailComponent)},
+        ]
     },
     {
         path: 'messages',

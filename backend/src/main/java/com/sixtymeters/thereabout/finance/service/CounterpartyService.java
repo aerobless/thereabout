@@ -131,6 +131,14 @@ public class CounterpartyService {
     counterparties.saveAndFlush(c); account.setCounterpartyId(c.getId());
   }
 
+  public void associate(FinanceAccountEntity account, long id) {
+    require(account.getKind().isCounterparty(), "Canonical counterparties require an expense or revenue account");
+    var canonical = counterparties.findById(id).orElseThrow(() -> missing("Counterparty"));
+    conflict(canonical.getMergedIntoId() == null, "Counterparty was combined; select its surviving identity");
+    require(account.getCounterpartyId() == null || account.getCounterpartyId().equals(id), "Account counterparty cannot be changed");
+    account.setCounterpartyId(id);
+  }
+
   @Transactional(readOnly = true)
   public List<FinanceAccountEntity> matchingAccounts(String name, AccountKind kind, String currency) {
     var matches = counterparties.matching(normalize(name));

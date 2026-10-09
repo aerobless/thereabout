@@ -43,6 +43,7 @@ export class CounterpartyListComponent {
     this.selected.update(items => event.target instanceof HTMLInputElement && event.target.checked ? [...items,c] : items.filter(item => item.id !== c.id));
   }
   open() { const first = this.selected()[0]; if (!first) return; this.targetId=first.id; this.name=first.name; this.websiteUrl=first.websiteUrl ?? ''; this.preview.set(null); this.visible.set(true); void this.review(); }
+  targetChanged() { const selected = this.selected().find(c => c.id === this.targetId); if (selected) { this.name = selected.name; this.websiteUrl = selected.websiteUrl ?? ""; } this.changed(); }
   changed() { this.preview.set(null); this.error.set(''); }
   close() { if (!this.context.saving() && !this.loadingPreview()) { this.visible.set(false); this.preview.set(null); } }
   async review() {

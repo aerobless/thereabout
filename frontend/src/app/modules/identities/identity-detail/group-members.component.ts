@@ -1,3 +1,4 @@
+import {IdentityWriteKeys} from "../identity-write-keys";
 import {ChangeDetectionStrategy, Component, computed, inject, input, signal} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {MultiSelectModule} from 'primeng/multiselect';
@@ -17,6 +18,7 @@ import {loadResource, errorMessage} from '../../finances/shared/finance-resource
   styles:`:host { display:block; } p { color:var(--app-muted); line-height:1.5; } p-multiselect { display:flex; margin:1rem 0; width:min(100%,30rem); }`
 })
 export class GroupMembersComponent {
+  private readonly writeKeys = new IdentityWriteKeys();
   readonly groupId=input.required<number>();
   private readonly api=inject(IdentityService);
   private readonly messages=inject(MessageService);
@@ -31,7 +33,7 @@ export class GroupMembersComponent {
   async save() {
     const members=this.state().data?.members, userIds=this.selection(); if(!members || !userIds || this.saving())return;
     this.saving.set(true);this.error.set('');
-    try { await firstValueFrom(this.api.saveGroupMembers(this.groupId(),{version:members.version,userIds}));this.selection.set(null);this.revision.update(n=>n+1);this.messages.add({severity:'success',summary:'Members saved',life:3000}); }
+    try { await firstValueFrom(this.api.saveGroupMembers(this.groupId(),{version:members.version,userIds,requestKey:this.writeKeys.key("members", {id:this.groupId(), version:members.version, userIds})}));this.selection.set(null);this.revision.update(n=>n+1);this.messages.add({severity:'success',summary:'Members saved',life:3000}); }
     catch(error) { this.error.set(errorMessage(error)); } finally { this.saving.set(false); }
   }
 }

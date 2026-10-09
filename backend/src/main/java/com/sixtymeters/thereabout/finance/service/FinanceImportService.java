@@ -23,6 +23,8 @@ import tools.jackson.databind.ObjectMapper;
 public class FinanceImportService {
   private final ImportCsvReader csv;
   private final ImportInterpreter interpreter;
+  private final ImportCounterpartyMatcher matcher;
+  private final FinanceCounterpartyRepository canonicalRepository;
   private final FinanceImportHintService hints;
   private final AccountService accounts;
   private final CategoryService categories;
@@ -54,7 +56,10 @@ public class FinanceImportService {
     long accountId, revision = 0;
     volatile GenFinanceImportJob.StatusEnum status = GenFinanceImportJob.StatusEnum.QUEUED;
     volatile Instant expires;
-    int processed;
+    int processed, stageProcessed, stageTotal;
+    GenFinanceImportJob.StageEnum stage = GenFinanceImportJob.StageEnum.INTERPRETING;
+    List<ImportCounterpartyMatcher.Candidate> counterparties;
+    Map<String, ImportCounterpartyMatcher.Match> decisions = new HashMap<>();
     List<ImportCsvReader.Row> source;
     List<GenFinanceImportRow> rows = new ArrayList<>();
     Map<String, String> fingerprints = new HashMap<>();
@@ -86,7 +91,7 @@ public class FinanceImportService {
                 a ->
                     !a.isDeleted()
                         && a.isActive()
-                        && (a.getKind().isOwn() || a.getKind().isCounterparty()))
+                        && a.getKind().isOwn())
             .map(
                 a ->
                     new GenFinanceAccount()
@@ -105,6 +110,8 @@ public class FinanceImportService {
     job.accountId = account.getId();
     job.currency = account.getCurrency();
     job.source = parsed;
+    job.stageTotal = parsed.size();
+    job.counterparties = matcher.snapshot();
     job.expires = financeClock.instant().plus(Duration.ofHours(1));
     var occurrences = new HashMap<String, Integer>();
     for (var row : parsed) {
@@ -233,15 +240,42 @@ public class FinanceImportService {
           if (job.status == GenFinanceImportJob.StatusEnum.CANCELLED) return;
           job.rows.addAll(converted);
           job.processed += chunk.size();
+          job.stageProcessed = job.processed;
         }
       }
       synchronized (job) {
         if (job.status == GenFinanceImportJob.StatusEnum.CANCELLED) return;
+        job.stage = GenFinanceImportJob.StageEnum.CHECKING_COUNTERPARTIES;
+        job.stageProcessed = 0; job.stageTotal = job.rows.size();
+      }
+      List<GenFinanceImportRow> pending;
+      synchronized (job) { pending = List.copyOf(job.rows); }
+      for (var row : pending) {
+        synchronized (job) { if (job.status == GenFinanceImportJob.StatusEnum.CANCELLED) return; }
+        var matched = json.readValue(json.writeValueAsString(row), GenFinanceImportRow.class);
+        checkCounterparty(job, matched);
+        synchronized (job) {
+          if (job.status == GenFinanceImportJob.StatusEnum.CANCELLED) return;
+          job.rows.set(job.rows.indexOf(row), matched); job.stageProcessed++;
+        }
+      }
+      synchronized (job) {
+        if (job.status == GenFinanceImportJob.StatusEnum.CANCELLED) return;
+        job.stage = GenFinanceImportJob.StageEnum.VALIDATING;
+        job.stageProcessed = 0;
         require(
             job.rows.stream().filter(r -> !Boolean.TRUE.equals(r.getSkip())).count()
                 <= ImportCsvReader.MAX_ROWS,
             "CSV exceeds 2,000 data rows");
-        validate(job, job.rows, true);
+      }
+      List<GenFinanceImportRow> validated;
+      synchronized (job) { validated = copy(job.rows); }
+      validate(job, validated, true);
+      synchronized (job) {
+        if (job.status == GenFinanceImportJob.StatusEnum.CANCELLED) return;
+        job.rows = validated;
+        job.stageProcessed = job.rows.size();
+        job.stage = GenFinanceImportJob.StageEnum.COMPLETE;
         job.status = GenFinanceImportJob.StatusEnum.READY;
         job.revision++;
         job.expires = financeClock.instant().plus(Duration.ofHours(1));
@@ -315,6 +349,7 @@ public class FinanceImportService {
             }
             var ids = new ArrayList<Long>();
             var newCounters = new HashMap<String, Long>();
+            var newCanonicalIdentities = new HashMap<String, Long>();
             for (var row : rows) {
               if (Boolean.TRUE.equals(row.getSkip())) continue;
               Long other = row.getOtherAccountId();
@@ -322,25 +357,25 @@ public class FinanceImportService {
                 String kind =
                     row.getType() == GenFinanceImportRow.TypeEnum.DEPOSIT ? "REVENUE" : "EXPENSE";
                 String name = required(row.getCounterpartyName(), "counterparty");
-                String key = kind + ":" + nameKey(name);
+                String merchantKey = ImportCounterpartyMatcher.normalized(name);
+                if (row.getCounterpartyId() == null) row.setCounterpartyId(newCanonicalIdentities.get(merchantKey));
+                String key = kind + ":" + (row.getCounterpartyId() == null ? nameKey(name) : row.getCounterpartyId());
                 other = newCounters.get(key);
                 if (other == null) {
-                  var existing = counterparties.matchingAccounts(name, AccountKind.valueOf(kind), job.currency).stream().findFirst();
+                  var existing = row.getCounterpartyId() == null
+                      ? counterparties.matchingAccounts(name, AccountKind.valueOf(kind), job.currency).stream().findFirst()
+                      : compatibleAccount(row.getCounterpartyId(), AccountKind.valueOf(kind), job.currency);
                   other =
                       existing
                           .map(FinanceAccountEntity::getId)
-                          .orElseGet(
-                              () ->
-                                  accounts
-                                      .save(
-                                          user,
-                                          new GenFinanceAccountInput()
-                                              .requestKey(childKey(input, "counter", key))
-                                              .name(name)
-                                              .kind(GenFinanceAccountKind.fromValue(kind))
-                                              .currency(job.currency))
-                                      .getAccount()
-                                      .getId());
+                          .orElseGet(() -> {
+                            var saved = accounts.save(user, new GenFinanceAccountInput()
+                                .requestKey(childKey(input, "counter", key)).counterpartyId(row.getCounterpartyId())
+                                .name(name).kind(GenFinanceAccountKind.fromValue(kind)).currency(job.currency)).getAccount();
+                            Long canonicalId = accountRepository.findById(saved.getId()).orElseThrow().getCounterpartyId();
+                            if (canonicalId != null) newCanonicalIdentities.put(merchantKey, canonicalId);
+                            return saved.getId();
+                          });
                   newCounters.put(key, other);
                 }
               }
@@ -376,6 +411,75 @@ public class FinanceImportService {
                 .skipped(rows.size() - ids.size());
           }
         });
+  }
+
+  private Optional<FinanceAccountEntity> compatibleAccount(long id, AccountKind kind, String currency) {
+    return accountRepository.findByCounterpartyIdOrderByIdAsc(id).stream()
+        .filter(a -> a.isActive() && !a.isDeleted() && a.getKind() == kind && a.getCurrency().equals(currency)).findFirst();
+  }
+
+  private void checkCounterparty(Job job, GenFinanceImportRow row) {
+    if (Boolean.TRUE.equals(row.getSkip()) || row.getType() == GenFinanceImportRow.TypeEnum.TRANSFER) return;
+    if (row.getOtherAccountId() != null) {
+      var ledger = accounts.requireAccount(job.caller, row.getOtherAccountId());
+      if (ledger.getKind().isCounterparty() && ledger.getCounterpartyId() != null) {
+        var canonical = counterparties.get(job.caller, ledger.getCounterpartyId());
+        row.setCounterpartyId(canonical.getId()); row.setCounterpartyVersion(canonical.getVersion());
+        row.setCounterpartyName(canonical.getName()); row.setCounterpartyConfirmed(true);
+        row.setMatchStatus(GenFinanceImportRow.MatchStatusEnum.EXACT); return;
+      }
+      if (ledger.getKind().isCounterparty()) {
+        row.setCounterpartyName(ledger.getName()); row.setMatchStatus(GenFinanceImportRow.MatchStatusEnum.EXACT);
+        row.setCounterpartyConfirmed(true); return;
+      }
+      row.setOtherAccountId(null);
+    }
+    var match = matcher.match(row.getCounterpartyName(), row.getDescription(), row.getSource(),
+        row.getType() == GenFinanceImportRow.TypeEnum.DEPOSIT ? AccountKind.REVENUE : AccountKind.EXPENSE,
+        job.currency, job.counterparties, job.decisions);
+    row.setCandidates(match.candidates().stream().map(ImportCounterpartyMatcher.Candidate::view).toList());
+    row.setMatchStatus(match.status()); row.setMatchMessage(match.message()); row.setCounterpartyId(match.selected());
+    row.setOtherAccountId(null);
+    row.setCounterpartyConfirmed(match.status() == GenFinanceImportRow.MatchStatusEnum.EXACT
+        || match.status() == GenFinanceImportRow.MatchStatusEnum.CONFIDENT || match.status() == GenFinanceImportRow.MatchStatusEnum.NEW);
+    row.setCounterpartyVersion(null);
+    if (match.selected() != null) {
+      var selected = match.candidates().stream().filter(c -> c.id() == match.selected()).findFirst().orElseThrow();
+      row.setCounterpartyName(selected.name()); row.setCounterpartyVersion(selected.version());
+    }
+  }
+
+  private void revalidateCounterparty(Job job, GenFinanceImportRow row, List<String> issues, List<ImportCounterpartyMatcher.Candidate> fresh) {
+    if (row.getType() == GenFinanceImportRow.TypeEnum.TRANSFER) return;
+    if (row.getCounterpartyId() != null) {
+      var selected = canonicalRepository.findById(row.getCounterpartyId());
+      if (selected.isEmpty() || selected.get().getMergedIntoId() != null) {
+        row.setCounterpartyConfirmed(false); row.setOtherAccountId(null);
+        row.setMatchStatus(GenFinanceImportRow.MatchStatusEnum.REVIEW);
+        issues.add("Selected counterparty is unavailable or was combined. Choose another."); return;
+      }
+      var canonical = selected.get();
+      if (!Objects.equals(row.getCounterpartyVersion(), canonical.getVersion())) {
+        row.setCounterpartyConfirmed(false); row.setCounterpartyVersion(canonical.getVersion());
+        row.setCounterpartyName(canonical.getName()); row.setMatchStatus(GenFinanceImportRow.MatchStatusEnum.REVIEW);
+        issues.add("Selected counterparty changed. Review and confirm it again.");
+      }
+      row.setCounterpartyName(canonical.getName());
+      if (row.getType() != null) row.setOtherAccountId(compatibleAccount(canonical.getId(),
+          row.getType() == GenFinanceImportRow.TypeEnum.DEPOSIT ? AccountKind.REVENUE : AccountKind.EXPENSE, job.currency)
+          .map(FinanceAccountEntity::getId).orElse(null));
+    } else {
+      // Another import may have created an exact match since preparation. Never duplicate it silently.
+      var matches = fresh.stream().filter(c -> ImportCounterpartyMatcher.normalized(c.name()).equals(ImportCounterpartyMatcher.normalized(row.getCounterpartyName()))
+          || c.aliases().stream().anyMatch(a -> ImportCounterpartyMatcher.normalized(a).equals(ImportCounterpartyMatcher.normalized(row.getCounterpartyName())))).toList();
+      if (matches.stream().anyMatch(c -> row.getCandidates() == null || row.getCandidates().stream().noneMatch(old -> old.getId() == c.id() && old.getVersion() == c.version()))) {
+        row.setCandidates(matches.stream().limit(8).map(ImportCounterpartyMatcher.Candidate::view).toList());
+        row.setCounterpartyConfirmed(false); row.setMatchStatus(GenFinanceImportRow.MatchStatusEnum.REVIEW);
+        issues.add("An existing counterparty now matches. Select it before creating a new one.");
+      }
+    }
+    if (row.getMatchStatus() != null && !Boolean.TRUE.equals(row.getCounterpartyConfirmed()))
+      issues.add("Confirm the counterparty selection or explicitly confirm creating a new one.");
   }
 
   private boolean supportedAmount(ImportCsvReader.Row source, String evidence, String amount) {
@@ -458,12 +562,10 @@ public class FinanceImportService {
                 dates.getFirst().toLocalDate().atStartOfDay(),
                 dates.getLast().toLocalDate().atTime(LocalTime.MAX));
     var knownCategories = reads.categories().getItems();
-    var knownCounterparties =
-        accountRepository.findAll().stream()
-            .filter(a -> !a.isDeleted() && a.isActive() && a.getKind().isCounterparty())
-            .toList();
+    var freshCounterparties = matcher.snapshot();
     var matchedCounts = new HashMap<String, Integer>();
     for (var row : rows) {
+      if (autoSkip && job.status == GenFinanceImportJob.StatusEnum.CANCELLED) return;
       var issues = new ArrayList<String>();
       row.setIssues(issues);
       row.setDuplicate("");
@@ -472,6 +574,7 @@ public class FinanceImportService {
           require(!text(row.getReason()).isEmpty(), "A skip reason is required");
           continue;
         }
+        revalidateCounterparty(job, row, issues, freshCounterparties);
         resolveAssignments(row, knownCategories, job.currency);
         require(row.getType() != null, "Select a transaction type");
         var date = dateTime(row.getDate(), null, false);
@@ -496,6 +599,8 @@ public class FinanceImportService {
                           ? AccountKind.REVENUE
                           : AccountKind.EXPENSE),
               "Counterparty direction does not match transaction type");
+          if (row.getType() != GenFinanceImportRow.TypeEnum.TRANSFER)
+            require(other.getCurrency().equals(job.currency), "Counterparty account currency does not match");
           if (row.getType() == GenFinanceImportRow.TypeEnum.TRANSFER) {
             if (other.getCurrency().equals(job.currency)) {
               row.setOtherAmount(row.getAmount());
@@ -574,6 +679,8 @@ public class FinanceImportService {
         issues.add(ex.getReason());
       } catch (IllegalArgumentException ex) {
         issues.add("Invalid transaction fields");
+      } finally {
+        if (autoSkip) synchronized (job) { job.stageProcessed++; }
       }
     }
   }
@@ -593,7 +700,8 @@ public class FinanceImportService {
       }
     }
     if (row.getCategoryId() != null) row.setCategoryName("");
-    if (row.getOtherAccountId() == null
+    if (row.getCounterpartyId() == null && row.getMatchStatus() == null
+        && row.getOtherAccountId() == null
         && !text(row.getCounterpartyName()).isEmpty()
         && (row.getType() == GenFinanceImportRow.TypeEnum.DEPOSIT
             || row.getType() == GenFinanceImportRow.TypeEnum.WITHDRAWAL)) {
@@ -638,7 +746,55 @@ public class FinanceImportService {
           change != null && seen.add(change.getRowId()) && byId.containsKey(change.getRowId()),
           "Unknown or duplicate source row");
       var corrected = json.convertValue(change, GenFinanceImportRow.class);
-      corrected.setSource(byId.get(change.getRowId()).getSource());
+      var previous = byId.get(change.getRowId());
+      corrected.setSource(previous.getSource());
+      corrected.setCandidates(previous.getCandidates());
+      corrected.setMatchStatus(previous.getMatchStatus());
+      corrected.setMatchMessage(previous.getMatchMessage());
+      corrected.setCounterpartyVersion(previous.getCounterpartyVersion());
+      boolean selectionChanged = !Objects.equals(previous.getCounterpartyId(), corrected.getCounterpartyId())
+          || !Objects.equals(previous.getOtherAccountId(), corrected.getOtherAccountId());
+      boolean evidenceChanged = !Objects.equals(previous.getType(), corrected.getType())
+          || !Objects.equals(previous.getDescription(), corrected.getDescription())
+          || !Objects.equals(previous.getAmount(), corrected.getAmount())
+          || !Objects.equals(previous.getForeignCurrency(), corrected.getForeignCurrency())
+          || !Objects.equals(previous.getForeignAmount(), corrected.getForeignAmount());
+      boolean nameChanged = !Objects.equals(text(previous.getCounterpartyName()), text(corrected.getCounterpartyName()));
+      if (corrected.getType() == GenFinanceImportRow.TypeEnum.TRANSFER) {
+        corrected.setCounterpartyId(null); corrected.setCounterpartyVersion(null); corrected.setCandidates(List.of());
+        corrected.setMatchStatus(null); corrected.setCounterpartyConfirmed(false);
+      } else if (nameChanged && Objects.equals(previous.getCounterpartyId(), corrected.getCounterpartyId()) && corrected.getOtherAccountId() == null) {
+        corrected.setCounterpartyId(null); corrected.setOtherAccountId(null);
+        checkCounterparty(job, corrected);
+      } else if (selectionChanged) {
+        if (corrected.getCounterpartyId() == null && corrected.getOtherAccountId() != null) {
+          var ledger = accounts.requireAccount(job.caller, corrected.getOtherAccountId());
+          if (ledger.getKind().isCounterparty()) corrected.setCounterpartyId(ledger.getCounterpartyId());
+        }
+        if (corrected.getCounterpartyId() == null && corrected.getOtherAccountId() == null && nameChanged) {
+          var suggestions = matcher.rank(corrected.getCounterpartyName(), matcher.snapshot());
+          corrected.setCandidates(suggestions.stream().map(ImportCounterpartyMatcher.Candidate::view).toList());
+          corrected.setMatchStatus(suggestions.isEmpty() ? GenFinanceImportRow.MatchStatusEnum.NEW : GenFinanceImportRow.MatchStatusEnum.REVIEW);
+          corrected.setCounterpartyVersion(null);
+        }
+        if (corrected.getCounterpartyId() != null) {
+          var canonical = counterparties.get(job.caller, corrected.getCounterpartyId());
+          conflict(canonical.getId().equals(corrected.getCounterpartyId()), "Selected counterparty was combined; reload");
+          corrected.setCounterpartyVersion(canonical.getVersion()); corrected.setCounterpartyName(canonical.getName());
+          corrected.setOtherAccountId(null); corrected.setMatchStatus(GenFinanceImportRow.MatchStatusEnum.MANUAL);
+        }
+      } else if (nameChanged) {
+        corrected.setCounterpartyId(null); corrected.setOtherAccountId(null);
+        checkCounterparty(job, corrected);
+      }
+      if (evidenceChanged && !selectionChanged && Boolean.TRUE.equals(previous.getCounterpartyConfirmed()))
+        corrected.setCounterpartyConfirmed(false);
+      if (corrected.getType() == GenFinanceImportRow.TypeEnum.TRANSFER) {
+        corrected.setCounterpartyId(null); corrected.setCounterpartyVersion(null); corrected.setCandidates(List.of());
+        corrected.setMatchStatus(null); corrected.setCounterpartyConfirmed(false);
+      }
+      if (corrected.getCounterpartyConfirmed() == null) corrected.setCounterpartyConfirmed(
+          !selectionChanged && !evidenceChanged && !nameChanged && Boolean.TRUE.equals(previous.getCounterpartyConfirmed()));
       corrected.setReviewed(true);
       rows.set(rows.indexOf(byId.get(change.getRowId())), corrected);
     }
@@ -688,7 +844,8 @@ public class FinanceImportService {
         else created++;
       }
       for (var row : rows)
-        if (!Boolean.TRUE.equals(row.getSkip())
+        if ((job.status == GenFinanceImportJob.StatusEnum.READY || job.status == GenFinanceImportJob.StatusEnum.APPROVED)
+            && !Boolean.TRUE.equals(row.getSkip())
             && row.getIssues() != null
             && row.getIssues().isEmpty()) {
           var amount = decimal(row.getAmount());
@@ -716,6 +873,7 @@ public class FinanceImportService {
           .fileName(job.fileName)
           .status(job.status)
           .revision(job.revision)
+          .stage(job.stage).stageProcessed(job.stageProcessed).stageTotal(job.stageTotal)
           .processed(job.processed)
           .total(
               job.status == GenFinanceImportJob.StatusEnum.RUNNING

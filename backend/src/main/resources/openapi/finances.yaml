@@ -42,10 +42,14 @@ paths:
     $ref: finances/reports.yaml#/paths/_reports_investments
 components:
   schemas:
+    FinanceImportCandidate:
+      $ref: './finances/imports.yaml#/components/schemas/FinanceImportCandidate'
     FinanceCounterpartyQuery:
       $ref: 'finances/counterparties.yaml#/components/schemas/FinanceCounterpartyQuery'
     FinanceCounterpartyId:
       $ref: 'finances/counterparties.yaml#/components/schemas/FinanceCounterpartyId'
+    FinanceCounterpartySaveInput:
+      $ref: 'finances/counterparties.yaml#/components/schemas/FinanceCounterpartySaveInput'
     FinanceCounterpartyMergePreviewInput:
       $ref: 'finances/counterparties.yaml#/components/schemas/FinanceCounterpartyMergePreviewInput'
     FinanceCounterpartyMergeInput:

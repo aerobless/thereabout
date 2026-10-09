@@ -135,6 +135,130 @@ class FinanceImportTest {
         .requestKey(UUID.randomUUID().toString());
   }
 
+  private void merchantProposal(String name, String type) {
+    when(interpreter.interpret(any(), anyList(), anyList(), anyList(), anyList(), anyList())).thenAnswer(invocation -> {
+      @SuppressWarnings("unchecked") var source = (List<ImportCsvReader.Row>) invocation.getArgument(2, List.class);
+      var result = new ImportInterpreter.Result(); result.rows = new ArrayList<>();
+      for (var cell : source) {
+        var row = new ImportInterpreter.Proposal(); row.rowId = cell.id();
+        if (cell.cells().getFirst().equals("Date")) { row.nonTransaction = true; row.skip = true; result.rows.add(row); continue; }
+        row.type = type.equals("MIXED") ? (cell.cells().get(1).equals("Refund") ? "DEPOSIT" : "WITHDRAWAL") : type; row.date = row.dateEvidence = cell.cells().getFirst(); row.description = cell.cells().get(1);
+        row.amount = row.amountEvidence = cell.cells().get(2); row.counterpartyName = type.equals("MIXED") && row.type.equals("DEPOSIT") ? "Mueller" : name; result.rows.add(row);
+      }
+      return result;
+    });
+  }
+  @Test void canonicalMatchesReuseAnIdentityAndCreateOnlyItsMissingDirectionAccountAtApproval() {
+    merchantProposal("Shop", "DEPOSIT");
+    var job = ready(prepare("2026-02-01;Refund;12.12")); var row = job.getRows().getFirst();
+    assertThat(row.getCounterpartyId()).isEqualTo(2L); assertThat(row.getOtherAccountId()).isNull(); assertThat(job.getReadyToApprove()).isTrue();
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_account", Long.class)).isEqualTo(3);
+    imports.approve(USER, approval(job));
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_counterparty", Long.class)).isEqualTo(1);
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_account WHERE counterparty_id=2 AND kind='REVENUE' AND currency='CHF'", Long.class)).isEqualTo(1);
+  }
+  @Test void legacyCoopExpenseAndIncomeIdentitiesResolveWithoutConfirmationOrModelCalls() {
+    db.update("UPDATE finance_counterparty SET name='Coop' WHERE id=2");
+    db.update("DELETE FROM finance_counterparty_alias WHERE counterparty_id=2");
+    db.update("INSERT INTO finance_counterparty(id,name) VALUES(4,'coop')");
+    db.update("INSERT INTO finance_account(id,name,kind,currency,counterparty_id) VALUES(4,'coop','REVENUE','CHF',4)");
+    merchantProposal("Coop", "WITHDRAWAL");
+    var job = ready(prepare("2026-02-01;Coop;12.12"));
+    var row = job.getRows().getFirst();
+    assertThat(row.getCounterpartyId()).isEqualTo(2L);
+    assertThat(row.getCounterpartyConfirmed()).isTrue();
+    assertThat(row.getMatchStatus()).isEqualTo(GenFinanceImportRow.MatchStatusEnum.EXACT);
+    assertThat(row.getIssues()).isEmpty(); assertThat(job.getReadyToApprove()).isTrue();
+    verify(ai, never()).chooseMerchant(anyString(), anyList());
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_transaction", Long.class)).isZero();
+  }
+  @Test void confidentSuggestionsAreReadyButConcurrentCanonicalChangesStillBlockApproval() {
+    merchantProposal("Shopp", "WITHDRAWAL");
+    when(ai.chooseMerchant(anyString(), anyList())).thenReturn(new OpenAiService.MerchantDecision("2", .97, .98));
+    var job = ready(prepare("2026-02-01;Coffee;12.12"));
+    assertThat(job.getReadyToApprove()).isTrue();
+    assertThat(job.getRows().getFirst().getMatchStatus()).isEqualTo(GenFinanceImportRow.MatchStatusEnum.CONFIDENT);
+    db.update("UPDATE finance_counterparty SET name='Renamed shop',version=version+1 WHERE id=2");
+    assertThatThrownBy(() -> imports.approve(USER, approval(job))).hasMessageContaining("Resolve every row");
+    assertThat(imports.get(USER, new GenFinanceImportQuery().jobId(job.getJobId())).getRows().getFirst().getCounterpartyConfirmed()).isFalse();
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_transaction", Long.class)).isZero();
+  }
+
+  @Test void ambiguousSuggestionsStayBlockedCacheRepeatedMerchantsAndRejectInjectedMatchingMetadata() {
+    merchantProposal("Shopp", "WITHDRAWAL"); when(ai.chooseMerchant(anyString(), anyList())).thenReturn(new OpenAiService.MerchantDecision("2", .8, .8));
+    var job = ready(prepare("Date;Description;Amount\n2026-02-01;First;12.12\n2026-02-02;Second;13.13"));
+    assertThat(job.getStageTotal()).isEqualTo(2); assertThat(job.getStageProcessed()).isEqualTo(2);
+    assertThat(job.getReadyToApprove()).isFalse(); verify(ai, times(1)).chooseMerchant(anyString(), anyList());
+    var row = job.getRows().getFirst(); assertThat(row.getCounterpartyId()).isEqualTo(2L); assertThat(row.getCandidates()).hasSize(1);
+    row.counterpartyConfirmed(true).counterpartyVersion(999L).candidates(List.of()).matchStatus(GenFinanceImportRow.MatchStatusEnum.EXACT);
+    job = imports.review(USER, new GenFinanceImportReviewInput().jobId(job.getJobId()).revision(job.getRevision()).rows(List.of(row)));
+    assertThat(job.getRows().getFirst().getCounterpartyVersion()).isZero(); assertThat(job.getRows().getFirst().getCandidates()).hasSize(1);
+    assertThat(job.getRows().getFirst().getIssues()).isEmpty(); assertThat(job.getReadyToApprove()).isFalse();
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_transaction", Long.class)).isZero();
+  }
+  @Test void canonicalChangesBeforeApprovalReturnToReviewWithoutAnyLedgerWrites() {
+    merchantProposal("Shop", "WITHDRAWAL"); var job = ready(prepare("2026-02-01;Coffee;12.12"));
+    db.update("UPDATE finance_counterparty SET name='Renamed shop',version=version+1 WHERE id=2");
+    assertThatThrownBy(() -> imports.approve(USER, approval(job))).hasMessageContaining("Resolve every row");
+    var refreshed = imports.get(USER, new GenFinanceImportQuery().jobId(job.getJobId()));
+    assertThat(refreshed.getRows().getFirst().getCounterpartyConfirmed()).isFalse();
+    assertThat(refreshed.getRows().getFirst().getCounterpartyName()).isEqualTo("Renamed shop");
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_transaction", Long.class)).isZero();
+  }
+  @Test void failedDecisionIsReviewableAndConfirmationResetsWhenAmountChanges() {
+    merchantProposal("Shopp", "WITHDRAWAL"); when(ai.chooseMerchant(anyString(), anyList())).thenThrow(new IllegalStateException("refused"));
+    var job = ready(prepare("2026-02-01;Coffee;12.12")); var row = job.getRows().getFirst();
+    assertThat(row.getMatchStatus()).isEqualTo(GenFinanceImportRow.MatchStatusEnum.UNAVAILABLE); assertThat(job.getReadyToApprove()).isFalse();
+    job = imports.review(USER, new GenFinanceImportReviewInput().jobId(job.getJobId()).revision(job.getRevision()).rows(List.of(row.counterpartyConfirmed(true))));
+    assertThat(job.getReadyToApprove()).isTrue();
+    row = job.getRows().getFirst().amount("14.14");
+    job = imports.review(USER, new GenFinanceImportReviewInput().jobId(job.getJobId()).revision(job.getRevision()).rows(List.of(row)));
+    assertThat(job.getRows().getFirst().getCounterpartyConfirmed()).isFalse(); assertThat(job.getReadyToApprove()).isFalse();
+  }
+
+  @Test void missingCurrencyReusesTheCanonicalIdentityWithoutPreparingLedgerRecords() {
+    merchantProposal("Shop", "WITHDRAWAL");
+    var job = ready(imports.prepare(USER, new GenFinanceImportPrepareInput().accountId(3L).fileName("synthetic.csv").csvText("2026-02-01;Euro purchase;12.12345")));
+    assertThat(job.getRows().getFirst().getCounterpartyId()).isEqualTo(2L);
+    assertThat(job.getRows().getFirst().getOtherAccountId()).isNull();
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_account", Long.class)).isEqualTo(3);
+    imports.approve(USER, approval(job));
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_counterparty", Long.class)).isEqualTo(1);
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_account WHERE counterparty_id=2 AND kind='EXPENSE' AND currency='EUR'", Long.class)).isEqualTo(1);
+    assertThat(db.queryForObject("SELECT amount FROM finance_posting WHERE account_id=3", java.math.BigDecimal.class)).isEqualByComparingTo("-12.12345");
+  }
+
+  @Test void repeatedNewMerchantsAcrossDirectionsAndNormalizedSpellingsShareOneIdentity() {
+    merchantProposal("Müller", "MIXED");
+    var job = ready(prepare("2026-02-01;Purchase;12.12\n2026-02-02;Refund;13.13"));
+    assertThat(job.getReadyToApprove()).isTrue();
+    imports.approve(USER, approval(job));
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_counterparty", Long.class)).isEqualTo(2);
+    assertThat(db.queryForObject("SELECT COUNT(DISTINCT counterparty_id) FROM finance_account WHERE id NOT IN (1,2,3)", Long.class)).isEqualTo(1);
+    assertThat(db.queryForObject("SELECT COUNT(DISTINCT kind) FROM finance_account WHERE id NOT IN (1,2,3)", Long.class)).isEqualTo(2);
+  }
+
+  @Test void checkingProgressIsPollableAndCancellationCannotCreateLedgerRecords() throws Exception {
+    merchantProposal("Shopp", "WITHDRAWAL");
+    var entered = new CountDownLatch(1); var release = new CountDownLatch(1);
+    when(ai.chooseMerchant(anyString(), anyList())).thenAnswer(invocation -> {
+      entered.countDown();
+      if (!release.await(10, TimeUnit.SECONDS)) throw new AssertionError("Decision wait timed out");
+      return new OpenAiService.MerchantDecision("2", .8, .8);
+    });
+    var job = prepare("Date;Description;Amount\n2026-02-01;First;12.12\n2026-02-02;Second;13.13");
+    try {
+      assertThat(entered.await(10, TimeUnit.SECONDS)).isTrue();
+      var running = imports.get(USER, new GenFinanceImportQuery().jobId(job.getJobId()));
+      assertThat(running.getStage()).isEqualTo(GenFinanceImportJob.StageEnum.CHECKING_COUNTERPARTIES);
+      assertThat(running.getStageTotal()).isEqualTo(2); assertThat(running.getStageProcessed()).isZero();
+      imports.cancel(USER, new GenFinanceImportQuery().jobId(job.getJobId()));
+    } finally { release.countDown(); }
+    assertThat(imports.get(USER, new GenFinanceImportQuery().jobId(job.getJobId())).getStatus()).isEqualTo(GenFinanceImportJob.StatusEnum.CANCELLED);
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_transaction", Long.class)).isZero();
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_account", Long.class)).isEqualTo(3);
+  }
+
   @Test
   void hintsAreSharedAcrossUsersButIsolatedByAccountAndWritesAreAuditedAndReplayable() {
     var input = new GenFinanceImportHintInput().accountId(1L).text("  Treat IBKR as a transfer  ")
@@ -248,7 +372,7 @@ class FinanceImportTest {
                 .revision(job.getRevision())
                 .rows(List.of(row)));
     assertThat(job.getRows().getFirst().getOtherAccountId()).isEqualTo(2L);
-    assertThat(job.getRows().getFirst().getCounterpartyName()).isEmpty();
+    assertThat(job.getRows().getFirst().getCounterpartyName()).isEqualTo("Zühlke Engineering AG");
     assertThat(job.getRows().getFirst().getCategoryId()).isEqualTo(11L);
     assertThat(job.getRows().getFirst().getCategoryName()).isEmpty();
     assertThat(job.getReadyToApprove()).isTrue();
@@ -300,7 +424,7 @@ class FinanceImportTest {
     db.update("INSERT INTO finance_counterparty_alias(counterparty_id,alias) VALUES(4,'Shop'),(5,'Shop')");
     db.update("UPDATE finance_account SET counterparty_id=id WHERE id IN (4,5)");
     var job = ready(prepare("2026-01-01;Shop;12.12"));
-    var row = job.getRows().getFirst().otherAccountId(null).counterpartyName("shop");
+    var row = job.getRows().getFirst().otherAccountId(null).counterpartyId(null).counterpartyName("shop").counterpartyConfirmed(false);
     job =
         imports.review(
             USER,
@@ -310,8 +434,8 @@ class FinanceImportTest {
                 .rows(List.of(row)));
     assertThat(job.getReadyToApprove()).isFalse();
     assertThat(job.getRows().getFirst().getIssues())
-        .contains("Several existing counterparties match; select the correct one");
-    row = job.getRows().getFirst().type(GenFinanceImportRow.TypeEnum.DEPOSIT);
+        .contains("Confirm the counterparty selection or explicitly confirm creating a new one.");
+    row = job.getRows().getFirst().type(GenFinanceImportRow.TypeEnum.DEPOSIT).counterpartyId(4L).otherAccountId(null).counterpartyConfirmed(true);
     job =
         imports.review(
             USER,
@@ -484,6 +608,7 @@ class FinanceImportTest {
         job.getRows()
             .getFirst()
             .counterpartyName("New shop")
+            .counterpartyId(null).counterpartyConfirmed(true)
             .otherAccountId(null)
             .source(List.of("forged source"));
     job =
@@ -818,6 +943,7 @@ class FinanceImportTest {
                                   "Corrected coffee",
                                   "amount",
                                   "12.12",
+                                  "counterpartyConfirmed", true,
                                   "otherAccountId",
                                   2))))
                   .build());
@@ -855,7 +981,7 @@ class FinanceImportTest {
   @Test
   void persistenceFailureRollsBackTransactionsEntitiesAuditAndReceipts() {
     var job = ready(prepare("Date;Description;Amount\n2026-01-01;Coffee;12.12"));
-    var row = job.getRows().getFirst().otherAccountId(null).counterpartyName("Proposed new shop");
+    var row = job.getRows().getFirst().otherAccountId(null).counterpartyId(null).counterpartyConfirmed(true).counterpartyName("Proposed new shop");
     job =
         imports.review(
             USER,

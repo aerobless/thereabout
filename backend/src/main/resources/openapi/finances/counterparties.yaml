@@ -125,6 +125,14 @@ components:
           items: {type: string, minLength: 1, maxLength: 1024}
         version: {type: integer, format: int64}
         requestKey: {type: string, minLength: 1, maxLength: 100}
+    FinanceCounterpartySaveInput:
+      type: object
+      description: MCP envelope for the same complete update accepted by the REST endpoint.
+      required: [id, input]
+      properties:
+        id: {type: integer, format: int64, minimum: 1}
+        input:
+          $ref: '#/components/schemas/FinanceCounterpartyInput'
     FinanceCounterpartyVersion:
       type: object
       required: [id, version]

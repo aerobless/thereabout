@@ -80,7 +80,7 @@ public class SecurityConfiguration {
     @Bean
     @Order(2)
     SecurityFilterChain financeMcp(HttpSecurity http, FinanceMcpKeyService mcpKeys) throws Exception {
-        identify(machine(http.securityMatcher(new OrRequestMatcher(PATHS.matcher("/mcp/finances"), PATHS.matcher("/mcp/finances/**")))))
+        identify(machine(http.securityMatcher(new OrRequestMatcher(PATHS.matcher("/mcp/finances"), PATHS.matcher("/mcp/finances/**"), PATHS.matcher("/mcp/identities"), PATHS.matcher("/mcp/identities/**")))))
                 .addFilterBefore(new BearerKeyFilter(mcpKeys::matchesAuthorization, "ROLE_MCP", true),
                         AnonymousAuthenticationFilter.class)
                 .authorizeHttpRequests(rules -> rules.anyRequest().access((authentication, context) -> {

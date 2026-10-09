@@ -376,6 +376,7 @@ components:
       type: object
       additionalProperties: false
       properties:
+        counterpartyId: {type: integer, format: int64, minimum: 1, description: Canonical counterparty for a new expense/revenue ledger account.}
         userId:
           type: integer
           format: int64

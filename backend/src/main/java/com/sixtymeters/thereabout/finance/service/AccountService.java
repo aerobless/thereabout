@@ -91,7 +91,8 @@ public class AccountService {
           account.setActive(input.getActive() == null || input.getActive());
           account.setIncludeNetWorth(
               kind.isOwn() && (input.getIncludeNetWorth() == null || input.getIncludeNetWorth()));
-          counterparties.attach(account);
+          if (input.getCounterpartyId() != null) counterparties.associate(account, input.getCounterpartyId());
+          else counterparties.attach(account);
           accounts.saveAndFlush(account);
           var after = reads.account(user, account.getId());
           writes.audit(user, "accounts.save", account.getId(), before, after);

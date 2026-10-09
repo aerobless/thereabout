@@ -52,40 +52,10 @@
     [showCurrentPageReport]="true"
     currentPageReportTemplate="{first}–{last} of {totalRecords} transactions"
   >
-    @if (!recent()) {
-      <ng-template #caption>
-        <div class="table-tools">
-          <label class="search-field"
-            ><i class="pi pi-search" aria-hidden="true"></i
-            ><input
-              aria-label="Search transactions"
-              placeholder="Search description or counterparty…"
-              [(ngModel)]="q"
-              (ngModelChange)="searchChanges.next()"
-          /></label>
-          <div class="table-options">
-            <label class="check"
-              ><input
-                type="checkbox"
-                [(ngModel)]="operatingOnly"
-                (change)="filterTransactions()"
-              />Operating only</label
-            >
-            <label class="check"
-              ><input
-                type="checkbox"
-                [(ngModel)]="showDeleted"
-                (change)="filterTransactions()"
-              />Include deleted</label
-            >
-          </div>
-        </div>
-      </ng-template>
-    }
     <ng-template #header>
       <tr>
         <th class="select-col"></th>
-        <th pSortableColumn="description">
+        <th class="description-col" pSortableColumn="description">
           Description <p-sorticon field="description" />
         </th>
         <th pSortableColumn="occurredAt">
@@ -108,15 +78,7 @@
         <tr class="column-filters">
           <th></th>
           <th>
-            <p-select
-              ariaLabel="Transaction type"
-              [(ngModel)]="typeFilter"
-              [options]="typeOptions"
-              optionLabel="label"
-              optionValue="value"
-              (onChange)="filterTransactions()"
-              appendTo="body"
-            />
+            <input class="column-search" aria-label="Search description" placeholder="Search description" [(ngModel)]="descriptionQ" (ngModelChange)="searchChanges.next()" />
           </th>
           <th>
             <p-columnfilter #dateColumn field="occurredAt" type="date" display="menu" ariaLabel="Filter transaction date"
@@ -125,20 +87,12 @@
               <ng-template #footer><div class="date-filter-footer"><button class="app-button" (click)="clearDates(dateColumn)">Clear</button><button class="app-button primary" [disabled]="!completeDates(dateColumn.fieldConstraints)" (click)="applyDates(dateColumn)">Apply</button></div></ng-template>
             </p-columnfilter>
           </th>
-          <th [attr.colspan]="accountId() ? 1 : 2">
-            @if (!accountId()) {
-              <p-select
-                ariaLabel="Filter account"
-                [(ngModel)]="accountFilter"
-                [options]="accountOptions()"
-                optionLabel="name"
-                optionValue="id"
-                [filter]="true"
-                (onChange)="filterTransactions()"
-                appendTo="body"
-              />
-            }
-          </th>
+          @if (accountId()) {
+            <th><input class="column-search" aria-label="Search counterparty" placeholder="Search counterparty" [(ngModel)]="counterpartQ" (ngModelChange)="searchChanges.next()" /></th>
+          } @else {
+            <th><input class="column-search" aria-label="Search from" placeholder="Search from" [(ngModel)]="fromQ" (ngModelChange)="searchChanges.next()" /></th>
+            <th><input class="column-search" aria-label="Search to" placeholder="Search to" [(ngModel)]="toQ" (ngModelChange)="searchChanges.next()" /></th>
+          }
           <th>
             <p-multiselect
               ariaLabel="Filter categories"
@@ -154,7 +108,17 @@
               appendTo="body"
             ><ng-template #item let-c><finance-category [name]="c.name" /></ng-template></p-multiselect>
           </th>
-          <th></th>
+          <th>
+            <p-select
+              ariaLabel="Transaction type"
+              [(ngModel)]="typeFilter"
+              [options]="typeOptions"
+              optionLabel="label"
+              optionValue="value"
+              (onChange)="filterTransactions()"
+              appendTo="body"
+            />
+          </th>
           @if (accountId()) {
             <th></th>
           }
@@ -173,7 +137,7 @@
           />
         </td>
         <td>
-          <button class="app-button text-button description" (click)="showHistory(t)">
+          <button class="app-button text-button description" [title]="t.description" (click)="showHistory(t)">
             {{ t.description }}
           </button>
           @if (t.effect === "VALUATION") {

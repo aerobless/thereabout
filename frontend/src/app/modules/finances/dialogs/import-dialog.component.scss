@@ -50,6 +50,12 @@ input[type=checkbox] { width:auto; }
 .editor label.checkbox-field { flex-direction:row; align-items:center; }
 
 .import-row.requires-review, .import-row.requires-review td { background:var(--p-red-50); }
+.import-row.requires-review td.needs-review {
+  background:var(--p-red-200);
+  color:var(--p-red-950);
+  box-shadow:inset 3px 0 var(--p-red-500);
+}
+.import-row td.needs-review .cell-label { color:inherit; }
 .review-note { font-size:11px; margin:0 0 .5rem; color:var(--app-ink); }
 
 .duplicate-tag { display:inline-flex; margin-bottom:.5rem; }

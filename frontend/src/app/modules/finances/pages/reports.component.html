@@ -13,16 +13,14 @@
     }
   </div>
   <div class="range">
-    <finance-date-input
-      ariaLabel="Report start"
-      [(ngModel)]="from"
-      (ngModelChange)="loadReport()"
-    /><span>to</span
-    ><finance-date-input
-      ariaLabel="Report end"
-      [(ngModel)]="to"
-      (ngModelChange)="loadReport()"
-    /><p-select
+    <button class="app-button" type="button" (click)="dates.toggle($event)" aria-label="Choose report period"><i class="pi pi-calendar" aria-hidden="true"></i> {{ from }} – {{ to }}</button>
+    <p-popover #dates appendTo="body">
+      <div class="report-date-popover">
+        <div class="date-presets">@for (p of presets; track p.years) { <button class="app-button" (click)="preset(p.years); dates.hide()">{{ p.label }}</button> }</div>
+        <label>From <finance-date-input ariaLabel="Report start" [(ngModel)]="from" (ngModelChange)="loadReport()" /></label>
+        <label>To <finance-date-input ariaLabel="Report end" [(ngModel)]="to" (ngModelChange)="loadReport()" /></label>
+      </div>
+    </p-popover><p-select
       ariaLabel="Report account"
       [(ngModel)]="accountFilter"
       (ngModelChange)="loadReport()"
@@ -57,7 +55,7 @@
       are shown as income in their original category.
     </p>
   }
-  @if (reportTab === "cashflow") {
+  @if (reportTab === "cashflow" && report.months.length) {
     <section class="panel">
       <div class="panel-header">
         <h2>Income & expenses by month</h2>
@@ -101,7 +99,7 @@
       </div>
     </section>
   }
-  @if (reportTab === "categories") {
+  @if (reportTab === "categories" && report.categories.length) {
     <section class="panel table-wrap">
       <table>
         <thead>
@@ -149,10 +147,10 @@
       Opening value + inflows − outflows + valuation changes + adjustments =
       closing value. Amounts remain in each account’s currency.
     </p>
-    @for (kind of ["INVESTMENT", "REAL_ESTATE", "OTHER_ASSET"]; track kind) {
+    @for (section of investmentSections(); track section.kind) {
       <section class="panel">
         <div class="panel-header">
-          <h2>{{ label(kind) }}</h2>
+          <h2>{{ label(section.kind) }}</h2>
         </div>
         <div class="table-wrap">
           <table>
@@ -167,8 +165,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (r of report.investments; track r.id) {
-                @if (r.kind === kind) {
+              @for (r of section.rows; track r.id) {
                   <tr>
                     <td>
                       <a
@@ -195,7 +192,6 @@
                       <strong>{{ money(r.end, r.currency) }}</strong>
                     </td>
                   </tr>
-                }
               }
             </tbody>
           </table>

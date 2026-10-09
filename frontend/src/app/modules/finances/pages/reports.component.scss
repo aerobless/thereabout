@@ -60,3 +60,7 @@
 }
 
 @include responsive.layout;
+
+.report-date-popover {display:grid; gap:1rem; max-width:min(28rem, calc(100vw - 3rem));}
+.date-presets {display:flex; gap:.5rem; flex-wrap:wrap;}
+.report-date-popover label {display:grid; gap:.4rem;}

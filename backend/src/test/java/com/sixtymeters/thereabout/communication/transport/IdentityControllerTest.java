@@ -42,6 +42,9 @@ class IdentityControllerTest {
     @Autowired
     private IdentityRepository identityRepository;
 
+    @Autowired
+    private com.sixtymeters.thereabout.communication.data.IdentityInApplicationRepository applications;
+
     @BeforeEach
     void setUp() {
         IdentityEntity senderIdentity = IdentityEntity.builder()
@@ -72,6 +75,7 @@ class IdentityControllerTest {
     @Test
     void testCreateIdentity() throws Exception {
         GenIdentity request = GenIdentity.builder()
+                .requestKey(java.util.UUID.randomUUID().toString())
                 .id(BigDecimal.ZERO)
                 .firstName("new-contact")
                 .relationship("colleague")
@@ -124,7 +128,8 @@ class IdentityControllerTest {
                 .orElseThrow();
 
         GenIdentity request = GenIdentity.builder()
-                .id(BigDecimal.valueOf(existing.getId()))
+                .requestKey(java.util.UUID.randomUUID().toString())
+                .id(BigDecimal.valueOf(existing.getId())).version(existing.getMembershipVersion())
                 .firstName("sender-updated")
                 .relationship("best-friend")
                 .identityInApplications(List.of(
@@ -160,8 +165,8 @@ class IdentityControllerTest {
                 .orElseThrow();
 
         String requestBody = """
-                {"id":%d,"firstName":"receiver-updated","relationship":"colleague"}
-                """.formatted(existing.getId()).strip();
+                {"id":%d,"firstName":"receiver-updated","relationship":"colleague","version":%d,"requestKey":"%s"}
+                """.formatted(existing.getId(), existing.getMembershipVersion(), java.util.UUID.randomUUID()).strip();
 
         String responseContent = mockMvc.perform(put("/backend/api/v1/identity/{id}", existing.getId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -190,7 +195,8 @@ class IdentityControllerTest {
         IdentityInApplicationEntity existingApp = existing.getIdentityInApplications().getFirst();
 
         GenIdentity request = GenIdentity.builder()
-                .id(BigDecimal.valueOf(existing.getId()))
+                .requestKey(java.util.UUID.randomUUID().toString())
+                .id(BigDecimal.valueOf(existing.getId())).version(existing.getMembershipVersion())
                 .firstName("sender-edited")
                 .relationship("colleague")
                 .identityInApplications(List.of(
@@ -227,14 +233,17 @@ class IdentityControllerTest {
                 .findFirst()
                 .orElseThrow();
 
-        mockMvc.perform(delete("/backend/api/v1/identity/{id}", existing.getId()))
+        long appId = existing.getIdentityInApplications().getFirst().getId();
+        mockMvc.perform(delete("/backend/api/v1/identity/{id}", existing.getId()).param("version", Long.toString(existing.getMembershipVersion())).param("requestKey", java.util.UUID.randomUUID().toString()))
                 .andExpect(status().isNoContent());
 
         assertThat(identityRepository.findById(existing.getId())).isEmpty();
+        assertThat(applications.findById(appId)).isPresent();
+        assertThat(applications.findById(appId).orElseThrow().getIdentity()).isNull();
     }
 
     @Test void normalizesBothNamesAndRejectsInvalidGroupsAndBlankNames() throws Exception {
-        var request = new GenIdentity().id(BigDecimal.ZERO).firstName("  Theo  ").lastName(" Winter ");
+        var request = new GenIdentity().requestKey(java.util.UUID.randomUUID().toString()).id(BigDecimal.ZERO).firstName("  Theo  ").lastName(" Winter ");
         var content = mockMvc.perform(post("/backend/api/v1/identity").contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
@@ -243,11 +252,29 @@ class IdentityControllerTest {
         assertThat(saved.getLastName()).isEqualTo("Winter");
         assertThat(content).doesNotContain("shortName");
         assertThat(identityRepository.findById(saved.getId().longValue()).orElseThrow().getFullName()).isEqualTo("Theo Winter");
+        request.setRequestKey(java.util.UUID.randomUUID().toString());
         request.setIsGroup(true);
         mockMvc.perform(post("/backend/api/v1/identity").contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))).andExpect(status().isBadRequest());
         request.setFirstName(" "); request.setLastName("");
         mockMvc.perform(post("/backend/api/v1/identity").contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))).andExpect(status().isBadRequest());
+        request.firstName("Valid contact").isGroup(false).relationship("x".repeat(256));
+        mockMvc.perform(post("/backend/api/v1/identity").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))).andExpect(status().isBadRequest());
     }
+    @Test void browserWritesRequireReceiptsAndExpectedVersions() throws Exception {
+        var input = new GenIdentity().id(BigDecimal.ZERO).firstName("A contact");
+        mockMvc.perform(post("/backend/api/v1/identity").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(input))).andExpect(status().isBadRequest());
+        var existing = identityRepository.findAll().stream().filter(person -> "sender".equals(person.getFirstName())).findFirst().orElseThrow();
+        input.id(BigDecimal.valueOf(existing.getId())).requestKey(java.util.UUID.randomUUID().toString());
+        mockMvc.perform(put("/backend/api/v1/identity/{id}", existing.getId()).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(input))).andExpect(status().isConflict());
+        input.version(existing.getMembershipVersion() + 1);
+        mockMvc.perform(put("/backend/api/v1/identity/{id}", existing.getId()).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(input))).andExpect(status().isConflict());
+        assertThat(existing.getFirstName()).isEqualTo("sender");
+    }
+
 }

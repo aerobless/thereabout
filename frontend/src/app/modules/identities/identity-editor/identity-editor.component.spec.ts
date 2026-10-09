@@ -22,6 +22,11 @@ describe('IdentityEditorComponent', () => {
     page.editingIdentity.firstName = 'Heidi updated'; page.saveIdentity();
     expect(api.updateIdentity).toHaveBeenCalledWith(1, expect.objectContaining({role: 'USER' as const, firstName: 'Heidi updated', identityInApplications: [cloudflare]}));
     expect(page.error()).toContain('Unable to save'); expect(page.editingIdentity.firstName).toBe('Heidi updated');
+    const requestKey = page.editingIdentity.requestKey;
+    page.saveIdentity();
+    expect(page.editingIdentity.requestKey).toBe(requestKey);
+    page.editingIdentity.firstName = 'Heidi changed again'; page.saveIdentity();
+    expect(page.editingIdentity.requestKey).not.toBe(requestKey);
     fixture.destroy();
   });
 });

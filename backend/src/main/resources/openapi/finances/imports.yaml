@@ -164,9 +164,25 @@ components:
           default: 50
       required:
       - jobId
+    FinanceImportCandidate:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        version: {type: integer, format: int64}
     FinanceImportRow:
       type: object
       properties:
+        counterpartyId: {type: integer, format: int64, minimum: 1}
+        counterpartyVersion: {type: integer, format: int64, readOnly: true}
+        counterpartyConfirmed: {type: boolean}
+        matchStatus: {type: string, readOnly: true, enum: [EXACT, CONFIDENT, REVIEW, NEW, UNAVAILABLE, MANUAL]}
+        matchMessage: {type: string, readOnly: true}
+        candidates:
+          type: array
+          readOnly: true
+          maxItems: 8
+          items: {$ref: '#/components/schemas/FinanceImportCandidate'}
         rowId:
           type: string
         source:
@@ -229,6 +245,9 @@ components:
     FinanceImportJob:
       type: object
       properties:
+        stage: {type: string, enum: [INTERPRETING, CHECKING_COUNTERPARTIES, VALIDATING, COMPLETE]}
+        stageProcessed: {type: integer}
+        stageTotal: {type: integer}
         jobId:
           type: string
         accountId:

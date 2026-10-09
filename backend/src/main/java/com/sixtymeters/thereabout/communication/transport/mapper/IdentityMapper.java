@@ -19,6 +19,8 @@ public interface IdentityMapper {
 
     @Mapping(target = "identityInApplications", source = "identityInApplications")
     @Mapping(source = "group", target = "isGroup")
+    @Mapping(source = "membershipVersion", target = "version")
+    @Mapping(target = "requestKey", ignore = true)
     GenIdentity mapToGenIdentity(IdentityEntity entity);
 
     @Mapping(target = "id", ignore = true)
@@ -33,6 +35,7 @@ public interface IdentityMapper {
 
     @Mapping(source = "application", target = "application", qualifiedByName = "enumToDisplayName")
     @Mapping(source = "group", target = "isGroup")
+    @Mapping(source = "identity.id", target = "identityId")
     GenIdentityInApplication mapToGenIdentityInApplication(IdentityInApplicationEntity entity);
 
     @Mapping(target = "id", source = "id", qualifiedByName = "bigDecimalToLong")

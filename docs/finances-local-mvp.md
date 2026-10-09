@@ -32,6 +32,10 @@ MCP uses the official Java SDK (`io.modelcontextprotocol.sdk:mcp:2.0.1`) with it
     "thereabout-finances": {
       "url": "http://127.0.0.1:9050/mcp/finances",
       "headers": {"Authorization": "Bearer <local-key>"}
+    },
+    "thereabout-identities": {
+      "url": "http://127.0.0.1:9050/mcp/identities",
+      "headers": {"Authorization": "Bearer <local-key>"}
     }
   }
 }
@@ -39,11 +43,48 @@ MCP uses the official Java SDK (`io.modelcontextprotocol.sdk:mcp:2.0.1`) with it
 
 Copy the key from Configuration into your MCP client's private credential storage. The application no longer reads a `FINANCE_MCP_KEY` environment variable or key file. No client is configured automatically.
 
-The 19 operations cover overview, accounts, categories, currencies, transaction listing/details/creation/editing/deletion/restoration/bulk classification, valuation preview/save/history, reports, and exchange-rate listing/manual correction/ECB refresh. Tool names are `finance_` followed by the operation with dots replaced by underscores. Their input schemas are derived from `backend/src/main/resources/openapi/finances.yaml`, the same contract used to generate REST DTOs and the Angular client.
+The finance operations cover overview, accounts, categories, currencies, transaction listing/details/creation/editing/deletion/restoration/bulk classification, valuation preview/save/history, reports, and exchange-rate listing/manual correction/ECB refresh. Tool names are `finance_` followed by the operation with dots replaced by underscores. Their input schemas are derived from `backend/src/main/resources/openapi/finances.yaml`, the same contract used to generate REST DTOs and the Angular client.
 
 REST uses explicit typed endpoints: `GET /api/finances/transactions`, `POST /api/finances/transactions`, `PUT /api/finances/transactions/{id}`, and `DELETE /api/finances/transactions/{id}`; other resources follow the same pattern. Reports are available at `/api/finances/reports/income-expenses`, `/categories` and `/investments`. The generic operation dispatcher has been removed. Angular uses the generated OpenAPI `FinancesService`. Regenerate it with `npm run openapi:generate` in `frontend/` after changing the contract.
 
 Amounts are decimal strings in both directions. Writes require a unique `requestKey`; retry the **same operation and arguments with the same key** if a response is lost. A different payload with a used key returns a conflict. Account/category/transaction edits and replacement of manual exchange rates require the returned `version`; reload after a conflict. The browser retains a failed write's key while its payload stays unchanged. A database lock serializes ledger writes, and both postings, audit entry and replay response commit in one transaction.
+
+Counterparty metadata can be edited with `finance_counterparties_save`. First read `finance_counterparties_get`, then send the ID and the complete REST update inside `input`:
+
+```json
+{
+  "id": 123,
+  "input": {
+    "name": "Example company",
+    "aliases": ["Example company", "Original merchant label"],
+    "websiteUrl": "https://example.com/",
+    "version": 4,
+    "requestKey": "unique-key-for-this-edit"
+  }
+}
+```
+
+For website-only edits, copy the current name and complete aliases list unchanged. The website is normalized to an HTTPS origin; omitting it or sending an empty string clears it. REST and MCP use the same authorization, validation, version checks, audit and idempotency service. A combined ID or stale version returns a conflict; reload before editing. Metadata edits preserve ledger accounts and financial history.
+
+## Identity MCP and browser writes
+
+`/mcp/identities` uses the same database-managed bearer credential and endpoint admission as `/mcp/finances`, including supported Cloudflare machine clients and loopback development clients. Eligible authenticated callers need **no administrator role** for identity tools. Browser identity pages and REST operations retain their administrator restrictions. Browser impersonation does not change the finance MCP data-user context.
+
+The settings catalog lists both endpoints and their complete current tool schemas. The identity endpoint offers `identity_list`, `identity_get`, `identity_create`, `identity_update`, `identity_delete`, `identity_applications_list`, `identity_applications_get`, `identity_applications_link`, `identity_applications_unlink`, `identity_members_get` and `identity_members_save`. List tools accept `q`, `isGroup`, `application`, `linked`, `identityId`, `page` and `pageSize` (1–200). Searches include names, relationships, imported identifiers and username hints.
+
+MCP write inputs accept only identity metadata and write controls: unsupported fields are rejected. No endpoint registers Create User or role-management tools. New contacts/groups have no role; metadata updates preserve user roles and Cloudflare links. Cloudflare linking/unlinking and user deletion are prohibited. App tools only manage existing imported IDs. Contact/group deletion unlinks and retains imported IDs and their message history. Membership grants access to the group's complete history.
+
+Identity REST and MCP share transactional validation, receipts and auditing. Every metadata/link/membership/delete write requires `requestKey`; updates/deletion require the identity's `version`, app mutations require the app's `version`, linking also requires the destination's `identityVersion`. Retry identical inputs with the same key; changed inputs need a new key. The browser retains retry keys for unchanged drafts. Identity metadata and membership share the existing identity version column; additive Flyway V36 versions imported app IDs. Audits retain the authenticated request actor when available. UI-only user creation and role changes retain their existing protected endpoints.
+
+## CSV matching and review
+
+Responses structured output extracts CSV evidence, own transfer accounts, categories and account guidance. It does not receive the complete counterparty catalog. Canonical names and aliases are searched locally; unique normalized exact matches are selected automatically. Other plausible matches are ranked using merchant tokens and spelling similarity, with at most eight candidates sent to [Decisions](https://developers.openai.com/api/docs/guides/decisions), including a “none fits” choice. Repeated merchant decisions are cached within the import. Java SDK 4.78.0 supplies the Decisions client.
+
+Unique normalized names/aliases are accepted automatically. For legacy identities with identical canonical names, a unique active ledger for the required direction and currency resolves the match. Other existing matches are accepted automatically only when Decisions confidence and the selected option probability are both at least 0.95; unresolved exact-name collisions still require review. Weaker suggestions require confirmation before approval. Use the row checkmark, or choose a counterparty in the row editor and apply it. When plausible matches exist, creating a new counterparty requires explicit confirmation. Failures/refusals retain candidates for review and cannot cause automatic creation. Changes to matching evidence reset confirmation. Match suggestions and selected versions are server-owned; original CSV evidence stays immutable.
+
+Preparation writes no ledger records. Approval revalidates selected canonical identities and returns changed/unavailable choices to review. A missing currency/direction account is created under the selected canonical identity during approval. Duplicate protection, exact decimal strings, cancellation and idempotent approval remain in place. Polling reports interpretation, counterparty checking and validation stages with real counters, excluding discarded headers/totals from “Checking transaction 12 of 43”.
+
+Transaction searches accept `descriptionQ`, `fromQ` and `toQ`, combined with AND; side searches include canonical names, aliases and ledger names. Fixed-account tables use `counterpartQ` on the opposite side. Legacy `q`, account/report drill-down scope and API flags remain supported. Report date presets use calendar-year boundaries and valid manual changes refresh automatically. Empty report sections are hidden while zero-valued accounts remain visible.
 
 ## Data and recovery
 

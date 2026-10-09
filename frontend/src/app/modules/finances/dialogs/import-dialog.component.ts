@@ -1,3 +1,4 @@
+import {OriginalAmountComponent} from "../shared/original-amount.component";
 import { ChangeDetectionStrategy, Component, computed, effect, DestroyRef, inject, input, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AppModalComponent } from '../../../shared/modal/app-modal.component';
@@ -9,11 +10,14 @@ import { TagModule } from 'primeng/tag';
 import { TableModule, TablePageEvent } from 'primeng/table';
 import { firstValueFrom, interval, Subscription } from 'rxjs';
 import { FinanceAccount, FinanceContext, FinanceDialogs, FinanceImportJob, FinanceImportRow, errorMessage } from '../shared/finance-ui';
+import {FinanceCounterparty} from '../../../../../generated/backend-api/thereabout';
 import { FinanceDateInputComponent } from '../shared/finance-date-input.component';
+
+type CounterChoice = {id:number; name:string; label:string; create?:boolean};
 
 @Component({
   selector: 'finance-import-dialog',
-  imports: [ AppModalComponent, FormsModule, SelectModule, AutoCompleteModule, TableModule, FinanceDateInputComponent, ProgressSpinnerModule, TagModule],
+  imports: [OriginalAmountComponent,  AppModalComponent, FormsModule, SelectModule, AutoCompleteModule, TableModule, FinanceDateInputComponent, ProgressSpinnerModule, TagModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class.import-preview]': "job()?.status === 'READY'" },
   templateUrl: './import-dialog.component.html',
@@ -33,8 +37,9 @@ export class ImportDialogComponent implements OnDestroy {
   readonly editor = signal<FinanceImportRow | undefined>(undefined);
   readonly page = signal(0);
   readonly counterparties = signal<FinanceAccount[]>([]);
-  readonly counterSuggestions = signal<FinanceAccount[]>([]);
-  readonly counterValue = signal<FinanceAccount | string | null>(null);
+  readonly counterSuggestions = signal<CounterChoice[]>([]);
+  readonly counterValue = signal<CounterChoice | string | null>(null);
+  private counterSearchVersion = 0;
   readonly activeAccounts = computed(() => this.context.accounts().filter(a => a.active));
   readonly accountChoices = computed(() => this.activeAccounts().map(a => ({ label: `${a.userName} · ${a.name} · ${a.currency}`, value: a.id })));
   readonly account = computed(() => this.context.accounts().find(a => a.id === (this.job()?.accountId ?? this.selectedAccount() ?? this.accountId())));
@@ -96,41 +101,59 @@ export class ImportDialogComponent implements OnDestroy {
     // Preserve the warning when a skipped duplicate is reopened and then unskipped.
     copy.duplicate = this.duplicateDetails(row) || row.duplicate;
     this.editor.set(copy);
-    this.counterValue.set(this.counterparties().find(a => a.id === row.otherAccountId) ?? row.counterpartyName ?? '');
+    this.counterValue.set(row.counterpartyId ? {id:row.counterpartyId, name:row.counterpartyName ?? '', label:row.counterpartyName ?? ''} : row.counterpartyName ?? '');
+    this.counterSuggestions.set((row.candidates ?? []).map(c => ({id:c.id ?? 0, name:c.name ?? '', label:c.name ?? ''})));
   }
   discardEdit() {
     if (!this.busy() && !this.dialogs.hintsBlocked()) { this.editor.set(undefined); this.error.set(''); }
   }
   patch(change: Partial<FinanceImportRow>) { this.editor.update(row => row ? { ...row, ...change } : row); }
-  counterSearch(event: AutoCompleteCompleteEvent) {
-    const kind = this.editor()?.type === 'DEPOSIT' ? 'REVENUE' : 'EXPENSE';
-    this.counterSuggestions.set(this.counterparties().filter(a => a.kind === kind && a.name.toLowerCase().includes(event.query.toLowerCase())).slice(0, 50));
+  async counterSearch(event: AutoCompleteCompleteEvent) {
+    const request = ++this.counterSearchVersion;
+    try {
+      const result = await firstValueFrom(this.api.client.financeListCounterparties(event.query, 0, 50));
+      if (request !== this.counterSearchVersion) return;
+      const candidates = (this.editor()?.candidates ?? []).filter(c => (c.name ?? '').toLowerCase().includes(event.query.toLowerCase()));
+      const rows: CounterChoice[] = result.items.map(c => ({id:c.id, name:c.name, label:c.name}));
+      for (const c of candidates) if (c.id && !rows.some(r => r.id === c.id)) rows.unshift({id:c.id, name:c.name ?? '', label:c.name ?? ''});
+      if (event.query.trim()) rows.push({id:0, name:event.query.trim(), label:`Create “${event.query.trim()}”`, create:true});
+      this.counterSuggestions.set(rows);
+    } catch (error) { this.error.set(errorMessage(error)); }
   }
-  counterChange(value: FinanceAccount | string | null) {
+  counterChange(value: CounterChoice | string | null) {
     this.counterValue.set(value);
-    if (typeof value === 'string' || value === null) this.patch({ otherAccountId: undefined, counterpartyName: value ?? '' });
+    if (typeof value === 'string' || value === null) this.patch({ otherAccountId: undefined, counterpartyId:undefined, counterpartyConfirmed:false, counterpartyName: value ?? '' });
   }
   counterSelect(event: AutoCompleteSelectEvent) {
     const value: unknown = event.value;
-    if (!value || typeof value !== 'object' || !('id' in value)) return;
-    const account = this.counterparties().find(a => a.id === value.id);
-    if (!account) return;
-    this.counterValue.set(account); this.patch({ otherAccountId: account.id, counterpartyName: '' });
+    if (!value || typeof value !== 'object' || !('id' in value) || !('name' in value) || typeof value.name !== 'string') return;
+    const option = this.counterSuggestions().find(c => c.id === value.id && c.name === value.name);
+    if (!option) return;
+    this.counterValue.set(option);
+    this.patch({otherAccountId:undefined, counterpartyId:option.create ? undefined : option.id, counterpartyName:option.name, counterpartyConfirmed:!!option.create});
+  }
+  progress(draft: FinanceImportJob) {
+    const total = draft.stageTotal ?? draft.total;
+    const done = draft.stageProcessed ?? draft.processed;
+    if (draft.stage === 'CHECKING_COUNTERPARTIES') return `Checking transaction ${Math.min((done ?? 0) + 1, total ?? 0)} of ${total}`;
+    if (draft.stage === 'VALIDATING') return `Validating transactions ${done} of ${total}`;
+    return `Interpreting CSV records ${done} of ${total}`;
   }
   async review(row = this.editor()) {
     const job = this.job(); if (!row || !job) return;
     this.busy.set(true); this.error.set('');
     try {
-      await firstValueFrom(this.api.client.financeReviewImport({ jobId: job.jobId, revision: job.revision, rows: [row] }));
+      await firstValueFrom(this.api.client.financeReviewImport({ jobId: job.jobId, revision: job.revision, rows: [{...row, counterpartyConfirmed:row.counterpartyId || row.otherAccountId ? true : row.counterpartyConfirmed}] }));
       this.editor.set(undefined); await this.load();
     } catch (error) { this.error.set(errorMessage(error)); }
     finally { this.busy.set(false); }
   }
-  accept(row: FinanceImportRow) { void this.review({...row, skip: false, duplicateOverride: !!this.duplicateDetails(row) || row.duplicateOverride}); }
+  accept(row: FinanceImportRow) { void this.review({...row, counterpartyConfirmed:true, skip: false, duplicateOverride: !!this.duplicateDetails(row) || row.duplicateOverride}); }
   // Skipped rows retain the backend's duplicate reason when another row is revalidated.
   duplicateDetails(row: FinanceImportRow) { return row.duplicate || (row.skip && row.reason?.startsWith('Duplicate: ') ? row.reason.slice('Duplicate: '.length) : ''); }
   needsEdit(row: FinanceImportRow) {
     return !row.skip && !!row.issues?.some(issue => this.issueText(issue) !== this.issueText(row.reason ?? '')
+      && !issue.startsWith('Confirm the counterparty selection')
       && !(this.duplicateDetails(row) && issue === 'Skip this duplicate or explicitly keep it'));
   }
   issueText(issue: string) { return issue.replace(/^Review interpretation:\s*/, ''); }
@@ -147,7 +170,7 @@ export class ImportDialogComponent implements OnDestroy {
     if (result) { this.approved = true; this.dialogs.close(); }
     else await this.load();
   }
-  counterName(row: FinanceImportRow) { return this.counterparties().find(a => a.id === row.otherAccountId)?.name ?? this.context.accounts().find(a => a.id === row.otherAccountId)?.name ?? (row.counterpartyName ? `${row.counterpartyName} (new)` : '—'); }
+  counterName(row: FinanceImportRow) { return this.counterparties().find(a => a.id === row.otherAccountId)?.name ?? this.context.accounts().find(a => a.id === row.otherAccountId)?.name ?? (row.counterpartyName ? row.counterpartyId ? row.counterpartyName : `${row.counterpartyName} (new)` : '—'); }
   categoryName(row: FinanceImportRow) { return this.context.categories().find(c => c.id === row.categoryId)?.name ?? (row.categoryName || 'Uncategorised'); }
   ngOnDestroy() {
     this.dialogs.blocked.set(false);

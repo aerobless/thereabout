@@ -1,7 +1,6 @@
 package com.sixtymeters.thereabout.communication.transport;
 
 import com.sixtymeters.thereabout.communication.data.CommunicationApplication;
-import com.sixtymeters.thereabout.communication.data.IdentityInApplicationEntity;
 import com.sixtymeters.thereabout.communication.service.IdentityInApplicationService;
 import com.sixtymeters.thereabout.communication.transport.mapper.IdentityMapper;
 import com.sixtymeters.thereabout.generated.api.IdentityInApplicationApi;
@@ -21,6 +20,7 @@ public class IdentityInApplicationController implements IdentityInApplicationApi
 
     private static final IdentityMapper IDENTITY_MAPPER = IdentityMapper.INSTANCE;
     private final IdentityInApplicationService identityInApplicationService;
+    private final com.sixtymeters.thereabout.communication.service.IdentityOperations operations;
 
     @Override
     public ResponseEntity<List<GenIdentityInApplication>> getIdentityInApplicationsByApplication(String application) {
@@ -40,14 +40,14 @@ public class IdentityInApplicationController implements IdentityInApplicationApi
     }
 
     @Override
-    public ResponseEntity<GenIdentityInApplication> linkIdentityInApplication(BigDecimal id, BigDecimal identityId) {
-        IdentityInApplicationEntity linked = identityInApplicationService.linkAppIdentity(id.longValue(), identityId.longValue());
-        return ResponseEntity.ok(IDENTITY_MAPPER.mapToGenIdentityInApplication(linked));
+    public ResponseEntity<GenIdentityInApplication> linkIdentityInApplication(BigDecimal id, BigDecimal identityId, java.util.Optional<Long> identityVersion, java.util.Optional<Long> version, java.util.Optional<String> requestKey) {
+        return ResponseEntity.ok(operations.link(new com.sixtymeters.thereabout.generated.model.GenIdentityLinkInput()
+            .id(id.longValueExact()).identityId(identityId.longValueExact()).identityVersion(identityVersion.orElse(null)).version(version.orElse(null)).requestKey(requestKey.orElse(null))));
     }
 
     @Override
-    public ResponseEntity<GenIdentityInApplication> unlinkIdentityInApplication(BigDecimal id) {
-        IdentityInApplicationEntity unlinked = identityInApplicationService.unlinkAppIdentity(id.longValue());
-        return ResponseEntity.ok(IDENTITY_MAPPER.mapToGenIdentityInApplication(unlinked));
+    public ResponseEntity<GenIdentityInApplication> unlinkIdentityInApplication(BigDecimal id, java.util.Optional<Long> version, java.util.Optional<String> requestKey) {
+        return ResponseEntity.ok(operations.unlink(new com.sixtymeters.thereabout.generated.model.GenIdentityVersionedInput()
+            .id(id.longValueExact()).version(version.orElse(null)).requestKey(requestKey.orElse(null))));
     }
 }

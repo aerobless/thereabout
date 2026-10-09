@@ -252,6 +252,15 @@ public class FinanceReadRepository {
         .orElseThrow(() -> missing("Transaction"));
   }
 
+  private static String searchPattern(String q) {
+    return "%" + q.strip().replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
+  }
+  private static String sideSearch(String account, String counterparty) {
+    return "(" + account + ".name LIKE ? ESCAPE '!' OR " + counterparty + ".name LIKE ? ESCAPE '!' OR EXISTS (SELECT 1 FROM finance_counterparty_alias alias WHERE alias.counterparty_id="
+        + account + ".counterparty_id AND alias.alias LIKE ? ESCAPE '!'))";
+  }
+  private static void addSideArgs(List<Object> args, String q) { for (int i = 0; i < 3; i++) args.add(searchPattern(q)); }
+
   public GenFinanceTransactionPage transactions(UserId user, GenFinanceTransactionQuery p) {
     List<Object> args = new ArrayList<>();
     long account = p.getAccountId() == null ? 0 : p.getAccountId();
@@ -276,6 +285,16 @@ public class FinanceReadRepository {
     if (!q.isBlank()) {
       where += " AND (t.description LIKE ? OR sa.name LIKE ? OR da.name LIKE ? OR t.notes LIKE ? OR sc.name LIKE ? OR dc.name LIKE ?)";
       for (int i = 0; i < 6; i++) args.add("%" + q + "%");
+    }
+    if (!text(p.getDescriptionQ()).isBlank()) {
+      where += " AND t.description LIKE ? ESCAPE '!'"; args.add(searchPattern(p.getDescriptionQ()));
+    }
+    if (!text(p.getFromQ()).isBlank()) { where += " AND " + sideSearch("sa", "sc"); addSideArgs(args, p.getFromQ()); }
+    if (!text(p.getToQ()).isBlank()) { where += " AND " + sideSearch("da", "dc"); addSideArgs(args, p.getToQ()); }
+    if (!text(p.getCounterpartQ()).isBlank()) {
+      require(account != 0, "Counterpart search requires a fixed accountId");
+      where += " AND ((sa.id=? AND " + sideSearch("da", "dc") + ") OR (da.id=? AND " + sideSearch("sa", "sc") + "))";
+      args.add(account); addSideArgs(args, p.getCounterpartQ()); args.add(account); addSideArgs(args, p.getCounterpartQ());
     }
     var categories = p.getCategoryIds();
     if (categories == null || categories.isEmpty())

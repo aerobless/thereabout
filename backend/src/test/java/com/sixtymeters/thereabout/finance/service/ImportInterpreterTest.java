@@ -13,7 +13,7 @@ import tools.jackson.databind.ObjectMapper;
 
 class ImportInterpreterTest {
   @Test
-  void suppliesAllExistingCategoryChoicesAndCounterpartyIdsToTheModel() {
+  void suppliesCategoriesAndMainAccountsWithoutCounterpartyPayloads() {
     var ai = mock(OpenAiService.class);
     var json = new ObjectMapper();
     var interpreter = new ImportInterpreter(ai, json);
@@ -30,8 +30,8 @@ class ImportInterpreterTest {
             new GenFinanceAccount()
                 .id(2L)
                 .name("Demo Employer")
-                .kind(GenFinanceAccountKind.REVENUE)
-                .currency("CHF"));
+                .kind(GenFinanceAccountKind.CASH)
+                .currency("CHF"), new GenFinanceAccount().id(3L).name("Do not send merchant").kind(GenFinanceAccountKind.EXPENSE).currency("CHF"));
     var rows = new ImportCsvReader().parse("2026-01-01;Lunch;12.12");
     interpreter.interpret(account, rows, rows, accountChoices, categoryChoices, List.of("Always treat IBKR as a transfer"));
     var instructions = ArgumentCaptor.forClass(String.class);
@@ -42,6 +42,8 @@ class ImportInterpreterTest {
     assertThat(sent.get("categories").get(0).get("id").asLong()).isEqualTo(10L);
     assertThat(sent.get("categories").get(0).get("name").asString()).isEqualTo("Food");
     assertThat(sent.get("categories").get(1).get("id").asLong()).isEqualTo(11L);
+    assertThat(sent.get("accounts").size()).isEqualTo(1);
+    assertThat(data.getValue()).doesNotContain("Do not send merchant");
     assertThat(sent.get("accounts").get(0).get("id").asLong()).isEqualTo(2L);
     assertThat(instructions.getValue())
         .contains("Categories are a closed list", "Never invent or create categories",

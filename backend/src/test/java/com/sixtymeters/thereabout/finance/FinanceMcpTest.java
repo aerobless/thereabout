@@ -51,13 +51,13 @@ class FinanceMcpTest {
     try (var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(15)).build()) {
       assertThat(client.initialize().serverInfo().name()).isEqualTo("thereabout-finances");
       var tools = client.listTools().tools();
-      assertThat(tools).hasSize(39);
+      assertThat(tools).hasSize(40);
       assertThat(tools)
           .extracting(McpSchema.Tool::name)
           .contains("finance_splitwise_get", "finance_splitwise_sources_list", "finance_splitwise_sources_get",
               "finance_splitwise_resolve", "finance_splitwise_categories_save", "finance_splitwise_sync",
               "finance_transactions_save", "finance_valuations_preview", "finance_valuations_delete", "finance_valuations_restore",
-              "finance_import_hints_list", "finance_import_hints_add", "finance_import_hints_remove");
+              "finance_import_hints_list", "finance_import_hints_add", "finance_import_hints_remove", "finance_counterparties_save");
       var read =
           client.callTool(
               McpSchema.CallToolRequest.builder("finance_categories_list")
@@ -105,6 +105,85 @@ class FinanceMcpTest {
   @org.springframework.beans.factory.annotation.Autowired SplitwiseSourceRepository splitwiseSources;
   @org.springframework.beans.factory.annotation.Autowired AccountService accounts;
   @org.springframework.beans.factory.annotation.Autowired FinanceReadRepository reads;
+  @Test
+  void counterpartyWebsitesHaveRestAndRealMcpParityWithoutChangingFinancialHistory() throws Exception {
+    db.update("INSERT IGNORE INTO finance_currency(code,name,decimal_places) VALUES('CHF','Franc',2)");
+    String marker = UUID.randomUUID().toString();
+    long own = accounts.save(new UserId(1), new GenFinanceAccountInput().name("Website owner " + marker)
+        .kind(GenFinanceAccountKind.CASH).currency("CHF").requestKey(UUID.randomUUID().toString())).getAccount().getId();
+    long merchant = accounts.save(new UserId(1), new GenFinanceAccountInput().name("Website merchant " + marker)
+        .kind(GenFinanceAccountKind.EXPENSE).currency("CHF").requestKey(UUID.randomUUID().toString())).getAccount().getId();
+    long id = db.queryForObject("SELECT counterparty_id FROM finance_account WHERE id=?", Long.class, merchant);
+    var transport = HttpClientStreamableHttpTransport.builder("http://127.0.0.1:" + port).endpoint("/mcp/finances")
+        .requestBuilder(HttpRequest.newBuilder().header("Authorization", "Bearer " + keys.getKey())).build();
+    try (var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(15)).build()) {
+      client.initialize();
+      var tool = client.listTools().tools().stream().filter(t -> t.name().equals("finance_counterparties_save")).findFirst().orElseThrow();
+      assertThat(tool.annotations().readOnlyHint()).isFalse();
+      assertThat(tool.annotations().idempotentHint()).isTrue();
+      var created = call(client, "finance_transactions_save", Map.ofEntries(
+          Map.entry("requestKey", UUID.randomUUID().toString()), Map.entry("type", "WITHDRAWAL"),
+          Map.entry("sourceId", own), Map.entry("destinationId", merchant),
+          Map.entry("sourceCurrency", "CHF"), Map.entry("destinationCurrency", "CHF"),
+          Map.entry("sourceAmount", "12.35"), Map.entry("destinationAmount", "12.35"),
+          Map.entry("date", "1900-01-02T12:00:00"), Map.entry("description", "Website protocol fixture")));
+      long transaction = ((Number) ((Map<?, ?>) created.get("transaction")).get("id")).longValue();
+      var postings = db.queryForList("SELECT * FROM finance_posting WHERE transaction_id=? ORDER BY id", transaction);
+      var history = db.queryForList("SELECT * FROM finance_transaction WHERE id=?", transaction);
+      var ledgerAccounts = db.queryForList("SELECT * FROM finance_account WHERE id IN (?,?) ORDER BY id", own, merchant);
+      var original = call(client, "finance_counterparties_get", Map.of("id", id));
+      var input = new LinkedHashMap<String, Object>();
+      input.put("name", original.get("name")); input.put("aliases", original.get("aliases"));
+      input.put("version", original.get("version")); input.put("requestKey", UUID.randomUUID().toString());
+      input.put("websiteUrl", "EXAMPLE.com/private?ignored=1");
+      var args = Map.<String, Object>of("id", id, "input", input);
+      var saved = call(client, "finance_counterparties_save", args);
+      assertThat(saved.get("websiteUrl")).isEqualTo("https://example.com/");
+      assertThat(saved.get("name")).isEqualTo(original.get("name"));
+      assertThat(saved.get("aliases")).isEqualTo(original.get("aliases"));
+      assertThat(((Number) saved.get("version")).longValue()).isGreaterThan(((Number) original.get("version")).longValue());
+      assertThat(call(client, "finance_counterparties_save", args)).isEqualTo(saved);
+      var rest = HttpClient.newHttpClient().send(HttpRequest.newBuilder(
+              URI.create("http://127.0.0.1:" + port + "/api/finances/counterparties/" + id))
+          .header("Content-Type", "application/json").header("Cookie", "XSRF-TOKEN=" + CSRF).header("X-XSRF-TOKEN", CSRF)
+          .PUT(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(input))).build(), HttpResponse.BodyHandlers.ofString());
+      assertThat(rest.statusCode()).isEqualTo(200);
+      assertThat(json.readTree(rest.body())).isEqualTo(json.valueToTree(saved));
+      assertThat(db.queryForObject("SELECT COUNT(*) FROM finance_audit WHERE entity_id=? AND operation='counterparties.save'", Long.class, id)).isEqualTo(1L);
+      assertThat(db.queryForMap("SELECT actor_id,user_id FROM finance_audit WHERE entity_id=? AND operation='counterparties.save'", id))
+          .containsEntry("actor_id", 1L).containsEntry("user_id", 1L);
+
+      var stale = new LinkedHashMap<>(input); stale.put("requestKey", UUID.randomUUID().toString());
+      var conflict = client.callTool(McpSchema.CallToolRequest.builder("finance_counterparties_save")
+          .arguments(Map.of("id", id, "input", stale)).build());
+      assertThat(conflict.isError()).isTrue(); assertThat(conflict.content().toString()).contains("409");
+      var reused = new LinkedHashMap<>(input); reused.put("websiteUrl", "https://different.example/");
+      var keyConflict = client.callTool(McpSchema.CallToolRequest.builder("finance_counterparties_save")
+          .arguments(Map.of("id", id, "input", reused)).build());
+      assertThat(keyConflict.isError()).isTrue(); assertThat(keyConflict.content().toString()).contains("409");
+
+      var invalid = new LinkedHashMap<>(input); invalid.put("version", saved.get("version"));
+      invalid.put("requestKey", UUID.randomUUID().toString()); invalid.put("websiteUrl", "http://example.com/");
+      var invalidUrl = client.callTool(McpSchema.CallToolRequest.builder("finance_counterparties_save")
+          .arguments(Map.of("id", id, "input", invalid)).build());
+      assertThat(invalidUrl.isError()).isTrue(); assertThat(invalidUrl.content().toString()).contains("400");
+      invalid.put("websiteUrl", "https://example.com/"); invalid.remove("aliases");
+      var missingAliases = client.callTool(McpSchema.CallToolRequest.builder("finance_counterparties_save")
+          .arguments(Map.of("id", id, "input", invalid)).build());
+      assertThat(missingAliases.isError()).isTrue(); assertThat(missingAliases.content().toString()).contains("aliases");
+      assertThat(call(client, "finance_counterparties_get", Map.of("id", id))).isEqualTo(saved);
+
+      var clear = new LinkedHashMap<>(input); clear.put("version", saved.get("version"));
+      clear.put("requestKey", UUID.randomUUID().toString()); clear.remove("websiteUrl");
+      var cleared = call(client, "finance_counterparties_save", Map.of("id", id, "input", clear));
+      assertThat(cleared.get("websiteUrl")).isNull();
+      assertThat(cleared.get("aliases")).isEqualTo(original.get("aliases"));
+      assertThat(db.queryForList("SELECT * FROM finance_posting WHERE transaction_id=? ORDER BY id", transaction)).isEqualTo(postings);
+      assertThat(db.queryForList("SELECT * FROM finance_transaction WHERE id=?", transaction)).isEqualTo(history);
+      assertThat(db.queryForList("SELECT * FROM finance_account WHERE id IN (?,?) ORDER BY id", own, merchant)).isEqualTo(ledgerAccounts);
+    }
+  }
+
   @Test void restAndRealMcpEditsBothEndSplitwiseManagement() throws Exception {
     db.update("INSERT IGNORE INTO finance_currency(code,name,decimal_places) VALUES('CHF','Franc',2)");
     long own=accounts.save(new UserId(1),new GenFinanceAccountInput().requestKey(UUID.randomUUID().toString()).name("Splitwise protocol fixture").kind(GenFinanceAccountKind.CASH).currency("CHF")).getAccount().getId();

@@ -173,26 +173,12 @@
         optionValue="id"
         appendTo="body"
         [filter]="true"><ng-template #item let-c><finance-category [name]="c.name" /></ng-template><ng-template #selectedItem let-c><finance-category [name]="c.name" /></ng-template></p-select></label
-    ><label
-      >Original currency (optional)<p-select
-        ariaLabel="Original currency"
-        name="foreignCurrency"
-        formControlName="foreignCurrency"
-        [options]="currencyOptions"
-        optionLabel="name"
-        optionValue="code"
-        appendTo="body"
-        [filter]="true"
-    /></label>
-    @if (form.controls.foreignCurrency.value) {
-      <label
-        >Original amount<input
-          name="foreignAmount"
-          inputmode="decimal"
-          formControlName="foreignAmount"
-          (blur)="formatAmount('foreignAmount')"
-      /></label>
-    }
+    ><label>Original amount (optional)
+      <finance-original-amount [amount]="form.controls.foreignAmount.value" [currency]="form.controls.foreignCurrency.value"
+        [currencies]="currencies" (amountChange)="originalAmountChanged('foreignAmount', $event)"
+        (currencyChange)="originalAmountChanged('foreignCurrency', $event)"
+        (amountBlur)="formatAmount('foreignAmount')" />
+    </label>
     <label
       >Purpose<p-select
         ariaLabel="Purpose"

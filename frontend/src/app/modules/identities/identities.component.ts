@@ -1,7 +1,12 @@
+import {IdentityWriteKeys} from "./identity-write-keys";
+import {IdentityNavigation} from "./identity-navigation";
+import {toSignal} from "@angular/core/rxjs-interop";
+import {map, of} from "rxjs";
+import {ActivatedRoute} from "@angular/router";
 import {fullName} from '../../shared/identity-names';
 import {IdentityEditorComponent} from './identity-editor/identity-editor.component';
 import {registerRefresh} from '../../shared/refresh/refresh-coordinator';
-import {inject, ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import {inject, signal, computed, effect, ChangeDetectorRef, Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {RouterModule} from '@angular/router';
 import {ButtonModule} from 'primeng/button';
@@ -45,18 +50,29 @@ type IdentityRow = Identity & {appIdentityCount: number; fullName: string};
     ],
     providers: [MessageService],
     templateUrl: './identities.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './identities.component.scss'
 })
 export class IdentitiesComponent implements OnInit {
+  private readonly writeKeys = new IdentityWriteKeys();
   readonly nameSort = [{field: 'firstName', order: 1}, {field: 'lastName', order: 1}];
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly refresh = registerRefresh(() => { this.loadIdentities(); this.loadUnlinkedAppIdentities(); }, () => this.identityDialogVisible || this.linkDialogVisible);
 
-    identities: IdentityRow[] = [];
+    private readonly route = inject(ActivatedRoute);
+    private readonly navigation = inject(IdentityNavigation, {optional:true});
+    readonly isGroup = toSignal((this.route.data ?? of(this.route.snapshot?.data ?? {})).pipe(map(data => data['isGroup'] === true)), {initialValue:false});
+    private readonly identityRows = signal<IdentityRow[]>([]);
+    readonly visibleIdentities = computed(() => this.identityRows().filter(identity => !!identity.isGroup === this.isGroup()));
+    get identities() { return this.visibleIdentities(); }
+    set identities(rows: IdentityRow[]) { this.identityRows.set(rows); }
+    private readonly personApps = signal<IdentityInApplication[]>([]);
+    private readonly groupApps = signal<IdentityInApplication[]>([]);
+    get unlinkedAppIdentities() { return this.personApps(); }
+    set unlinkedAppIdentities(rows: IdentityInApplication[]) { this.personApps.set(rows); }
+    get unlinkedGroupIdentities() { return this.groupApps(); }
+    set unlinkedGroupIdentities(rows: IdentityInApplication[]) { this.groupApps.set(rows); }
     identityFilter = '';
-    unlinkedAppIdentities: IdentityInApplication[] = [];
-    unlinkedGroupIdentities: IdentityInApplication[] = [];
     unlinkedFilter = '';
     unlinkedGroupFilter = '';
 
@@ -72,7 +88,7 @@ export class IdentitiesComponent implements OnInit {
         private readonly identityService: IdentityService,
         private readonly identityInApplicationService: IdentityInApplicationService,
         private readonly messageService: MessageService,
-    ) {}
+    ) { effect(() => this.navigation?.group.set(this.isGroup())); }
 
     ngOnInit(): void {
         this.loadIdentities();
@@ -109,7 +125,7 @@ export class IdentitiesComponent implements OnInit {
 
         this.identityInApplicationService.linkIdentityInApplication(
             this.linkingAppIdentity.id,
-            this.selectedIdentityForLink.id
+            this.selectedIdentityForLink.id, this.selectedIdentityForLink.version, this.linkingAppIdentity.version, this.writeKeys.key("link", {id:this.linkingAppIdentity.id, version:this.linkingAppIdentity.version, identityId:this.selectedIdentityForLink.id, identityVersion:this.selectedIdentityForLink.version})
         ).subscribe({
             next: () => {
                 this.messageService.add({severity: 'success', summary: 'Linked', detail: 'Application identity linked successfully'});

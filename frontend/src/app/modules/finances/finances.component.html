@@ -19,7 +19,7 @@
         [routerLink]="tab === 'overview' ? '/finances' : '/finances/' + tab"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: tab === 'overview' }"
-        >{{ tab | titlecase }}</a
+        ><i [class]="navIcons[tab]" aria-hidden="true"></i> {{ tab | titlecase }}</a
       >
     }
   </nav>
